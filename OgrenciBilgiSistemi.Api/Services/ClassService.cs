@@ -1,4 +1,4 @@
-﻿using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using OgrenciBilgiSistemi.Api.Models;
 
 namespace OgrenciBilgiSistemi.Api.Services
@@ -9,43 +9,45 @@ namespace OgrenciBilgiSistemi.Api.Services
 
         public ClassService(IConfiguration configuration)
         {
-            _connectionString = configuration.GetConnectionString("DefaultConnection");
+            _connectionString = configuration.GetConnectionString("DefaultConnection")
+                ?? throw new InvalidOperationException("DefaultConnection bağlantı dizesi eksik.");
         }
 
         public async Task<List<UnitWithCountDto>> GetAllClassesWithStudentCountAsync()
         {
             var resultList = new List<UnitWithCountDto>();
-
-            using (SqlConnection conn = new SqlConnection(_connectionString))
+            try
             {
-                string query = @"
+                await using var conn = new SqlConnection(_connectionString);
+                const string query = @"
                     SELECT BirimId, BirimAd, BirimSinifMi, BirimDurum,
                            (SELECT COUNT(*) FROM Ogrenciler
-                            WHERE BirimId = B.BirimId AND OgrenciDurum = 1) as OgrenciSayisi
+                            WHERE BirimId = B.BirimId AND OgrenciDurum = 1) AS OgrenciSayisi
                     FROM Birimler B
                     WHERE BirimSinifMi = 1 AND BirimDurum = 1";
 
-                using (SqlCommand cmd = new SqlCommand(query, conn))
+                await using var cmd = new SqlCommand(query, conn);
+                await conn.OpenAsync();
+
+                await using var reader = await cmd.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
                 {
-                    await conn.OpenAsync();
-                    using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
+                    resultList.Add(new UnitWithCountDto
                     {
-                        while (await reader.ReadAsync())
+                        UnitData = new Unit
                         {
-                            resultList.Add(new UnitWithCountDto
-                            {
-                                UnitData = new Unit
-                                {
-                                    Id = (int)reader["BirimId"],
-                                    Name = reader["BirimAd"].ToString(),
-                                    IsClass = (bool)reader["BirimSinifMi"],
-                                    IsActive = (bool)reader["BirimDurum"]
-                                },
-                                StudentCount = (int)reader["OgrenciSayisi"]
-                            });
-                        }
-                    }
+                            Id       = (int)reader["BirimId"],
+                            Name     = reader["BirimAd"]?.ToString() ?? string.Empty,
+                            IsClass  = (bool)reader["BirimSinifMi"],
+                            IsActive = (bool)reader["BirimDurum"]
+                        },
+                        StudentCount = (int)reader["OgrenciSayisi"]
+                    });
                 }
+            }
+            catch (SqlException ex)
+            {
+                throw new InvalidOperationException("Sınıf listesi alınamadı.", ex);
             }
             return resultList;
         }

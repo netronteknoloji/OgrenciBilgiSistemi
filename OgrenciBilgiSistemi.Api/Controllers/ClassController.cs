@@ -19,8 +19,15 @@ namespace OgrenciBilgiSistemi.Api.Controllers
         [HttpGet("all-with-count")]
         public async Task<IActionResult> GetClassesWithCount()
         {
-            var data = await _classService.GetAllClassesWithStudentCountAsync();
-            return Ok(data);
+            try
+            {
+                var data = await _classService.GetAllClassesWithStudentCountAsync();
+                return Ok(data);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = ex.Message });
+            }
         }
     }
 }

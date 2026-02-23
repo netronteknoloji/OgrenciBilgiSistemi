@@ -1,6 +1,27 @@
-@StudentTrackingSystem.Api_HostAddress = http://localhost:5196
+@OgrenciBilgiSistemi.Api_HostAddress = http://localhost:5196
 
-GET {{StudentTrackingSystem.Api_HostAddress}}/weatherforecast/
+### Auth — Giriş (JWT token al)
+POST {{OgrenciBilgiSistemi.Api_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "SifreBuraya"
+}
+
+###
+
+### Sınıf listesi (token gerektirir)
+# @token = <login yanıtından alınan token>
+GET {{OgrenciBilgiSistemi.Api_HostAddress}}/api/class/all-with-count
+Authorization: Bearer {{token}}
+Accept: application/json
+
+###
+
+### Öğrenci listesi (sınıfa göre)
+GET {{OgrenciBilgiSistemi.Api_HostAddress}}/api/students/class/1
+Authorization: Bearer {{token}}
 Accept: application/json
 
 ###

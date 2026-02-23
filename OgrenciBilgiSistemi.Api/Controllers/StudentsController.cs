@@ -12,10 +12,9 @@ namespace OgrenciBilgiSistemi.Api.Controllers
     {
         private readonly StudentService _studentService;
 
-        // Servisi IConfiguration parametresi ile başlatıyoruz
-        public StudentsController(IConfiguration configuration)
+        public StudentsController(StudentService studentService)
         {
-            _studentService = new StudentService(configuration);
+            _studentService = studentService;
         }
 
         #region Öğrenci Bilgi Metotları
