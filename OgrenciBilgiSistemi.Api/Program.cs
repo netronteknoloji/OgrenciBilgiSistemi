@@ -49,7 +49,8 @@ var app = builder.Build();
 // --------------------
 // Middleware sırası
 // --------------------
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+    app.UseHttpsRedirection();
 
 app.UseCors("ConfiguredOrigins");
 
