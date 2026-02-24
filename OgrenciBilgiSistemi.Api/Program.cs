@@ -49,16 +49,10 @@ var app = builder.Build();
 // --------------------
 // Middleware sırası
 // --------------------
-if (!app.Environment.IsDevelopment())
-    app.UseHttpsRedirection();
-
 app.UseCors("ConfiguredOrigins");
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.MapControllers();
 app.Run();
