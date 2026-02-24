@@ -27,6 +27,7 @@ namespace OgrenciBilgiSistemi.Api.Services
                     K.KullaniciAdi,
                     K.BirimId,
                     K.KullaniciDurum,
+                    K.AdminMi,
                     K.Sifre
                 FROM Kullanicilar K
                 WHERE K.KullaniciAdi = @username
@@ -52,7 +53,8 @@ namespace OgrenciBilgiSistemi.Api.Services
                         Id       = (int)reader["KullaniciId"],
                         Username = reader["KullaniciAdi"].ToString() ?? string.Empty,
                         UnitId   = reader["BirimId"] != DBNull.Value ? (int?)reader["BirimId"] : null,
-                        IsActive = Convert.ToBoolean(reader["KullaniciDurum"])
+                        IsActive = Convert.ToBoolean(reader["KullaniciDurum"]),
+                        IsAdmin  = reader["AdminMi"] != DBNull.Value && Convert.ToBoolean(reader["AdminMi"])
                     };
                 }
             }

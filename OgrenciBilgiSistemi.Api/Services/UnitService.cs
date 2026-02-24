@@ -21,7 +21,7 @@ namespace OgrenciBilgiSistemi.Api.Services
             try
             {
                 await using var conn = new SqlConnection(_connectionString);
-                const string query = "SELECT BirimId, BirimAd, BirimSinifMi FROM Birimler WHERE BirimId = @unitId";
+                const string query = "SELECT BirimId, BirimAd, BirimSinifMi, BirimDurum FROM Birimler WHERE BirimId = @unitId";
 
                 await using var cmd = new SqlCommand(query, conn);
                 cmd.Parameters.AddWithValue("@unitId", unitId);
@@ -32,9 +32,10 @@ namespace OgrenciBilgiSistemi.Api.Services
                 {
                     return new Unit
                     {
-                        Id      = (int)reader["BirimId"],
-                        Name    = reader["BirimAd"]?.ToString() ?? string.Empty,
-                        IsClass = (bool)reader["BirimSinifMi"]
+                        Id       = (int)reader["BirimId"],
+                        Name     = reader["BirimAd"]?.ToString() ?? string.Empty,
+                        IsClass  = (bool)reader["BirimSinifMi"],
+                        IsActive = (bool)reader["BirimDurum"]
                     };
                 }
             }

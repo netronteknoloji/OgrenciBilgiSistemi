@@ -44,7 +44,8 @@ namespace OgrenciBilgiSistemi.Api.Controllers
                     user.Id,
                     user.Username,
                     user.UnitId,
-                    user.IsActive
+                    user.IsActive,
+                    user.IsAdmin
                 }
             });
         }
@@ -69,6 +70,9 @@ namespace OgrenciBilgiSistemi.Api.Controllers
 
             if (user.UnitId.HasValue)
                 claims.Add(new Claim("unitid", user.UnitId.Value.ToString()));
+
+            if (user.IsAdmin)
+                claims.Add(new Claim(ClaimTypes.Role, "Admin"));
 
             var token = new JwtSecurityToken(
                 issuer:             issuer,

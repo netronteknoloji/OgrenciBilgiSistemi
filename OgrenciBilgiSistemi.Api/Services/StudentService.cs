@@ -53,7 +53,7 @@ namespace OgrenciBilgiSistemi.Api.Services
             {
                 await using var conn = new SqlConnection(_connectionString);
                 const string query = @"
-                    SELECT OgrenciId, OgrenciAdSoyad, OgrenciGorsel, BirimId, ParentId
+                    SELECT OgrenciId, OgrenciAdSoyad, OgrenciGorsel, BirimId, OgrenciVeliId
                     FROM Ogrenciler
                     WHERE OgrenciId = @studentId AND OgrenciDurum = 1";
 
@@ -69,8 +69,8 @@ namespace OgrenciBilgiSistemi.Api.Services
                         Id        = (int)reader["OgrenciId"],
                         FullName  = reader["OgrenciAdSoyad"]?.ToString() ?? string.Empty,
                         ImagePath = reader["OgrenciGorsel"]?.ToString(),
-                        UnitId    = reader["BirimId"]   as int?,
-                        ParentId  = reader["ParentId"]  as int?
+                        UnitId    = reader["BirimId"]        as int?,
+                        ParentId  = reader["OgrenciVeliId"] as int?
                     };
                 }
             }
@@ -156,7 +156,7 @@ namespace OgrenciBilgiSistemi.Api.Services
 
                 await transaction.CommitAsync();
             }
-            catch (SqlException ex)
+            catch (Exception ex)
             {
                 await transaction.RollbackAsync();
                 throw new InvalidOperationException("Yoklama kaydedilemedi.", ex);

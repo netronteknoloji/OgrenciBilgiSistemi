@@ -28,9 +28,9 @@ namespace OgrenciBilgiSistemi.Api.Controllers
                 var students = await _studentService.GetStudentsByClassIdAsync(classId);
                 return Ok(students);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return BadRequest(ex.Message);
+                return StatusCode(500, new { error = "Öğrenci listesi alınırken bir hata oluştu." });
             }
         }
 
@@ -41,11 +41,13 @@ namespace OgrenciBilgiSistemi.Api.Controllers
             try
             {
                 var details = await _studentService.GetStudentFullDetailsAsync(id);
+                if (details.Count == 0)
+                    return NotFound(new { message = $"{id} numaralı öğrenci bulunamadı." });
                 return Ok(details);
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return StatusCode(500, new { error = "Öğrenci detayları alınırken bir hata oluştu." });
             }
         }
 
@@ -62,9 +64,13 @@ namespace OgrenciBilgiSistemi.Api.Controllers
                 var attendance = await _studentService.GetExistingAttendanceAsync(classId, lessonNumber);
                 return Ok(attendance);
             }
-            catch (Exception ex)
+            catch (ArgumentOutOfRangeException ex)
             {
-                return BadRequest(ex.Message);
+                return BadRequest(new { error = ex.Message });
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new { error = "Yoklama bilgisi alınırken bir hata oluştu." });
             }
         }
 
@@ -72,14 +78,17 @@ namespace OgrenciBilgiSistemi.Api.Controllers
         [HttpGet("{id}/weekly-attendance")]
         public async Task<IActionResult> GetWeekly(int id, [FromQuery] DateTime start, [FromQuery] DateTime end)
         {
+            if (start > end)
+                return BadRequest(new { error = "Başlangıç tarihi bitiş tarihinden sonra olamaz." });
+
             try
             {
                 var history = await _studentService.GetStudentWeeklyAttendanceAsync(id, start, end);
                 return Ok(history);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return BadRequest(ex.Message);
+                return StatusCode(500, new { error = "Haftalık yoklama alınırken bir hata oluştu." });
             }
         }
 
@@ -87,6 +96,9 @@ namespace OgrenciBilgiSistemi.Api.Controllers
         [HttpPost("attendance/save-bulk")]
         public async Task<IActionResult> SaveBulkAttendance([FromBody] AttendanceUpdateModel model)
         {
+            if (model.Records == null || model.Records.Count == 0)
+                return BadRequest(new { error = "Yoklama kaydı listesi boş olamaz." });
+
             try
             {
                 // API üzerinden gelen veriyi servisin beklediği Tuple formatına dönüştürüyoruz
@@ -101,9 +113,13 @@ namespace OgrenciBilgiSistemi.Api.Controllers
 
                 return Ok(new { message = "Yoklama başarıyla kaydedildi." });
             }
-            catch (Exception ex)
+            catch (ArgumentOutOfRangeException ex)
             {
                 return BadRequest(new { error = ex.Message });
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new { error = "Yoklama kaydedilirken bir hata oluştu." });
             }
         }
 

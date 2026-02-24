@@ -34,9 +34,9 @@ namespace OgrenciBilgiSistemi.Api.Controllers
 
                 return Ok(unit);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return BadRequest(new { error = ex.Message });
+                return StatusCode(500, new { error = "Birim bilgisi alınırken bir hata oluştu." });
             }
         }
     }
