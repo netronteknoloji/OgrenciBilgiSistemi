@@ -18,3 +18,12 @@ secrets.json
 # OS
 .DS_Store
 Thumbs.db
+
+# MSBuild / VS per-user files
+*.csproj.user
+
+# Local tooling/config
+**/.config/
+
+# Publish profiles (often environment-specific / sensitive)
+**/Properties/PublishProfiles/
