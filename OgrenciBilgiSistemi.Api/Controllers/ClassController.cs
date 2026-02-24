@@ -1,12 +1,10 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using OgrenciBilgiSistemi.Api.Services;
 
 namespace OgrenciBilgiSistemi.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
     public class ClassController : ControllerBase
     {
         private readonly ClassService _classService;
