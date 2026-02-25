@@ -74,6 +74,11 @@
             fi
           done
 
+          # App Store'da zaten 1 var; CM_BUILD_NUMBER offset ile her build
+          # önceki versiyondan yüksek olacak şekilde hesaplanır.
+          APP_BUILD_NUMBER=$(($CM_BUILD_NUMBER + 1))
+          echo "CFBundleVersion: $APP_BUILD_NUMBER"
+
           # Build + Sign (--no-restore YOK!)
           "$DOTNET" publish "$PROJECT_PATH" \
             -c Release \
@@ -81,7 +86,7 @@
             /p:RuntimeIdentifier=ios-arm64 \
             /p:ArchiveOnBuild=true \
             /p:BuildIpa=true \
-            /p:ApplicationVersion=$CM_BUILD_NUMBER \
+            /p:ApplicationVersion=$APP_BUILD_NUMBER \
             /p:CodesignKey="$SIGNING_IDENTITY" \
             /p:CodesignProvision="$PROFILE_UUID"
 
