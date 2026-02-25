@@ -12,7 +12,7 @@
       vars:
         BUNDLE_ID: com.netronyazilim.ogrencibilgisistemi
         PROJECT_PATH: StudentTrackingSystem/StudentTrackingSystem.csproj
-        IOS_TFM: net9.0-ios
+        IOS_TFM: net9.0-ios18.0
         DOTNET_PATH: $CM_BUILD_DIR/dotnet
         DOTNET: $CM_BUILD_DIR/dotnet/dotnet
 
@@ -39,7 +39,7 @@
         script: |
           set -e
           "$DOTNET" restore "$PROJECT_PATH" \
-            /p:TargetFramework=net9.0-ios
+            /p:TargetFramework=net9.0-ios18.0
 
       - name: Setup iOS code signing
         script: |

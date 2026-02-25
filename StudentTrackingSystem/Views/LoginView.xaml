@@ -102,9 +102,7 @@
                                        FontSize="14"
                                        BackgroundColor="Transparent"
                                        Margin="12,0"
-                                       VerticalOptions="Center"
-                                       Keyboard="Plain"
-                                       ReturnType="Next" />
+                                       VerticalOptions="Center" />
                             </Border>
 
                         </VerticalStackLayout>
