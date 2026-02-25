@@ -9,15 +9,13 @@
     <ApplicationId>com.netronyazilim.ogrencibilgisistemi</ApplicationId>
     <ApplicationTitle>OgrenciBilgiSistemi IOS</ApplicationTitle>
     <ApplicationDisplayVersion>1.0.0</ApplicationDisplayVersion>
-    <ApplicationVersion>1</ApplicationVersion>
+    <ApplicationVersion>2</ApplicationVersion>
     <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">14.2</SupportedOSPlatformVersion>
     <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">21.0</SupportedOSPlatformVersion>
   </PropertyGroup>
 
   <ItemGroup>
-    <MauiIcon Include="Resources\AppIcon\appicon.svg"
-              ForegroundFile="Resources\AppIcon\appiconfg.svg"
-              Color="#512BD4" />
+    <MauiIcon Include="Resources\AppIcon\appicon.png" />
   </ItemGroup>
 
   <ItemGroup>
