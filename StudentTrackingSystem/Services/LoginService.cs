@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using System.Text.Json;
 using StudentTrackingSystem.Models;
 
@@ -10,37 +10,60 @@ namespace StudentTrackingSystem.Services
         {
             try
             {
-                // API'ye gönderilecek veri paketi
                 var loginData = new { Username = username, Password = password };
                 var json = JsonSerializer.Serialize(loginData);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                // API'deki AuthController -> [HttpPost("login")] ucuna POST isteği atar
                 var response = await _httpClient.PostAsync($"{BaseUrl}auth/login", content);
 
                 if (response.IsSuccessStatusCode)
                 {
                     var responseString = await response.Content.ReadAsStringAsync();
 
-                    // API'den dönen JSON verisini User modeline dönüştürüyoruz
-                    var user = JsonSerializer.Deserialize<User>(responseString, new JsonSerializerOptions
+                    // API'den dönen JSON: { user: {...}, token: "..." }
+                    // Eğer API henüz token döndürmüyorsa, User nesnesini de destekler
+                    using var doc = JsonDocument.Parse(responseString);
+                    var root = doc.RootElement;
+
+                    string token = null;
+                    User user = null;
+
+                    // Token varsa al
+                    if (root.TryGetProperty("token", out var tokenElement))
                     {
-                        PropertyNameCaseInsensitive = true
-                    });
+                        token = tokenElement.GetString();
+                    }
+
+                    // User nesnesini çöz (iç içe "user" alanı veya doğrudan root)
+                    if (root.TryGetProperty("user", out var userElement))
+                    {
+                        user = JsonSerializer.Deserialize<User>(userElement.GetRawText(), _jsonOptions);
+                    }
+                    else
+                    {
+                        // API doğrudan User nesnesi dönüyorsa (geriye uyumluluk)
+                        user = JsonSerializer.Deserialize<User>(responseString, _jsonOptions);
+                    }
 
                     if (user != null)
                     {
-                        // Başarılı girişte UserSession (hafıza) güncellenir
-                        UserSession.UserId = user.Id;
-                        UserSession.FullName = user.Username;
-                        UserSession.UnitId = user.UnitId;
+                        // Oturum bilgilerini SecureStorage'a kaydet
+                        await UserSession.SetSessionAsync(
+                            userId: user.Id,
+                            fullName: user.Username,
+                            unitId: user.UnitId,
+                            authToken: token
+                        );
+
+                        // HttpClient header'ını güncelle
+                        RefreshAuthHeader();
+
                         return true;
                     }
                 }
             }
             catch (Exception ex)
             {
-                // Hata durumunda konsola yazdırılır, arayüzde false döner
                 System.Diagnostics.Debug.WriteLine($"[API HATASI]: {ex.Message}");
             }
 

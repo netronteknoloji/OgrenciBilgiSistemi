@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+using System.Net.Http.Headers;
+using System.Text.Json;
 
 namespace StudentTrackingSystem.Services
 {
@@ -6,35 +7,68 @@ namespace StudentTrackingSystem.Services
     {
         protected readonly HttpClient _httpClient;
 
-        // API URL Yapılandırması
-        // GÜNCELLEME: Mobil veri erişimi için Dış IP adresi (85.106.232.156) tanımlandı.
-        protected readonly string BaseUrl = "http://81.214.75.22:5196/api/";
+        // API URL Yapılandırması - HTTPS zorunlu
+        protected readonly string BaseUrl;
 
-        // JSON Serileştirme Seçenekleri: API'den gelen verilerin 
-        // küçük/büyük harf duyarlılığını yönetmek için merkezi ayar.
+        // JSON Serileştirme Seçenekleri
         protected readonly JsonSerializerOptions _jsonOptions;
 
         public BaseApiService()
         {
+            // API base URL'yi yapılandırmadan oku, yoksa varsayılan HTTPS kullan
+            BaseUrl = Preferences.Default.Get("ApiBaseUrl", "https://81.214.75.22:5196/api/");
+
             _httpClient = new HttpClient();
             _httpClient.Timeout = TimeSpan.FromSeconds(30);
 
+            // Authorization header'ı varsa ekle
+            var token = UserSession.AuthToken;
+            if (!string.IsNullOrEmpty(token))
+            {
+                _httpClient.DefaultRequestHeaders.Authorization =
+                    new AuthenticationHeaderValue("Bearer", token);
+            }
+
             _jsonOptions = new JsonSerializerOptions
             {
-                PropertyNameCaseInsensitive = true // 'name' ile 'Name' arasındaki farkı yok sayar.
+                PropertyNameCaseInsensitive = true
             };
         }
 
         /// <summary>
+        /// Token değiştiğinde HttpClient header'ını günceller.
+        /// </summary>
+        protected void RefreshAuthHeader()
+        {
+            var token = UserSession.AuthToken;
+            if (!string.IsNullOrEmpty(token))
+            {
+                _httpClient.DefaultRequestHeaders.Authorization =
+                    new AuthenticationHeaderValue("Bearer", token);
+            }
+            else
+            {
+                _httpClient.DefaultRequestHeaders.Authorization = null;
+            }
+        }
+
+        /// <summary>
         /// API haberleşmesi sırasında oluşan hataları yönetmek için ortak metot.
+        /// 401 durumunda oturumu sonlandırır.
         /// </summary>
         protected async Task<bool> HandleResponseStatus(HttpResponseMessage response)
         {
             if (response.IsSuccessStatusCode)
                 return true;
 
-            // Hata durumunda loglama veya kullanıcıya bildirim mekanizması buraya eklenebilir.
+            if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+            {
+                // Token süresi dolmuş veya geçersiz - oturumu temizle
+                await UserSession.ClearSessionAsync();
+            }
+
             var errorContent = await response.Content.ReadAsStringAsync();
+            System.Diagnostics.Debug.WriteLine($"[API HATASI] {response.StatusCode}: {errorContent}");
             return false;
         }
     }

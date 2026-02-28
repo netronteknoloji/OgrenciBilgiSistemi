@@ -1,82 +1,166 @@
-﻿#region Kütüphane Referansları
-using System;                                                                       // Temel sistem fonksiyonları ve hata yönetimi için gereklidir.
-using System.Collections.Generic;                                                   // Liste ve koleksiyon tabanlı veri yapıları için kullanılır.
-using System.Linq;                                                                  // Veriler üzerinde sorgulama ve filtreleme yapmayı sağlar.
-using System.Text;                                                                  // Yazı karakterlerini ve metin işlemlerini yönetir.
-using System.Threading.Tasks;                                                       // Arka plan işlemleri ve görev yönetimi için kullanılır.
-#endregion                                                                          // Referanslar bölümünün bitişi.
+namespace StudentTrackingSystem.Services
+{
+    /// <summary>
+    /// Kullanıcı oturum bilgilerini SecureStorage ile güvenli şekilde yöneten sınıf.
+    /// Hassas veriler (token, kullanıcı bilgileri) şifreli olarak saklanır.
+    /// </summary>
+    public static class UserSession
+    {
+        // Bellek içi cache - SecureStorage'a her erişimde I/O yapılmasını önler
+        private static int _userId;
+        private static string _fullName = "Kullanıcı";
+        private static int? _unitId;
+        private static int? _serviceId;
+        private static string _authToken;
+        private static bool _isLoaded;
 
-namespace StudentTrackingSystem.Services                                            // Bu dosyanın projedeki servis katmanı içinde olduğunu belirtir.
-{                                                                                   // İsim uzayı başlangıç ayracı.
-    #region Oturum Yönetim Merkezi
-    public static class UserSession                                                 // Kullanıcı bilgilerini uygulama boyunca hafızada tutan sınıftır.
-    {                                                                               // Sınıf gövdesinin başlangıç ayracı.
-        #region Kullanıcı Bilgileri
-        private static int _userId;                                                 // Kullanıcı ID'sini güvenli şekilde saklayan gizli değişken.
-        private static string _fullName = "Kullanıcı";                                // Kullanıcı ismini saklayan ve varsayılan değer atanan değişken.
-        private static int? _unitId;                                                // Bağlı olunan birim (şube/rol) bilgisini saklayan değişken.
-        private static int? _serviceId;                                             // Şoförler için atanan servis ID bilgisini saklayan değişken.
-        #endregion                                                                  // Bilgi saklama bölümünün sonu.
+        // SecureStorage anahtarları
+        private const string KeyUserId = "session_user_id";
+        private const string KeyFullName = "session_full_name";
+        private const string KeyUnitId = "session_unit_id";
+        private const string KeyServiceId = "session_service_id";
+        private const string KeyAuthToken = "session_auth_token";
+        private const string KeyLoginTime = "session_login_time";
 
-        #region Erişim Özellikleri (Properties)
+        // Oturum zaman aşımı (8 saat)
+        private static readonly TimeSpan SessionTimeout = TimeSpan.FromHours(8);
 
-        public static int UserId                                                    // Kullanıcı ID'sine diğer sayfalardan ulaşmayı sağlayan kapı.
-        {                                                                           // Özellik başlangıç ayracı.
-            get                                                                     // Değer okuma işlemi başladığında.
-            {                                                                       // Getter başlangıcı.
-                try { return _userId; }                                             // Saklanan kullanıcı numarasını geri döndürür.
-                catch { return 0; }                                                 // Hata olursa uygulama çökmesin diye 0 değerini döner.
-            }                                                                       // Getter bitişi.
-            set                                                                     // Değer atama işlemi başladığında.
-            {                                                                       // Setter başlangıcı.
-                try { _userId = value; }                                            // Gelen ID değerini güvenli bir şekilde gizli değişkene yazar.
-                catch { /**/ }                                                      // Atama hatasında sessiz kalarak stabiliteyi korur.
-            }                                                                       // Setter bitişi.
-        }                                                                           // Özellik bitiş ayracı.
+        /// <summary>
+        /// Giriş başarılı olduğunda tüm oturum bilgilerini SecureStorage'a kaydeder.
+        /// </summary>
+        public static async Task SetSessionAsync(int userId, string fullName, int? unitId, string authToken = null)
+        {
+            _userId = userId;
+            _fullName = string.IsNullOrEmpty(fullName) ? "Kullanıcı" : fullName;
+            _unitId = unitId;
+            _authToken = authToken;
+            _isLoaded = true;
 
-        public static string FullName                                               // Kullanıcı ismine her yerden ulaşmayı sağlayan kapı.
-        {                                                                           // Özellik başlangıç ayracı.
-            get                                                                     // İsim bilgisi istendiğinde.
-            {                                                                       // Getter başlangıcı.
-                try { return _fullName; }                                           // Kayıtlı olan isim ve soyisim bilgisini döndürür.
-                catch { return "Kullanıcı"; }                                       // Hata anında ekranın boş kalmaması için varsayılan ismi döner.
-            }                                                                       // Getter bitişi.
-            set                                                                     // İsim değiştirilmek veya atanmak istendiğinde.
-            {                                                                       // Setter başlangıcı.
-                try { _fullName = string.IsNullOrEmpty(value) ? "Kullanıcı" : value; } // Boş değer gelirse "Kullanıcı" yazar, doluysa değeri atar.
-                catch { /**/ }                                                      // Hata durumunda işlemi iptal eder ve çökmeyi engeller.
-            }                                                                       // Setter bitişi.
-        }                                                                           // Özellik bitiş ayracı.
+            try
+            {
+                await SecureStorage.Default.SetAsync(KeyUserId, userId.ToString());
+                await SecureStorage.Default.SetAsync(KeyFullName, _fullName);
+                await SecureStorage.Default.SetAsync(KeyLoginTime, DateTime.UtcNow.ToString("O"));
 
-        public static int? UnitId                                                   // Birim (Rol/Şube) ID'sine erişim sağlayan özellik.
-        {                                                                           // Özellik başlangıç ayracı.
-            get                                                                     // Değer okuma işlemi.
-            {                                                                       // Getter başlangıcı.
-                try { return _unitId; }                                             // Saklanan birim ID'sini döndürür.
-                catch { return null; }                                              // Hata durumunda boş değer döner.
-            }                                                                       // Getter bitişi.
-            set                                                                     // Değer atama işlemi.
-            {                                                                       // Setter başlangıcı.
-                try { _unitId = value; }                                            // Değeri gizli değişkene atar.
-                catch { /**/ }                                                      // Hatayı sessizce geçiştirir.
-            }                                                                       // Setter bitişi.
-        }                                                                           // Özellik bitiş ayracı.
+                if (unitId.HasValue)
+                    await SecureStorage.Default.SetAsync(KeyUnitId, unitId.Value.ToString());
 
-        public static int? ServiceId                                                // Sorumlu olunan servis ID'sine erişim sağlayan özellik.
-        {                                                                           // Özellik başlangıç ayracı.
-            get                                                                     // Değer okuma işlemi.
-            {                                                                       // Getter başlangıcı.
-                try { return _serviceId; }                                          // Şoförün servis ID'sini döndürür.
-                catch { return null; }                                              // Hata durumunda boş döner.
-            }                                                                       // Getter bitişi.
-            set                                                                     // Değer atama işlemi.
-            {                                                                       // Setter başlangıcı.
-                try { _serviceId = value; }                                         // Gelen servis ID'sini atar.
-                catch { /**/ }                                                      // Hatayı sessizce yönetir.
-            }                                                                       // Setter bitişi.
-        }                                                                           // Özellik bitiş ayracı.
+                if (!string.IsNullOrEmpty(authToken))
+                    await SecureStorage.Default.SetAsync(KeyAuthToken, authToken);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[SecureStorage HATASI]: {ex.Message}");
+            }
+        }
 
-        #endregion                                                                  // Erişim özellikleri bölümünün sonu.
-    }                                                                               // Sınıf bitiş ayracı.
-    #endregion                                                                      // Ana bölge bitişi.
-}                                                                                   // İsim uzayı bitiş ayracı.
+        /// <summary>
+        /// Uygulama yeniden başlatıldığında oturum bilgilerini SecureStorage'dan yükler.
+        /// Oturum süresi dolmuşsa otomatik olarak temizler.
+        /// </summary>
+        public static async Task LoadSessionAsync()
+        {
+            if (_isLoaded) return;
+
+            try
+            {
+                // Oturum süresini kontrol et
+                var loginTimeStr = await SecureStorage.Default.GetAsync(KeyLoginTime);
+                if (!string.IsNullOrEmpty(loginTimeStr) && DateTime.TryParse(loginTimeStr, out var loginTime))
+                {
+                    if (DateTime.UtcNow - loginTime > SessionTimeout)
+                    {
+                        await ClearSessionAsync();
+                        return;
+                    }
+                }
+
+                var userIdStr = await SecureStorage.Default.GetAsync(KeyUserId);
+                if (!string.IsNullOrEmpty(userIdStr) && int.TryParse(userIdStr, out var uid))
+                    _userId = uid;
+
+                _fullName = await SecureStorage.Default.GetAsync(KeyFullName) ?? "Kullanıcı";
+
+                var unitIdStr = await SecureStorage.Default.GetAsync(KeyUnitId);
+                if (!string.IsNullOrEmpty(unitIdStr) && int.TryParse(unitIdStr, out var parsedUnitId))
+                    _unitId = parsedUnitId;
+
+                var serviceIdStr = await SecureStorage.Default.GetAsync(KeyServiceId);
+                if (!string.IsNullOrEmpty(serviceIdStr) && int.TryParse(serviceIdStr, out var sid))
+                    _serviceId = sid;
+
+                _authToken = await SecureStorage.Default.GetAsync(KeyAuthToken);
+
+                _isLoaded = true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[SecureStorage YÜKLEME HATASI]: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Tüm oturum bilgilerini bellekten ve SecureStorage'dan temizler.
+        /// </summary>
+        public static async Task ClearSessionAsync()
+        {
+            _userId = 0;
+            _fullName = "Kullanıcı";
+            _unitId = null;
+            _serviceId = null;
+            _authToken = null;
+            _isLoaded = true;
+
+            try
+            {
+                SecureStorage.Default.Remove(KeyUserId);
+                SecureStorage.Default.Remove(KeyFullName);
+                SecureStorage.Default.Remove(KeyUnitId);
+                SecureStorage.Default.Remove(KeyServiceId);
+                SecureStorage.Default.Remove(KeyAuthToken);
+                SecureStorage.Default.Remove(KeyLoginTime);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[SecureStorage TEMİZLEME HATASI]: {ex.Message}");
+            }
+
+            await Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// Kullanıcının aktif bir oturumu olup olmadığını kontrol eder.
+        /// </summary>
+        public static bool IsLoggedIn => _userId > 0;
+
+        public static int UserId
+        {
+            get => _userId;
+            set => _userId = value;
+        }
+
+        public static string FullName
+        {
+            get => _fullName;
+            set => _fullName = string.IsNullOrEmpty(value) ? "Kullanıcı" : value;
+        }
+
+        public static int? UnitId
+        {
+            get => _unitId;
+            set => _unitId = value;
+        }
+
+        public static int? ServiceId
+        {
+            get => _serviceId;
+            set => _serviceId = value;
+        }
+
+        public static string AuthToken
+        {
+            get => _authToken;
+            set => _authToken = value;
+        }
+    }
+}

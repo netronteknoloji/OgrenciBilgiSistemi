@@ -5,7 +5,7 @@ namespace StudentTrackingSystem.Views;
 
 public partial class MainHeaderView : ContentView
 {
-    #region Bindable Properties (Mevcut yapýn)
+    #region Bindable Properties
     public static readonly BindableProperty ShowBackProperty =
         BindableProperty.Create(nameof(ShowBack), typeof(bool), typeof(MainHeaderView), true);
 
@@ -31,7 +31,7 @@ public partial class MainHeaderView : ContentView
         if (string.IsNullOrEmpty(UserInitial))
         {
             var name = UserSession.FullName;
-            UserInitial = (!string.IsNullOrEmpty(name) && name != "Kullanýcý")
+            UserInitial = (!string.IsNullOrEmpty(name) && name != "KullanÄ±cÄ±")
                           ? name.Trim().Substring(0, 1).ToUpper()
                           : "?";
         }
@@ -44,39 +44,41 @@ public partial class MainHeaderView : ContentView
 
     private async void OnProfileClicked(object sender, EventArgs e)
     {
-        // 1. ADIM: Alttan modern ActionSheet menüsünü aç
-        // Parametreler: Baþlýk, Ýptal Butonu Metni, Yýkýcý Buton (Kýrmýzý), Seçenekler...
         string action = await Shell.Current.CurrentPage.DisplayActionSheet(
-            "Profil Ýþlemleri",
-            "Vazgeç",
+            "Profil Ä°ÅŸlemleri",
+            "VazgeÃ§",
             null,
-            "Çýkýþ Yap");
+            "Ã‡Ä±kÄ±ÅŸ Yap");
 
-        if (action == "Çýkýþ Yap")
+        if (action == "Ã‡Ä±kÄ±ÅŸ Yap")
         {
-            // 2. ADIM: Yanlýþlýkla basýlmalara karþý son onay
             bool answer = await Shell.Current.CurrentPage.DisplayAlert(
                 "Oturumu Kapat",
-                "Uygulamadan çýkýþ yapmak istediðinize emin misiniz?",
+                "Uygulamadan Ã§Ä±kÄ±ÅŸ yapmak istediÄŸinize emin misiniz?",
                 "Evet",
-                "Hayýr");
+                "HayÄ±r");
 
             if (answer)
             {
-                PerformLogout();
+                await PerformLogoutAsync();
             }
         }
     }
 
-    private async void PerformLogout()
+    /// <summary>
+    /// Oturum bilgilerini SecureStorage'dan temizler ve giriÅŸ ekranÄ±na yÃ¶nlendirir.
+    /// </summary>
+    private async Task PerformLogoutAsync()
     {
-        // 3. ADIM: Veri Temizliði (Ana Kural: WEB API için oturumu sýfýrla)
-        UserSession.FullName = null;
-        // Eðer varsa Token veya Id sýfýrlama:
-        // UserSession.TeacherId = 0;
+        // TÃ¼m oturum bilgilerini SecureStorage'dan ve bellekten temizle
+        await UserSession.ClearSessionAsync();
 
-        // 4. ADIM: Güvenli Navigasyon
-        // //LoginPage kullanarak tüm geçmiþi siler ve geri dönüþü engelleriz.
+        // "Beni HatÄ±rla" kapsamÄ±ndaki kaydedilmiÅŸ kimlik bilgilerini de temizle
+        SecureStorage.Default.Remove("SavedUsername");
+        SecureStorage.Default.Remove("SavedPassword");
+        Preferences.Default.Set("IsRemembered", false);
+
+        // GiriÅŸ ekranÄ±na yÃ¶nlendir (tÃ¼m navigasyon geÃ§miÅŸi temizlenir)
         await Shell.Current.GoToAsync("//LoginView");
     }
 }

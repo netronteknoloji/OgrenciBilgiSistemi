@@ -1,46 +1,39 @@
-﻿#region Gerekli Kütüphanelerin Tanımlanması
-using Microsoft.Extensions.Logging;                                         // Uygulama içi loglama ve hata takibi için gerekli kütüphane.
-using CommunityToolkit.Maui;                                                // MAUI için hazır bileşenler ve yardımcı araçlar sunan toolkit kütüphanesi.
-#endregion
+using Microsoft.Extensions.Logging;
+using CommunityToolkit.Maui;
+using StudentTrackingSystem.Services;
+using StudentTrackingSystem.Views;
 
-namespace StudentTrackingSystem                                             // Uygulamanın ana isim uzayı.
-{                                                                           // İsim uzayı kapsamı başlangıcı.
-    public static class MauiProgram                                         // Uygulamanın temel yapılandırma sınıfı.
-    {                                                                       // Sınıf gövdesi başlangıcı.
+namespace StudentTrackingSystem
+{
+    public static class MauiProgram
+    {
+        public static MauiApp CreateMauiApp()
+        {
+            var builder = MauiApp.CreateBuilder();
 
-        #region Uygulama Oluşturma ve Yapılandırma Metodu
-        public static MauiApp CreateMauiApp()                               // Uygulama örneğini döndüren statik metot.
-        {                                                                   // Metot gövdesi başlangıcı.
+            builder
+                .UseMauiApp<App>()
+                .UseMauiCommunityToolkit()
+                .ConfigureFonts(fonts =>
+                {
+                    fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
+                    fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
+                });
 
-            #region Builder (İnşa Edici) Başlatılması
-            var builder = MauiApp.CreateBuilder();                          // MAUI uygulamasını yapılandırmak için builder nesnesi oluşturulur.
-            #endregion
+            // Servis kayıtları (Dependency Injection)
+            builder.Services.AddSingleton<LoginService>();
+            builder.Services.AddSingleton<ClassService>();
+            builder.Services.AddSingleton<StudentService>();
+            builder.Services.AddSingleton<UnitService>();
 
-            #region MAUI ve Toolkit Kayıt İşlemleri
-            builder                                                         // Yapılandırıcı nesne üzerinden devam edilir.
-                .UseMauiApp<App>()                                          // Uygulamanın ana giriş sınıfı olarak 'App' sınıfı atanır.
-                .UseMauiCommunityToolkit()                                  // Community Toolkit kütüphanesi uygulamaya entegre edilir.
-            #endregion
+            // Sayfa kayıtları
+            builder.Services.AddTransient<LoginView>();
 
-            #region Yazı Tiplerinin (Fonts) Yapılandırılması
-                .ConfigureFonts(fonts =>                                    // Uygulama genelinde kullanılacak fontlar tanımlanır.
-                {                                                           // Font konfigürasyon bloğu başlangıcı.
-                    fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");  // Standart OpenSans fontu sisteme ve takma ismine kaydedilir.
-                    fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold"); // Yarı kalın OpenSans fontu sisteme ve takma ismine kaydedilir.
-                });                                                         // Font konfigürasyon bloğu sonu.
-            #endregion
+#if DEBUG
+            builder.Logging.AddDebug();
+#endif
 
-            #region Hata Ayıklama (Debug) Günlüğü Yapılandırması
-#if DEBUG                                                                   // Sadece Debug modunda derlenecek koşullu blok.
-            builder.Logging.AddDebug();                                     // Geliştirme aşamasında çıktı (output) penceresine log yazdırılmasını sağlar.
-#endif                                                                      // Koşullu blok sonu.
-            #endregion
-
-            #region Uygulamanın İnşası ve Döndürülmesi
-            return builder.Build();                                         // Tüm yapılandırmalar tamamlanarak uygulama nesnesi oluşturulur ve döndürülür.
-            #endregion
-        }                                                                   // Metot gövdesi sonu.
-        #endregion
-
-    }                                                                       // Sınıf gövdesi sonu.
-}                                                                           // İsim uzayı kapsamı sonu.
+            return builder.Build();
+        }
+    }
+}
