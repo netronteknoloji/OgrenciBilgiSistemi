@@ -7,7 +7,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <ApplicationId>com.netronyazilim.ogrencibilgisistemi</ApplicationId>
-    <ApplicationTitle>OgrenciBilgiSistemi IOS</ApplicationTitle>
+    <ApplicationTitle>OgrenciBilgiSistemi</ApplicationTitle>
     <ApplicationDisplayVersion>1.1.0</ApplicationDisplayVersion>
     <ApplicationVersion>3</ApplicationVersion>
     <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">14.2</SupportedOSPlatformVersion>
@@ -15,7 +15,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <MauiIcon Include="Resources\AppIcon\appicon.png" />
+    <MauiIcon Include="Resources/AppIcon/appicon.png" />
   </ItemGroup>
 
   <ItemGroup>

@@ -74,6 +74,11 @@
             fi
           done
 
+          if [ -z "$PROFILE_UUID" ]; then
+            echo "ERROR: '$BUNDLE_ID' icin eslesen provisioning profile bulunamadi!"
+            exit 1
+          fi
+
           # App Store'da zaten 1 var; CM_BUILD_NUMBER offset ile her build
           # önceki versiyondan yüksek olacak şekilde hesaplanır.
           APP_BUILD_NUMBER=$(($CM_BUILD_NUMBER + 1))
@@ -98,3 +103,71 @@
         auth: integration
         submit_to_testflight: true
         submit_to_app_store: false
+
+  android-maui-release:
+    name: Android MAUI Release
+    instance_type: mac_mini_m2
+    max_build_duration: 120
+
+    environment:
+      vars:
+        PROJECT_PATH: StudentTrackingSystem/StudentTrackingSystem.csproj
+        ANDROID_TFM: net9.0-android
+        DOTNET_PATH: $CM_BUILD_DIR/dotnet
+        DOTNET: $CM_BUILD_DIR/dotnet/dotnet
+
+      android_signing:
+        - android_keystore
+
+    scripts:
+      - name: Install .NET SDK 9.0
+        script: |
+          set -e
+          curl -fsSL https://dot.net/v1/dotnet-install.sh -o dotnet-install.sh
+          chmod +x dotnet-install.sh
+          ./dotnet-install.sh --install-dir "$DOTNET_PATH" --channel 9.0
+          "$DOTNET" --info
+
+      - name: Install MAUI workloads
+        script: |
+          set -e
+          "$DOTNET" workload install maui-android maui
+          "$DOTNET" workload list
+
+      - name: Restore NuGet packages
+        script: |
+          set -e
+          "$DOTNET" restore "$PROJECT_PATH" \
+            /p:TargetFramework=net9.0-android
+
+      - name: Build AAB (Release)
+        script: |
+          set -e
+
+          APP_BUILD_NUMBER=$(($CM_BUILD_NUMBER + 1))
+          echo "Build number: $APP_BUILD_NUMBER"
+
+          if [ -z "$CM_KEYSTORE_PATH" ]; then
+            echo "ERROR: Android keystore bulunamadi! Codemagic Code Signing ayarlarini kontrol edin."
+            exit 1
+          fi
+
+          "$DOTNET" publish "$PROJECT_PATH" \
+            -c Release \
+            -f "$ANDROID_TFM" \
+            /p:AndroidPackageFormat=aab \
+            /p:ApplicationVersion=$APP_BUILD_NUMBER \
+            /p:AndroidKeyStore=true \
+            /p:AndroidSigningKeyStore="$CM_KEYSTORE_PATH" \
+            /p:AndroidSigningKeyAlias="$CM_KEY_ALIAS" \
+            /p:AndroidSigningKeyPass="$CM_KEY_PASSWORD" \
+            /p:AndroidSigningStorePass="$CM_KEYSTORE_PASSWORD"
+
+    artifacts:
+      - "**/*.aab"
+
+    publishing:
+      google_play:
+        credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
+        track: internal
+        submit_as_draft: true
