@@ -102,14 +102,14 @@ namespace StudentTrackingSystem.Services
         /// <summary>
         /// Tüm oturum bilgilerini bellekten ve SecureStorage'dan temizler.
         /// </summary>
-        public static async Task ClearSessionAsync()
+        public static Task ClearSessionAsync()
         {
             _userId = 0;
             _fullName = "Kullanıcı";
             _unitId = null;
             _serviceId = null;
             _authToken = null;
-            _isLoaded = true;
+            _isLoaded = false;
 
             try
             {
@@ -125,7 +125,7 @@ namespace StudentTrackingSystem.Services
                 System.Diagnostics.Debug.WriteLine($"[SecureStorage TEMİZLEME HATASI]: {ex.Message}");
             }
 
-            await Task.CompletedTask;
+            return Task.CompletedTask;
         }
 
         /// <summary>

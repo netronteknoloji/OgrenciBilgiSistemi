@@ -102,11 +102,8 @@ namespace StudentTrackingSystem.Services
                 // API Ucu: POST api/students/attendance/save-bulk
                 var response = await _httpClient.PostAsJsonAsync($"{BaseUrl}students/attendance/save-bulk", model);
 
-                if (!response.IsSuccessStatusCode)
-                {
-                    var errorContent = await response.Content.ReadAsStringAsync();
-                    throw new Exception($"API Hatası: {errorContent}");
-                }
+                if (!await HandleResponseStatus(response))
+                    throw new Exception("Yoklama kaydedilemedi.");
             }
             catch (Exception ex)
             {

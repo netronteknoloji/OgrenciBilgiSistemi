@@ -143,18 +143,6 @@ namespace StudentTrackingSystem.Views
             }
         }
 
-        private async void OnClassSelected(object sender, SelectionChangedEventArgs e)
-        {
-            if (e.CurrentSelection.FirstOrDefault() is ClassroomViewModel selectedVm)
-            {
-                await NavigateToStudentList(selectedVm);
-
-                // Seçimi temizle
-                if (sender is CollectionView cv)
-                    cv.SelectedItem = null;
-            }
-        }
-
         private async Task NavigateToStudentList(ClassroomViewModel selectedVm)
         {
             try
