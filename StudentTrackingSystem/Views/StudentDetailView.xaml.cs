@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Maui.Controls;
-// Border ve Shape bile�enleri i�in gerekli:
+// Border ve Shape bileşenleri için gerekli:
 using Microsoft.Maui.Controls.Shapes;
 
 namespace StudentTrackingSystem.Views
@@ -21,11 +21,11 @@ namespace StudentTrackingSystem.Views
         {
             { 1, Color.FromArgb("#1ABC9C") }, // Geldi
             { 2, Color.FromArgb("#E74C3C") }, // Gelmedi
-            { 3, Color.FromArgb("#F1C40F") }, // Ge� Geldi
-            { 4, Color.FromArgb("#3498DB") }, // �zinli
+            { 3, Color.FromArgb("#F1C40F") }, // Geç Geldi
+            { 4, Color.FromArgb("#3498DB") }, // İzinli
             { 5, Color.FromArgb("#9B59B6") }, // Raporlu
-            { 6, Color.FromArgb("#34495E") }, // N�bet�i
-            { 7, Color.FromArgb("#95A5A6") }  // G�revli
+            { 6, Color.FromArgb("#34495E") }, // Nöbetçi
+            { 7, Color.FromArgb("#95A5A6") }  // Görevli
         };
 
         public StudentDetailView(int studentId)
@@ -74,18 +74,22 @@ namespace StudentTrackingSystem.Views
                     LblClass.Text = details.ContainsKey("ClassName") ? details["ClassName"] : "-";
                     LblStudentNo.Text = details.ContainsKey("StudentNo") ? details["StudentNo"] : "-";
                     LblCardNo.Text = details.ContainsKey("CardNo") ? details["CardNo"] : "-";
-                    LblServicePlate.Text = details.ContainsKey("PlateNumber") ? details["PlateNumber"] : "Kullanm�yor";
+                    LblServicePlate.Text = details.ContainsKey("PlateNumber") ? details["PlateNumber"] : "Kullanmıyor";
                     LblParentName.Text = details.ContainsKey("ParentName") ? details["ParentName"] : "-";
                     LblParentPhone.Text = details.ContainsKey("ParentPhone") ? details["ParentPhone"] : "-";
                     LblParentEmail.Text = details.ContainsKey("ParentEmail") ? details["ParentEmail"] : "-";
                     LblParentAddress.Text = details.ContainsKey("Address") ? details["Address"] : "-";
                     LblParentJob.Text = details.ContainsKey("ParentJob") ? details["ParentJob"] : "-";
                     LblParentWork.Text = details.ContainsKey("ParentWork") ? details["ParentWork"] : "-";
-                    LblTeacherName.Text = details.ContainsKey("TeacherName") ? details["TeacherName"] : "Atanmam��";
+                    LblTeacherName.Text = details.ContainsKey("TeacherName") ? details["TeacherName"] : "Atanmamış";
 
                 }
             }
-            catch { /**/ }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[HATA] Öğrenci detayları yüklenemedi: {ex.Message}");
+                await DisplayAlert("Hata", "Öğrenci bilgileri yüklenirken bir sorun oluştu.", "Tamam");
+            }
         }
 
         private async Task LoadWeeklyAttendanceMatrix()
@@ -94,7 +98,7 @@ namespace StudentTrackingSystem.Views
             {
                 var weeklyRecords = await _studentService.GetStudentWeeklyAttendanceAsync(_studentId, currentWeekStart, currentWeekStart.AddDays(6));
 
-                // Dinamik kutucuklar� temizle
+                // Dinamik kutucukları temizle
                 var cellsToRemove = GridAttendanceMatrix.Children
                     .Cast<View>()
                     .Where(c => Grid.GetRow(c) > 0 && Grid.GetColumn(c) >= 1 && Grid.GetColumn(c) <= 5)
@@ -116,15 +120,14 @@ namespace StudentTrackingSystem.Views
                         int statusId = 0;
                         if (dayRecord != null)
                         {
-                            var prop = typeof(ClassAttendance).GetProperty($"Lesson{lessonIndex}");
-                            statusId = Convert.ToInt32(prop?.GetValue(dayRecord) ?? 0);
+                            statusId = dayRecord.GetLesson(lessonIndex) ?? 0;
                         }
 
                         if (statusId > 0 && StatusColors.ContainsKey(statusId))
                         {
                             recordedLessonsCount++;
 
-                            // Hata veren ToolTipProperties kald�r�ld�, Border yap�s� sadele�tirildi
+                            // Hata veren ToolTipProperties kaldırıldı, Border yapısı sadeleştirildi
                             var box = new Border
                             {
                                 BackgroundColor = StatusColors[statusId],
