@@ -29,7 +29,6 @@ namespace StudentTrackingSystem
             builder.Services.AddSingleton<LoginService>();
             builder.Services.AddSingleton<ClassService>();
             builder.Services.AddSingleton<StudentService>();
-            builder.Services.AddSingleton<UnitService>();
 
             // Sayfa kayıtları
             // LoginView ve ClassListView Shell tarafından DI ile çözümleniyor
