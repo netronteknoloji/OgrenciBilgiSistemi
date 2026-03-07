@@ -1,4 +1,5 @@
 using Microsoft.Data.SqlClient;
+using OgrenciBilgiSistemi.Api.Dtos;
 using OgrenciBilgiSistemi.Api.Models;
 
 namespace OgrenciBilgiSistemi.Api.Services
@@ -213,6 +214,111 @@ namespace OgrenciBilgiSistemi.Api.Services
                 throw new InvalidOperationException("Öğrenci detayları alınamadı.", ex);
             }
             return detaylar;
+        }
+
+        /// <summary>
+        /// Yeni öğrenci oluşturur ve oluşturulan kaydın OgrenciId'sini döner.
+        /// </summary>
+        public async Task<int> EkleAsync(OgrenciKaydetDto dto)
+        {
+            const string query = @"
+                INSERT INTO Ogrenciler
+                    (OgrenciAdSoyad, OgrenciNo, OgrenciKartNo, OgrenciCikisDurumu,
+                     OgrenciDurum, BirimId, PersonelId, OgrenciVeliId, OgrenciGorsel)
+                OUTPUT INSERTED.OgrenciId
+                VALUES
+                    (@adSoyad, @no, @kartNo, @cikisDurumu,
+                     1, @birimId, @personelId, @veliId, @gorsel)";
+
+            try
+            {
+                await using var conn = new SqlConnection(_connectionString);
+                await using var cmd  = new SqlCommand(query, conn);
+
+                cmd.Parameters.AddWithValue("@adSoyad",      dto.OgrenciAdSoyad.Trim().ToUpperInvariant());
+                cmd.Parameters.AddWithValue("@no",           dto.OgrenciNo);
+                cmd.Parameters.AddWithValue("@kartNo",       (object?)dto.OgrenciKartNo ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@cikisDurumu",  dto.OgrenciCikisDurumu);
+                cmd.Parameters.AddWithValue("@birimId",      (object?)dto.BirimId    ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@personelId",   (object?)dto.PersonelId ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@veliId",       (object?)dto.OgrenciVeliId ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@gorsel",       (object?)dto.OgrenciGorsel ?? DBNull.Value);
+
+                await conn.OpenAsync();
+                var result = await cmd.ExecuteScalarAsync();
+                return (int)result!;
+            }
+            catch (SqlException ex)
+            {
+                throw new InvalidOperationException("Öğrenci eklenemedi.", ex);
+            }
+        }
+
+        /// <summary>
+        /// Mevcut öğrenciyi günceller. Öğrenci bulunamazsa false döner.
+        /// </summary>
+        public async Task<bool> GuncelleAsync(int ogrenciId, OgrenciKaydetDto dto)
+        {
+            const string query = @"
+                UPDATE Ogrenciler
+                SET OgrenciAdSoyad   = @adSoyad,
+                    OgrenciNo        = @no,
+                    OgrenciKartNo    = @kartNo,
+                    OgrenciCikisDurumu = @cikisDurumu,
+                    OgrenciDurum     = @durum,
+                    BirimId          = @birimId,
+                    PersonelId       = @personelId,
+                    OgrenciVeliId    = @veliId,
+                    OgrenciGorsel    = @gorsel
+                WHERE OgrenciId = @id";
+
+            try
+            {
+                await using var conn = new SqlConnection(_connectionString);
+                await using var cmd  = new SqlCommand(query, conn);
+
+                cmd.Parameters.AddWithValue("@id",           ogrenciId);
+                cmd.Parameters.AddWithValue("@adSoyad",      dto.OgrenciAdSoyad.Trim().ToUpperInvariant());
+                cmd.Parameters.AddWithValue("@no",           dto.OgrenciNo);
+                cmd.Parameters.AddWithValue("@kartNo",       (object?)dto.OgrenciKartNo ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@cikisDurumu",  dto.OgrenciCikisDurumu);
+                cmd.Parameters.AddWithValue("@durum",        dto.OgrenciDurum);
+                cmd.Parameters.AddWithValue("@birimId",      (object?)dto.BirimId    ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@personelId",   (object?)dto.PersonelId ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@veliId",       (object?)dto.OgrenciVeliId ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@gorsel",       (object?)dto.OgrenciGorsel ?? DBNull.Value);
+
+                await conn.OpenAsync();
+                int etkilenen = await cmd.ExecuteNonQueryAsync();
+                return etkilenen > 0;
+            }
+            catch (SqlException ex)
+            {
+                throw new InvalidOperationException("Öğrenci güncellenemedi.", ex);
+            }
+        }
+
+        /// <summary>
+        /// Öğrenciyi pasif yapar (soft-delete). Bulunamazsa false döner.
+        /// </summary>
+        public async Task<bool> SilAsync(int ogrenciId)
+        {
+            const string query = "UPDATE Ogrenciler SET OgrenciDurum = 0 WHERE OgrenciId = @id";
+
+            try
+            {
+                await using var conn = new SqlConnection(_connectionString);
+                await using var cmd  = new SqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@id", ogrenciId);
+
+                await conn.OpenAsync();
+                int etkilenen = await cmd.ExecuteNonQueryAsync();
+                return etkilenen > 0;
+            }
+            catch (SqlException ex)
+            {
+                throw new InvalidOperationException("Öğrenci silinemedi.", ex);
+            }
         }
 
         public async Task<List<SinifYoklamaModel>> GetStudentWeeklyAttendanceAsync(

@@ -45,7 +45,6 @@ namespace OgrenciBilgiSistemi.Api.Controllers
                 {
                     kullanici.KullaniciId,
                     kullanici.KullaniciAdi,
-                    kullanici.AdSoyad,
                     kullanici.BirimId,
                     kullanici.KullaniciDurum,
                     kullanici.AdminMi

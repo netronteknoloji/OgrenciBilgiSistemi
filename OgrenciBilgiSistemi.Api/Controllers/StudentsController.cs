@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OgrenciBilgiSistemi.Api.Dtos;
 using OgrenciBilgiSistemi.Api.Services;
@@ -6,6 +7,7 @@ namespace OgrenciBilgiSistemi.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class StudentsController : ControllerBase
     {
         private readonly StudentService _studentService;
@@ -32,7 +34,24 @@ namespace OgrenciBilgiSistemi.Api.Controllers
             }
         }
 
-        // 2. Öğrencinin tüm detaylarını (Veli, Servis vb.) getirir
+        // 2. ID'ye göre tek öğrenci getirir
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(int id)
+        {
+            try
+            {
+                var ogrenci = await _studentService.GetStudentByIdAsync(id);
+                if (ogrenci is null)
+                    return NotFound(new { message = $"{id} numaralı öğrenci bulunamadı." });
+                return Ok(ogrenci);
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new { error = "Öğrenci bilgisi alınırken bir hata oluştu." });
+            }
+        }
+
+        // 3. Öğrencinin tüm detaylarını (Veli, Servis vb.) getirir
         [HttpGet("{id}/details")]
         public async Task<IActionResult> GetDetails(int id)
         {
@@ -51,9 +70,77 @@ namespace OgrenciBilgiSistemi.Api.Controllers
 
         #endregion
 
+        #region Öğrenci CRUD (Admin Only)
+
+        // 4. Yeni öğrenci ekler — yalnızca admin
+        [HttpPost]
+        [Authorize(Policy = "AdminOnly")]
+        public async Task<IActionResult> Ekle([FromBody] OgrenciKaydetDto dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto.OgrenciAdSoyad))
+                return BadRequest(new { error = "OgrenciAdSoyad boş olamaz." });
+
+            if (dto.OgrenciNo <= 0)
+                return BadRequest(new { error = "OgrenciNo sıfırdan büyük olmalıdır." });
+
+            try
+            {
+                int yeniId = await _studentService.EkleAsync(dto);
+                return CreatedAtAction(nameof(GetById), new { id = yeniId }, new { ogrenciId = yeniId });
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new { error = "Öğrenci eklenirken bir hata oluştu." });
+            }
+        }
+
+        // 5. Mevcut öğrenciyi günceller — yalnızca admin
+        [HttpPut("{id}")]
+        [Authorize(Policy = "AdminOnly")]
+        public async Task<IActionResult> Guncelle(int id, [FromBody] OgrenciKaydetDto dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto.OgrenciAdSoyad))
+                return BadRequest(new { error = "OgrenciAdSoyad boş olamaz." });
+
+            if (dto.OgrenciNo <= 0)
+                return BadRequest(new { error = "OgrenciNo sıfırdan büyük olmalıdır." });
+
+            try
+            {
+                bool basarili = await _studentService.GuncelleAsync(id, dto);
+                if (!basarili)
+                    return NotFound(new { message = $"{id} numaralı öğrenci bulunamadı." });
+                return Ok(new { message = "Öğrenci başarıyla güncellendi." });
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new { error = "Öğrenci güncellenirken bir hata oluştu." });
+            }
+        }
+
+        // 6. Öğrenciyi pasife alır (soft-delete) — yalnızca admin
+        [HttpDelete("{id}")]
+        [Authorize(Policy = "AdminOnly")]
+        public async Task<IActionResult> Sil(int id)
+        {
+            try
+            {
+                bool basarili = await _studentService.SilAsync(id);
+                if (!basarili)
+                    return NotFound(new { message = $"{id} numaralı öğrenci bulunamadı." });
+                return Ok(new { message = "Öğrenci pasife alındı." });
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new { error = "Öğrenci silinirken bir hata oluştu." });
+            }
+        }
+
+        #endregion
+
         #region Yoklama Metotları
 
-        // 3. Mevcut yoklama durumunu getirir (Dictionary döner)
+        // 7. Mevcut yoklama durumunu getirir (Dictionary döner)
         [HttpGet("attendance/{sinifId}/{dersNumarasi}")]
         public async Task<IActionResult> GetAttendance(int sinifId, int dersNumarasi)
         {
@@ -72,7 +159,7 @@ namespace OgrenciBilgiSistemi.Api.Controllers
             }
         }
 
-        // 4. Haftalık yoklama geçmişini getirir
+        // 8. Haftalık yoklama geçmişini getirir
         [HttpGet("{id}/weekly-attendance")]
         public async Task<IActionResult> GetWeekly(int id, [FromQuery] DateTime baslangic, [FromQuery] DateTime bitis)
         {
@@ -90,7 +177,7 @@ namespace OgrenciBilgiSistemi.Api.Controllers
             }
         }
 
-        // 5. Toplu yoklama kaydetme (POST)
+        // 9. Toplu yoklama kaydetme (POST)
         [HttpPost("attendance/save-bulk")]
         public async Task<IActionResult> SaveBulkAttendance([FromBody] TopluYoklamaGuncelleDto model)
         {
@@ -99,7 +186,6 @@ namespace OgrenciBilgiSistemi.Api.Controllers
 
             try
             {
-                // API üzerinden gelen veriyi servisin beklediği Tuple formatına dönüştürüyoruz
                 var formatliVeri = model.Kayitlar.Select(k => (k.OgrenciId, k.DurumId));
 
                 await _studentService.SaveBulkAttendanceAsync(

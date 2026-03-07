@@ -59,7 +59,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             IssuerSigningKey         = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey!))
         };
     });
-builder.Services.AddAuthorization();
+// AdminOnly policy: adminMi claim'i "true" olan kullanıcılar
+builder.Services.AddAuthorization(opts =>
+{
+    opts.AddPolicy("AdminOnly", p => p.RequireClaim("adminMi", "true"));
+});
 
 // --------------------
 // Servisler
@@ -69,6 +73,7 @@ builder.Services.AddScoped<LoginService>();
 builder.Services.AddScoped<ClassService>();
 builder.Services.AddScoped<StudentService>();
 builder.Services.AddScoped<UnitService>();
+builder.Services.AddScoped<GecisKayitService>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
