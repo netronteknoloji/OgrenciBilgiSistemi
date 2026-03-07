@@ -18,7 +18,7 @@ namespace OgrenciBilgiSistemi.Api.Services
         /// Kullanıcı adıyla kullanıcıyı bulur, ardından PasswordHasher ile şifreyi doğrular.
         /// Düz metin SQL karşılaştırması yapılmaz; hash doğrulaması C# katmanında gerçekleşir.
         /// </summary>
-        public async Task<User?> AuthenticateAsync(string username, string password)
+        public async Task<KullaniciDto?> AuthenticateAsync(string kullaniciAdi, string sifre)
         {
             // 1) Kullanıcıyı sadece KullaniciAdi ile sorgula; şifre SQL'de karşılaştırılmaz.
             const string query = @"
@@ -30,17 +30,17 @@ namespace OgrenciBilgiSistemi.Api.Services
                     K.AdminMi,
                     K.Sifre
                 FROM Kullanicilar K
-                WHERE K.KullaniciAdi = @username
+                WHERE K.KullaniciAdi = @kullaniciAdi
                   AND K.KullaniciDurum = 1";
 
-            string? storedHash = null;
-            User?   found      = null;
+            string?        storedHash = null;
+            KullaniciDto?  found      = null;
 
             try
             {
                 await using var conn = new SqlConnection(_connectionString);
                 await using var cmd  = new SqlCommand(query, conn);
-                cmd.Parameters.AddWithValue("@username", username);
+                cmd.Parameters.AddWithValue("@kullaniciAdi", kullaniciAdi);
 
                 await conn.OpenAsync();
                 await using var reader = await cmd.ExecuteReaderAsync();
@@ -48,13 +48,13 @@ namespace OgrenciBilgiSistemi.Api.Services
                 if (await reader.ReadAsync())
                 {
                     storedHash = reader["Sifre"]?.ToString();
-                    found = new User
+                    found = new KullaniciDto
                     {
-                        Id       = (int)reader["KullaniciId"],
-                        Username = reader["KullaniciAdi"].ToString() ?? string.Empty,
-                        UnitId   = reader["BirimId"] != DBNull.Value ? (int?)reader["BirimId"] : null,
-                        IsActive = Convert.ToBoolean(reader["KullaniciDurum"]),
-                        IsAdmin  = reader["AdminMi"] != DBNull.Value && Convert.ToBoolean(reader["AdminMi"])
+                        KullaniciId   = (int)reader["KullaniciId"],
+                        KullaniciAdi  = reader["KullaniciAdi"].ToString() ?? string.Empty,
+                        BirimId       = reader["BirimId"] != DBNull.Value ? (int?)reader["BirimId"] : null,
+                        KullaniciDurum = Convert.ToBoolean(reader["KullaniciDurum"]),
+                        AdminMi       = reader["AdminMi"] != DBNull.Value && Convert.ToBoolean(reader["AdminMi"])
                     };
                 }
             }
@@ -67,8 +67,8 @@ namespace OgrenciBilgiSistemi.Api.Services
                 return null;
 
             // 2) Hash doğrulaması — MVC uygulaması ile aynı PasswordHasher kullanılır.
-            var hasher = new PasswordHasher<User>();
-            var result = hasher.VerifyHashedPassword(found, storedHash, password);
+            var hasher = new PasswordHasher<KullaniciDto>();
+            var result = hasher.VerifyHashedPassword(found, storedHash, sifre);
 
             if (result == PasswordVerificationResult.Failed)
                 return null;

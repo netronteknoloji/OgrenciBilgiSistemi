@@ -13,9 +13,9 @@ namespace OgrenciBilgiSistemi.Api.Services
                 ?? throw new InvalidOperationException("DefaultConnection bağlantı dizesi eksik.");
         }
 
-        public async Task<List<UnitWithCountDto>> GetAllClassesWithStudentCountAsync()
+        public async Task<List<BirimOgrenciSayisiDto>> GetAllClassesWithStudentCountAsync()
         {
-            var resultList = new List<UnitWithCountDto>();
+            var resultList = new List<BirimOgrenciSayisiDto>();
             try
             {
                 await using var conn = new SqlConnection(_connectionString);
@@ -32,16 +32,16 @@ namespace OgrenciBilgiSistemi.Api.Services
                 await using var reader = await cmd.ExecuteReaderAsync();
                 while (await reader.ReadAsync())
                 {
-                    resultList.Add(new UnitWithCountDto
+                    resultList.Add(new BirimOgrenciSayisiDto
                     {
-                        UnitData = new Unit
+                        Birim = new BirimDto
                         {
-                            Id       = (int)reader["BirimId"],
-                            Name     = reader["BirimAd"]?.ToString() ?? string.Empty,
-                            IsClass  = (bool)reader["BirimSinifMi"],
-                            IsActive = (bool)reader["BirimDurum"]
+                            BirimId     = (int)reader["BirimId"],
+                            BirimAd     = reader["BirimAd"]?.ToString() ?? string.Empty,
+                            BirimSinifMi = (bool)reader["BirimSinifMi"],
+                            BirimDurum  = (bool)reader["BirimDurum"]
                         },
-                        StudentCount = (int)reader["OgrenciSayisi"]
+                        OgrenciSayisi = (int)reader["OgrenciSayisi"]
                     });
                 }
             }

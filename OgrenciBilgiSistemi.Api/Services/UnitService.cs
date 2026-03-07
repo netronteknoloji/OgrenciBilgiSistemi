@@ -16,26 +16,26 @@ namespace OgrenciBilgiSistemi.Api.Services
         /// <summary>
         /// Verilen ID'ye göre birimi getirir. Bulunamazsa null döner.
         /// </summary>
-        public async Task<Unit?> GetUnitByIdAsync(int unitId)
+        public async Task<BirimDto?> GetUnitByIdAsync(int birimId)
         {
             try
             {
                 await using var conn = new SqlConnection(_connectionString);
-                const string query = "SELECT BirimId, BirimAd, BirimSinifMi, BirimDurum FROM Birimler WHERE BirimId = @unitId";
+                const string query = "SELECT BirimId, BirimAd, BirimSinifMi, BirimDurum FROM Birimler WHERE BirimId = @birimId";
 
                 await using var cmd = new SqlCommand(query, conn);
-                cmd.Parameters.AddWithValue("@unitId", unitId);
+                cmd.Parameters.AddWithValue("@birimId", birimId);
                 await conn.OpenAsync();
 
                 await using var reader = await cmd.ExecuteReaderAsync();
                 if (await reader.ReadAsync())
                 {
-                    return new Unit
+                    return new BirimDto
                     {
-                        Id       = (int)reader["BirimId"],
-                        Name     = reader["BirimAd"]?.ToString() ?? string.Empty,
-                        IsClass  = (bool)reader["BirimSinifMi"],
-                        IsActive = (bool)reader["BirimDurum"]
+                        BirimId      = (int)reader["BirimId"],
+                        BirimAd      = reader["BirimAd"]?.ToString() ?? string.Empty,
+                        BirimSinifMi = (bool)reader["BirimSinifMi"],
+                        BirimDurum   = (bool)reader["BirimDurum"]
                     };
                 }
             }

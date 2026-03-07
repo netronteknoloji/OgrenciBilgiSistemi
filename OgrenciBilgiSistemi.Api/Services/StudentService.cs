@@ -13,30 +13,30 @@ namespace OgrenciBilgiSistemi.Api.Services
                 ?? throw new InvalidOperationException("DefaultConnection bağlantı dizesi eksik.");
         }
 
-        public async Task<List<Student>> GetStudentsByClassIdAsync(int classId)
+        public async Task<List<OgrenciDto>> GetStudentsByClassIdAsync(int sinifId)
         {
-            var students = new List<Student>();
+            var ogrenciler = new List<OgrenciDto>();
             try
             {
                 await using var conn = new SqlConnection(_connectionString);
                 const string query = @"
                     SELECT OgrenciId, OgrenciAdSoyad, OgrenciGorsel
                     FROM Ogrenciler
-                    WHERE BirimId = @classId AND OgrenciDurum = 1";
+                    WHERE BirimId = @sinifId AND OgrenciDurum = 1";
 
                 await using var cmd = new SqlCommand(query, conn);
-                cmd.Parameters.AddWithValue("@classId", classId);
+                cmd.Parameters.AddWithValue("@sinifId", sinifId);
                 await conn.OpenAsync();
 
                 await using var reader = await cmd.ExecuteReaderAsync();
                 while (await reader.ReadAsync())
                 {
                     string rawFileName = reader["OgrenciGorsel"]?.ToString() ?? string.Empty;
-                    students.Add(new Student
+                    ogrenciler.Add(new OgrenciDto
                     {
-                        Id       = (int)reader["OgrenciId"],
-                        FullName = reader["OgrenciAdSoyad"]?.ToString() ?? string.Empty,
-                        ImagePath = string.IsNullOrEmpty(rawFileName) ? "user_icon.png" : rawFileName
+                        OgrenciId     = (int)reader["OgrenciId"],
+                        OgrenciAdSoyad = reader["OgrenciAdSoyad"]?.ToString() ?? string.Empty,
+                        OgrenciGorsel = string.IsNullOrEmpty(rawFileName) ? "user_icon.png" : rawFileName
                     });
                 }
             }
@@ -44,10 +44,10 @@ namespace OgrenciBilgiSistemi.Api.Services
             {
                 throw new InvalidOperationException("Öğrenci listesi alınamadı.", ex);
             }
-            return students;
+            return ogrenciler;
         }
 
-        public async Task<Student?> GetStudentByIdAsync(int studentId)
+        public async Task<OgrenciDto?> GetStudentByIdAsync(int ogrenciId)
         {
             try
             {
@@ -55,22 +55,22 @@ namespace OgrenciBilgiSistemi.Api.Services
                 const string query = @"
                     SELECT OgrenciId, OgrenciAdSoyad, OgrenciGorsel, BirimId, OgrenciVeliId
                     FROM Ogrenciler
-                    WHERE OgrenciId = @studentId AND OgrenciDurum = 1";
+                    WHERE OgrenciId = @ogrenciId AND OgrenciDurum = 1";
 
                 await using var cmd = new SqlCommand(query, conn);
-                cmd.Parameters.AddWithValue("@studentId", studentId);
+                cmd.Parameters.AddWithValue("@ogrenciId", ogrenciId);
                 await conn.OpenAsync();
 
                 await using var reader = await cmd.ExecuteReaderAsync();
                 if (await reader.ReadAsync())
                 {
-                    return new Student
+                    return new OgrenciDto
                     {
-                        Id        = (int)reader["OgrenciId"],
-                        FullName  = reader["OgrenciAdSoyad"]?.ToString() ?? string.Empty,
-                        ImagePath = reader["OgrenciGorsel"]?.ToString(),
-                        UnitId    = reader["BirimId"]        as int?,
-                        ParentId  = reader["OgrenciVeliId"] as int?
+                        OgrenciId      = (int)reader["OgrenciId"],
+                        OgrenciAdSoyad = reader["OgrenciAdSoyad"]?.ToString() ?? string.Empty,
+                        OgrenciGorsel  = reader["OgrenciGorsel"]?.ToString(),
+                        BirimId        = reader["BirimId"]       as int?,
+                        OgrenciVeliId  = reader["OgrenciVeliId"] as int?
                     };
                 }
             }
@@ -81,52 +81,52 @@ namespace OgrenciBilgiSistemi.Api.Services
             return null;
         }
 
-        public async Task<Dictionary<int, int>> GetExistingAttendanceAsync(int classId, int lessonNumber)
+        public async Task<Dictionary<int, int>> GetExistingAttendanceAsync(int sinifId, int dersNumarasi)
         {
-            if (lessonNumber < 1 || lessonNumber > 8)
-                throw new ArgumentOutOfRangeException(nameof(lessonNumber), "Ders numarası 1-8 arasında olmalıdır.");
+            if (dersNumarasi < 1 || dersNumarasi > 8)
+                throw new ArgumentOutOfRangeException(nameof(dersNumarasi), "Ders numarası 1-8 arasında olmalıdır.");
 
-            var attendanceDict = new Dictionary<int, int>();
-            string dersColumn = $"Ders{lessonNumber}";
+            var yoklamaDict = new Dictionary<int, int>();
+            string dersKolonu = $"Ders{dersNumarasi}";
 
             try
             {
                 await using var conn = new SqlConnection(_connectionString);
                 string query = $@"
-                    SELECT SY.OgrenciId, SY.{dersColumn}
+                    SELECT SY.OgrenciId, SY.{dersKolonu}
                     FROM SinifYoklama SY
                     INNER JOIN Ogrenciler O ON SY.OgrenciId = O.OgrenciId
-                    WHERE O.BirimId = @classId
+                    WHERE O.BirimId = @sinifId
                       AND CAST(SY.OlusturulmaTarihi AS DATE) = CAST(GETDATE() AS DATE)";
 
                 await using var cmd = new SqlCommand(query, conn);
-                cmd.Parameters.AddWithValue("@classId", classId);
+                cmd.Parameters.AddWithValue("@sinifId", sinifId);
                 await conn.OpenAsync();
 
                 await using var reader = await cmd.ExecuteReaderAsync();
                 while (await reader.ReadAsync())
                 {
-                    if (reader[dersColumn] != DBNull.Value)
-                        attendanceDict[(int)reader["OgrenciId"]] = (int)reader[dersColumn];
+                    if (reader[dersKolonu] != DBNull.Value)
+                        yoklamaDict[(int)reader["OgrenciId"]] = (int)reader[dersKolonu];
                 }
             }
             catch (SqlException ex)
             {
                 throw new InvalidOperationException("Yoklama bilgisi alınamadı.", ex);
             }
-            return attendanceDict;
+            return yoklamaDict;
         }
 
         public async Task SaveBulkAttendanceAsync(
-            IEnumerable<(int StudentId, int StatusId)> attendanceData,
-            int classId,
-            int teacherId,
-            int lessonNumber)
+            IEnumerable<(int OgrenciId, int DurumId)> yoklamaVerisi,
+            int sinifId,
+            int ogretmenId,
+            int dersNumarasi)
         {
-            if (lessonNumber < 1 || lessonNumber > 8)
-                throw new ArgumentOutOfRangeException(nameof(lessonNumber), "Ders numarası 1-8 arasında olmalıdır.");
+            if (dersNumarasi < 1 || dersNumarasi > 8)
+                throw new ArgumentOutOfRangeException(nameof(dersNumarasi), "Ders numarası 1-8 arasında olmalıdır.");
 
-            string dersColumn = $"Ders{lessonNumber}";
+            string dersKolonu = $"Ders{dersNumarasi}";
 
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
@@ -137,20 +137,20 @@ namespace OgrenciBilgiSistemi.Api.Services
                 string query = $@"
                     DECLARE @Bugun DATE = CAST(GETDATE() AS DATE);
                     MERGE INTO SinifYoklama AS target
-                    USING (SELECT @studentId AS OgrenciId) AS source
+                    USING (SELECT @ogrenciId AS OgrenciId) AS source
                     ON (target.OgrenciId = source.OgrenciId AND CAST(target.OlusturulmaTarihi AS DATE) = @Bugun)
                     WHEN MATCHED THEN
-                        UPDATE SET {dersColumn} = @statusId, GuncellenmeTarihi = GETDATE()
+                        UPDATE SET {dersKolonu} = @durumId, GuncellenmeTarihi = GETDATE()
                     WHEN NOT MATCHED THEN
-                        INSERT (OgrenciId, OgretmenId, {dersColumn}, OlusturulmaTarihi)
-                        VALUES (@studentId, @teacherId, @statusId, GETDATE());";
+                        INSERT (OgrenciId, OgretmenId, {dersKolonu}, OlusturulmaTarihi)
+                        VALUES (@ogrenciId, @ogretmenId, @durumId, GETDATE());";
 
-                foreach (var record in attendanceData)
+                foreach (var kayit in yoklamaVerisi)
                 {
                     await using var cmd = new SqlCommand(query, conn, transaction);
-                    cmd.Parameters.AddWithValue("@studentId", record.StudentId);
-                    cmd.Parameters.AddWithValue("@statusId",  record.StatusId);
-                    cmd.Parameters.AddWithValue("@teacherId", teacherId);
+                    cmd.Parameters.AddWithValue("@ogrenciId", kayit.OgrenciId);
+                    cmd.Parameters.AddWithValue("@durumId",   kayit.DurumId);
+                    cmd.Parameters.AddWithValue("@ogretmenId", ogretmenId);
                     await cmd.ExecuteNonQueryAsync();
                 }
 
@@ -163,9 +163,9 @@ namespace OgrenciBilgiSistemi.Api.Services
             }
         }
 
-        public async Task<Dictionary<string, string>> GetStudentFullDetailsAsync(int studentId)
+        public async Task<Dictionary<string, string>> GetStudentFullDetailsAsync(int ogrenciId)
         {
-            var details = new Dictionary<string, string>();
+            var detaylar = new Dictionary<string, string>();
             try
             {
                 await using var conn = new SqlConnection(_connectionString);
@@ -180,10 +180,10 @@ namespace OgrenciBilgiSistemi.Api.Services
                     LEFT JOIN OgrenciVeliler    p   ON s.OgrenciVeliId  = p.OgrenciVeliId
                     LEFT JOIN Ogretmenler       t   ON s.OgretmenId     = t.OgretmenId
                     LEFT JOIN Servisler         srv ON srv.ServisId     = s.ServisId
-                    WHERE s.OgrenciId = @studentId";
+                    WHERE s.OgrenciId = @ogrenciId";
 
                 await using var cmd = new SqlCommand(query, conn);
-                cmd.Parameters.AddWithValue("@studentId", studentId);
+                cmd.Parameters.AddWithValue("@ogrenciId", ogrenciId);
                 await conn.OpenAsync();
 
                 await using var reader = await cmd.ExecuteReaderAsync();
@@ -191,34 +191,34 @@ namespace OgrenciBilgiSistemi.Api.Services
                 {
                     string rawFileName = reader["OgrenciGorsel"]?.ToString() ?? string.Empty;
 
-                    details["StudentName"]  = reader["OgrenciAdSoyad"]?.ToString()    ?? "Bilinmiyor";
-                    details["StudentNo"]    = reader["OgrenciNo"]?.ToString()          ?? "-";
-                    details["CardNo"]       = reader["OgrenciKartNo"]?.ToString()      ?? "-";
-                    details["ImagePath"]    = string.IsNullOrEmpty(rawFileName)
-                                                ? "user_icon.png"
-                                                : rawFileName.Trim().ToLower();
-                    details["ClassName"]    = reader["BirimAd"]?.ToString()            ?? "Atanmamış";
-                    details["ParentName"]   = reader["VeliAdSoyad"]?.ToString()        ?? "Belirtilmemiş";
-                    details["ParentPhone"]  = reader["VeliTelefon"]?.ToString()        ?? "-";
-                    details["ParentEmail"]  = reader["VeliEmail"]?.ToString()          ?? "-";
-                    details["ParentJob"]    = reader["VeliMeslek"]?.ToString()         ?? "-";
-                    details["ParentWork"]   = reader["VeliIsYeri"]?.ToString()         ?? "-";
-                    details["Address"]      = reader["VeliAdres"]?.ToString()          ?? "-";
-                    details["TeacherName"]  = reader["OgretmenAdSoyad"]?.ToString()   ?? "Atanmamış";
-                    details["PlateNumber"]  = reader["Plaka"]?.ToString()              ?? "Kullanmıyor";
+                    detaylar["OgrenciAdSoyad"]  = reader["OgrenciAdSoyad"]?.ToString()   ?? "Bilinmiyor";
+                    detaylar["OgrenciNo"]        = reader["OgrenciNo"]?.ToString()         ?? "-";
+                    detaylar["OgrenciKartNo"]    = reader["OgrenciKartNo"]?.ToString()     ?? "-";
+                    detaylar["OgrenciGorsel"]    = string.IsNullOrEmpty(rawFileName)
+                                                    ? "user_icon.png"
+                                                    : rawFileName.Trim().ToLower();
+                    detaylar["BirimAd"]          = reader["BirimAd"]?.ToString()           ?? "Atanmamış";
+                    detaylar["VeliAdSoyad"]      = reader["VeliAdSoyad"]?.ToString()       ?? "Belirtilmemiş";
+                    detaylar["VeliTelefon"]      = reader["VeliTelefon"]?.ToString()       ?? "-";
+                    detaylar["VeliEmail"]        = reader["VeliEmail"]?.ToString()         ?? "-";
+                    detaylar["VeliMeslek"]       = reader["VeliMeslek"]?.ToString()        ?? "-";
+                    detaylar["VeliIsYeri"]       = reader["VeliIsYeri"]?.ToString()        ?? "-";
+                    detaylar["VeliAdres"]        = reader["VeliAdres"]?.ToString()         ?? "-";
+                    detaylar["OgretmenAdSoyad"]  = reader["OgretmenAdSoyad"]?.ToString()  ?? "Atanmamış";
+                    detaylar["Plaka"]            = reader["Plaka"]?.ToString()             ?? "Kullanmıyor";
                 }
             }
             catch (SqlException ex)
             {
                 throw new InvalidOperationException("Öğrenci detayları alınamadı.", ex);
             }
-            return details;
+            return detaylar;
         }
 
-        public async Task<List<ClassAttendance>> GetStudentWeeklyAttendanceAsync(
-            int studentId, DateTime start, DateTime end)
+        public async Task<List<SinifYoklamaDto>> GetStudentWeeklyAttendanceAsync(
+            int ogrenciId, DateTime baslangic, DateTime bitis)
         {
-            var records = new List<ClassAttendance>();
+            var kayitlar = new List<SinifYoklamaDto>();
             try
             {
                 await using var conn = new SqlConnection(_connectionString);
@@ -228,34 +228,34 @@ namespace OgrenciBilgiSistemi.Api.Services
                         Ders1, Ders2, Ders3, Ders4, Ders5, Ders6, Ders7, Ders8,
                         OlusturulmaTarihi
                     FROM SinifYoklama
-                    WHERE OgrenciId = @studentId
-                      AND CAST(OlusturulmaTarihi AS DATE) >= @start
-                      AND CAST(OlusturulmaTarihi AS DATE) <= @end
+                    WHERE OgrenciId = @ogrenciId
+                      AND CAST(OlusturulmaTarihi AS DATE) >= @baslangic
+                      AND CAST(OlusturulmaTarihi AS DATE) <= @bitis
                     ORDER BY OlusturulmaTarihi ASC";
 
                 await using var cmd = new SqlCommand(query, conn);
-                cmd.Parameters.AddWithValue("@studentId", studentId);
-                cmd.Parameters.AddWithValue("@start",     start.Date);
-                cmd.Parameters.AddWithValue("@end",       end.Date);
+                cmd.Parameters.AddWithValue("@ogrenciId", ogrenciId);
+                cmd.Parameters.AddWithValue("@baslangic", baslangic.Date);
+                cmd.Parameters.AddWithValue("@bitis",     bitis.Date);
                 await conn.OpenAsync();
 
                 await using var reader = await cmd.ExecuteReaderAsync();
                 while (await reader.ReadAsync())
                 {
-                    records.Add(new ClassAttendance
+                    kayitlar.Add(new SinifYoklamaDto
                     {
-                        AttendanceId = (int)reader["SinifYoklamaId"],
-                        StudentId    = (int)reader["OgrenciId"],
-                        TeacherId    = (int)reader["OgretmenId"],
-                        Lesson1      = reader["Ders1"] as int?,
-                        Lesson2      = reader["Ders2"] as int?,
-                        Lesson3      = reader["Ders3"] as int?,
-                        Lesson4      = reader["Ders4"] as int?,
-                        Lesson5      = reader["Ders5"] as int?,
-                        Lesson6      = reader["Ders6"] as int?,
-                        Lesson7      = reader["Ders7"] as int?,
-                        Lesson8      = reader["Ders8"] as int?,
-                        CreatedAt    = Convert.ToDateTime(reader["OlusturulmaTarihi"])
+                        SinifYoklamaId    = (int)reader["SinifYoklamaId"],
+                        OgrenciId         = (int)reader["OgrenciId"],
+                        OgretmenId        = (int)reader["OgretmenId"],
+                        Ders1             = reader["Ders1"] as int?,
+                        Ders2             = reader["Ders2"] as int?,
+                        Ders3             = reader["Ders3"] as int?,
+                        Ders4             = reader["Ders4"] as int?,
+                        Ders5             = reader["Ders5"] as int?,
+                        Ders6             = reader["Ders6"] as int?,
+                        Ders7             = reader["Ders7"] as int?,
+                        Ders8             = reader["Ders8"] as int?,
+                        OlusturulmaTarihi = Convert.ToDateTime(reader["OlusturulmaTarihi"])
                     });
                 }
             }
@@ -263,7 +263,7 @@ namespace OgrenciBilgiSistemi.Api.Services
             {
                 throw new InvalidOperationException("Haftalık yoklama alınamadı.", ex);
             }
-            return records;
+            return kayitlar;
         }
     }
 }

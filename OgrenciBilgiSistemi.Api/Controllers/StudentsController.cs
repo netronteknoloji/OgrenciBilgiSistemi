@@ -1,5 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using OgrenciBilgiSistemi.Api.Models;
+using Microsoft.AspNetCore.Mvc;
+using OgrenciBilgiSistemi.Api.Dtos;
 using OgrenciBilgiSistemi.Api.Services;
 
 namespace OgrenciBilgiSistemi.Api.Controllers
@@ -18,13 +18,13 @@ namespace OgrenciBilgiSistemi.Api.Controllers
         #region Öğrenci Bilgi Metotları
 
         // 1. Sınıf ID'sine göre öğrenci listesini getirir
-        [HttpGet("class/{classId}")]
-        public async Task<IActionResult> GetByClass(int classId)
+        [HttpGet("class/{sinifId}")]
+        public async Task<IActionResult> GetByClass(int sinifId)
         {
             try
             {
-                var students = await _studentService.GetStudentsByClassIdAsync(classId);
-                return Ok(students);
+                var ogrenciler = await _studentService.GetStudentsByClassIdAsync(sinifId);
+                return Ok(ogrenciler);
             }
             catch (Exception)
             {
@@ -38,12 +38,12 @@ namespace OgrenciBilgiSistemi.Api.Controllers
         {
             try
             {
-                var details = await _studentService.GetStudentFullDetailsAsync(id);
-                if (details.Count == 0)
+                var detaylar = await _studentService.GetStudentFullDetailsAsync(id);
+                if (detaylar.Count == 0)
                     return NotFound(new { message = $"{id} numaralı öğrenci bulunamadı." });
-                return Ok(details);
+                return Ok(detaylar);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return StatusCode(500, new { error = "Öğrenci detayları alınırken bir hata oluştu." });
             }
@@ -54,13 +54,13 @@ namespace OgrenciBilgiSistemi.Api.Controllers
         #region Yoklama Metotları
 
         // 3. Mevcut yoklama durumunu getirir (Dictionary döner)
-        [HttpGet("attendance/{classId}/{lessonNumber}")]
-        public async Task<IActionResult> GetAttendance(int classId, int lessonNumber)
+        [HttpGet("attendance/{sinifId}/{dersNumarasi}")]
+        public async Task<IActionResult> GetAttendance(int sinifId, int dersNumarasi)
         {
             try
             {
-                var attendance = await _studentService.GetExistingAttendanceAsync(classId, lessonNumber);
-                return Ok(attendance);
+                var yoklama = await _studentService.GetExistingAttendanceAsync(sinifId, dersNumarasi);
+                return Ok(yoklama);
             }
             catch (ArgumentOutOfRangeException ex)
             {
@@ -74,15 +74,15 @@ namespace OgrenciBilgiSistemi.Api.Controllers
 
         // 4. Haftalık yoklama geçmişini getirir
         [HttpGet("{id}/weekly-attendance")]
-        public async Task<IActionResult> GetWeekly(int id, [FromQuery] DateTime start, [FromQuery] DateTime end)
+        public async Task<IActionResult> GetWeekly(int id, [FromQuery] DateTime baslangic, [FromQuery] DateTime bitis)
         {
-            if (start > end)
+            if (baslangic > bitis)
                 return BadRequest(new { error = "Başlangıç tarihi bitiş tarihinden sonra olamaz." });
 
             try
             {
-                var history = await _studentService.GetStudentWeeklyAttendanceAsync(id, start, end);
-                return Ok(history);
+                var gecmis = await _studentService.GetStudentWeeklyAttendanceAsync(id, baslangic, bitis);
+                return Ok(gecmis);
             }
             catch (Exception)
             {
@@ -92,21 +92,21 @@ namespace OgrenciBilgiSistemi.Api.Controllers
 
         // 5. Toplu yoklama kaydetme (POST)
         [HttpPost("attendance/save-bulk")]
-        public async Task<IActionResult> SaveBulkAttendance([FromBody] AttendanceUpdateModel model)
+        public async Task<IActionResult> SaveBulkAttendance([FromBody] TopluYoklamaGuncelleDto model)
         {
-            if (model.Records == null || model.Records.Count == 0)
+            if (model.Kayitlar == null || model.Kayitlar.Count == 0)
                 return BadRequest(new { error = "Yoklama kaydı listesi boş olamaz." });
 
             try
             {
                 // API üzerinden gelen veriyi servisin beklediği Tuple formatına dönüştürüyoruz
-                var formattedData = model.Records.Select(r => (r.StudentId, r.StatusId));
+                var formatliVeri = model.Kayitlar.Select(k => (k.OgrenciId, k.DurumId));
 
                 await _studentService.SaveBulkAttendanceAsync(
-                    formattedData,
-                    model.ClassId,
-                    model.TeacherId,
-                    model.LessonNumber
+                    formatliVeri,
+                    model.SinifId,
+                    model.OgretmenId,
+                    model.DersNumarasi
                 );
 
                 return Ok(new { message = "Yoklama başarıyla kaydedildi." });
@@ -123,24 +123,4 @@ namespace OgrenciBilgiSistemi.Api.Controllers
 
         #endregion
     }
-
-    #region Transfer Modelleri
-
-    // Toplu yoklama verisini karşılamak için kullanılan model
-    public class AttendanceUpdateModel
-    {
-        public int ClassId { get; set; }
-        public int TeacherId { get; set; }
-        public int LessonNumber { get; set; }
-        public List<AttendanceRecordItem> Records { get; set; } = new();
-    }
-
-    // Her bir öğrencinin yoklama bilgisini temsil eden model
-    public class AttendanceRecordItem
-    {
-        public int StudentId { get; set; }
-        public int StatusId { get; set; }
-    }
-
-    #endregion
 }

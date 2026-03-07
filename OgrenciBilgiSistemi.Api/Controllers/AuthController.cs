@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
+using OgrenciBilgiSistemi.Api.Dtos;
 using OgrenciBilgiSistemi.Api.Models;
 using OgrenciBilgiSistemi.Api.Services;
 using System.IdentityModel.Tokens.Jwt;
@@ -22,32 +23,32 @@ namespace OgrenciBilgiSistemi.Api.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginRequest request)
+        public async Task<IActionResult> Login([FromBody] GirisIstegiDto istek)
         {
-            if (string.IsNullOrWhiteSpace(request.Username) ||
-                string.IsNullOrWhiteSpace(request.Password))
+            if (string.IsNullOrWhiteSpace(istek.KullaniciAdi) ||
+                string.IsNullOrWhiteSpace(istek.Sifre))
                 return BadRequest("Kullanıcı adı veya şifre boş olamaz.");
 
-            var user = await _loginService.AuthenticateAsync(request.Username, request.Password);
+            var kullanici = await _loginService.AuthenticateAsync(istek.KullaniciAdi, istek.Sifre);
 
-            if (user is null)
+            if (kullanici is null)
                 return Unauthorized("Kullanıcı adı veya şifre hatalı.");
 
             // JWT token üret — geçerlilik süresi 8 saat (mobil uygulama ile eşleşir)
-            var token = GenerateJwtToken(user);
+            var token = GenerateJwtToken(kullanici);
 
             return Ok(new
             {
                 token,
                 expiresIn = 8 * 3600, // saniye cinsinden
-                user = new
+                kullanici = new
                 {
-                    user.Id,
-                    user.Username,
-                    user.FullName,
-                    user.UnitId,
-                    user.IsActive,
-                    user.IsAdmin
+                    kullanici.KullaniciId,
+                    kullanici.KullaniciAdi,
+                    kullanici.AdSoyad,
+                    kullanici.BirimId,
+                    kullanici.KullaniciDurum,
+                    kullanici.AdminMi
                 }
             });
         }
@@ -55,7 +56,7 @@ namespace OgrenciBilgiSistemi.Api.Controllers
         /// <summary>
         /// Kullanıcı bilgilerini claim olarak içeren imzalı JWT token üretir.
         /// </summary>
-        private string GenerateJwtToken(User user)
+        private string GenerateJwtToken(KullaniciDto kullanici)
         {
             var secretKey = _configuration["Jwt:SecretKey"]
                 ?? throw new InvalidOperationException("Jwt:SecretKey yapılandırılmamış.");
@@ -65,11 +66,11 @@ namespace OgrenciBilgiSistemi.Api.Controllers
 
             var claims = new[]
             {
-                new Claim(JwtRegisteredClaimNames.Sub,        user.Id.ToString()),
-                new Claim(JwtRegisteredClaimNames.UniqueName, user.Username),
+                new Claim(JwtRegisteredClaimNames.Sub,        kullanici.KullaniciId.ToString()),
+                new Claim(JwtRegisteredClaimNames.UniqueName, kullanici.KullaniciAdi),
                 new Claim(JwtRegisteredClaimNames.Jti,        Guid.NewGuid().ToString()),
-                new Claim("userId",  user.Id.ToString()),
-                new Claim("isAdmin", user.IsAdmin.ToString().ToLower())
+                new Claim("kullaniciId", kullanici.KullaniciId.ToString()),
+                new Claim("adminMi",     kullanici.AdminMi.ToString().ToLower())
             };
 
             var token = new JwtSecurityToken(
@@ -83,6 +84,4 @@ namespace OgrenciBilgiSistemi.Api.Controllers
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
     }
-
-    public record LoginRequest(string Username, string Password);
 }
