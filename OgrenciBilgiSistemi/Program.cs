@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.EntityFrameworkCore;
 using OgrenciBilgiSistemi.Abstractions;
+using OgrenciBilgiSistemi.Infrastructure.FileStorage;
 using OgrenciBilgiSistemi.Data;
 using OgrenciBilgiSistemi.Hubs;
 using OgrenciBilgiSistemi.Services;
