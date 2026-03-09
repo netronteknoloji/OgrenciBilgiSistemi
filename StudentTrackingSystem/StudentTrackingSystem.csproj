@@ -8,8 +8,8 @@
     <Nullable>enable</Nullable>
     <ApplicationId>com.netronyazilim.ogrencibilgisistemi</ApplicationId>
     <ApplicationTitle>OgrenciBilgiSistemi</ApplicationTitle>
-    <ApplicationDisplayVersion>1.1.5</ApplicationDisplayVersion>
-    <ApplicationVersion>7</ApplicationVersion>
+    <ApplicationDisplayVersion>1.1.6</ApplicationDisplayVersion>
+    <ApplicationVersion>8</ApplicationVersion>
     <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">14.2</SupportedOSPlatformVersion>
     <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">21.0</SupportedOSPlatformVersion>
   </PropertyGroup>
