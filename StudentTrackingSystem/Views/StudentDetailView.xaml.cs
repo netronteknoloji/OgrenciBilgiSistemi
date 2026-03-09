@@ -65,23 +65,24 @@ namespace StudentTrackingSystem.Views
                 {
                     var vm = new OgrenciViewModel();
                     vm.OgrenciData.Id = _studentId;
-                    vm.OgrenciData.FullName = details.ContainsKey("StudentName") ? details["StudentName"] : "Bilinmiyor";
+                    // API Türkçe anahtar isimleri kullanıyor (OgrenciAdSoyad, VeliAdSoyad vb.)
+                    vm.OgrenciData.FullName = details.ContainsKey("OgrenciAdSoyad") ? details["OgrenciAdSoyad"] : "Bilinmiyor";
 
-                    string imgName = details.ContainsKey("ImagePath") ? details["ImagePath"] : "user_icon.png";
+                    string imgName = details.ContainsKey("OgrenciGorsel") ? details["OgrenciGorsel"] : "user_icon.png";
                     vm.OgrenciData.ImagePath = "students/" + imgName.ToLower().Trim();
                     this.BindingContext = vm;
 
-                    LblClass.Text = details.ContainsKey("ClassName") ? details["ClassName"] : "-";
-                    LblStudentNo.Text = details.ContainsKey("StudentNo") ? details["StudentNo"] : "-";
-                    LblCardNo.Text = details.ContainsKey("CardNo") ? details["CardNo"] : "-";
-                    LblServicePlate.Text = details.ContainsKey("PlateNumber") ? details["PlateNumber"] : "Kullanmıyor";
-                    LblParentName.Text = details.ContainsKey("ParentName") ? details["ParentName"] : "-";
-                    LblParentPhone.Text = details.ContainsKey("ParentPhone") ? details["ParentPhone"] : "-";
-                    LblParentEmail.Text = details.ContainsKey("ParentEmail") ? details["ParentEmail"] : "-";
-                    LblParentAddress.Text = details.ContainsKey("Address") ? details["Address"] : "-";
-                    LblParentJob.Text = details.ContainsKey("ParentJob") ? details["ParentJob"] : "-";
-                    LblParentWork.Text = details.ContainsKey("ParentWork") ? details["ParentWork"] : "-";
-                    LblTeacherName.Text = details.ContainsKey("TeacherName") ? details["TeacherName"] : "Atanmamış";
+                    LblClass.Text         = details.ContainsKey("BirimAd")         ? details["BirimAd"]         : "-";
+                    LblStudentNo.Text     = details.ContainsKey("OgrenciNo")        ? details["OgrenciNo"]        : "-";
+                    LblCardNo.Text        = details.ContainsKey("OgrenciKartNo")    ? details["OgrenciKartNo"]    : "-";
+                    LblServicePlate.Text  = details.ContainsKey("Plaka")            ? details["Plaka"]            : "Kullanmıyor";
+                    LblParentName.Text    = details.ContainsKey("VeliAdSoyad")      ? details["VeliAdSoyad"]      : "-";
+                    LblParentPhone.Text   = details.ContainsKey("VeliTelefon")      ? details["VeliTelefon"]      : "-";
+                    LblParentEmail.Text   = details.ContainsKey("VeliEmail")        ? details["VeliEmail"]        : "-";
+                    LblParentAddress.Text = details.ContainsKey("VeliAdres")        ? details["VeliAdres"]        : "-";
+                    LblParentJob.Text     = details.ContainsKey("VeliMeslek")       ? details["VeliMeslek"]       : "-";
+                    LblParentWork.Text    = details.ContainsKey("VeliIsYeri")       ? details["VeliIsYeri"]       : "-";
+                    LblTeacherName.Text   = details.ContainsKey("OgretmenAdSoyad")  ? details["OgretmenAdSoyad"]  : "Atanmamış";
 
                 }
             }
