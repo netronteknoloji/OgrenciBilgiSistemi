@@ -18,8 +18,8 @@ namespace StudentTrackingSystem.Services
 
         public BaseApiService()
         {
-            // API base URL'yi yapılandırmadan oku, yoksa varsayılan HTTP kullan
-            BaseUrl = Preferences.Default.Get("ApiBaseUrl", "http://81.214.75.22:5196/api/");
+            // API base URL'yi yapılandırmadan oku, yoksa Constants.cs'deki değeri kullan
+            BaseUrl = Preferences.Default.Get("ApiBaseUrl", Constants.ApiBaseUrl);
 
             _httpClient = new HttpClient();
             _httpClient.Timeout = TimeSpan.FromSeconds(30);

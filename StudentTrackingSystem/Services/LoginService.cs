@@ -10,7 +10,8 @@ namespace StudentTrackingSystem.Services
         {
             try
             {
-                var loginData = new { Username = username, Password = password };
+                // API GirisIstegiDto: KullaniciAdi ve Sifre alanlarını bekler
+                var loginData = new { KullaniciAdi = username, Sifre = password };
                 var json = JsonSerializer.Serialize(loginData);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
@@ -20,8 +21,7 @@ namespace StudentTrackingSystem.Services
                 {
                     var responseString = await response.Content.ReadAsStringAsync();
 
-                    // API'den dönen JSON: { user: {...}, token: "..." }
-                    // Eğer API henüz token döndürmüyorsa, User nesnesini de destekler
+                    // API'den dönen JSON: { token: "...", expiresIn: 28800, kullanici: {...} }
                     using var doc = JsonDocument.Parse(responseString);
                     var root = doc.RootElement;
 
@@ -34,15 +34,10 @@ namespace StudentTrackingSystem.Services
                         token = tokenElement.GetString();
                     }
 
-                    // User nesnesini çöz (iç içe "user" alanı veya doğrudan root)
-                    if (root.TryGetProperty("user", out var userElement))
+                    // Kullanici nesnesini "kullanici" alanından çöz
+                    if (root.TryGetProperty("kullanici", out var userElement))
                     {
                         user = JsonSerializer.Deserialize<Kullanici>(userElement.GetRawText(), _jsonOptions);
-                    }
-                    else
-                    {
-                        // API doğrudan User nesnesi dönüyorsa (geriye uyumluluk)
-                        user = JsonSerializer.Deserialize<Kullanici>(responseString, _jsonOptions);
                     }
 
                     if (user != null)
