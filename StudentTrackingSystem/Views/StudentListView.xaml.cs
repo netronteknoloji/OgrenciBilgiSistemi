@@ -47,7 +47,11 @@ public partial class StudentListView : ContentPage
 
             StudentCollection.ItemsSource = _studentViewModels;
         }
-        catch { /**/ }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[HATA] Öğrenci listesi yüklenemedi: {ex.Message}");
+            await DisplayAlert("Hata", $"Öğrenci listesi yüklenemedi:\n{ex.Message}", "Tamam");
+        }
     }
     #endregion
 

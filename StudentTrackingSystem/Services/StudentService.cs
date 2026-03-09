@@ -31,8 +31,8 @@ namespace StudentTrackingSystem.Services
         {
             try
             {
-                // API Ucu: GET api/students/by-class/{classId}
-                var response = await _httpClient.GetFromJsonAsync<List<Ogrenci>>($"{BaseUrl}students/by-class/{classId}");
+                // API Ucu: GET api/students/class/{classId}
+                var response = await _httpClient.GetFromJsonAsync<List<Ogrenci>>($"{BaseUrl}students/class/{classId}");
                 return response ?? new List<Ogrenci>();
             }
             catch (Exception ex)
@@ -99,8 +99,8 @@ namespace StudentTrackingSystem.Services
                     }).ToList()
                 };
 
-                // API Ucu: POST api/students/bulk-attendance
-                var response = await _httpClient.PostAsJsonAsync($"{BaseUrl}students/bulk-attendance", model);
+                // API Ucu: POST api/students/attendance/save-bulk
+                var response = await _httpClient.PostAsJsonAsync($"{BaseUrl}students/attendance/save-bulk", model);
 
                 if (!await HandleResponseStatus(response))
                     throw new Exception("Yoklama kaydedilemedi.");
@@ -119,8 +119,8 @@ namespace StudentTrackingSystem.Services
             try
             {
                 // Query String parametreleri ile istek atılıyor
-                // API Ucu: GET api/students/{id}/weekly?start=...&end=...
-                string url = $"{BaseUrl}students/{studentId}/weekly?start={start:yyyy-MM-dd}&end={end:yyyy-MM-dd}";
+                // API Ucu: GET api/students/{id}/weekly-attendance?baslangic=...&bitis=...
+                string url = $"{BaseUrl}students/{studentId}/weekly-attendance?baslangic={start:yyyy-MM-dd}&bitis={end:yyyy-MM-dd}";
                 var response = await _httpClient.GetFromJsonAsync<List<SinifYoklama>>(url);
                 return response ?? new List<SinifYoklama>();
             }
