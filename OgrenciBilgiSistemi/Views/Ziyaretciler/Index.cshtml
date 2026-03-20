@@ -1,4 +1,4 @@
-﻿@model PaginatedListModel<OgrenciBilgiSistemi.Models.ZiyaretciModel>
+﻿@model SayfalanmisListeModel<OgrenciBilgiSistemi.Models.ZiyaretciModel>
 @using OgrenciBilgiSistemi.Models
 @using Microsoft.AspNetCore.Mvc.Rendering
 
@@ -6,9 +6,9 @@
     ViewData["Title"] = "Ziyaretçi İşlemleri";
 
     var q = ViewData["CurrentFilter"] as string;
-    var page = Model?.PageIndex ?? 1;
-    var total = Model?.TotalPages ?? 1;
-    var count = Model?.TotalCount ?? 0;
+    var page = Model?.SayfaIndeks ?? 1;
+    var total = Model?.ToplamSayfa ?? 1;
+    var count = Model?.ToplamSayi ?? 0;
 
     var sadeceAktif = ViewData["SadeceAktif"] as bool? ?? true;
     var seciliPersonelId = ViewData["PersonelId"] as int?;
@@ -195,7 +195,7 @@
                     </div>
 
                     <div class="btn-group btn-group-gap">
-                        <a class="btn btn-outline-secondary @(Model.HasPreviousPage ? "" : "disabled")"
+                        <a class="btn btn-outline-secondary @(Model.OncekiSayfaVar ? "" : "disabled")"
                            asp-controller="Ziyaretciler"
                            asp-action="Index"
                            asp-route-searchString="@q"
@@ -205,7 +205,7 @@
                             ‹ Önceki
                         </a>
 
-                        <a class="btn btn-outline-secondary @(Model.HasNextPage ? "" : "disabled")"
+                        <a class="btn btn-outline-secondary @(Model.SonrakiSayfaVar ? "" : "disabled")"
                            asp-controller="Ziyaretciler"
                            asp-action="Index"
                            asp-route-searchString="@q"

@@ -19,7 +19,7 @@ namespace OgrenciBilgiSistemi.Services.Interfaces
 
         Task<PersonelModel?> GetByIdAsync(int id, bool tumPersoneller = false, CancellationToken ct = default);
 
-        Task<PaginatedListModel<PersonelModel>> SearchPagedAsync(
+        Task<SayfalanmisListeModel<PersonelModel>> SearchPagedAsync(
             string? searchString,
             int page,
             int pageSize,

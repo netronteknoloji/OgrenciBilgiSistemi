@@ -1,13 +1,13 @@
-﻿@model PaginatedListModel<OgrenciBilgiSistemi.Models.KitapDetayModel>
+﻿@model SayfalanmisListeModel<OgrenciBilgiSistemi.Models.KitapDetayModel>
 @using OgrenciBilgiSistemi.Models.Enums
 
 @{
     ViewData["Title"] = "Kitap Detay İşlemleri";
     var q = ViewData["CurrentFilter"] as string;
     var durum = ViewData["DurumFilter"] as string;
-    var page = Model.PageIndex;
-    var total = Model.TotalPages;
-    var count = Model.TotalCount;
+    var page = Model.SayfaIndeks;
+    var total = Model.ToplamSayfa;
+    var count = Model.ToplamSayi;
 }
 
 <div class="viewport-scroller">
@@ -167,11 +167,11 @@
                 <!-- Sayfalama -->
                 <div class="d-flex justify-content-between align-items-center mt-3">
                     <div class="text-muted">
-                        Toplam <strong>@Model.TotalCount</strong> kayıt •
-                        Sayfa <strong>@Model.PageIndex</strong>/<strong>@Model.TotalPages</strong>
+                        Toplam <strong>@Model.ToplamSayi</strong> kayıt •
+                        Sayfa <strong>@Model.SayfaIndeks</strong>/<strong>@Model.ToplamSayfa</strong>
                     </div>
                     <div class="btn-group btn-group-gap">
-                        <a class="btn btn-outline-secondary @(Model.HasPreviousPage ? "" : "disabled")"
+                        <a class="btn btn-outline-secondary @(Model.OncekiSayfaVar ? "" : "disabled")"
                            asp-action="Index"
                            asp-route-searchString="@q"
                            asp-route-durumFilter="@durum"
@@ -179,7 +179,7 @@
                             ‹ Önceki
                         </a>
 
-                        <a class="btn btn-outline-secondary @(Model.HasNextPage ? "" : "disabled")"
+                        <a class="btn btn-outline-secondary @(Model.SonrakiSayfaVar ? "" : "disabled")"
                            asp-action="Index"
                            asp-route-searchString="@q"
                            asp-route-durumFilter="@durum"

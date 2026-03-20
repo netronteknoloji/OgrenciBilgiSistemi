@@ -1,4 +1,4 @@
-﻿@model PaginatedListModel<OgrenciBilgiSistemi.Models.OgrenciDetayModel>
+﻿@model SayfalanmisListeModel<OgrenciBilgiSistemi.Models.OgrenciDetayModel>
 @using System.Globalization
 @using System.Linq
 @using OgrenciBilgiSistemi.Models
@@ -102,7 +102,7 @@
                                 <th class="text-start">
                                     <a asp-action="Detay"
                                        asp-route-sortOrder="@NextSort("AdSoyad")"
-                                       asp-route-page="@Model.PageIndex"
+                                       asp-route-page="@Model.SayfaIndeks"
                                        asp-route-searchString="@currentFilter"
                                        asp-route-startDate="@startDate"
                                        asp-route-endDate="@endDate"
@@ -115,7 +115,7 @@
                                 <th>
                                     <a asp-action="Detay"
                                        asp-route-sortOrder="@NextSort("Tarih")"
-                                       asp-route-page="@Model.PageIndex"
+                                       asp-route-page="@Model.SayfaIndeks"
                                        asp-route-searchString="@currentFilter"
                                        asp-route-startDate="@startDate"
                                        asp-route-endDate="@endDate"
@@ -148,13 +148,13 @@
                 <!-- YENİ PAGING TASARIMI -->
                 <div class="d-flex justify-content-between align-items-center mt-3">
                     <div class="text-muted">
-                        Toplam <strong>@Model.TotalCount</strong> kayıt • Sayfa <strong>@Model.PageIndex</strong>/<strong>@Model.TotalPages</strong>
+                        Toplam <strong>@Model.ToplamSayi</strong> kayıt • Sayfa <strong>@Model.SayfaIndeks</strong>/<strong>@Model.ToplamSayfa</strong>
                     </div>
 
                     <div class="btn-group">
-                        <a class="btn btn-outline-secondary @(Model.HasPreviousPage ? "" : "disabled")"
+                        <a class="btn btn-outline-secondary @(Model.OncekiSayfaVar ? "" : "disabled")"
                            asp-action="Detay"
-                           asp-route-page="@(Model.PageIndex - 1)"
+                           asp-route-page="@(Model.SayfaIndeks - 1)"
                            asp-route-sortOrder="@currentSort"
                            asp-route-searchString="@currentFilter"
                            asp-route-startDate="@startDate"
@@ -163,9 +163,9 @@
                             ‹ Önceki
                         </a>
 
-                        <a class="btn btn-outline-secondary @(Model.HasNextPage ? "" : "disabled")"
+                        <a class="btn btn-outline-secondary @(Model.SonrakiSayfaVar ? "" : "disabled")"
                            asp-action="Detay"
-                           asp-route-page="@(Model.PageIndex + 1)"
+                           asp-route-page="@(Model.SayfaIndeks + 1)"
                            asp-route-sortOrder="@currentSort"
                            asp-route-searchString="@currentFilter"
                            asp-route-startDate="@startDate"

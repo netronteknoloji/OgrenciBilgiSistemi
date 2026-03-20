@@ -2,7 +2,7 @@
 {
     public class AidatRaporSonucDto
     {
-        public PaginatedListModel<AidatRaporDto> Satirlar { get; set; } = null!;
+        public SayfalanmisListeModel<AidatRaporDto> Satirlar { get; set; } = null!;
 
         public decimal ToplamBorc { get; set; }
         public decimal ToplamOdenenGosterilen { get; set; }

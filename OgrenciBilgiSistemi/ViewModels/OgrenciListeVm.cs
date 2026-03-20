@@ -5,7 +5,7 @@ namespace OgrenciBilgiSistemi.ViewModels
 {
     public class OgrenciListeVm
     {
-        public PaginatedListModel<OgrenciModel> Page { get; set; } = default!;
+        public SayfalanmisListeModel<OgrenciModel> Page { get; set; } = default!;
 
         public List<SelectListItem> Birimler { get; set; } = new();
 

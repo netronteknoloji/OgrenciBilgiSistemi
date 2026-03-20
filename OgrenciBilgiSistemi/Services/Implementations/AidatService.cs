@@ -242,7 +242,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 .OrderBy(x => x.OgrenciSinif)
                 .ThenBy(x => x.OgrenciAdSoyad);
 
-            var paged = await PaginatedListModel<AidatRaporDto>.CreateAsync(
+            var paged = await SayfalanmisListeModel<AidatRaporDto>.CreateAsync(
                 orderedQuery,
                 page,
                 pageSize,

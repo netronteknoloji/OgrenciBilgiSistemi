@@ -19,7 +19,7 @@ namespace OgrenciBilgiSistemi.Services.Interfaces
             string adSoyad,
             CancellationToken ct = default);
 
-        Task<PaginatedListModel<ZiyaretciModel>> SearchPagedAsync(
+        Task<SayfalanmisListeModel<ZiyaretciModel>> SearchPagedAsync(
             string? searchString,
             int page,
             int pageSize,

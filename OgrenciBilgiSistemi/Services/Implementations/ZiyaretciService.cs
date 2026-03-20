@@ -83,7 +83,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                     z.AktifMi, ct);
         }
 
-        public async Task<PaginatedListModel<ZiyaretciModel>> SearchPagedAsync(
+        public async Task<SayfalanmisListeModel<ZiyaretciModel>> SearchPagedAsync(
             string? searchString,
             int page,
             int pageSize,
@@ -115,7 +115,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
 
             q = q.OrderByDescending(z => z.GirisZamani);
 
-            return await PaginatedListModel<ZiyaretciModel>.CreateAsync(q, page, pageSize, ct);
+            return await SayfalanmisListeModel<ZiyaretciModel>.CreateAsync(q, page, pageSize, ct);
         }
 
         public async Task<List<ZiyaretciModel>> GetZiyaretGecmisiAsync(

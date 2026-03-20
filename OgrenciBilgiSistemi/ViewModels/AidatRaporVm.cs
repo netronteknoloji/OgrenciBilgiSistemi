@@ -24,7 +24,7 @@ namespace OgrenciBilgiSistemi.ViewModels
         public IEnumerable<SelectListItem> Durumlar { get; set; } = Enumerable.Empty<SelectListItem>();
 
         // Liste + sayfalama (TEK KAYNAK)
-        public PaginatedListModel<AidatRaporDto> Satirlar { get; set; } = null!;
+        public SayfalanmisListeModel<AidatRaporDto> Satirlar { get; set; } = null!;
 
         // Üst özetler (tüm data üzerinden)
         public decimal ToplamBorc { get; set; }

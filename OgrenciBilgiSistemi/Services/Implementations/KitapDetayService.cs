@@ -21,7 +21,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
         // ======================================
         // PAGINATED SEARCH
         // ======================================
-        public async Task<PaginatedListModel<KitapDetayModel>> SearchPagedAsync(
+        public async Task<SayfalanmisListeModel<KitapDetayModel>> SearchPagedAsync(
             string? sortOrder,
             string? searchString,
             string? durumFilter,
@@ -68,7 +68,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                                    .ThenBy(kd => kd.Ogrenci!.OgrenciAdSoyad)
             };
 
-            return await PaginatedListModel<KitapDetayModel>.CreateAsync(q, pageIndex, pageSize, ct);
+            return await SayfalanmisListeModel<KitapDetayModel>.CreateAsync(q, pageIndex, pageSize, ct);
         }
 
         // ======================================

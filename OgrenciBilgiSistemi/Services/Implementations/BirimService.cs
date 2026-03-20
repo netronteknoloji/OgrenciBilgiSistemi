@@ -62,7 +62,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             return items;
         }
 
-        public async Task<PaginatedListModel<BirimModel>> SearchPagedAsync(
+        public async Task<SayfalanmisListeModel<BirimModel>> SearchPagedAsync(
             string? searchString,
             int page,
             int pageSize,
@@ -96,7 +96,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             var totalPages = total > 0 ? (int)Math.Ceiling(total / (double)pageSize) : 1;
             var safePage = Math.Min(page, totalPages);
 
-            return await PaginatedListModel<BirimModel>.CreateAsync(q, safePage, pageSize, ct);
+            return await SayfalanmisListeModel<BirimModel>.CreateAsync(q, safePage, pageSize, ct);
         }
 
         // --- TEK KAYIT ---

@@ -10,10 +10,10 @@
     Title="Öğrenci Bilgi Sistemi">
 
     <ShellContent
-        ContentTemplate="{DataTemplate views:LoginView}"
-        Route="LoginView" />
+        ContentTemplate="{DataTemplate views:GirisView}"
+        Route="GirisView" />
 
     <ShellContent
-        ContentTemplate="{DataTemplate views:ClassListView}"
-        Route="ClassListView" />
+        ContentTemplate="{DataTemplate views:SinifListeView}"
+        Route="SinifListeView" />
 </Shell>

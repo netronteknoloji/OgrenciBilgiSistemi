@@ -108,7 +108,7 @@ namespace OgrenciBilgiSistemi.Controllers
             };
 
             // Sayfalama
-            var model = await PaginatedListModel<OgrenciDetayModel>.CreateAsync(q, page, 50, ct);
+            var model = await SayfalanmisListeModel<OgrenciDetayModel>.CreateAsync(q, page, 50, ct);
             return View(model);
         }
 
@@ -210,7 +210,7 @@ namespace OgrenciBilgiSistemi.Controllers
             });
 
             var pageIndex = pageNumber.GetValueOrDefault(1);
-            var hareketlerPaged = await PaginatedListModel<OgrenciGirisCikisVm>
+            var hareketlerPaged = await SayfalanmisListeModel<OgrenciGirisCikisVm>
                 .CreateAsync(proj, pageIndex, 25, ct);
 
             var vm = new OgrenciGirisCikisListViewModel

@@ -18,6 +18,6 @@ namespace OgrenciBilgiSistemi.ViewModels
     public class OgrenciGirisCikisListViewModel
     {
         public OgrenciModel Ogrenci { get; set; }
-        public PaginatedListModel<OgrenciGirisCikisVm> Hareketler { get; set; }
+        public SayfalanmisListeModel<OgrenciGirisCikisVm> Hareketler { get; set; }
     }
 }

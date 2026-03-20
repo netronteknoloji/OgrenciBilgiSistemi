@@ -31,7 +31,7 @@
 
                 @* Yeni filtreleme her zaman 1. sayfadan başlasın *@
                 <input type="hidden" name="page" value="1" />
-                <input type="hidden" name="pageSize" value="@(r?.PageSize ?? 50)" />
+                <input type="hidden" name="pageSize" value="@(r?.SayfaBoyutu ?? 50)" />
 
                 <!-- Öğrenci / Veli Arama -->
                 <div>
@@ -111,25 +111,25 @@
                 <!-- Sayfalama (Önceki / Sonraki + Özet) -->
                 <div class="d-flex justify-content-between align-items-center mt-3">
                     <div class="text-muted">
-                        Toplam <strong>@r.TotalCount</strong> kayıt • Sayfa <strong>@r.PageIndex</strong>/<strong>@r.TotalPages</strong>
+                        Toplam <strong>@r.ToplamSayi</strong> kayıt • Sayfa <strong>@r.SayfaIndeks</strong>/<strong>@r.ToplamSayfa</strong>
                     </div>
                     <div class="btn-group">
-                        <a class="btn btn-outline-secondary @(r.HasPreviousPage ? "" : "disabled")"
+                        <a class="btn btn-outline-secondary @(r.OncekiSayfaVar ? "" : "disabled")"
                            asp-controller="Ogrenciler"
                            asp-action="OgrenciVeliRapor"
                            asp-route-query="@Model.query"
                            asp-route-birimId="@Model.birimId"
-                           asp-route-page="@(r.PageIndex - 1)"
-                           asp-route-pageSize="@r.PageSize">
+                           asp-route-page="@(r.SayfaIndeks - 1)"
+                           asp-route-pageSize="@r.SayfaBoyutu">
                             ‹ Önceki
                         </a>
-                        <a class="btn btn-outline-secondary @(r.HasNextPage ? "" : "disabled")"
+                        <a class="btn btn-outline-secondary @(r.SonrakiSayfaVar ? "" : "disabled")"
                            asp-controller="Ogrenciler"
                            asp-action="OgrenciVeliRapor"
                            asp-route-query="@Model.query"
                            asp-route-birimId="@Model.birimId"
-                           asp-route-page="@(r.PageIndex + 1)"
-                           asp-route-pageSize="@r.PageSize">
+                           asp-route-page="@(r.SayfaIndeks + 1)"
+                           asp-route-pageSize="@r.SayfaBoyutu">
                             Sonraki ›
                         </a>
                     </div>

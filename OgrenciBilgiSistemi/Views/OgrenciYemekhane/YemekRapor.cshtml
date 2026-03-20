@@ -8,8 +8,8 @@
     var vBas = ViewData["Bas"]?.ToString();
     var vBit = ViewData["Bit"]?.ToString();
 
-    var pageIndex = r.PageIndex;
-    var totalPages = r.TotalPages;
+    var pageIndex = r.SayfaIndeks;
+    var totalPages = r.ToplamSayfa;
 
     string Q(string? s) => s ?? "";
 }

@@ -28,6 +28,9 @@ namespace OgrenciBilgiSistemi.Data
         public DbSet<OgrenciYemekTarifeModel> OgrenciYemekTarifeler { get; set; }
         public DbSet<OgrenciYemekOdemeModel> OgrenciYemekOdemeler { get; set; }
         public DbSet<ZiyaretciModel> Ziyaretciler { get; set; }
+        public DbSet<ServisModel> Servisler { get; set; }
+        public DbSet<SinifYoklamaModel> SinifYoklamalar { get; set; }
+        public DbSet<SinifYoklamaDurumModel> SinifYoklamaDurumlar { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -202,6 +205,58 @@ namespace OgrenciBilgiSistemi.Data
                     tb.HasCheckConstraint("CK_Tarife_Tutar", "[Tutar] >= 0");
                 });
             });
+
+            // =========================
+            // OGRENCI <-> SERVIS (optional)
+            // =========================
+            modelBuilder.Entity<OgrenciModel>()
+                .HasOne(o => o.Servis)
+                .WithMany(s => s.Ogrenciler)
+                .HasForeignKey(o => o.ServisId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // =========================
+            // SERVIS <-> KULLANICI (optional)
+            // =========================
+            modelBuilder.Entity<ServisModel>()
+                .HasOne(s => s.Kullanici)
+                .WithMany()
+                .HasForeignKey(s => s.KullaniciId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // =========================
+            // SINIF YOKLAMA
+            // =========================
+            modelBuilder.Entity<SinifYoklamaModel>(e =>
+            {
+                e.HasOne(sy => sy.Ogrenci)
+                 .WithMany(o => o.SinifYoklamalar)
+                 .HasForeignKey(sy => sy.OgrenciId)
+                 .OnDelete(DeleteBehavior.Restrict)
+                 .IsRequired();
+
+                e.HasOne(sy => sy.Personel)
+                 .WithMany(p => p.SinifYoklamalar)
+                 .HasForeignKey(sy => sy.PersonelId)
+                 .OnDelete(DeleteBehavior.Restrict)
+                 .IsRequired();
+
+                e.HasIndex(sy => new { sy.OgrenciId, sy.OlusturulmaTarihi });
+            });
+
+            modelBuilder.Entity<SinifYoklamaModel>()
+                .HasQueryFilter(sy => sy.Ogrenci.OgrenciDurum || IncludePasifOgrenciler);
+
+            // =========================
+            // SINIF YOKLAMA DURUM (Seed Data)
+            // =========================
+            modelBuilder.Entity<SinifYoklamaDurumModel>().HasData(
+                new SinifYoklamaDurumModel { DurumId = 1, DurumAd = "Var" },
+                new SinifYoklamaDurumModel { DurumId = 2, DurumAd = "Yok" },
+                new SinifYoklamaDurumModel { DurumId = 3, DurumAd = "Geç" },
+                new SinifYoklamaDurumModel { DurumId = 4, DurumAd = "İzinli" },
+                new SinifYoklamaDurumModel { DurumId = 5, DurumAd = "Raporlu" }
+            );
 
             // =========================
             // UNIQUE INDEKSLER

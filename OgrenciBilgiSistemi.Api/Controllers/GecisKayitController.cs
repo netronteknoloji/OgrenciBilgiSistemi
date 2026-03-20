@@ -6,7 +6,7 @@ namespace OgrenciBilgiSistemi.Api.Controllers
 {
     [ApiController]
     [Authorize]
-    [Route("api/[controller]")]
+    [Route("api/gecis-kayit")]
     public class GecisKayitController : ControllerBase
     {
         private readonly GecisKayitService _gecisKayitService;
@@ -18,7 +18,7 @@ namespace OgrenciBilgiSistemi.Api.Controllers
 
         // GET: api/gecis?baslangic=2026-01-01&bitis=2026-03-07&arama=ali&sinifId=3
         [HttpGet]
-        public async Task<IActionResult> GetList(
+        public async Task<IActionResult> ListeGetir(
             [FromQuery] DateTime? baslangic,
             [FromQuery] DateTime? bitis,
             [FromQuery] string?   arama,
@@ -40,7 +40,7 @@ namespace OgrenciBilgiSistemi.Api.Controllers
 
         // GET: api/gecis/{ogrenciId}
         [HttpGet("{ogrenciId}")]
-        public async Task<IActionResult> GetByOgrenci(int ogrenciId)
+        public async Task<IActionResult> OgrenciyeGoreGetir(int ogrenciId)
         {
             try
             {

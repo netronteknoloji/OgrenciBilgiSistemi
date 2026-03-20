@@ -17,9 +17,9 @@
     public class YemekhaneRaporListeVm
     {
         public IEnumerable<int> KullanilabilirYillar { get; set; } = Enumerable.Empty<int>();
-        public int PageIndex { get; set; } = 1;
-        public int TotalPages { get; set; } = 1;
-        public int PageSize { get; set; } = 20;
+        public int SayfaIndeks { get; set; } = 1;
+        public int ToplamSayfa { get; set; } = 1;
+        public int SayfaBoyutu { get; set; } = 20;
 
         public decimal ToplamBorc { get; set; }
         public decimal ToplamOdenen { get; set; }

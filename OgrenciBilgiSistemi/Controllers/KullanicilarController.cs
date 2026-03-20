@@ -35,7 +35,7 @@ namespace OgrenciBilgiSistemi.Controllers
             if (!string.IsNullOrWhiteSpace(searchString))
                 query = query.Where(k => k.KullaniciAdi.Contains(searchString));
 
-            var paged = await PaginatedListModel<KullaniciModel>.CreateAsync(query.OrderBy(k => k.KullaniciAdi), page, 10,ct);
+            var paged = await SayfalanmisListeModel<KullaniciModel>.CreateAsync(query.OrderBy(k => k.KullaniciAdi), page, 10,ct);
             return View(paged);
         }
 
@@ -280,24 +280,24 @@ namespace OgrenciBilgiSistemi.Controllers
 
         // --- Helpers ---
 
-        private List<MenuOgeAssignmentVm> BuildMenuViewModels(int? parentId, List<MenuOgeModel> allMenus, List<int> assignedMenuIds)
+        private List<MenuOgeAtamaVm> BuildMenuViewModels(int? parentId, List<MenuOgeModel> allMenus, List<int> assignedMenuIds)
         {
             var menus = allMenus
                 .Where(m => m.AnaMenuId == parentId)
                 .OrderBy(m => m.Sirala)
                 .ToList();
 
-            var result = new List<MenuOgeAssignmentVm>();
+            var result = new List<MenuOgeAtamaVm>();
 
             foreach (var menu in menus)
             {
-                var vm = new MenuOgeAssignmentVm
+                var vm = new MenuOgeAtamaVm
                 {
                     MenuOgeId = menu.Id,
-                    Title = menu.Baslik,
-                    IsAssigned = assignedMenuIds.Contains(menu.Id),
+                    Baslik = menu.Baslik,
+                    AtandiMi = assignedMenuIds.Contains(menu.Id),
                     AnaMenuId = menu.AnaMenuId,
-                    Children = BuildMenuViewModels(menu.Id, allMenus, assignedMenuIds)
+                    AltOgeler = BuildMenuViewModels(menu.Id, allMenus, assignedMenuIds)
                 };
 
                 result.Add(vm);

@@ -553,7 +553,7 @@ namespace OgrenciBilgiSistemi.Controllers
                 VeliIsYeri = o.OgrenciVeli != null ? o.OgrenciVeli.VeliIsYeri : null
             });
 
-            var rapor = await PaginatedListModel<OgrenciVeliRaporDto>.CreateAsync(dtoQuery, page, pageSize, ct);
+            var rapor = await SayfalanmisListeModel<OgrenciVeliRaporDto>.CreateAsync(dtoQuery, page, pageSize, ct);
 
             // Sınıf/Birim dropdown'u
             var birimler = await _birimService.GetSelectListAsync(

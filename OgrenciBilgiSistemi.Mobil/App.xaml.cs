@@ -1,5 +1,5 @@
 ﻿using Microsoft.Maui.Handlers;                                                      // MAUI kontrol işleyicileri için gerekli kütüphane eklenir.
-using OgrenciBilgiSistemi.Mobil.Services;                                               // BaseApiService.OnSessionExpired olayı için gerekli.
+using OgrenciBilgiSistemi.Mobil.Services;                                               // TemelApiService.OturumSuresiDoldu olayı için gerekli.
 
 namespace OgrenciBilgiSistemi.Mobil;                                                    // Uygulamanın ana isim uzayı tanımlanır.
 
@@ -10,11 +10,11 @@ public partial class App : Application                                          
         InitializeComponent();                                                      // XAML arayüz bileşenleri yüklenir.
 
         // 401 alındığında otomatik login ekranına yönlendir
-        BaseApiService.OnSessionExpired += async () =>
+        TemelApiService.OturumSuresiDoldu += async () =>
         {
             await MainThread.InvokeOnMainThreadAsync(async () =>
             {
-                await Shell.Current.GoToAsync("///LoginView");
+                await Shell.Current.GoToAsync("///GirisView");
             });
         };
 

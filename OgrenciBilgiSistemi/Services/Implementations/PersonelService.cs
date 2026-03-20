@@ -158,7 +158,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             return await q.FirstOrDefaultAsync(p => p.PersonelId == id, ct);
         }
 
-        public async Task<PaginatedListModel<PersonelModel>> SearchPagedAsync(
+        public async Task<SayfalanmisListeModel<PersonelModel>> SearchPagedAsync(
             string? searchString,
             int page,
             int pageSize,
@@ -199,7 +199,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             page = Math.Max(1, page);
             pageSize = Math.Max(1, pageSize);
 
-            return await PaginatedListModel<PersonelModel>.CreateAsync(q, page, pageSize, ct);
+            return await SayfalanmisListeModel<PersonelModel>.CreateAsync(q, page, pageSize, ct);
         }
 
         private static string? NormalizeKartNo(string? s)

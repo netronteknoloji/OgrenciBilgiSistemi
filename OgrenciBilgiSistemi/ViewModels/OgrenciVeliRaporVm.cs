@@ -8,6 +8,6 @@ namespace OgrenciBilgiSistemi.ViewModels
         public string? query { get; set; }      
         public int? birimId { get; set; }
         public List<SelectListItem> Birimler { get; set; } = new();
-        public PaginatedListModel<OgrenciVeliRaporDto> Rapor { get; set; } = null!;
+        public SayfalanmisListeModel<OgrenciVeliRaporDto> Rapor { get; set; } = null!;
     }
 }

@@ -56,6 +56,14 @@ namespace OgrenciBilgiSistemi.Models
         [Display(Name = "Birimi")]
         public virtual BirimModel? Birim { get; set; }
 
+        [Display(Name = "Servis")]
+        public int? ServisId { get; set; }
+
+        [ForeignKey(nameof(ServisId))]
+        [ValidateNever]
+        [Display(Name = "Servis")]
+        public virtual ServisModel? Servis { get; set; }
+
         [Display(Name = "Fotoğraf")]
         public string? OgrenciGorsel { get; set; }
 
@@ -74,6 +82,9 @@ namespace OgrenciBilgiSistemi.Models
 
         [ValidateNever]
         public virtual List<OgrenciAidatModel> OgrenciAidatlar { get; set; } = new();
+
+        [ValidateNever]
+        public virtual List<SinifYoklamaModel> SinifYoklamalar { get; set; } = new();
 
         [NotMapped]
         [ValidateNever]

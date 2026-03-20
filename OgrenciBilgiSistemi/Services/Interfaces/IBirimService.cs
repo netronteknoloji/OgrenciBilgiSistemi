@@ -15,7 +15,7 @@ namespace OgrenciBilgiSistemi.Services.Interfaces
         Task<List<SelectListItem>> GetSelectListAsync(int? selectedId = null, bool? sinifMi = null,
                         BirimFiltre filtre = BirimFiltre.Aktif, CancellationToken ct = default);
 
-        Task<PaginatedListModel<BirimModel>> SearchPagedAsync(
+        Task<SayfalanmisListeModel<BirimModel>> SearchPagedAsync(
                         string? searchString, int page, int pageSize,
                         BirimFiltre filtre = BirimFiltre.Aktif, bool? sinifMi = null, CancellationToken ct = default);
 

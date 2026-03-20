@@ -137,7 +137,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                         Action = node.Action,
                         AnaMenuId = node.AnaMenuId,
                         Sirala = node.Sirala,
-                        Children = new()
+                        AltOgeler = new()
                     };
                 }
 
@@ -156,7 +156,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                     .Select(m => ToDtoFilteredFlat(m, visited))
                     .ToList();
 
-                dto.Children = kids;
+                dto.AltOgeler = kids;
 
                 visited.Remove(node.Id);
                 return dto;

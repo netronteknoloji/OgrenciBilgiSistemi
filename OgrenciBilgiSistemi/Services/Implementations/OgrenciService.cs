@@ -177,7 +177,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             return ok;
         }
 
-        public async Task<PaginatedListModel<OgrenciModel>> SearchPagedAsync(
+        public async Task<SayfalanmisListeModel<OgrenciModel>> SearchPagedAsync(
         string? sortOrder,
         string? searchString,
         int pageNumber,
@@ -234,7 +234,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             // Güvenli sayfa
             var pageIndex = Math.Max(1, pageNumber);
 
-            return await PaginatedListModel<OgrenciModel>.CreateAsync(q, pageIndex, pageSize, ct);
+            return await SayfalanmisListeModel<OgrenciModel>.CreateAsync(q, pageIndex, pageSize, ct);
         }
 
         public async Task<OgrenciModel?> GetByIdAsync(int id, bool includeVeli = true, CancellationToken ct = default)

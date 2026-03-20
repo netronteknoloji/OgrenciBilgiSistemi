@@ -60,10 +60,10 @@ builder.Services.AddAuthorization(opts =>
 // Servisler
 // --------------------
 builder.Services.AddControllers();
-builder.Services.AddScoped<LoginService>();
-builder.Services.AddScoped<ClassService>();
-builder.Services.AddScoped<StudentService>();
-builder.Services.AddScoped<UnitService>();
+builder.Services.AddScoped<GirisService>();
+builder.Services.AddScoped<SinifService>();
+builder.Services.AddScoped<OgrenciService>();
+builder.Services.AddScoped<BirimService>();
 builder.Services.AddScoped<GecisKayitService>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

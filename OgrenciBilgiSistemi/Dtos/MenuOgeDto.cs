@@ -1,4 +1,4 @@
-﻿namespace OgrenciBilgiSistemi.DTOs
+namespace OgrenciBilgiSistemi.DTOs
 {
     public class MenuOgeDto
     {
@@ -9,9 +9,9 @@
         public int? AnaMenuId { get; set; }
         public int Sirala { get; set; }
 
-        public List<MenuOgeDto> Children { get; set; } = new();
+        public List<MenuOgeDto> AltOgeler { get; set; } = new();
 
-        public bool IsLeaf =>
+        public bool YaprakMi =>
             !string.IsNullOrWhiteSpace(Controller) &&
             !string.IsNullOrWhiteSpace(Action);
     }

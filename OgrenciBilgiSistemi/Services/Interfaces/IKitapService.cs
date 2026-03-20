@@ -5,7 +5,7 @@ namespace OgrenciBilgiSistemi.Services.Interfaces
 {
     public interface IKitapService
     {
-        Task<PaginatedListModel<KitapModel>> SearchPagedAsync(
+        Task<SayfalanmisListeModel<KitapModel>> SearchPagedAsync(
             string? sortOrder,
             string? searchString,
             int pageIndex,

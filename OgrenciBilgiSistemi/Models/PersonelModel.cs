@@ -62,5 +62,8 @@ namespace OgrenciBilgiSistemi.Models
 
         [ValidateNever]
         public virtual List<ZiyaretciModel> Ziyaretciler { get; set; } = new();
+
+        [ValidateNever]
+        public virtual List<SinifYoklamaModel> SinifYoklamalar { get; set; } = new();
     }
 }

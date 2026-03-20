@@ -50,7 +50,7 @@ namespace OgrenciBilgiSistemi.Controllers
 
             query = query.OrderBy(c => c.CihazAdi).ThenBy(c => c.CihazId);
 
-            var paged = await PaginatedListModel<CihazModel>.CreateAsync(query, page, 10, ct);
+            var paged = await SayfalanmisListeModel<CihazModel>.CreateAsync(query, page, 10, ct);
             return View(paged);
         }
 

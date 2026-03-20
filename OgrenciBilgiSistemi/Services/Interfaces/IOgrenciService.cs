@@ -8,7 +8,7 @@ public interface IOgrenciService
     Task SilAsync(int ogrenciId, CancellationToken ct = default);
     Task<bool> CihazaGonderAsync(int cihazId, CancellationToken ct = default);
 
-    Task<PaginatedListModel<OgrenciModel>> SearchPagedAsync(
+    Task<SayfalanmisListeModel<OgrenciModel>> SearchPagedAsync(
     string? sortOrder,
     string? searchString,
     int pageNumber,

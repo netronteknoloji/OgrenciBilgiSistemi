@@ -1,4 +1,4 @@
-﻿@model PaginatedListModel<OgrenciBilgiSistemi.Models.BirimModel>
+﻿@model SayfalanmisListeModel<OgrenciBilgiSistemi.Models.BirimModel>
 @using OgrenciBilgiSistemi.Models
 @using OgrenciBilgiSistemi.Models.Enums
 @using System.Linq
@@ -6,9 +6,9 @@
 @{
     ViewData["Title"] = "Birim İşlemleri";
     var q = ViewData["CurrentFilter"] as string;
-    var page = Model.PageIndex;
-    var total = Model.TotalPages;
-    var count = Model.TotalCount;
+    var page = Model.SayfaIndeks;
+    var total = Model.ToplamSayfa;
+    var count = Model.ToplamSayi;
 
     var durum = (BirimFiltre)(ViewData["Durum"] ?? BirimFiltre.Aktif);
 }
@@ -113,7 +113,7 @@
                         Toplam <strong>@count</strong> kayıt • Sayfa <strong>@(page)</strong>/<strong>@(total)</strong>
                     </div>
                     <div class="btn-group btn-group-gap">
-                        <a class="btn btn-outline-secondary @(Model.HasPreviousPage ? "" : "disabled")"
+                        <a class="btn btn-outline-secondary @(Model.OncekiSayfaVar ? "" : "disabled")"
                            asp-action="Index"
                            asp-route-searchString="@q"
                            asp-route-durum="@((int)durum)"
@@ -121,7 +121,7 @@
                             ‹ Önceki
                         </a>
 
-                        <a class="btn btn-outline-secondary @(Model.HasNextPage ? "" : "disabled")"
+                        <a class="btn btn-outline-secondary @(Model.SonrakiSayfaVar ? "" : "disabled")"
                            asp-action="Index"
                            asp-route-searchString="@q"
                            asp-route-durum="@((int)durum)"

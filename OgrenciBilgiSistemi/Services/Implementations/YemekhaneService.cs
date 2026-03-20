@@ -390,9 +390,9 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             var listeVm = new YemekhaneRaporListeVm
             {
                 KullanilabilirYillar = yilSet,
-                PageIndex = page,
-                TotalPages = totalPages,
-                PageSize = pageSize,
+                SayfaIndeks = page,
+                ToplamSayfa = totalPages,
+                SayfaBoyutu = pageSize,
                 Satirlar = satirlar,
                 ToplamBorc = satirlar.Sum(s => s.Borc),
                 ToplamOdenen = satirlar.Sum(s => s.Odenen)

@@ -5,7 +5,7 @@
 @{
     ViewData["Title"] = "Toplu Aidat Raporu";
 
-    var list = Model.Satirlar; // PaginatedListModel<AidatRaporDto>
+    var list = Model.Satirlar; // SayfalanmisListeModel<AidatRaporDto>
     var akademikYilDefault = Model.yil ?? (DateTime.Now.Month >= 9 ? DateTime.Now.Year : DateTime.Now.Year - 1);
     var culture = CultureInfo.CurrentCulture;
 }
@@ -174,28 +174,28 @@
 
                 <div class="d-flex justify-content-between align-items-center mt-3">
                     <div class="text-muted">
-                        Toplam <strong>@list.TotalCount</strong> kayıt •
-                        Sayfa <strong>@list.PageIndex</strong>/<strong>@list.TotalPages</strong>
+                        Toplam <strong>@list.ToplamSayi</strong> kayıt •
+                        Sayfa <strong>@list.SayfaIndeks</strong>/<strong>@list.ToplamSayfa</strong>
                     </div>
                     <div class="btn-group">
-                        <a class="btn btn-outline-secondary @(list.HasPreviousPage ? "" : "disabled")"
+                        <a class="btn btn-outline-secondary @(list.OncekiSayfaVar ? "" : "disabled")"
                            asp-action="AidatRapor"
                            asp-route-query="@Model.query"
                            asp-route-yil="@Model.yil"
                            asp-route-birimId="@Model.birimId"
                            asp-route-durum="@((int)Model.durum)"
-                           asp-route-page="@(list.PageIndex - 1)"
-                           asp-route-pageSize="@list.PageSize">
+                           asp-route-page="@(list.SayfaIndeks - 1)"
+                           asp-route-pageSize="@list.SayfaBoyutu">
                             ‹ Önceki
                         </a>
-                        <a class="btn btn-outline-secondary @(list.HasNextPage ? "" : "disabled")"
+                        <a class="btn btn-outline-secondary @(list.SonrakiSayfaVar ? "" : "disabled")"
                            asp-action="AidatRapor"
                            asp-route-query="@Model.query"
                            asp-route-yil="@Model.yil"
                            asp-route-birimId="@Model.birimId"
                            asp-route-durum="@((int)Model.durum)"
-                           asp-route-page="@(list.PageIndex + 1)"
-                           asp-route-pageSize="@list.PageSize">
+                           asp-route-page="@(list.SayfaIndeks + 1)"
+                           asp-route-pageSize="@list.SayfaBoyutu">
                             Sonraki ›
                         </a>
                     </div>

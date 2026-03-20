@@ -57,8 +57,8 @@ builder.Services.AddScoped<IKitapService, KitapService>();
 builder.Services.AddScoped<IKitapDetayService, KitapDetayService>();
 
 // Hosted services
-builder.Services.AddHostedService<CardReadEventHandlerService>();
-builder.Services.AddHostedService<ZkConnectionMonitorHostedService>();
+builder.Services.AddHostedService<KartOkumaOlayIsleyiciService>();
+builder.Services.AddHostedService<ZkBaglantiIzleyiciHostedService>();
 
 // SignalR + Cache
 builder.Services.AddSignalR();

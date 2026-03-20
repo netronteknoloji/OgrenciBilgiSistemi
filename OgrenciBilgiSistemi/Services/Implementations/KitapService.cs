@@ -27,7 +27,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
         // ======================
         // LIST & SEARCH
         // ======================
-        public async Task<PaginatedListModel<KitapModel>> SearchPagedAsync(
+        public async Task<SayfalanmisListeModel<KitapModel>> SearchPagedAsync(
             string? sortOrder,
             string? searchString,
             int pageIndex,
@@ -56,7 +56,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
 
             if (pageIndex < 1) pageIndex = 1;
 
-            return await PaginatedListModel<KitapModel>.CreateAsync(q, pageIndex, pageSize, ct);
+            return await SayfalanmisListeModel<KitapModel>.CreateAsync(q, pageIndex, pageSize, ct);
         }
 
         public async Task<List<KitapModel>> GetFilteredListAsync(

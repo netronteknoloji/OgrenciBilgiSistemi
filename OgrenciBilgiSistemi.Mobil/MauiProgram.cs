@@ -26,14 +26,14 @@ namespace OgrenciBilgiSistemi.Mobil
                 });
 
             // Servis kayıtları (Dependency Injection)
-            builder.Services.AddSingleton<LoginService>();
-            builder.Services.AddSingleton<ClassService>();
-            builder.Services.AddSingleton<StudentService>();
+            builder.Services.AddSingleton<GirisService>();
+            builder.Services.AddSingleton<SinifService>();
+            builder.Services.AddSingleton<OgrenciService>();
 
             // Sayfa kayıtları
-            // LoginView ve ClassListView Shell tarafından DI ile çözümleniyor
-            builder.Services.AddTransient<LoginView>();
-            builder.Services.AddTransient<ClassListView>();
+            // GirisView ve SinifListeView Shell tarafından DI ile çözümleniyor
+            builder.Services.AddTransient<GirisView>();
+            builder.Services.AddTransient<SinifListeView>();
 
 #if DEBUG
             builder.Logging.AddDebug();
@@ -70,7 +70,7 @@ namespace OgrenciBilgiSistemi.Mobil
             }
             catch
             {
-                // Okuma başarısız olursa BaseApiService'teki varsayılan URL kullanılır
+                // Okuma başarısız olursa TemelApiService'teki varsayılan URL kullanılır
             }
         }
     }

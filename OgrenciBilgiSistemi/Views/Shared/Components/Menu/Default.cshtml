@@ -14,8 +14,8 @@
     bool IsActiveTree(OgrenciBilgiSistemi.DTOs.MenuOgeDto node)
     {
         if (IsActive(node.Controller, node.Action)) return true;
-        if (node.Children == null || node.Children.Count == 0) return false;
-        return node.Children.Any(IsActiveTree);
+        if (node.AltOgeler == null || node.AltOgeler.Count == 0) return false;
+        return node.AltOgeler.Any(IsActiveTree);
     }
 
     IHtmlContent SafeLink(string? controller, string? action, string text, string extraClasses, bool active)
@@ -35,7 +35,7 @@
 
 @foreach (var m in Model.OrderBy(x => x.Sirala))
 {
-    var hasChildren = m.Children != null && m.Children.Count > 0;
+    var hasChildren = m.AltOgeler != null && m.AltOgeler.Count > 0;
     var parentActive = hasChildren && IsActiveTree(m);
 
     if (hasChildren)
@@ -54,15 +54,15 @@
             </a>
 
             <ul class="dropdown-menu" aria-labelledby="@ddId">
-                @foreach (var c in m.Children.OrderBy(x => x.Sirala))
+                @foreach (var c in m.AltOgeler.OrderBy(x => x.Sirala))
                 {
-                    var hasGrand = c.Children != null && c.Children.Count > 0;
+                    var hasGrand = c.AltOgeler != null && c.AltOgeler.Count > 0;
 
                     if (hasGrand)
                     {
                         <li><h6 class="dropdown-header">@c.Baslik</h6></li>
 
-                        @foreach (var g in c.Children.OrderBy(x => x.Sirala))
+                        @foreach (var g in c.AltOgeler.OrderBy(x => x.Sirala))
                         {
                             var gActive = IsActive(g.Controller, g.Action);
                             <li>
