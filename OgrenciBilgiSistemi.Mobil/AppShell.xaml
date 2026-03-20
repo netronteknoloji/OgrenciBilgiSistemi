@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Shell
+    x:Class="OgrenciBilgiSistemi.Mobil.AppShell"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:local="clr-namespace:OgrenciBilgiSistemi.Mobil"
+    xmlns:views="clr-namespace:OgrenciBilgiSistemi.Mobil.Views"
+    Shell.FlyoutBehavior="Disabled"
+    Shell.NavBarIsVisible="False"
+    Title="Öğrenci Bilgi Sistemi">
+
+    <ShellContent
+        ContentTemplate="{DataTemplate views:GirisView}"
+        Route="GirisView" />
+
+    <ShellContent
+        ContentTemplate="{DataTemplate views:SinifListeView}"
+        Route="SinifListeView" />
+
+    <ShellContent
+        ContentTemplate="{DataTemplate views:ServisEkraniView}"
+        Route="ServisEkraniView" />
+</Shell>

@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:views="clr-namespace:OgrenciBilgiSistemi.Mobil.Views"
+             x:Class="OgrenciBilgiSistemi.Mobil.Views.ServisEkraniView"
+             Title="Servis Öğrencileri"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="#F2F2F2">
+
+    <Grid RowDefinitions="125, Auto, Auto, *">
+
+        <Border Grid.Row="0"
+                StrokeThickness="0"
+                BackgroundColor="#2980B9"
+                VerticalOptions="FillAndExpand">
+            <Border.Shadow>
+                <Shadow Brush="#2980B9" Offset="0,4" Radius="15" Opacity="0.4" />
+            </Border.Shadow>
+
+            <Grid>
+                <views:AnaBaslikView x:Name="MyHeader"
+                                      ShowBack="False"
+                                      ShowProfile="True" />
+
+                <VerticalStackLayout Spacing="2"
+                                     VerticalOptions="End"
+                                     Margin="20,0,20,35">
+                    <Label x:Name="WelcomeLabel"
+                           Text="Merhaba"
+                           FontSize="18"
+                           FontFamily="OpenSansSemibold"
+                           TextColor="White" />
+                    <Label x:Name="PlakaLabel"
+                           Text="Servis Öğrencileri"
+                           FontSize="14"
+                           FontFamily="OpenSansSemibold"
+                           TextColor="White" />
+                </VerticalStackLayout>
+            </Grid>
+        </Border>
+
+        <!-- Öğrenci sayısı bilgisi -->
+        <Border Grid.Row="1"
+                Margin="15,-28,15,10"
+                HeightRequest="55"
+                StrokeShape="RoundRectangle 28"
+                StrokeThickness="0"
+                BackgroundColor="White">
+            <Border.Shadow>
+                <Shadow Brush="Black" Offset="0,10" Radius="20" Opacity="0.08" />
+            </Border.Shadow>
+            <Grid ColumnDefinitions="55, *">
+                <Label Grid.Column="0" Text="🚌" VerticalOptions="Center" HorizontalOptions="Center" FontSize="22" />
+                <Label Grid.Column="1" x:Name="OgrenciSayisiLabel"
+                       Text="Yükleniyor..."
+                       VerticalOptions="Center"
+                       FontSize="15"
+                       FontFamily="OpenSansSemibold"
+                       TextColor="#2C3E50" />
+            </Grid>
+        </Border>
+
+        <!-- Arama -->
+        <Border Grid.Row="2"
+                Margin="15,0,15,10"
+                HeightRequest="45"
+                StrokeShape="RoundRectangle 22"
+                StrokeThickness="0"
+                BackgroundColor="White">
+            <Border.Shadow>
+                <Shadow Brush="Black" Offset="0,4" Radius="10" Opacity="0.05" />
+            </Border.Shadow>
+            <Grid ColumnDefinitions="45, *">
+                <Label Grid.Column="0" Text="🔍" VerticalOptions="Center" HorizontalOptions="Center" FontSize="16" TextColor="#95A5A6" />
+                <Entry Grid.Column="1" x:Name="SearchBar" Placeholder="Öğrenci ara..." PlaceholderColor="#95A5A6"
+                       TextColor="#2C3E50" FontSize="14" VerticalOptions="Center" TextChanged="OnSearchBarTextChanged" />
+            </Grid>
+        </Border>
+
+        <!-- Öğrenci listesi -->
+        <CollectionView x:Name="OgrenciCollection" Grid.Row="3" Margin="15,0" SelectionMode="None">
+            <CollectionView.ItemsLayout>
+                <LinearItemsLayout Orientation="Vertical" ItemSpacing="8" />
+            </CollectionView.ItemsLayout>
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Border StrokeShape="RoundRectangle 12" StrokeThickness="0" BackgroundColor="White" Padding="0">
+                        <Border.Shadow>
+                            <Shadow Brush="Black" Offset="0,2" Radius="5" Opacity="0.05" />
+                        </Border.Shadow>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnOgrenciTapped" CommandParameter="{Binding .}" />
+                        </Border.GestureRecognizers>
+                        <Grid ColumnDefinitions="8, 55, *, Auto" Padding="0,8">
+                            <BoxView Grid.Column="0" BackgroundColor="#2980B9" WidthRequest="8" HorizontalOptions="Start" />
+                            <Border Grid.Column="1" StrokeShape="RoundRectangle 20" StrokeThickness="0"
+                                    WidthRequest="40" HeightRequest="40" Margin="8,0">
+                                <Image Source="{Binding OgrenciGorsel}" Aspect="AspectFill"
+                                       WidthRequest="40" HeightRequest="40" />
+                            </Border>
+                            <VerticalStackLayout Grid.Column="2" VerticalOptions="Center" Spacing="2">
+                                <Label Text="{Binding OgrenciAdSoyad}" FontSize="15" FontFamily="OpenSansSemibold" TextColor="#2C3E50" />
+                                <Label Text="{Binding SinifAdi}" FontSize="11" TextColor="#7F8C8D" />
+                            </VerticalStackLayout>
+                            <Label Grid.Column="3" Text="→" FontSize="20" TextColor="#2980B9" VerticalOptions="Center" Margin="0,0,12,0" />
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+            <CollectionView.EmptyView>
+                <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="10" Padding="20">
+                    <Label Text="Bu serviste öğrenci bulunmuyor." FontSize="16" TextColor="#95A5A6" HorizontalOptions="Center" />
+                </VerticalStackLayout>
+            </CollectionView.EmptyView>
+        </CollectionView>
+    </Grid>
+</ContentPage>

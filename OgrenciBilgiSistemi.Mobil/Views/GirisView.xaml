@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="OgrenciBilgiSistemi.Mobil.Views.GirisView"
+             Title="Giriş"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="White">
+
+    <Grid>
+        <BoxView Grid.RowSpan="2">
+            <BoxView.Background>
+                <LinearGradientBrush StartPoint="0,0"
+                                     EndPoint="1,1">
+                    <GradientStop Color="#1ABC9C"
+                                  Offset="0.1" />
+                    <GradientStop Color="#2C3E50"
+                                  Offset="1.0" />
+                </LinearGradientBrush>
+            </BoxView.Background>
+        </BoxView>
+
+        <ScrollView VerticalOptions="Center">
+
+            <VerticalStackLayout Spacing="0"
+                                 Padding="30">
+
+                <VerticalStackLayout Spacing="10"
+                                     Margin="0,0,0,40"
+                                     HorizontalOptions="Center">
+
+                    <Border StrokeShape="RoundRectangle 50"
+                            HeightRequest="100"
+                            WidthRequest="100"
+                            BackgroundColor="Transparent"
+                            StrokeThickness="0">
+
+                        <Border.Shadow>
+                            <Shadow Brush="Black"
+                                    Offset="0,10"
+                                    Radius="20"
+                                    Opacity="0.2" />
+                        </Border.Shadow>
+
+                        <Image Source="app_logo.png"
+                               HeightRequest="100"
+                               WidthRequest="100"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center"
+                               Aspect="AspectFit" />
+                    </Border>
+
+                    <Label Text="Öğrenci Bilgi Sistemi"
+                           FontSize="28"
+                           TextColor="White"
+                           FontAttributes="Bold"
+                           HorizontalOptions="Center" />
+
+                    <Label Text="Giriş Ekranı"
+                           FontSize="14"
+                           TextColor="#BDC3C7"
+                           HorizontalOptions="Center" />
+
+                </VerticalStackLayout>
+
+                <Border BackgroundColor="White"
+                        StrokeThickness="0"
+                        StrokeShape="RoundRectangle 20"
+                        Padding="25">
+
+                    <Border.Shadow>
+                        <Shadow Brush="Black"
+                                Offset="0,20"
+                                Radius="30"
+                                Opacity="0.1" />
+                    </Border.Shadow>
+
+                    <VerticalStackLayout Spacing="20">
+
+                        <Label Text="Hoş Geldiniz"
+                               FontSize="20"
+                               FontAttributes="Bold"
+                               TextColor="#2C3E50"
+                               Margin="0,0,0,10"/>
+
+                        <VerticalStackLayout Spacing="5">
+
+                            <Label Text="Kullanıcı Adı"
+                                   FontSize="13"
+                                   TextColor="#7F8C8D"
+                                   Margin="5,0"/>
+
+                            <Border Stroke="#E5E8E8"
+                                    StrokeThickness="1"
+                                    StrokeShape="RoundRectangle 10"
+                                    BackgroundColor="#F8F9F9"
+                                    HeightRequest="45">
+
+                                <Entry x:Name="TxtUsername"
+                                       Placeholder="Kullanıcı adınızı giriniz"
+                                       PlaceholderColor="#95A5A6"
+                                       TextColor="#2C3E50"
+                                       FontSize="14"
+                                       BackgroundColor="Transparent"
+                                       Margin="12,0"
+                                       VerticalOptions="Center" />
+                            </Border>
+
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout Spacing="5">
+
+                            <Label Text="Şifre"
+                                   FontSize="13"
+                                   TextColor="#7F8C8D"
+                                   Margin="5,0"/>
+
+                            <Border Stroke="#E5E8E8"
+                                    StrokeThickness="1"
+                                    StrokeShape="RoundRectangle 10"
+                                    BackgroundColor="#F8F9F9"
+                                    HeightRequest="45">
+
+                                <Grid ColumnDefinitions="*, Auto">
+
+                                    <Entry x:Name="TxtPassword"
+                                           Grid.Column="0"
+                                           Placeholder="••••••••"
+                                           IsPassword="True"
+                                           PlaceholderColor="#95A5A6"
+                                           TextColor="#2C3E50"
+                                           FontSize="14"
+                                           BackgroundColor="Transparent"
+                                           Margin="12,0"
+                                           VerticalOptions="Center" />
+
+                                    <ImageButton x:Name="BtnPasswordToggle"
+                                                 Grid.Column="1"
+                                                 Source="eye_off.png"
+                                                 HeightRequest="25"
+                                                 WidthRequest="25"
+                                                 Margin="0,0,12,0"
+                                                 VerticalOptions="Center"
+                                                 BackgroundColor="Transparent"
+                                                 Clicked="OnPasswordToggleClicked" />
+                                </Grid>
+                            </Border>
+
+                        </VerticalStackLayout>
+
+                        <HorizontalStackLayout Spacing="5"
+                                               Margin="5,-10,0,0"
+                                               VerticalOptions="Center">
+
+                            <CheckBox x:Name="ChkRememberMe"
+                                      Color="#1ABC9C" />
+
+                            <Label Text="Beni Hatırla"
+                                   TextColor="#7F8C8D"
+                                   FontSize="14"
+                                   VerticalOptions="Center">
+                                <Label.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnRememberMeLabelTapped" />
+                                </Label.GestureRecognizers>
+                            </Label>
+
+                        </HorizontalStackLayout>
+
+                        <Button x:Name="BtnLogin"
+                                Text="Giriş Yap"
+                                Clicked="BtnLogin_Clicked"
+                                HeightRequest="55"
+                                CornerRadius="12"
+                                Margin="0,10,0,0"
+                                FontAttributes="Bold"
+                                BackgroundColor="#1ABC9C"
+                                TextColor="White">
+
+                            <Button.Shadow>
+                                <Shadow Brush="#1ABC9C"
+                                        Offset="0,5"
+                                        Radius="10"
+                                        Opacity="0.3" />
+                            </Button.Shadow>
+                        </Button>
+
+                        <Button x:Name="BtnDemoLogin"
+                                Text="Demo Olarak Gir"
+                                Clicked="BtnDemoLogin_Clicked"
+                                HeightRequest="45"
+                                CornerRadius="12"
+                                Margin="0,5,0,0"
+                                FontSize="13"
+                                BackgroundColor="Transparent"
+                                TextColor="#7F8C8D"
+                                BorderColor="#BDC3C7"
+                                BorderWidth="1" />
+
+                    </VerticalStackLayout>
+                </Border>
+
+                <Label Text="© 2026 | Developed by Mert Yüksel. Tüm hakları saklıdır."
+                       TextColor="#BDC3C7"
+                       FontSize="11"
+                       HorizontalOptions="Center"
+                       Margin="0,40,0,0" />
+
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
+</ContentPage>

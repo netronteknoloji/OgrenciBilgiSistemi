@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:views="clr-namespace:OgrenciBilgiSistemi.Mobil.Views"
+             x:Class="OgrenciBilgiSistemi.Mobil.Views.SinifListeView"
+             Title="Sınıf Listesi"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="#F2F2F2">
+
+    <Grid RowDefinitions="125, Auto, Auto, *">
+
+        <Border Grid.Row="0"
+                StrokeThickness="0"
+                BackgroundColor="#1ABC9C"
+                VerticalOptions="FillAndExpand">
+            <Border.Shadow>
+                <Shadow Brush="#1ABC9C" Offset="0,4" Radius="15" Opacity="0.4" />
+            </Border.Shadow>
+
+            <Grid>
+                <views:AnaBaslikView x:Name="MyHeader"
+                                      ShowBack="False"
+                                      ShowProfile="True" />
+
+                <VerticalStackLayout Spacing="2"
+                                     VerticalOptions="End"
+                                     Margin="20,0,20,35">
+                    <Label x:Name="WelcomeLabel"
+                           Text="Merhaba"
+                           FontSize="18"
+                           FontFamily="OpenSansSemibold"
+                           TextColor="White" />
+                    <Label Text="Sınıf Seçiniz"
+                           FontSize="14"
+                           FontFamily="OpenSansSemibold"
+                           TextColor="White" />
+                </VerticalStackLayout>
+            </Grid>
+        </Border>
+
+        <Border x:Name="DemoBanner"
+                Grid.Row="1"
+                IsVisible="False"
+                BackgroundColor="#F39C12"
+                StrokeThickness="0"
+                Padding="12,8"
+                Margin="0,0,0,0">
+            <Label Text="Demo Modu — Gerçek veri gösterilmiyor"
+                   TextColor="White"
+                   FontSize="12"
+                   FontAttributes="Bold"
+                   HorizontalOptions="Center" />
+        </Border>
+
+        <Border Grid.Row="2"
+                Margin="15,-28,15,10"
+                HeightRequest="55"
+                StrokeShape="RoundRectangle 28"
+                StrokeThickness="0"
+                BackgroundColor="White">
+            <Border.Shadow>
+                <Shadow Brush="Black" Offset="0,10" Radius="20" Opacity="0.08" />
+            </Border.Shadow>
+            <Grid ColumnDefinitions="55, *">
+                <Label Grid.Column="0" Text="🔍" VerticalOptions="Center" HorizontalOptions="Center" FontSize="18" TextColor="#95A5A6" />
+                <Entry Grid.Column="1" x:Name="SearchBar" Placeholder="Hangi sınıfı arıyorsun?" PlaceholderColor="#95A5A6" 
+                       TextColor="#2C3E50" FontSize="15" VerticalOptions="Center" TextChanged="OnSearchBarTextChanged" />
+            </Grid>
+        </Border>
+
+        <CollectionView x:Name="ClassCollection" Grid.Row="3" Margin="15,0" SelectionMode="None">
+            <CollectionView.ItemsLayout>
+                <LinearItemsLayout Orientation="Vertical" ItemSpacing="10" />
+            </CollectionView.ItemsLayout>
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Border StrokeShape="RoundRectangle 15" StrokeThickness="0" BackgroundColor="White" Padding="0">
+                        <Border.Shadow>
+                            <Shadow Brush="Black" Offset="0,2" Radius="5" Opacity="0.05" />
+                        </Border.Shadow>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnClassFrameTapped" CommandParameter="{Binding .}" />
+                        </Border.GestureRecognizers>
+                        <Grid ColumnDefinitions="8, *, Auto">
+                            <BoxView Grid.Column="0" BackgroundColor="#1ABC9C" WidthRequest="8" HorizontalOptions="Start"/>
+                            <HorizontalStackLayout Grid.Column="1" Spacing="15" Padding="15,12">
+                                <Image Source="classroom.png" WidthRequest="30" HeightRequest="30" VerticalOptions="Center" />
+                                <VerticalStackLayout VerticalOptions="Center">
+                                    <Label Text="{Binding Ad}" FontSize="16" FontFamily="OpenSansSemibold" TextColor="#2C3E50" />
+                                    <Label Text="{Binding OgrenciSayisi, StringFormat='Sınıf Mevcudu: {0}'}" FontSize="11" TextColor="#1ABC9C" />
+                                </VerticalStackLayout>
+                            </HorizontalStackLayout>
+                            <Label Grid.Column="2" Text="→" FontSize="24" TextColor="#1ABC9C" VerticalOptions="Center" Margin="0,0,15,0" />
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </Grid>
+</ContentPage>
