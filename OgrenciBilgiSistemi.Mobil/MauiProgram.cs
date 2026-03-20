@@ -29,11 +29,13 @@ namespace OgrenciBilgiSistemi.Mobil
             builder.Services.AddSingleton<GirisService>();
             builder.Services.AddSingleton<SinifService>();
             builder.Services.AddSingleton<OgrenciService>();
+            builder.Services.AddSingleton<ServisService>();
 
             // Sayfa kayıtları
             // GirisView ve SinifListeView Shell tarafından DI ile çözümleniyor
             builder.Services.AddTransient<GirisView>();
             builder.Services.AddTransient<SinifListeView>();
+            builder.Services.AddTransient<ServisEkraniView>();
 
 #if DEBUG
             builder.Logging.AddDebug();

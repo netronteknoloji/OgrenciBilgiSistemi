@@ -15,6 +15,7 @@
 
     var personeller = Model.Personeller ?? new List<SelectListItem>();
     var birimler = Model.Birimler ?? Enumerable.Empty<SelectListItem>();
+    var servisler = Model.Servisler ?? new List<SelectListItem>();
 }
 
 <div class="viewport-scroller">
@@ -119,6 +120,15 @@
                                                     <select asp-for="Ogrenci.BirimId" class="form-select" asp-items="birimler">
                                                     </select>
                                                     <span asp-validation-for="Ogrenci.BirimId" class="text-danger"></span>
+                                                </div>
+
+                                                <!-- Servis -->
+                                                <div class="col-md-6">
+                                                    <label asp-for="Ogrenci.ServisId" class="form-label fw-semibold">Servis</label>
+                                                    <select asp-for="Ogrenci.ServisId" class="form-select" asp-items="servisler">
+                                                        <option value="">-- Servis Yok --</option>
+                                                    </select>
+                                                    <span asp-validation-for="Ogrenci.ServisId" class="text-danger"></span>
                                                 </div>
 
                                                 <!-- Öğle Çıkışı -->

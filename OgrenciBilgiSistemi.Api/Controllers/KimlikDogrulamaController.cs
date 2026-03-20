@@ -47,7 +47,8 @@ namespace OgrenciBilgiSistemi.Api.Controllers
                     kullanici.KullaniciAdi,
                     kullanici.BirimId,
                     kullanici.KullaniciDurum,
-                    kullanici.AdminMi
+                    kullanici.Rol,
+                    kullanici.ServisId
                 }
             });
         }
@@ -63,13 +64,20 @@ namespace OgrenciBilgiSistemi.Api.Controllers
             var key         = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
             var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
+            var rolAdi = kullanici.Rol switch
+            {
+                1 => "Admin",
+                3 => "Sofor",
+                _ => "Ogretmen"
+            };
+
             var claims = new[]
             {
                 new Claim(JwtRegisteredClaimNames.Sub,        kullanici.KullaniciId.ToString()),
                 new Claim(JwtRegisteredClaimNames.UniqueName, kullanici.KullaniciAdi),
                 new Claim(JwtRegisteredClaimNames.Jti,        Guid.NewGuid().ToString()),
                 new Claim("kullaniciId", kullanici.KullaniciId.ToString()),
-                new Claim("adminMi",     kullanici.AdminMi.ToString().ToLower())
+                new Claim("rol",         rolAdi)
             };
 
             var token = new JwtSecurityToken(

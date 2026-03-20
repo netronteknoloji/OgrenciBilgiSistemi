@@ -58,7 +58,11 @@ namespace OgrenciBilgiSistemi.Mobil.Views
                     // "Beni Hatırla" bilgilerini SecureStorage'a kaydet
                     await ManageRememberMeAsync(username, password);
 
-                    await Shell.Current.GoToAsync("///SinifListeView");
+                    // Role göre yönlendirme: Şoför → ServisEkrani, diğerleri → SinifListeView
+                    if (KullaniciOturum.SoforMu)
+                        await Shell.Current.GoToAsync("///ServisEkraniView");
+                    else
+                        await Shell.Current.GoToAsync("///SinifListeView");
                 }
                 else
                 {

@@ -27,9 +27,11 @@ namespace OgrenciBilgiSistemi.Api.Services
                     K.KullaniciAdi,
                     K.BirimId,
                     K.KullaniciDurum,
-                    K.AdminMi,
-                    K.Sifre
+                    K.Rol,
+                    K.Sifre,
+                    S.ServisId
                 FROM Kullanicilar K
+                LEFT JOIN Servisler S ON S.KullaniciId = K.KullaniciId
                 WHERE K.KullaniciAdi = @kullaniciAdi
                   AND K.KullaniciDurum = 1";
 
@@ -50,11 +52,12 @@ namespace OgrenciBilgiSistemi.Api.Services
                     storedHash = reader["Sifre"]?.ToString();
                     found = new KullaniciModel
                     {
-                        KullaniciId   = (int)reader["KullaniciId"],
-                        KullaniciAdi  = reader["KullaniciAdi"].ToString() ?? string.Empty,
-                        BirimId       = reader["BirimId"] != DBNull.Value ? (int?)reader["BirimId"] : null,
+                        KullaniciId    = (int)reader["KullaniciId"],
+                        KullaniciAdi   = reader["KullaniciAdi"].ToString() ?? string.Empty,
+                        BirimId        = reader["BirimId"] != DBNull.Value ? (int?)reader["BirimId"] : null,
                         KullaniciDurum = Convert.ToBoolean(reader["KullaniciDurum"]),
-                        AdminMi       = reader["AdminMi"] != DBNull.Value && Convert.ToBoolean(reader["AdminMi"])
+                        Rol            = reader["Rol"] != DBNull.Value ? Convert.ToInt32(reader["Rol"]) : 2,
+                        ServisId       = reader["ServisId"] != DBNull.Value ? (int?)reader["ServisId"] : null
                     };
                 }
             }

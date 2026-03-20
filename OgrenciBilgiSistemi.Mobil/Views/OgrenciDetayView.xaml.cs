@@ -69,7 +69,7 @@ namespace OgrenciBilgiSistemi.Mobil.Views
                     vm.OgrenciData.OgrenciAdSoyad = details.ContainsKey("OgrenciAdSoyad") ? details["OgrenciAdSoyad"] : "Bilinmiyor";
 
                     string imgName = details.ContainsKey("OgrenciGorsel") ? details["OgrenciGorsel"] : "user_icon.png";
-                    vm.OgrenciData.OgrenciGorsel = "students/" + imgName.ToLower().Trim();
+                    vm.OgrenciData.OgrenciGorsel = Constants.GorselUrl(imgName);
                     this.BindingContext = vm;
 
                     LblClass.Text         = details.ContainsKey("BirimAd")         ? details["BirimAd"]         : "-";

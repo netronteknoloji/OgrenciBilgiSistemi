@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using OgrenciBilgiSistemi.Api.Services;
 using System.Text;
@@ -50,10 +51,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             IssuerSigningKey         = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey!))
         };
     });
-// AdminOnly policy: adminMi claim'i "true" olan kullanıcılar
+// AdminOnly policy: rol claim'i "Admin" olan kullanıcılar
 builder.Services.AddAuthorization(opts =>
 {
-    opts.AddPolicy("AdminOnly", p => p.RequireClaim("adminMi", "true"));
+    opts.AddPolicy("AdminOnly", p => p.RequireClaim("rol", "Admin"));
 });
 
 // --------------------
@@ -65,6 +66,7 @@ builder.Services.AddScoped<SinifService>();
 builder.Services.AddScoped<OgrenciService>();
 builder.Services.AddScoped<BirimService>();
 builder.Services.AddScoped<GecisKayitService>();
+builder.Services.AddScoped<ServisService>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -78,6 +80,17 @@ app.UseCors("ConfiguredOrigins");
 
 app.UseSwagger();
 app.UseSwaggerUI();
+
+// MVC projesinin wwwroot/uploads klasörünü /uploads altında sun
+var mvcWwwRoot = Path.Combine(app.Environment.ContentRootPath, "..", "OgrenciBilgiSistemi", "wwwroot");
+if (Directory.Exists(mvcWwwRoot))
+{
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        FileProvider = new PhysicalFileProvider(Path.GetFullPath(mvcWwwRoot)),
+        RequestPath = ""
+    });
+}
 
 // Kimlik doğrulama ve yetkilendirme middleware'i
 app.UseAuthentication();

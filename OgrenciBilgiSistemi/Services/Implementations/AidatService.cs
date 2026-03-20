@@ -398,30 +398,34 @@ namespace OgrenciBilgiSistemi.Services.Implementations
 
         public async Task<bool> OdemeSilAsync(int ogrenciAidatOdemeId, CancellationToken ct = default)
         {
-            await using var tx = await _db.Database.BeginTransactionAsync(ct);
+            var strategy = _db.Database.CreateExecutionStrategy();
+            return await strategy.ExecuteAsync(async () =>
+            {
+                await using var tx = await _db.Database.BeginTransactionAsync(ct);
 
-            var ent = await _db.OgrenciAidatOdemeler
-                .Include(p => p.OgrenciAidat)
-                .FirstOrDefaultAsync(p => p.OgrenciAidatOdemeId == ogrenciAidatOdemeId, ct);
+                var ent = await _db.OgrenciAidatOdemeler
+                    .Include(p => p.OgrenciAidat)
+                    .FirstOrDefaultAsync(p => p.OgrenciAidatOdemeId == ogrenciAidatOdemeId, ct);
 
-            if (ent is null)
-                return false;
+                if (ent is null)
+                    return false;
 
-            var aidat = ent.OgrenciAidat;
-            aidat.Odenen = decimal.Round(Math.Max(0m, aidat.Odenen - ent.Tutar), 2, MidpointRounding.AwayFromZero);
-            _db.OgrenciAidatOdemeler.Remove(ent);
-            await _db.SaveChangesAsync(ct);
+                var aidat = ent.OgrenciAidat;
+                aidat.Odenen = decimal.Round(Math.Max(0m, aidat.Odenen - ent.Tutar), 2, MidpointRounding.AwayFromZero);
+                _db.OgrenciAidatOdemeler.Remove(ent);
+                await _db.SaveChangesAsync(ct);
 
-            aidat.SonOdemeTarihi = await _db.OgrenciAidatOdemeler
-                .Where(x => x.OgrenciAidatId == aidat.OgrenciAidatId)
-                .OrderByDescending(x => x.OdemeTarihi)
-                .Select(x => (DateTime?)x.OdemeTarihi)
-                .FirstOrDefaultAsync(ct);
+                aidat.SonOdemeTarihi = await _db.OgrenciAidatOdemeler
+                    .Where(x => x.OgrenciAidatId == aidat.OgrenciAidatId)
+                    .OrderByDescending(x => x.OdemeTarihi)
+                    .Select(x => (DateTime?)x.OdemeTarihi)
+                    .FirstOrDefaultAsync(ct);
 
-            await _db.SaveChangesAsync(ct);
-            await tx.CommitAsync(ct);
+                await _db.SaveChangesAsync(ct);
+                await tx.CommitAsync(ct);
 
-            return true;
+                return true;
+            });
         }
 
         // ---------------------- Muafiyet İşlemleri ----------------------

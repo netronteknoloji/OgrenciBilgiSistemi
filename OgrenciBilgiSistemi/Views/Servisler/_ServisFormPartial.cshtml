@@ -1,0 +1,100 @@
+@model OgrenciBilgiSistemi.Models.ServisModel
+@using Microsoft.AspNetCore.Mvc.Rendering
+
+@{
+    var action = (ViewData["Action"] as string) ?? "Ekle";
+    var submitText = (ViewData["SubmitText"] as string) ?? "Kaydet";
+    var includeId = (bool?)ViewData["IncludeId"] ?? false;
+
+    var kullanicilar = ViewBag.Kullanicilar as List<SelectListItem> ?? new List<SelectListItem>();
+
+    var formId = "servisForm";
+    var submitBtnId = "submitBtn";
+}
+
+<div class="viewport-scroller">
+    <div class="fixed-canvas">
+        <div class="container py-4">
+            <div class="row justify-content-center">
+                <div class="col-lg-6 col-xxl-5">
+                    <div class="card rounded-3 border">
+                        <div class="card-header bg-primary text-white text-center">
+                            <h4 class="fw-bold mb-0">
+                                @(action == "Ekle" ? "Servis Ekle" : "Servis Güncelle")
+                            </h4>
+                        </div>
+
+                        <div class="card-body p-4">
+                            <form method="post" asp-action="@action" id="@formId" autocomplete="off">
+                                @Html.AntiForgeryToken()
+
+                                @if (includeId)
+                                {
+                                    <input type="hidden" asp-for="ServisId" />
+                                }
+
+                                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                                <!-- Plaka -->
+                                <div class="mb-3">
+                                    <label asp-for="Plaka" class="form-label fw-semibold">Plaka</label>
+                                    <input asp-for="Plaka"
+                                           class="form-control"
+                                           required
+                                           placeholder="34 ABC 123" />
+                                    <span asp-validation-for="Plaka" class="text-danger"></span>
+                                </div>
+
+                                <!-- Şoför (Kullanıcı) -->
+                                <div class="mb-3">
+                                    <label asp-for="KullaniciId" class="form-label fw-semibold">Şoför</label>
+                                    <select asp-for="KullaniciId" class="form-select" asp-items="kullanicilar">
+                                        <option value="">-- Şoför Seçiniz --</option>
+                                    </select>
+                                    <span asp-validation-for="KullaniciId" class="text-danger"></span>
+                                </div>
+
+                                <!-- Durum -->
+                                <div class="mb-3">
+                                    <label asp-for="ServisDurum" class="form-label fw-semibold">Durum</label>
+                                    <select asp-for="ServisDurum" class="form-select">
+                                        <option value="true">Aktif</option>
+                                        <option value="false">Pasif</option>
+                                    </select>
+                                    <span asp-validation-for="ServisDurum" class="text-danger"></span>
+                                </div>
+
+                                <!-- Butonlar -->
+                                <div class="d-flex justify-content-between gap-2">
+                                    <a asp-action="Index" class="btn btn-outline-secondary">
+                                        <i class="bi bi-arrow-left"></i> Geri Dön
+                                    </a>
+                                    <button type="submit" class="btn btn-primary fw-bold" id="@submitBtnId">
+                                        <i class="bi bi-save"></i> @submitText
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const form = document.getElementById('@formId');
+            const btn  = document.getElementById('@submitBtnId');
+            if (!form || !btn) return;
+
+            form.addEventListener('submit', function () {
+                if (form.checkValidity()) {
+                    btn.disabled = true;
+                    btn.textContent = '@(submitText.EndsWith("e") ? submitText + "iliyor..." : submitText + "iyor...")';
+                }
+            });
+        })();
+    </script>
+}

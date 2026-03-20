@@ -177,9 +177,6 @@ namespace OgrenciBilgiSistemi.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("KullaniciId"));
 
-                    b.Property<bool>("AdminMi")
-                        .HasColumnType("bit");
-
                     b.Property<bool>("BeniHatirla")
                         .HasColumnType("bit");
 
@@ -192,6 +189,9 @@ namespace OgrenciBilgiSistemi.Migrations
 
                     b.Property<bool>("KullaniciDurum")
                         .HasColumnType("bit");
+
+                    b.Property<int>("Rol")
+                        .HasColumnType("int");
 
                     b.Property<string>("Sifre")
                         .IsRequired()

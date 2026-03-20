@@ -40,71 +40,61 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             var dayStart = now.Date;
             var dayEnd = dayStart.AddDays(1);
 
-            await using var tx = await _db.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
-
-            bool nextIsEntry;
-            if (!string.IsNullOrEmpty(gecisTipi))
+            var strategy = _db.Database.CreateExecutionStrategy();
+            return await strategy.ExecuteAsync(async () =>
             {
-                nextIsEntry = string.Equals(gecisTipi, "Giriş", StringComparison.OrdinalIgnoreCase);
-            }
-            else
-            {
-                // Bugün bu istasyondaki son kaydı COALESCE(GTarih, CTarih) ile bul
-                var last = await _db.OgrenciDetaylar
-                    .Where(x => x.OgrenciId == ogrenciId
-                                && x.IstasyonTipi == istasyon
-                                && (
-                                    (x.OgrenciGTarih >= dayStart && x.OgrenciGTarih < dayEnd)
-                                    || (x.OgrenciCTarih >= dayStart && x.OgrenciCTarih < dayEnd)
-                                ))
-                    .OrderByDescending(x => x.OgrenciGTarih ?? x.OgrenciCTarih)
-                    .FirstOrDefaultAsync(ct);
+                await using var tx = await _db.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
 
-                if (last is null)
+                bool nextIsEntry;
+                if (!string.IsNullOrEmpty(gecisTipi))
                 {
-                    nextIsEntry = true; // bugün ilk kayıt => giriş
+                    nextIsEntry = string.Equals(gecisTipi, "Giriş", StringComparison.OrdinalIgnoreCase);
                 }
                 else
                 {
-                    // Son kayıt "açık giriş" ise şimdi çıkış, değilse giriş
-                    var lastWasOpenEntry = last.OgrenciGTarih.HasValue && !last.OgrenciCTarih.HasValue;
-                    nextIsEntry = !lastWasOpenEntry;
+                    // Bugün bu istasyondaki son kaydı COALESCE(GTarih, CTarih) ile bul
+                    var last = await _db.OgrenciDetaylar
+                        .Where(x => x.OgrenciId == ogrenciId
+                                    && x.IstasyonTipi == istasyon
+                                    && (
+                                        (x.OgrenciGTarih >= dayStart && x.OgrenciGTarih < dayEnd)
+                                        || (x.OgrenciCTarih >= dayStart && x.OgrenciCTarih < dayEnd)
+                                    ))
+                        .OrderByDescending(x => x.OgrenciGTarih ?? x.OgrenciCTarih)
+                        .FirstOrDefaultAsync(ct);
+
+                    if (last is null)
+                    {
+                        nextIsEntry = true; // bugün ilk kayıt => giriş
+                    }
+                    else
+                    {
+                        // Son kayıt "açık giriş" ise şimdi çıkış, değilse giriş
+                        var lastWasOpenEntry = last.OgrenciGTarih.HasValue && !last.OgrenciCTarih.HasValue;
+                        nextIsEntry = !lastWasOpenEntry;
+                    }
                 }
-            }
 
-            // DB'ye BÜYÜK, sonuç objesine normal yaz
-            var gecisTipiDb = nextIsEntry ? "GİRİŞ" : "ÇIKIŞ";   // <-- DB'ye böyle kaydedilecek
-            var gecisTipiResult = nextIsEntry ? "Giriş" : "Çıkış";   // <-- Geri dönüş/ekranda kullanım
+                // DB'ye BÜYÜK, sonuç objesine normal yaz
+                var gecisTipiDb = nextIsEntry ? "GİRİŞ" : "ÇIKIŞ";   // <-- DB'ye böyle kaydedilecek
+                var gecisTipiResult = nextIsEntry ? "Giriş" : "Çıkış";   // <-- Geri dönüş/ekranda kullanım
 
-            var log = new OgrenciDetayModel
-            {
-                OgrenciId = ogrenciId,
-                IstasyonTipi = istasyon,
-                CihazId = cihazId,
-                OgrenciGecisTipi = gecisTipiDb,
-                OgrenciGTarih = nextIsEntry ? now : null,
-                OgrenciCTarih = nextIsEntry ? null : now
-            };
+                var log = new OgrenciDetayModel
+                {
+                    OgrenciId = ogrenciId,
+                    IstasyonTipi = istasyon,
+                    CihazId = cihazId,
+                    OgrenciGecisTipi = gecisTipiDb,
+                    OgrenciGTarih = nextIsEntry ? now : null,
+                    OgrenciCTarih = nextIsEntry ? null : now
+                };
 
-            _db.OgrenciDetaylar.Add(log);
+                _db.OgrenciDetaylar.Add(log);
 
-            try
-            {
                 await _db.SaveChangesAsync(ct);
                 await tx.CommitAsync(ct);
                 return new GecisKayitSonucu(gecisTipiResult, now);
-            }
-            catch (DbUpdateException ex)
-            {
-                await tx.RollbackAsync(ct);
-                _logger.LogError(ex, "Geçiş kaydı sırasında DbUpdateException.");
-                throw;
-            }
-            catch
-            {
-                await tx.RollbackAsync(ct);
-                throw;
-            }
+            });
         }
     }
 }

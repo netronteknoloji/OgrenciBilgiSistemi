@@ -54,8 +54,11 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             model.OgrenciAdSoyad = (model.OgrenciAdSoyad ?? string.Empty).ToUpper(_tr);
             model.OgrenciKartNo = NormalizeKartNo(model.OgrenciKartNo);
 
-            await using (var tx = await _db.Database.BeginTransactionAsync(ct))
+            var strategy = _db.Database.CreateExecutionStrategy();
+            await strategy.ExecuteAsync(async () =>
             {
+                await using var tx = await _db.Database.BeginTransactionAsync(ct);
+
                 if (gorsel is not null)
                 {
                     model.OgrenciGorsel = await _files.SaveImageAsync(gorsel, existingPath: null, ct);
@@ -68,15 +71,18 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 await _yemekhane.SetBuAyAsync(model.OgrenciId, buAyYemekhaneAktif, ct: ct);
 
                 await tx.CommitAsync(ct);
-            }
+            });
 
             return model.OgrenciId;
         }
 
         public async Task GuncelleAsync(OgrenciModel model, IFormFile? gorsel, bool? buAyYemekhaneAktif, CancellationToken ct = default)
         {
-            await using (var tx = await _db.Database.BeginTransactionAsync(ct))
+            var strategy = _db.Database.CreateExecutionStrategy();
+            await strategy.ExecuteAsync(async () =>
             {
+                await using var tx = await _db.Database.BeginTransactionAsync(ct);
+
                 var ent = await _db.Ogrenciler.FindAsync(new object[] { model.OgrenciId }, ct)
                           ?? throw new KeyNotFoundException("Öğrenci yok");
 
@@ -88,7 +94,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 ent.OgrenciDurum = model.OgrenciDurum;
                 ent.OgrenciCikisDurumu = model.OgrenciCikisDurumu;
                 ent.OgrenciVeliId = model.OgrenciVeliId;
-
+                ent.ServisId = model.ServisId;
 
                 if (gorsel is not null)
                 {
@@ -103,7 +109,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 }
 
                 await tx.CommitAsync(ct);
-            }
+            });
 
             if (buAyYemekhaneAktif.HasValue)
             {
@@ -134,8 +140,11 @@ namespace OgrenciBilgiSistemi.Services.Implementations
 
         public async Task SilAsync(int ogrenciId, CancellationToken ct = default)
         {
-            await using (var tx = await _db.Database.BeginTransactionAsync(ct))
+            var strategy = _db.Database.CreateExecutionStrategy();
+            await strategy.ExecuteAsync(async () =>
             {
+                await using var tx = await _db.Database.BeginTransactionAsync(ct);
+
                 var ent = await _db.Ogrenciler.FindAsync(new object[] { ogrenciId }, ct);
                 if (ent == null)
                 {
@@ -147,7 +156,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 await _db.SaveChangesAsync(ct);
 
                 await tx.CommitAsync(ct);
-            }
+            });
         }
 
         public async Task<bool> CihazaGonderAsync(int cihazId, CancellationToken ct = default)

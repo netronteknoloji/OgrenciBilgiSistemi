@@ -36,7 +36,10 @@ namespace OgrenciBilgiSistemi.Mobil.Services
             {
                 // API Ucu: GET api/ogrenciler/class/{sinifId}
                 var response = await _httpClient.GetFromJsonAsync<List<Ogrenci>>($"{BaseUrl}ogrenciler/class/{sinifId}");
-                return response ?? new List<Ogrenci>();
+                var list = response ?? new List<Ogrenci>();
+                foreach (var o in list)
+                    o.OgrenciGorsel = Constants.GorselUrl(o.OgrenciGorsel);
+                return list;
             }
             catch (Exception ex)
             {

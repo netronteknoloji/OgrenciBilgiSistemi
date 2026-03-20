@@ -16,4 +16,8 @@
     <ShellContent
         ContentTemplate="{DataTemplate views:SinifListeView}"
         Route="SinifListeView" />
+
+    <ShellContent
+        ContentTemplate="{DataTemplate views:ServisEkraniView}"
+        Route="ServisEkraniView" />
 </Shell>

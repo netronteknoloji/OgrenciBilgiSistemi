@@ -66,20 +66,19 @@
                                     <span asp-validation-for="KullaniciDurum" class="text-danger"></span>
                                 </div>
 
-                                <!-- Admin Mi? -->
+                                <!-- Rol -->
                                 <div class="mb-3">
-                                    <label asp-for="AdminMi" class="form-label fw-semibold">Admin Mi?</label>
-                                    <select asp-for="AdminMi" class="form-select">
-                                        <option value="true">Evet</option>
-                                        <option value="false">Hayır</option>
+                                    <label asp-for="Rol" class="form-label fw-semibold">Rol</label>
+                                    <select asp-for="Rol" class="form-select"
+                                            asp-items="Html.GetEnumSelectList<OgrenciBilgiSistemi.Models.KullaniciRolu>()">
                                     </select>
-                                    <span asp-validation-for="AdminMi" class="text-danger"></span>
+                                    <span asp-validation-for="Rol" class="text-danger"></span>
                                 </div>
 
                                 <!-- Birim -->
                                 <div class="mb-4">
                                     <label asp-for="BirimId" class="form-label fw-semibold">Birimi</label>
-                                    <select asp-for="BirimId" class="form-select" asp-items="birimler" required>
+                                    <select asp-for="BirimId" class="form-select" asp-items="birimler">
                                         <option value="">-- Seçiniz --</option>
                                     </select>
                                     <span asp-validation-for="BirimId" class="text-danger"></span>

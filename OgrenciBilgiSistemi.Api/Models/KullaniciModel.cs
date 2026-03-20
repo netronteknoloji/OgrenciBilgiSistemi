@@ -4,8 +4,9 @@ namespace OgrenciBilgiSistemi.Api.Models
     {
         public int KullaniciId { get; set; }
         public string KullaniciAdi { get; set; } = string.Empty;
-        public bool AdminMi { get; set; }
+        public int Rol { get; set; }
         public bool KullaniciDurum { get; set; }
         public int? BirimId { get; set; }
+        public int? ServisId { get; set; }
     }
 }

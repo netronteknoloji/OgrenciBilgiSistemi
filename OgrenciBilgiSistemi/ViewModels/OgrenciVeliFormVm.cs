@@ -14,6 +14,7 @@ namespace OgrenciBilgiSistemi.ViewModels
         // DropDown listeler
         public List<SelectListItem> Personeller { get; set; } = new();
         public List<SelectListItem> Birimler { get; set; } = new();
+        public List<SelectListItem> Servisler { get; set; } = new();
 
         // Form davranışı
         public string Action { get; set; } = "Ekle";

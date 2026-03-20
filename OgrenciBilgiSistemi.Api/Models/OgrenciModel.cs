@@ -13,5 +13,6 @@ namespace OgrenciBilgiSistemi.Api.Models
         public int? PersonelId { get; set; }
         public int? OgrenciVeliId { get; set; }
         public int? ServisId { get; set; }
+        public string? SinifAdi { get; set; }
     }
 }

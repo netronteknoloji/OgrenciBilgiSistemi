@@ -105,6 +105,17 @@ namespace OgrenciBilgiSistemi.Controllers
                 filtre: BirimFiltre.Aktif,
                 ct: ct);
 
+            var servisler = await _context.Servisler
+                .AsNoTracking()
+                .Where(s => s.ServisDurum)
+                .OrderBy(s => s.Plaka)
+                .Select(s => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem
+                {
+                    Value = s.ServisId.ToString(),
+                    Text = s.Plaka
+                })
+                .ToListAsync(ct);
+
             return new OgrenciVeliFormVm
             {
                 Ogrenci = ogrenci ?? new OgrenciModel(),
@@ -112,6 +123,7 @@ namespace OgrenciBilgiSistemi.Controllers
                 BuAyYemekhaneAktif = buAyYemekhaneAktif ?? true,
                 Personeller = personeller,
                 Birimler = birimler,
+                Servisler = servisler,
                 Action = action,
                 SubmitText = submitText,
                 IncludeId = includeId

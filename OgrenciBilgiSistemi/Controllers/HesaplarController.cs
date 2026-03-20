@@ -61,8 +61,7 @@ namespace OgrenciBilgiSistemi.Controllers
                 new Claim("sub", user.KullaniciId.ToString())
             };
 
-            if (user.AdminMi)
-                claims.Add(new Claim(ClaimTypes.Role, "Admin"));
+            claims.Add(new Claim(ClaimTypes.Role, user.Rol.ToString()));
 
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
 

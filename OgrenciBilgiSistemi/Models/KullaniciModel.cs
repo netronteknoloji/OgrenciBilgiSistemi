@@ -19,7 +19,10 @@ namespace OgrenciBilgiSistemi.Models
         public string Sifre { get; set; } = string.Empty;
 
         public bool BeniHatirla { get; set; } = true;
-        public bool AdminMi { get; set; } = false;
+
+        [Display(Name = "Rol")]
+        public KullaniciRolu Rol { get; set; } = KullaniciRolu.Ogretmen;
+
         public bool KullaniciDurum { get; set; } = true;
 
         public int? BirimId { get; set; }

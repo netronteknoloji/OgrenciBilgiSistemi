@@ -148,7 +148,7 @@ namespace OgrenciBilgiSistemi.Controllers
                 }
 
                 kullanici.KullaniciAdi = model.KullaniciAdi;
-                kullanici.AdminMi = model.AdminMi;
+                kullanici.Rol = model.Rol;
                 kullanici.KullaniciDurum = model.KullaniciDurum;
                 kullanici.BirimId = model.BirimId;
 
@@ -242,36 +242,40 @@ namespace OgrenciBilgiSistemi.Controllers
             var toRemove = current.Except(desired).ToList();
             var toAdd = desired.Except(current).ToList();
 
-            using var tx = await _context.Database.BeginTransactionAsync(HttpContext.RequestAborted);
+            var strategy = _context.Database.CreateExecutionStrategy();
             try
             {
-                if (toRemove.Count > 0)
+                await strategy.ExecuteAsync(async () =>
                 {
-                    var removeEntities = user.KullaniciMenuler
-                        .Where(km => toRemove.Contains(km.MenuOgeId))
-                        .ToList();
-                    foreach (var rem in removeEntities)
-                        user.KullaniciMenuler.Remove(rem);
-                }
+                    using var tx = await _context.Database.BeginTransactionAsync(HttpContext.RequestAborted);
 
-                foreach (var mid in toAdd)
-                {
-                    user.KullaniciMenuler.Add(new KullaniciMenuModel
+                    if (toRemove.Count > 0)
                     {
-                        KullaniciId = user.KullaniciId,
-                        MenuOgeId = mid
-                    });
-                }
+                        var removeEntities = user.KullaniciMenuler
+                            .Where(km => toRemove.Contains(km.MenuOgeId))
+                            .ToList();
+                        foreach (var rem in removeEntities)
+                            user.KullaniciMenuler.Remove(rem);
+                    }
 
-                await _context.SaveChangesAsync();
-                await tx.CommitAsync(HttpContext.RequestAborted);
+                    foreach (var mid in toAdd)
+                    {
+                        user.KullaniciMenuler.Add(new KullaniciMenuModel
+                        {
+                            KullaniciId = user.KullaniciId,
+                            MenuOgeId = mid
+                        });
+                    }
+
+                    await _context.SaveChangesAsync();
+                    await tx.CommitAsync(HttpContext.RequestAborted);
+                });
 
                 TempData["OkMessage"] = "Yetkiler güncellendi.";
                 return RedirectToAction(nameof(YetkiGuncelle), new { id = user.KullaniciId });
             }
             catch (Exception ex)
             {
-                await tx.RollbackAsync();
                 _logger.LogError(ex, "Yetki güncellenirken hata oluştu.");
                 TempData["ErrMessage"] = "Yetkiler güncellenirken bir hata oluştu.";
                 return RedirectToAction(nameof(YetkiGuncelle), new { id = user.KullaniciId });
