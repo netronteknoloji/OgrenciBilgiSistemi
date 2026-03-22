@@ -4,7 +4,7 @@ namespace OgrenciBilgiSistemi.Api.Models
     {
         public int SinifYoklamaId { get; set; }
         public int OgrenciId { get; set; }
-        public int PersonelId { get; set; }
+        public int KullaniciId { get; set; }
         public int? Ders1 { get; set; }
         public int? Ders2 { get; set; }
         public int? Ders3 { get; set; }

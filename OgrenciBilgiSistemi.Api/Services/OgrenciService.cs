@@ -66,7 +66,7 @@ namespace OgrenciBilgiSistemi.Api.Services
                            O.BirimId, O.ServisId, B.BirimAd AS SinifAdi
                     FROM Ogrenciler O
                     LEFT JOIN Birimler B ON O.BirimId = B.BirimId
-                    WHERE O.OgrenciVeliId = @veliId AND O.OgrenciDurum = 1";
+                    WHERE O.VeliId = @veliId AND O.OgrenciDurum = 1";
 
                 await using var cmd = new SqlCommand(query, conn);
                 cmd.Parameters.AddWithValue("@veliId", veliId);
@@ -101,7 +101,7 @@ namespace OgrenciBilgiSistemi.Api.Services
             {
                 await using var conn = new SqlConnection(_connectionString);
                 const string query = @"
-                    SELECT OgrenciId, OgrenciAdSoyad, OgrenciGorsel, BirimId, OgrenciVeliId
+                    SELECT OgrenciId, OgrenciAdSoyad, OgrenciGorsel, BirimId, VeliId
                     FROM Ogrenciler
                     WHERE OgrenciId = @ogrenciId AND OgrenciDurum = 1";
 
@@ -118,7 +118,7 @@ namespace OgrenciBilgiSistemi.Api.Services
                         OgrenciAdSoyad = reader["OgrenciAdSoyad"]?.ToString() ?? string.Empty,
                         OgrenciGorsel  = reader["OgrenciGorsel"]?.ToString(),
                         BirimId        = reader["BirimId"]       as int?,
-                        OgrenciVeliId  = reader["OgrenciVeliId"] as int?
+                        VeliId         = reader["VeliId"] as int?
                     };
                 }
             }
@@ -187,15 +187,15 @@ namespace OgrenciBilgiSistemi.Api.Services
                     WHEN MATCHED THEN
                         UPDATE SET {dersKolonu} = @durumId, GuncellenmeTarihi = GETDATE()
                     WHEN NOT MATCHED THEN
-                        INSERT (OgrenciId, PersonelId, {dersKolonu}, OlusturulmaTarihi)
-                        VALUES (@ogrenciId, @personelId, @durumId, GETDATE());";
+                        INSERT (OgrenciId, KullaniciId, {dersKolonu}, OlusturulmaTarihi)
+                        VALUES (@ogrenciId, @kullaniciId, @durumId, GETDATE());";
 
                 foreach (var kayit in yoklamaVerisi)
                 {
                     await using var cmd = new SqlCommand(query, conn, transaction);
                     cmd.Parameters.AddWithValue("@ogrenciId", kayit.OgrenciId);
                     cmd.Parameters.AddWithValue("@durumId",   kayit.DurumId);
-                    cmd.Parameters.AddWithValue("@personelId", ogretmenId);
+                    cmd.Parameters.AddWithValue("@kullaniciId", ogretmenId);
                     await cmd.ExecuteNonQueryAsync();
                 }
 
@@ -219,11 +219,11 @@ namespace OgrenciBilgiSistemi.Api.Services
                         s.OgrenciAdSoyad, s.OgrenciNo, s.OgrenciKartNo, s.OgrenciGorsel,
                         u.BirimAd,
                         p.VeliAdSoyad, p.VeliTelefon, p.VeliEmail, p.VeliMeslek, p.VeliIsYeri, p.VeliAdres,
-                        t.PersonelAdSoyad AS OgretmenAdSoyad, srv.Plaka
+                        t.KullaniciAdi AS OgretmenAdSoyad, srv.Plaka
                     FROM Ogrenciler s
                     LEFT JOIN Birimler          u   ON s.BirimId        = u.BirimId
-                    LEFT JOIN OgrenciVeliler    p   ON s.OgrenciVeliId  = p.OgrenciVeliId
-                    LEFT JOIN Personeller       t   ON s.PersonelId     = t.PersonelId
+                    LEFT JOIN OgrenciVeliler    p   ON s.VeliId         = p.OgrenciVeliId
+                    LEFT JOIN Kullanicilar      t   ON s.OgretmenId     = t.KullaniciId
                     LEFT JOIN Servisler         srv ON s.ServisId       = srv.ServisId
                     WHERE s.OgrenciId = @ogrenciId";
 
@@ -268,11 +268,11 @@ namespace OgrenciBilgiSistemi.Api.Services
             const string query = @"
                 INSERT INTO Ogrenciler
                     (OgrenciAdSoyad, OgrenciNo, OgrenciKartNo, OgrenciCikisDurumu,
-                     OgrenciDurum, BirimId, PersonelId, OgrenciVeliId, OgrenciGorsel)
+                     OgrenciDurum, BirimId, OgretmenId, VeliId, OgrenciGorsel)
                 OUTPUT INSERTED.OgrenciId
                 VALUES
                     (@adSoyad, @no, @kartNo, @cikisDurumu,
-                     1, @birimId, @personelId, @veliId, @gorsel)";
+                     1, @birimId, @ogretmenId, @veliId, @gorsel)";
 
             try
             {
@@ -284,8 +284,8 @@ namespace OgrenciBilgiSistemi.Api.Services
                 cmd.Parameters.AddWithValue("@kartNo",       (object?)dto.OgrenciKartNo ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@cikisDurumu",  dto.OgrenciCikisDurumu);
                 cmd.Parameters.AddWithValue("@birimId",      (object?)dto.BirimId    ?? DBNull.Value);
-                cmd.Parameters.AddWithValue("@personelId",   (object?)dto.PersonelId ?? DBNull.Value);
-                cmd.Parameters.AddWithValue("@veliId",       (object?)dto.OgrenciVeliId ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@ogretmenId",   (object?)dto.OgretmenId ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@veliId",       (object?)dto.VeliId ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@gorsel",       (object?)dto.OgrenciGorsel ?? DBNull.Value);
 
                 await conn.OpenAsync();
@@ -311,8 +311,8 @@ namespace OgrenciBilgiSistemi.Api.Services
                     OgrenciCikisDurumu = @cikisDurumu,
                     OgrenciDurum     = @durum,
                     BirimId          = @birimId,
-                    PersonelId       = @personelId,
-                    OgrenciVeliId    = @veliId,
+                    OgretmenId       = @ogretmenId,
+                    VeliId           = @veliId,
                     OgrenciGorsel    = @gorsel
                 WHERE OgrenciId = @id";
 
@@ -328,8 +328,8 @@ namespace OgrenciBilgiSistemi.Api.Services
                 cmd.Parameters.AddWithValue("@cikisDurumu",  dto.OgrenciCikisDurumu);
                 cmd.Parameters.AddWithValue("@durum",        dto.OgrenciDurum);
                 cmd.Parameters.AddWithValue("@birimId",      (object?)dto.BirimId    ?? DBNull.Value);
-                cmd.Parameters.AddWithValue("@personelId",   (object?)dto.PersonelId ?? DBNull.Value);
-                cmd.Parameters.AddWithValue("@veliId",       (object?)dto.OgrenciVeliId ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@ogretmenId",   (object?)dto.OgretmenId ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@veliId",       (object?)dto.VeliId ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@gorsel",       (object?)dto.OgrenciGorsel ?? DBNull.Value);
 
                 await conn.OpenAsync();
@@ -374,7 +374,7 @@ namespace OgrenciBilgiSistemi.Api.Services
                 await using var conn = new SqlConnection(_connectionString);
                 const string query = @"
                     SELECT
-                        SinifYoklamaId, OgrenciId, PersonelId,
+                        SinifYoklamaId, OgrenciId, KullaniciId,
                         Ders1, Ders2, Ders3, Ders4, Ders5, Ders6, Ders7, Ders8,
                         OlusturulmaTarihi
                     FROM SinifYoklama
@@ -396,7 +396,7 @@ namespace OgrenciBilgiSistemi.Api.Services
                     {
                         SinifYoklamaId    = (int)reader["SinifYoklamaId"],
                         OgrenciId         = (int)reader["OgrenciId"],
-                        PersonelId        = (int)reader["PersonelId"],
+                        KullaniciId       = (int)reader["KullaniciId"],
                         Ders1             = reader["Ders1"] as int?,
                         Ders2             = reader["Ders2"] as int?,
                         Ders3             = reader["Ders3"] as int?,

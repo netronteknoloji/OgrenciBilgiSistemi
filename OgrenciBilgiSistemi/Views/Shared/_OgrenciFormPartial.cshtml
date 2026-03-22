@@ -12,10 +12,11 @@
 
     var includeId = Model.IncludeId;
 
-    var personeller = Model.Personeller ?? new List<SelectListItem>();
+    var ogretmenler = Model.Ogretmenler ?? new List<SelectListItem>();
     var birimler = Model.Birimler ?? Enumerable.Empty<SelectListItem>();
     var servisler = Model.Servisler ?? new List<SelectListItem>();
     var veliKullanicilari = Model.VeliKullanicilari ?? new List<SelectListItem>();
+    var veliler = Model.Veliler ?? new List<SelectListItem>();
 }
 
 <div class="viewport-scroller">
@@ -107,11 +108,11 @@
 
                                                 <!-- Öğretmen -->
                                                 <div class="col-md-6">
-                                                    <label asp-for="Ogrenci.PersonelId" class="form-label fw-semibold">Öğretmen</label>
-                                                    <select asp-for="Ogrenci.PersonelId" class="form-select" asp-items="personeller">
+                                                    <label asp-for="Ogrenci.OgretmenId" class="form-label fw-semibold">Öğretmen</label>
+                                                    <select asp-for="Ogrenci.OgretmenId" class="form-select" asp-items="ogretmenler">
                                                         <option value="">-- Seçiniz --</option>
                                                     </select>
-                                                    <span asp-validation-for="Ogrenci.PersonelId" class="text-danger"></span>
+                                                    <span asp-validation-for="Ogrenci.OgretmenId" class="text-danger"></span>
                                                 </div>
 
                                                 <!-- Birim / Sınıf -->
@@ -160,8 +161,8 @@
                                             <div class="row g-3">
                                                 <!-- Veli Ad Soyad -->
                                                 <div class="col-md-12">
-                                                    <label asp-for="VeliKullaniciId" class="form-label fw-semibold">Veli Ad Soyad</label>
-                                                    <select asp-for="VeliKullaniciId" class="form-select" asp-items="veliKullanicilari" id="veliKullaniciSelect">
+                                                    <label asp-for="Ogrenci.VeliId" class="form-label fw-semibold">Veli Ad Soyad</label>
+                                                    <select asp-for="Ogrenci.VeliId" class="form-select" asp-items="veliler" id="veliSelect">
                                                         <option value="">-- Seçiniz --</option>
                                                     </select>
                                                 </div>

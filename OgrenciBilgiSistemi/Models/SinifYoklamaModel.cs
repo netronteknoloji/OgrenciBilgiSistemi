@@ -19,11 +19,11 @@ namespace OgrenciBilgiSistemi.Models
 
         [Required]
         [Display(Name = "Öğretmen")]
-        public int PersonelId { get; set; }
+        public int KullaniciId { get; set; }
 
-        [ForeignKey(nameof(PersonelId))]
+        [ForeignKey(nameof(KullaniciId))]
         [ValidateNever]
-        public virtual PersonelModel Personel { get; set; } = null!;
+        public virtual KullaniciModel Kullanici { get; set; } = null!;
 
         public int? Ders1 { get; set; }
         public int? Ders2 { get; set; }

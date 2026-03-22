@@ -64,7 +64,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
         public async Task<ZiyaretciModel?> GetByIdAsync(int id, CancellationToken ct = default)
         {
             return await _db.Ziyaretciler
-                .Include(z => z.Personel)
+                .Include(z => z.Kullanici)
                 .FirstOrDefaultAsync(z => z.ZiyaretciId == id, ct);
         }
 
@@ -76,7 +76,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             var k = kartNo.Trim();
 
             return await _db.Ziyaretciler
-                .Include(z => z.Personel)
+                .Include(z => z.Kullanici)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(z =>
                     z.KartNo == k &&
@@ -88,19 +88,19 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             int page,
             int pageSize,
             bool sadeceAktif = true,
-            int? personelId = null,
+            int? kullaniciId = null,
             CancellationToken ct = default)
         {
             var q = _db.Ziyaretciler
-                .Include(z => z.Personel)
+                .Include(z => z.Kullanici)
                 .AsNoTracking()
                 .AsQueryable();
 
             if (sadeceAktif)
                 q = q.Where(z => z.AktifMi);
 
-            if (personelId.HasValue)
-                q = q.Where(z => z.PersonelId == personelId.Value);
+            if (kullaniciId.HasValue)
+                q = q.Where(z => z.KullaniciId == kullaniciId.Value);
 
             if (!string.IsNullOrWhiteSpace(searchString))
             {
@@ -124,7 +124,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             CancellationToken ct = default)
         {
             var q = _db.Ziyaretciler
-                .Include(z => z.Personel)
+                .Include(z => z.Kullanici)
                 .AsNoTracking()
                 .AsQueryable();
 
@@ -166,8 +166,8 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 TcKimlikNo = ziyaretci.TcKimlikNo,
                 Telefon = ziyaretci.Telefon,
                 Adres = ziyaretci.Adres,
-                PersonelId = ziyaretci.PersonelId,
-                PersonelAdSoyad = ziyaretci.Personel?.PersonelAdSoyad,
+                KullaniciId = ziyaretci.KullaniciId,
+                KullaniciAdi = ziyaretci.Kullanici?.KullaniciAdi,
                 ZiyaretSebebi = ziyaretci.ZiyaretSebebi,
                 KartVerildiMi = ziyaretci.KartVerildiMi,
                 GirisZamani = ziyaretci.GirisZamani,
@@ -188,8 +188,8 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             DateTime? endDate)
         {
             var q = _db.Ziyaretciler
-                .Include(z => z.Personel)
-                    .ThenInclude(p => p!.Birim)
+                .Include(z => z.Kullanici)
+                    .ThenInclude(k => k!.Birim)
                 .AsNoTracking()
                 .AsQueryable();
 
@@ -241,10 +241,10 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                     Telefon = z.Telefon,
                     Adres = z.Adres,
 
-                    PersonelId = z.PersonelId,
-                    PersonelAdSoyad = z.Personel != null ? z.Personel.PersonelAdSoyad : null,
-                    BirimAd = z.Personel != null && z.Personel.Birim != null
-                        ? z.Personel.Birim.BirimAd
+                    KullaniciId = z.KullaniciId,
+                    KullaniciAdi = z.Kullanici != null ? z.Kullanici.KullaniciAdi : null,
+                    BirimAd = z.Kullanici != null && z.Kullanici.Birim != null
+                        ? z.Kullanici.Birim.BirimAd
                         : null,
 
                     ZiyaretSebebi = z.ZiyaretSebebi,
@@ -283,9 +283,9 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                     z.TcKimlikNo,
                     z.Telefon,
                     z.Adres,
-                    PersonelAdSoyad = z.Personel != null ? z.Personel.PersonelAdSoyad : null,
-                    BirimAd = z.Personel != null && z.Personel.Birim != null
-                        ? z.Personel.Birim.BirimAd
+                    KullaniciAdi = z.Kullanici != null ? z.Kullanici.KullaniciAdi : null,
+                    BirimAd = z.Kullanici != null && z.Kullanici.Birim != null
+                        ? z.Kullanici.Birim.BirimAd
                         : null,
                     z.ZiyaretSebebi,
                     z.KartNo,
@@ -322,7 +322,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 ws.Cell(row, 2).Value = x.TcKimlikNo;
                 ws.Cell(row, 3).Value = x.Telefon;
                 ws.Cell(row, 4).Value = x.Adres;
-                ws.Cell(row, 5).Value = x.PersonelAdSoyad;
+                ws.Cell(row, 5).Value = x.KullaniciAdi;
                 ws.Cell(row, 6).Value = x.BirimAd;
                 ws.Cell(row, 7).Value = x.ZiyaretSebebi;
                 ws.Cell(row, 8).Value = x.KartNo;

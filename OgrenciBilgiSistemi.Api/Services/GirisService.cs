@@ -29,10 +29,11 @@ namespace OgrenciBilgiSistemi.Api.Services
                     K.KullaniciDurum,
                     K.Rol,
                     K.Sifre,
-                    K.OgrenciVeliId,
+                    V.OgrenciVeliId,
                     S.ServisId
                 FROM Kullanicilar K
                 LEFT JOIN Servisler S ON S.KullaniciId = K.KullaniciId
+                LEFT JOIN OgrenciVeliler V ON V.KullaniciId = K.KullaniciId
                 WHERE K.KullaniciAdi = @kullaniciAdi
                   AND K.KullaniciDurum = 1";
 

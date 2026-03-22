@@ -79,7 +79,7 @@ namespace OgrenciBilgiSistemi.Api.Services
                     {
                         ServisId    = (int)reader["ServisId"],
                         Plaka       = reader["Plaka"]?.ToString() ?? string.Empty,
-                        KullaniciId = (int)reader["KullaniciId"]
+                        KullaniciId = reader["KullaniciId"] as int?
                     };
                 }
             }

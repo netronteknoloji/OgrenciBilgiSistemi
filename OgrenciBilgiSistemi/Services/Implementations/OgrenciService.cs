@@ -89,10 +89,10 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 ent.OgrenciNo = model.OgrenciNo;
                 ent.OgrenciKartNo = NormalizeKartNo(model.OgrenciKartNo);
                 ent.BirimId = model.BirimId;
-                ent.PersonelId = model.PersonelId;
+                ent.OgretmenId = model.OgretmenId;
                 ent.OgrenciDurum = model.OgrenciDurum;
                 ent.OgrenciCikisDurumu = model.OgrenciCikisDurumu;
-                ent.OgrenciVeliId = model.OgrenciVeliId;
+                ent.VeliId = model.VeliId;
                 ent.ServisId = model.ServisId;
 
                 if (gorsel is not null)
@@ -250,7 +250,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             var q = _db.Ogrenciler.AsQueryable();
 
             if (includeVeli)
-                q = q.Include(o => o.OgrenciVeli);
+                q = q.Include(o => o.Veli);
 
             return await q.AsNoTracking()
                           .FirstOrDefaultAsync(o => o.OgrenciId == id, ct);

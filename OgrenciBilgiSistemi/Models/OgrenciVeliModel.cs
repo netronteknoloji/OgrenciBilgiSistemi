@@ -42,6 +42,13 @@ namespace OgrenciBilgiSistemi.Models
         [Display(Name = "Durum (Aktif)")]
         public bool VeliDurum { get; set; } = true;
 
+        [Display(Name = "Kullanıcı Hesabı")]
+        public int? KullaniciId { get; set; }
+
+        [ForeignKey(nameof(KullaniciId))]
+        [ValidateNever]
+        public virtual KullaniciModel? Kullanici { get; set; }
+
         // Bir veli birden fazla öğrenciye atanabilir
         [ValidateNever]
         public virtual List<OgrenciModel> Ogrenciler { get; set; } = new();

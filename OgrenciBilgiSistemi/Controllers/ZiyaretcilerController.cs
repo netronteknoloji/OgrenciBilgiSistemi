@@ -9,30 +9,28 @@ namespace OgrenciBilgiSistemi.Controllers
     public class ZiyaretcilerController : Controller
     {
         private readonly IZiyaretciService _ziyaretciService;
-        private readonly IPersonelService _personelService;
+        private readonly IKullaniciService _kullaniciService;
         private readonly IBirimService _birimService;
         private readonly ILogger<ZiyaretcilerController> _logger;
 
         public ZiyaretcilerController(
             IZiyaretciService ziyaretciService,
-            IPersonelService personelService,
+            IKullaniciService kullaniciService,
             IBirimService birimService,
             ILogger<ZiyaretcilerController> logger)
         {
             _ziyaretciService = ziyaretciService;
-            _personelService = personelService;
+            _kullaniciService = kullaniciService;
             _birimService = birimService;
             _logger = logger;
         }
 
-        // Personel dropdown için ortak metot
-        private async Task<List<SelectListItem>> GetPersonelSelectListAsync(
+        // Kullanıcı dropdown için ortak metot
+        private async Task<List<SelectListItem>> GetKullaniciSelectListAsync(
             int? selectedId,
             CancellationToken ct)
         {
-            var list = await _personelService.GetSelectListAsync(
-                filtre: PersonelFiltre.Aktif,
-                ct: ct);
+            var list = await _kullaniciService.GetPersonellerSelectListAsync(ct);
 
             if (selectedId.HasValue)
             {
@@ -49,7 +47,7 @@ namespace OgrenciBilgiSistemi.Controllers
         // -----------------------------
         public async Task<IActionResult> Index(
             string? searchString,
-            int? personelId,
+            int? kullaniciId,
             bool sadeceAktif = true,
             int page = 1,
             int pageSize = 50,
@@ -60,14 +58,14 @@ namespace OgrenciBilgiSistemi.Controllers
                 page,
                 pageSize,
                 sadeceAktif,
-                personelId,
+                kullaniciId,
                 ct);
 
             ViewData["CurrentFilter"] = searchString;
             ViewData["SadeceAktif"] = sadeceAktif;
-            ViewData["PersonelId"] = personelId;
+            ViewData["KullaniciId"] = kullaniciId;
 
-            ViewBag.Personeller = await GetPersonelSelectListAsync(personelId, ct);
+            ViewBag.Kullanicilar = await GetKullaniciSelectListAsync(kullaniciId, ct);
 
             return View(model);
         }
@@ -78,7 +76,7 @@ namespace OgrenciBilgiSistemi.Controllers
             var vm = new ZiyaretciFormViewModel
             {
                 KartVerildiMi = false,
-                Personeller = await GetPersonelSelectListAsync(null, ct)
+                Kullanicilar = await GetKullaniciSelectListAsync(null, ct)
             };
 
             ViewData["Action"] = "Ekle";
@@ -94,7 +92,7 @@ namespace OgrenciBilgiSistemi.Controllers
         {
             if (!ModelState.IsValid)
             {
-                vm.Personeller = await GetPersonelSelectListAsync(vm.PersonelId, ct);
+                vm.Kullanicilar = await GetKullaniciSelectListAsync(vm.KullaniciId, ct);
                 ViewData["Action"] = "Ekle";
                 ViewData["SubmitText"] = "Kaydet";
                 return View(vm);
@@ -106,7 +104,7 @@ namespace OgrenciBilgiSistemi.Controllers
                 TcKimlikNo = vm.TcKimlikNo,
                 Telefon = vm.Telefon,
                 Adres = vm.Adres,
-                PersonelId = vm.PersonelId,
+                KullaniciId = vm.KullaniciId,
                 ZiyaretSebebi = vm.ZiyaretSebebi,
                 KartNo = vm.KartNo,
                 KartVerildiMi = vm.KartVerildiMi,
@@ -134,14 +132,14 @@ namespace OgrenciBilgiSistemi.Controllers
                 TcKimlikNo = z.TcKimlikNo,
                 Telefon = z.Telefon,
                 Adres = z.Adres,
-                PersonelId = z.PersonelId,
+                KullaniciId = z.KullaniciId,
                 ZiyaretSebebi = z.ZiyaretSebebi,
                 KartNo = z.KartNo,
                 KartVerildiMi = z.KartVerildiMi,
                 GirisZamani = z.GirisZamani,
                 CikisZamani = z.CikisZamani,
                 CihazId = z.CihazId,
-                Personeller = await GetPersonelSelectListAsync(z.PersonelId, ct)
+                Kullanicilar = await GetKullaniciSelectListAsync(z.KullaniciId, ct)
             };
 
             ViewData["Action"] = "Guncelle";
@@ -158,7 +156,7 @@ namespace OgrenciBilgiSistemi.Controllers
         {
             if (!ModelState.IsValid)
             {
-                vm.Personeller = await GetPersonelSelectListAsync(vm.PersonelId, ct);
+                vm.Kullanicilar = await GetKullaniciSelectListAsync(vm.KullaniciId, ct);
                 ViewData["Action"] = "Guncelle";
                 ViewData["SubmitText"] = "Güncelle";
                 ViewData["IncludeId"] = true;
@@ -177,7 +175,7 @@ namespace OgrenciBilgiSistemi.Controllers
             z.TcKimlikNo = vm.TcKimlikNo;
             z.Telefon = vm.Telefon;
             z.Adres = vm.Adres;
-            z.PersonelId = vm.PersonelId;
+            z.KullaniciId = vm.KullaniciId;
             z.ZiyaretSebebi = vm.ZiyaretSebebi;
             z.KartNo = vm.KartNo;
             z.KartVerildiMi = vm.KartVerildiMi;

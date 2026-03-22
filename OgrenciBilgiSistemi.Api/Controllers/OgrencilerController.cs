@@ -237,7 +237,7 @@ namespace OgrenciBilgiSistemi.Api.Controllers
                 await _ogrenciService.TopluYoklamaKaydetAsync(
                     formatliVeri,
                     model.SinifId,
-                    model.PersonelId,
+                    model.KullaniciId,
                     model.DersNumarasi
                 );
 

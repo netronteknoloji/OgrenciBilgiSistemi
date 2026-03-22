@@ -24,7 +24,7 @@ namespace OgrenciBilgiSistemi.Services.Interfaces
             int page,
             int pageSize,
             bool sadeceAktif = true,
-            int? personelId = null,
+            int? kullaniciId = null,
             CancellationToken ct = default);
 
         // Kart okuma ekranında kullanılacak model

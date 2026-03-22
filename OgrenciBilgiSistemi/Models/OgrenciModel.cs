@@ -26,12 +26,12 @@ namespace OgrenciBilgiSistemi.Models
         public string? OgrenciKartNo { get; set; }
 
         [Display(Name = "Veli")]
-        public int? OgrenciVeliId { get; set; }
+        public int? VeliId { get; set; }
 
-        [ForeignKey(nameof(OgrenciVeliId))]
+        [ForeignKey(nameof(VeliId))]
         [ValidateNever]
         [Display(Name = "Veli")]
-        public virtual OgrenciVeliModel? OgrenciVeli { get; set; }
+        public virtual OgrenciVeliModel? Veli { get; set; }
 
         [Display(Name = "Öğle Çıkış")]
         public OglenCikisDurumu OgrenciCikisDurumu { get; set; } = OglenCikisDurumu.Hayir;
@@ -40,12 +40,12 @@ namespace OgrenciBilgiSistemi.Models
         public bool OgrenciDurum { get; set; } = true;
 
         [Display(Name = "Öğretmen")]
-        public int? PersonelId { get; set; }
+        public int? OgretmenId { get; set; }
 
-        [ForeignKey(nameof(PersonelId))]
+        [ForeignKey(nameof(OgretmenId))]
         [ValidateNever]
         [Display(Name = "Öğretmen")]
-        public virtual PersonelModel? Personel { get; set; }
+        public virtual KullaniciModel? Ogretmen { get; set; }
 
         [Display(Name = "Birimi")]
         public int? BirimId { get; set; }
@@ -87,7 +87,7 @@ namespace OgrenciBilgiSistemi.Models
 
         [NotMapped]
         [ValidateNever]
-        public List<SelectListItem> Personeller { get; set; } = new();
+        public List<SelectListItem> Ogretmenler { get; set; } = new();
 
         [NotMapped]
         [ValidateNever]

@@ -18,9 +18,9 @@ namespace OgrenciBilgiSistemi.Services.Interfaces
 
         Task<bool> KullaniciAdiVarMiAsync(string kullaniciAdi, int? excludeId = null, CancellationToken ct = default);
 
-        Task<List<SelectListItem>> GetVelilerSelectListAsync(CancellationToken ct = default);
         Task<List<SelectListItem>> GetPersonellerSelectListAsync(CancellationToken ct = default);
         Task<List<SelectListItem>> GetServislerSelectListAsync(CancellationToken ct = default);
+        Task<List<SelectListItem>> GetBirimlerSelectListAsync(CancellationToken ct = default);
         Task<List<SelectListItem>> GetKullanicilarByRolSelectListAsync(KullaniciRolu rol, CancellationToken ct = default);
 
         // Yetki yönetimi

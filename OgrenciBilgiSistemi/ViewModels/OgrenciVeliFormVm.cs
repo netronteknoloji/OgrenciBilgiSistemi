@@ -15,10 +15,11 @@ namespace OgrenciBilgiSistemi.ViewModels
         public int? VeliKullaniciId { get; set; }
 
         // DropDown listeler
-        public List<SelectListItem> Personeller { get; set; } = new();
+        public List<SelectListItem> Ogretmenler { get; set; } = new();
         public List<SelectListItem> Birimler { get; set; } = new();
         public List<SelectListItem> Servisler { get; set; } = new();
         public List<SelectListItem> VeliKullanicilari { get; set; } = new();
+        public List<SelectListItem> Veliler { get; set; } = new();
 
         // Form davranışı
         public string Action { get; set; } = "Ekle";

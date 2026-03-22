@@ -11,8 +11,8 @@
     var count = Model?.ToplamSayi ?? 0;
 
     var sadeceAktif = ViewData["SadeceAktif"] as bool? ?? true;
-    var seciliPersonelId = ViewData["PersonelId"] as int?;
-    var personeller = ViewBag.Personeller as IEnumerable<SelectListItem> ?? Enumerable.Empty<SelectListItem>();
+    var seciliKullaniciId = ViewData["KullaniciId"] as int?;
+    var kullanicilar = ViewBag.Kullanicilar as IEnumerable<SelectListItem> ?? Enumerable.Empty<SelectListItem>();
 }
 
 <div class="viewport-scroller">
@@ -50,13 +50,13 @@
 
                 <!-- Görüştüğü Personel -->
                 <div>
-                    <label for="personelId" class="visually-hidden">Görüştüğü Personel</label>
-                    <select id="personelId" name="personelId" class="form-select" style="width:220px;">
+                    <label for="kullaniciId" class="visually-hidden">Görüştüğü Personel</label>
+                    <select id="kullaniciId" name="kullaniciId" class="form-select" style="width:220px;">
                         <option value="">Tüm Personeller</option>
 
-                        @foreach (var p in personeller)
+                        @foreach (var k in kullanicilar)
                         {
-                            <option value="@p.Value">@p.Text</option>
+                            <option value="@k.Value">@k.Text</option>
                         }
                     </select>
                 </div>
@@ -133,7 +133,7 @@
                                     <td class="text-start fw-semibold text-primary">@z.AdSoyad</td>
                                     <td>@(z.TcKimlikNo ?? "-")</td>
                                     <td>@(z.Telefon ?? "-")</td>
-                                    <td>@(z.Personel?.PersonelAdSoyad ?? "-")</td>
+                                    <td>@(z.Kullanici?.KullaniciAdi ?? "-")</td>
                                     <td>@(z.ZiyaretSebebi ?? "-")</td>
                                     <td>@(z.KartNo ?? "-")</td>
                                     <td>@z.GirisZamani.ToString("dd.MM.yyyy HH:mm")</td>
@@ -199,7 +199,7 @@
                            asp-controller="Ziyaretciler"
                            asp-action="Index"
                            asp-route-searchString="@q"
-                           asp-route-personelId="@seciliPersonelId"
+                           asp-route-kullaniciId="@seciliKullaniciId"
                            asp-route-sadeceAktif="@sadeceAktif"
                            asp-route-page="@(page - 1)">
                             ‹ Önceki
@@ -209,7 +209,7 @@
                            asp-controller="Ziyaretciler"
                            asp-action="Index"
                            asp-route-searchString="@q"
-                           asp-route-personelId="@seciliPersonelId"
+                           asp-route-kullaniciId="@seciliKullaniciId"
                            asp-route-sadeceAktif="@sadeceAktif"
                            asp-route-page="@(page + 1)">
                             Sonraki ›

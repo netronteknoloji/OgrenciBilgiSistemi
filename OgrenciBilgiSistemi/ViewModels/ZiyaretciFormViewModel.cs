@@ -37,13 +37,13 @@ namespace OgrenciBilgiSistemi.ViewModels
 
 
         // -----------------------------
-        // Görüştüğü Personel
+        // Görüştüğü Kullanıcı
         // -----------------------------
         [Display(Name = "Görüştüğü Personel")]
-        public int? PersonelId { get; set; }
+        public int? KullaniciId { get; set; }
 
         // Dropdown listesi
-        public List<SelectListItem> Personeller { get; set; } = new();
+        public List<SelectListItem> Kullanicilar { get; set; } = new();
 
 
         // -----------------------------

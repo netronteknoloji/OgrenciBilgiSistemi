@@ -13,7 +13,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
         private readonly ILogger<ZKTecoService> _logger;
         private readonly IServiceScopeFactory _scopeFactory;
 
-        private CZKEM _zkemkeeper;
+        private CZKEM? _zkemkeeper;
         private readonly SemaphoreSlim _connLock = new(1, 1);
 
         private event Func<string, Task>? _internalCardHandler;
@@ -28,7 +28,6 @@ namespace OgrenciBilgiSistemi.Services.Implementations
         {
             _logger = logger;
             _scopeFactory = serviceScopeFactory;
-            _zkemkeeper = new CZKEM();
         }
 
         public event Func<string, Task> OnCardReadAsync
@@ -111,14 +110,17 @@ namespace OgrenciBilgiSistemi.Services.Implementations
 
                 try
                 {
-                    _zkemkeeper.OnAttTransactionEx -= zkem_OnAttTransactionEx;
-                    _zkemkeeper.OnHIDNum -= zkem_OnHIDNum;
+                    if (_zkemkeeper is not null)
+                    {
+                        _zkemkeeper.OnAttTransactionEx -= zkem_OnAttTransactionEx;
+                        _zkemkeeper.OnHIDNum -= zkem_OnHIDNum;
+                    }
                 }
                 catch { /* yut */ }
 
-                try { _zkemkeeper.Disconnect(); } catch { /* yut */ }
+                try { _zkemkeeper?.Disconnect(); } catch { /* yut */ }
                 TryDisposeCom();
-                _zkemkeeper = new CZKEM();
+                _zkemkeeper = null;
 
                 IsConnected = false;
                 _internalCardHandler = null;

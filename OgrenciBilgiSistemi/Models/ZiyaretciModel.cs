@@ -30,12 +30,12 @@ namespace OgrenciBilgiSistemi.Models
 
         // --- Ziyaret Bilgileri ---
 
-        [Display(Name = "Görüştüğü Personel")]
-        public int? PersonelId { get; set; }
+        [Display(Name = "Görüştüğü Kişi")]
+        public int? KullaniciId { get; set; }
 
-        [ForeignKey(nameof(PersonelId))]
+        [ForeignKey(nameof(KullaniciId))]
         [ValidateNever]
-        public PersonelModel? Personel { get; set; }
+        public KullaniciModel? Kullanici { get; set; }
 
         [StringLength(100)]
         [Display(Name = "Ziyaret Sebebi")]

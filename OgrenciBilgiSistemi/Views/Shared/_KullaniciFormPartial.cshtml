@@ -9,14 +9,14 @@
     var formId = "kullaniciForm";
     var submitBtnId = "submitBtn";
 
-    var veliler = Model?.Veliler ?? new List<SelectListItem>();
-    var personeller = Model?.Personeller ?? new List<SelectListItem>();
     var servisler = Model?.Servisler ?? new List<SelectListItem>();
+    var birimler = Model?.Birimler ?? new List<SelectListItem>();
+
+    var adminRolDegeri = (int)OgrenciBilgiSistemi.Shared.Enums.KullaniciRolu.Admin;
 
     // KullaniciRolu enum değerleri
     var ogretmenRolDegeri = (int)OgrenciBilgiSistemi.Shared.Enums.KullaniciRolu.Ogretmen;
     var soforRolDegeri = (int)OgrenciBilgiSistemi.Shared.Enums.KullaniciRolu.Sofor;
-    var veliRolDegeri = (int)OgrenciBilgiSistemi.Shared.Enums.KullaniciRolu.Veli;
 }
 
 <div class="viewport-scroller">
@@ -32,7 +32,7 @@
                         </div>
 
                         <div class="card-body p-4">
-                            <form method="post" asp-action="@action" id="@formId" autocomplete="off">
+                            <form method="post" asp-action="@action" id="@formId" autocomplete="off" enctype="multipart/form-data">
                                 @Html.AntiForgeryToken()
 
                                 @if (includeId)
@@ -91,14 +91,42 @@
                                     <span asp-validation-for="Telefon" class="text-danger"></span>
                                 </div>
 
-                                <!-- Personel Seçimi (Rol = Öğretmen olduğunda görünür) -->
-                                <div class="mb-4" id="personelSecimAlani" style="display:none;">
-                                    <label asp-for="PersonelId" class="form-label fw-semibold">Bağlı Personel</label>
-                                    <select asp-for="PersonelId" class="form-select" asp-items="personeller">
-                                        <option value="">-- Personel Seçiniz --</option>
-                                    </select>
-                                    <span asp-validation-for="PersonelId" class="text-danger"></span>
-                                    <div class="form-text">Öğretmen rolündeki kullanıcının hangi personele bağlı olduğunu seçiniz.</div>
+                                <!-- Personel Alanları (Rol = Öğretmen veya Admin olduğunda görünür) -->
+                                <div id="personelAlanlari" style="display:none;">
+                                    <div class="mb-3">
+                                        <label asp-for="KartNo" class="form-label fw-semibold">Kart No</label>
+                                        <input asp-for="KartNo" class="form-control" placeholder="Kart numarası" />
+                                        <span asp-validation-for="KartNo" class="text-danger"></span>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label asp-for="Email" class="form-label fw-semibold">E-posta</label>
+                                        <input asp-for="Email" class="form-control" placeholder="ornek@email.com" />
+                                        <span asp-validation-for="Email" class="text-danger"></span>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label asp-for="BirimId" class="form-label fw-semibold">Birim</label>
+                                        <select asp-for="BirimId" class="form-select" asp-items="birimler">
+                                            <option value="">-- Birim Seçiniz --</option>
+                                        </select>
+                                        <span asp-validation-for="BirimId" class="text-danger"></span>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label asp-for="GorselFile" class="form-label fw-semibold">Fotoğraf</label>
+                                        @if (!string.IsNullOrWhiteSpace(Model?.GorselPath))
+                                        {
+                                            <div class="mb-2">
+                                                <img src="@Url.Content(Model.GorselPath)"
+                                                     alt="Mevcut Fotoğraf"
+                                                     class="img-thumbnail d-block"
+                                                     style="max-height:80px;" />
+                                            </div>
+                                        }
+                                        <input asp-for="GorselFile" type="file" class="form-control" accept=".jpg,.jpeg,.png" />
+                                        <span asp-validation-for="GorselFile" class="text-danger"></span>
+                                    </div>
                                 </div>
 
                                 <!-- Servis Seçimi (Rol = Şoför olduğunda görünür) -->
@@ -109,16 +137,6 @@
                                     </select>
                                     <span asp-validation-for="ServisId" class="text-danger"></span>
                                     <div class="form-text">Şoför rolündeki kullanıcının hangi servise bağlı olduğunu seçiniz.</div>
-                                </div>
-
-                                <!-- Veli Seçimi (Rol = Veli olduğunda görünür) -->
-                                <div class="mb-4" id="veliSecimAlani" style="display:none;">
-                                    <label asp-for="OgrenciVeliId" class="form-label fw-semibold">Bağlı Veli</label>
-                                    <select asp-for="OgrenciVeliId" class="form-select" asp-items="veliler">
-                                        <option value="">-- Veli Seçiniz --</option>
-                                    </select>
-                                    <span asp-validation-for="OgrenciVeliId" class="text-danger"></span>
-                                    <div class="form-text">Veli rolündeki kullanıcının hangi veliye bağlı olduğunu seçiniz.</div>
                                 </div>
 
                                 <!-- Butonlar -->
@@ -145,19 +163,17 @@
         (function () {
             const OGRETMEN_ROL = '@ogretmenRolDegeri';
             const SOFOR_ROL = '@soforRolDegeri';
-            const VELI_ROL = '@veliRolDegeri';
+            const ADMIN_ROL = '@adminRolDegeri';
 
             const rolSelect = document.getElementById('Rol');
-            const personelAlani = document.getElementById('personelSecimAlani');
+            const personelAlanlari = document.getElementById('personelAlanlari');
             const servisAlani = document.getElementById('servisSecimAlani');
-            const veliAlani = document.getElementById('veliSecimAlani');
 
             function rolDegisti() {
                 if (!rolSelect) return;
                 const val = rolSelect.value;
-                if (personelAlani) personelAlani.style.display = (val === OGRETMEN_ROL) ? '' : 'none';
+                if (personelAlanlari) personelAlanlari.style.display = (val === OGRETMEN_ROL || val === ADMIN_ROL) ? '' : 'none';
                 if (servisAlani) servisAlani.style.display = (val === SOFOR_ROL) ? '' : 'none';
-                if (veliAlani) veliAlani.style.display = (val === VELI_ROL) ? '' : 'none';
             }
 
             if (rolSelect) {

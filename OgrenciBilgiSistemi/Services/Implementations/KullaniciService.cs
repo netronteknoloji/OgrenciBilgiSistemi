@@ -12,9 +12,14 @@ namespace OgrenciBilgiSistemi.Services.Implementations
     public sealed class KullaniciService : IKullaniciService
     {
         private readonly AppDbContext _db;
+        private readonly IWebHostEnvironment _env;
         private readonly PasswordHasher<KullaniciModel> _passwordHasher = new();
 
-        public KullaniciService(AppDbContext db) => _db = db;
+        public KullaniciService(AppDbContext db, IWebHostEnvironment env)
+        {
+            _db = db;
+            _env = env;
+        }
 
         public async Task<SayfalanmisListeModel<KullaniciModel>> SearchPagedAsync(
             string? searchString, int page, int pageSize = 10, CancellationToken ct = default)
@@ -33,7 +38,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
         public async Task<KullaniciModel?> GetByIdAsync(int id, CancellationToken ct = default)
         {
             var kullanici = await _db.Kullanicilar
-                .Include(k => k.Personel)
+                .Include(k => k.Birim)
                 .FirstOrDefaultAsync(k => k.KullaniciId == id, ct);
 
             if (kullanici != null)
@@ -52,17 +57,25 @@ namespace OgrenciBilgiSistemi.Services.Implementations
         public async Task EkleAsync(KullaniciModel model, CancellationToken ct = default)
         {
             // Role göre koşullu FK temizliği
-            if (model.Rol != KullaniciRolu.Ogretmen) model.PersonelId = null;
-            if (model.Rol != KullaniciRolu.Veli) model.OgrenciVeliId = null;
+            if (model.Rol != KullaniciRolu.Ogretmen && model.Rol != KullaniciRolu.Admin)
+            {
+                model.BirimId = null;
+                model.KartNo = null;
+            }
 
-            // Bire-bir validasyonlar
-            if (model.PersonelId.HasValue &&
-                await _db.Kullanicilar.AnyAsync(k => k.PersonelId == model.PersonelId && k.KullaniciDurum, ct))
-                throw new InvalidOperationException("Bu personel zaten başka bir kullanıcıya bağlı.");
+            // KartNo normalize + tekillik
+            model.KartNo = NormalizeKartNo(model.KartNo);
+            if (!string.IsNullOrWhiteSpace(model.KartNo) &&
+                await _db.Kullanicilar.AnyAsync(k => k.KartNo == model.KartNo && k.KullaniciDurum, ct))
+                throw new InvalidOperationException("Bu kart numarası başka bir kullanıcıda kayıtlı.");
 
             if (model.Rol == KullaniciRolu.Sofor && model.ServisId.HasValue &&
                 await _db.Servisler.AnyAsync(s => s.ServisId == model.ServisId && s.KullaniciId != null, ct))
                 throw new InvalidOperationException("Bu servis zaten başka bir şoföre atanmış.");
+
+            // Görsel kaydet
+            if (model.GorselFile != null && model.GorselFile.Length > 0)
+                model.GorselPath = await SaveImageAsync(model.GorselFile, ct);
 
             model.Sifre = _passwordHasher.HashPassword(model, model.Sifre);
             _db.Kullanicilar.Add(model);
@@ -85,11 +98,12 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             var kullanici = await _db.Kullanicilar.FindAsync([model.KullaniciId], ct)
                 ?? throw new KeyNotFoundException("Kullanıcı bulunamadı.");
 
-            // Bire-bir validasyonlar
-            var yeniPersonelId = model.Rol == KullaniciRolu.Ogretmen ? model.PersonelId : null;
-            if (yeniPersonelId.HasValue &&
-                await _db.Kullanicilar.AnyAsync(k => k.PersonelId == yeniPersonelId && k.KullaniciId != model.KullaniciId && k.KullaniciDurum, ct))
-                throw new InvalidOperationException("Bu personel zaten başka bir kullanıcıya bağlı.");
+            // KartNo normalize + tekillik
+            var normalizedKartNo = NormalizeKartNo(model.KartNo);
+            if (!string.Equals(kullanici.KartNo, normalizedKartNo, StringComparison.Ordinal) &&
+                !string.IsNullOrWhiteSpace(normalizedKartNo) &&
+                await _db.Kullanicilar.AnyAsync(k => k.KartNo == normalizedKartNo && k.KullaniciId != model.KullaniciId && k.KullaniciDurum, ct))
+                throw new InvalidOperationException("Bu kart numarası başka bir kullanıcıda kayıtlı.");
 
             if (model.Rol == KullaniciRolu.Sofor && model.ServisId.HasValue &&
                 await _db.Servisler.AnyAsync(s => s.ServisId == model.ServisId && s.KullaniciId != null && s.KullaniciId != model.KullaniciId, ct))
@@ -100,8 +114,22 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             kullanici.KullaniciDurum = model.KullaniciDurum;
             kullanici.Telefon = model.Telefon;
             kullanici.BeniHatirla = model.BeniHatirla;
-            kullanici.OgrenciVeliId = model.Rol == KullaniciRolu.Veli ? model.OgrenciVeliId : null;
-            kullanici.PersonelId = yeniPersonelId;
+            kullanici.Email = model.Email;
+            // Role göre BirimId ve KartNo
+            if (model.Rol == KullaniciRolu.Ogretmen || model.Rol == KullaniciRolu.Admin)
+            {
+                kullanici.BirimId = model.BirimId;
+                kullanici.KartNo = normalizedKartNo;
+            }
+            else
+            {
+                kullanici.BirimId = null;
+                kullanici.KartNo = null;
+            }
+
+            // Görsel kaydet
+            if (model.GorselFile != null && model.GorselFile.Length > 0)
+                kullanici.GorselPath = await SaveImageAsync(model.GorselFile, ct);
 
             if (!string.IsNullOrWhiteSpace(model.Sifre))
                 kullanici.Sifre = _passwordHasher.HashPassword(kullanici, model.Sifre);
@@ -145,27 +173,15 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 k.KullaniciDurum &&
                 (!excludeId.HasValue || k.KullaniciId != excludeId.Value), ct);
 
-        public async Task<List<SelectListItem>> GetVelilerSelectListAsync(CancellationToken ct = default)
-            => await _db.OgrenciVeliler
-                .AsNoTracking()
-                .Where(v => v.VeliDurum)
-                .OrderBy(v => v.VeliAdSoyad)
-                .Select(v => new SelectListItem
-                {
-                    Value = v.OgrenciVeliId.ToString(),
-                    Text = v.VeliAdSoyad ?? "İsimsiz Veli"
-                })
-                .ToListAsync(ct);
-
         public async Task<List<SelectListItem>> GetPersonellerSelectListAsync(CancellationToken ct = default)
-            => await _db.Personeller
+            => await _db.Kullanicilar
                 .AsNoTracking()
-                .Where(p => p.PersonelDurum)
-                .OrderBy(p => p.PersonelAdSoyad)
-                .Select(p => new SelectListItem
+                .Where(k => k.KullaniciDurum && k.Rol == KullaniciRolu.Ogretmen)
+                .OrderBy(k => k.KullaniciAdi)
+                .Select(k => new SelectListItem
                 {
-                    Value = p.PersonelId.ToString(),
-                    Text = p.PersonelAdSoyad
+                    Value = k.KullaniciId.ToString(),
+                    Text = k.KullaniciAdi
                 })
                 .ToListAsync(ct);
 
@@ -257,6 +273,41 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 await _db.SaveChangesAsync(ct);
                 await tx.CommitAsync(ct);
             });
+        }
+
+        public async Task<List<SelectListItem>> GetBirimlerSelectListAsync(CancellationToken ct = default)
+            => await _db.Birimler
+                .AsNoTracking()
+                .Where(b => b.BirimDurum)
+                .OrderBy(b => b.BirimAd)
+                .Select(b => new SelectListItem
+                {
+                    Value = b.BirimId.ToString(),
+                    Text = b.BirimAd
+                })
+                .ToListAsync(ct);
+
+        private static string? NormalizeKartNo(string? s)
+        {
+            if (string.IsNullOrWhiteSpace(s)) return null;
+            var t = s.Trim().TrimStart('0');
+            return t;
+        }
+
+        private async Task<string> SaveImageAsync(IFormFile file, CancellationToken ct)
+        {
+            var root = Path.Combine(_env.WebRootPath ?? "wwwroot", "uploads", "kullanici");
+            Directory.CreateDirectory(root);
+
+            var ext = Path.GetExtension(file.FileName);
+            var name = $"kul_{Guid.NewGuid():N}{ext}";
+            var full = Path.Combine(root, name);
+
+            using (var fs = new FileStream(full, FileMode.Create))
+                await file.CopyToAsync(fs, ct);
+
+            var rel = Path.Combine("uploads", "kullanici", name).Replace("\\", "/");
+            return "/" + rel;
         }
 
         private static List<MenuOgeAtamaVm> BuildMenuViewModels(

@@ -10,11 +10,11 @@
         public string? Telefon { get; set; }
         public string? Adres { get; set; }
 
-        // --- Görüştüğü Personel Bilgisi ---
-        public int? PersonelId { get; set; }
-        public string? PersonelAdSoyad { get; set; }
+        // --- Görüştüğü Kullanıcı Bilgisi ---
+        public int? KullaniciId { get; set; }
+        public string? KullaniciAdi { get; set; }
 
-        // Personel üzerinden gelen birim adı
+        // Kullanıcı üzerinden gelen birim adı
         public string? BirimAd { get; set; }
 
         // --- Ziyaret Bilgileri ---

@@ -12,8 +12,8 @@ namespace OgrenciBilgiSistemi.Api.Dtos
         public int OgrenciCikisDurumu { get; set; }  // 0=Hayır, 1=Evet
         public bool OgrenciDurum { get; set; } = true;
         public int? BirimId { get; set; }
-        public int? PersonelId { get; set; }
-        public int? OgrenciVeliId { get; set; }
+        public int? OgretmenId { get; set; }
+        public int? VeliId { get; set; }
         public string? OgrenciGorsel { get; set; }
     }
 }

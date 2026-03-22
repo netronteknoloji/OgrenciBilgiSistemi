@@ -4,6 +4,6 @@ namespace OgrenciBilgiSistemi.Api.Models
     {
         public int ServisId { get; set; }
         public string Plaka { get; set; } = string.Empty;
-        public int KullaniciId { get; set; }
+        public int? KullaniciId { get; set; }
     }
 }

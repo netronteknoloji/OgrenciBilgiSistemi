@@ -51,7 +51,6 @@ builder.Services.AddScoped<IOgrenciVeliService, OgrenciVeliService>();
 builder.Services.AddScoped<IFileStorage, LocalFileStorage>();
 builder.Services.AddScoped<IBirimService, BirimService>();
 builder.Services.AddScoped<IMenuService, MenuService>();
-builder.Services.AddScoped<IPersonelService, PersonelService>();
 builder.Services.AddScoped<IZiyaretciService, ZiyaretciService>();
 builder.Services.AddScoped<IKitapService, KitapService>();
 builder.Services.AddScoped<IKitapDetayService, KitapDetayService>();

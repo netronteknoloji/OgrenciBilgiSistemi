@@ -25,10 +25,10 @@ namespace OgrenciBilgiSistemi.ViewModels
         public string? Adres { get; set; }
 
         [Display(Name = "Görüştüğü Personel")]
-        public int? PersonelId { get; set; }
+        public int? KullaniciId { get; set; }
 
         [Display(Name = "Görüştüğü Personel")]
-        public string? PersonelAdSoyad { get; set; }
+        public string? KullaniciAdi { get; set; }
 
         [Display(Name = "Ziyaret Sebebi")]
         public string? ZiyaretSebebi { get; set; }

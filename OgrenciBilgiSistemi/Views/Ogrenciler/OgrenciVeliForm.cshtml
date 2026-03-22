@@ -73,18 +73,5 @@
           });
         })();
 
-        // 5) Veli kullanıcı seçildiğinde Veli Ad Soyad'ı otomatik doldur
-        (function () {
-            const veliKullaniciSelect = document.getElementById('veliKullaniciSelect');
-            const veliAdSoyadInput = document.getElementById('veliAdSoyad');
-            if (!veliKullaniciSelect || !veliAdSoyadInput) return;
-
-            veliKullaniciSelect.addEventListener('change', function () {
-                const selectedOption = veliKullaniciSelect.options[veliKullaniciSelect.selectedIndex];
-                if (veliKullaniciSelect.value) {
-                    veliAdSoyadInput.value = selectedOption.text;
-                }
-            });
-        })();
     </script>
 }

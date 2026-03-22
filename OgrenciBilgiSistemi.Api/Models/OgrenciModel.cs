@@ -12,8 +12,8 @@ namespace OgrenciBilgiSistemi.Api.Models
         public OglenCikisDurumu OgrenciCikisDurumu { get; set; }
         public bool OgrenciDurum { get; set; }
         public int? BirimId { get; set; }
-        public int? PersonelId { get; set; }
-        public int? OgrenciVeliId { get; set; }
+        public int? OgretmenId { get; set; }
+        public int? VeliId { get; set; }
         public int? ServisId { get; set; }
         public string? SinifAdi { get; set; }
     }
