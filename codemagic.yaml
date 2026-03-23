@@ -119,9 +119,6 @@
         script: |
           set -e
 
-          APP_BUILD_NUMBER=$CM_BUILD_NUMBER
-          echo "Build number: $APP_BUILD_NUMBER"
-
           if [ -z "$CM_KEYSTORE_PATH" ]; then
             echo "ERROR: Android keystore bulunamadi!"
             exit 1
@@ -133,7 +130,6 @@
             --no-restore \
             /p:RuntimeIdentifier=android-arm64 \
             /p:AndroidPackageFormat=aab \
-            /p:ApplicationVersion=$APP_BUILD_NUMBER \
             /p:AndroidKeyStore=true \
             /p:AndroidSigningKeyStore="$CM_KEYSTORE_PATH" \
             /p:AndroidSigningKeyAlias="$CM_KEY_ALIAS" \
