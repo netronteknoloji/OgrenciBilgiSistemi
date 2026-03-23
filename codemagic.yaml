@@ -65,7 +65,7 @@
           else
             APP_BUILD_NUMBER=$((CM_BUILD_NUMBER + 1))
           fi
-          echo "Latest TestFlight build: ${LATEST_BUILD:-N/A} -> New build: $APP_BUILD_NUMBER"
+          echo "CM_BUILD_NUMBER=$CM_BUILD_NUMBER, LATEST_BUILD=${LATEST_BUILD:-N/A}, APP_BUILD_NUMBER=$APP_BUILD_NUMBER"
 
           "$DOTNET" publish "$PROJECT_PATH" \
           -c Release \
