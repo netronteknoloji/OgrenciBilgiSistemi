@@ -1,6 +1,6 @@
-﻿workflows:
+workflows:
   ios-maui-release:
-    name: iOS MAUI Release - Manual Signing
+    name: iOS MAUI Release
     instance_type: mac_mini_m2
     max_build_duration: 120
 
@@ -10,7 +10,6 @@
     environment:
       xcode: latest
       vars:
-        BUNDLE_ID: com.netronyazilim.ogrencibilgisistemi
         PROJECT_PATH: OgrenciBilgiSistemi.Mobil/OgrenciBilgiSistemi.Mobil.csproj
         IOS_TFM: net9.0-ios
         DOTNET_PATH: $CM_BUILD_DIR/dotnet
@@ -27,13 +26,11 @@
           curl -fsSL https://dot.net/v1/dotnet-install.sh -o dotnet-install.sh
           chmod +x dotnet-install.sh
           ./dotnet-install.sh --install-dir "$DOTNET_PATH" --channel 9.0
-          "$DOTNET" --info
 
       - name: Install MAUI iOS workload
         script: |
           set -e
           "$DOTNET" workload install maui-ios --skip-manifest-update
-          "$DOTNET" workload list
 
       - name: Restore NuGet packages
         script: |
@@ -50,9 +47,6 @@
           keychain initialize
           keychain add-certificates
           xcode-project use-profiles
-
-          echo "=== Certificates ==="
-          security find-identity -v -p codesigning
 
       - name: Build IPA (Release)
         script: |
@@ -100,13 +94,11 @@
           curl -fsSL https://dot.net/v1/dotnet-install.sh -o dotnet-install.sh
           chmod +x dotnet-install.sh
           ./dotnet-install.sh --install-dir "$DOTNET_PATH" --channel 9.0
-          "$DOTNET" --info
 
       - name: Install MAUI Android workload
         script: |
           set -e
           "$DOTNET" workload install maui-android --skip-manifest-update
-          "$DOTNET" workload list
 
       - name: Restore NuGet packages
         script: |
