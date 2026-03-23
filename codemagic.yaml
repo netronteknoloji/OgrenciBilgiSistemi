@@ -35,12 +35,6 @@
           "$DOTNET" workload install maui-ios --skip-manifest-update
           "$DOTNET" workload list
 
-      - name: Clean project
-        script: |
-          set -e
-          rm -rf OgrenciBilgiSistemi.Mobil/bin OgrenciBilgiSistemi.Mobil/obj
-          rm -rf OgrenciBilgiSistemi.Shared/bin OgrenciBilgiSistemi.Shared/obj
-
       - name: Restore NuGet packages
         script: |
           set -e
@@ -118,12 +112,6 @@
           set -e
           "$DOTNET" workload install maui-android --skip-manifest-update
           "$DOTNET" workload list
-
-      - name: Clean project
-        script: |
-          set -e
-          rm -rf OgrenciBilgiSistemi.Mobil/bin OgrenciBilgiSistemi.Mobil/obj
-          rm -rf OgrenciBilgiSistemi.Shared/bin OgrenciBilgiSistemi.Shared/obj
 
       - name: Restore NuGet packages
         script: |
