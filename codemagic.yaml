@@ -44,10 +44,7 @@
       - name: Restore NuGet packages
         script: |
           set -e
-          "$DOTNET" restore OgrenciBilgiSistemi.Shared/OgrenciBilgiSistemi.Shared.csproj
-          "$DOTNET" restore "$PROJECT_PATH" \
-            /p:TargetFramework=$IOS_TFM \
-            -r ios-arm64
+          "$DOTNET" restore "$PROJECT_PATH"
 
       - name: Setup iOS code signing
         script: |
@@ -68,12 +65,11 @@
           LATEST_BUILD=$(app-store-connect get-latest-testflight-build-number "$BUNDLE_ID" || echo "0")
           APP_BUILD_NUMBER=$((LATEST_BUILD + 1))
           echo "Latest TestFlight build: $LATEST_BUILD -> New build: $APP_BUILD_NUMBER"
-    
+
           "$DOTNET" publish "$PROJECT_PATH" \
           -c Release \
           -f "$IOS_TFM" \
           -r ios-arm64 \
-          --no-restore \
           /p:ArchiveOnBuild=true \
           /p:BuildIpa=true \
           /p:ApplicationVersion=$APP_BUILD_NUMBER \
@@ -128,9 +124,7 @@
       - name: Restore NuGet packages
         script: |
           set -e
-          "$DOTNET" restore OgrenciBilgiSistemi.Shared/OgrenciBilgiSistemi.Shared.csproj
-          "$DOTNET" restore "$PROJECT_PATH" \
-            /p:TargetFramework=$ANDROID_TFM
+          "$DOTNET" restore "$PROJECT_PATH"
 
       - name: Build AAB (Release)
         script: |
@@ -147,7 +141,6 @@
           "$DOTNET" publish "$PROJECT_PATH" \
             -c Release \
             -f "$ANDROID_TFM" \
-            --no-restore \
             /p:RuntimeIdentifier=android-arm64 \
             /p:AndroidPackageFormat=aab \
             /p:ApplicationVersion=$APP_BUILD_NUMBER \
