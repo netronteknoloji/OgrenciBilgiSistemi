@@ -44,7 +44,10 @@
       - name: Restore NuGet packages
         script: |
           set -e
-          "$DOTNET" restore "$PROJECT_PATH"
+          "$DOTNET" restore "$PROJECT_PATH" \
+            /p:TargetFramework=$IOS_TFM \
+            -r ios-arm64
+          "$DOTNET" restore OgrenciBilgiSistemi.Shared/OgrenciBilgiSistemi.Shared.csproj
 
       - name: Setup iOS code signing
         script: |
@@ -70,6 +73,7 @@
           -c Release \
           -f "$IOS_TFM" \
           -r ios-arm64 \
+          --no-restore \
           /p:ArchiveOnBuild=true \
           /p:BuildIpa=true \
           /p:ApplicationVersion=$APP_BUILD_NUMBER \
@@ -124,7 +128,9 @@
       - name: Restore NuGet packages
         script: |
           set -e
-          "$DOTNET" restore "$PROJECT_PATH"
+          "$DOTNET" restore "$PROJECT_PATH" \
+            /p:TargetFramework=$ANDROID_TFM
+          "$DOTNET" restore OgrenciBilgiSistemi.Shared/OgrenciBilgiSistemi.Shared.csproj
 
       - name: Build AAB (Release)
         script: |
@@ -141,6 +147,7 @@
           "$DOTNET" publish "$PROJECT_PATH" \
             -c Release \
             -f "$ANDROID_TFM" \
+            --no-restore \
             /p:RuntimeIdentifier=android-arm64 \
             /p:AndroidPackageFormat=aab \
             /p:ApplicationVersion=$APP_BUILD_NUMBER \
