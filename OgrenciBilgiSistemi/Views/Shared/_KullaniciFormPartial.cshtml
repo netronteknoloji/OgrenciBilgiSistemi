@@ -68,16 +68,24 @@
                                         <!-- Şifre -->
                                         <div class="mb-3">
                                             <label asp-for="Sifre" class="form-label fw-semibold">Şifre</label>
-                                            <input asp-for="Sifre"
-                                                   class="form-control"
-                                                   type="password"
-                                                   @(action == "Ekle" ? "required" : "") minlength="3"
-                                                   placeholder="@(action == "Ekle" ? "Şifre giriniz" : "Değiştirmek istemiyorsanız boş bırakın")" />
-                                            <span asp-validation-for="Sifre" class="text-danger"></span>
-                                            @if (action == "Guncelle")
+                                            @if (action == "Ekle")
                                             {
+                                                <input asp-for="Sifre"
+                                                       class="form-control"
+                                                       type="password"
+                                                       required minlength="3"
+                                                       placeholder="Şifre giriniz" />
+                                            }
+                                            else
+                                            {
+                                                <input asp-for="Sifre"
+                                                       class="form-control"
+                                                       type="password"
+                                                       minlength="3"
+                                                       placeholder="Değiştirmek istemiyorsanız boş bırakın" />
                                                 <small class="text-muted">Boş bırakırsanız mevcut şifre korunur.</small>
                                             }
+                                            <span asp-validation-for="Sifre" class="text-danger"></span>
                                         </div>
 
                                         <!-- Kullanıcı Durumu -->
