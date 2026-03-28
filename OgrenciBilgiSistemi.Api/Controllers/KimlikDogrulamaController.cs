@@ -122,6 +122,31 @@ namespace OgrenciBilgiSistemi.Api.Controllers
             return Ok(sonuclar);
         }
 
+        /// <summary>
+        /// Giriş yapmış kullanıcının şifresini değiştirir. Eski şifre sorgulanmaz.
+        /// </summary>
+        [Authorize]
+        [HttpPost("sifre-degistir")]
+        public async Task<IActionResult> SifreDegistir([FromBody] SifreDegistirIstegiDto istek)
+        {
+            var kullaniciIdStr = User.FindFirst("kullaniciId")?.Value;
+            if (!int.TryParse(kullaniciIdStr, out var kullaniciId))
+                return Unauthorized("Oturum bilgileri eksik.");
+
+            try
+            {
+                var sonuc = await _girisService.SifreDegistirAsync(kullaniciId, istek.YeniSifre);
+                if (!sonuc)
+                    return NotFound(new { error = "Kullanıcı bulunamadı." });
+
+                return Ok(new { mesaj = "Şifre başarıyla değiştirildi." });
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new { error = "Şifre değiştirilirken bir hata oluştu." });
+            }
+        }
+
         [Authorize]
         [HttpPost("logout")]
         public IActionResult CikisYap()

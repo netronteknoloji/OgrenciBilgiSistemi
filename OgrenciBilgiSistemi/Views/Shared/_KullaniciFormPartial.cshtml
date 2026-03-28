@@ -66,18 +66,19 @@
                                         </div>
 
                                         <!-- Şifre -->
-                                        @if (action == "Ekle")
-                                        {
                                         <div class="mb-3">
                                             <label asp-for="Sifre" class="form-label fw-semibold">Şifre</label>
                                             <input asp-for="Sifre"
                                                    class="form-control"
                                                    type="password"
-                                                   required minlength="3"
-                                                   placeholder="Şifre giriniz" />
+                                                   @(action == "Ekle" ? "required" : "") minlength="3"
+                                                   placeholder="@(action == "Ekle" ? "Şifre giriniz" : "Değiştirmek istemiyorsanız boş bırakın")" />
                                             <span asp-validation-for="Sifre" class="text-danger"></span>
+                                            @if (action == "Guncelle")
+                                            {
+                                                <small class="text-muted">Boş bırakırsanız mevcut şifre korunur.</small>
+                                            }
                                         </div>
-                                        }
 
                                         <!-- Kullanıcı Durumu -->
                                         <div class="mb-3">

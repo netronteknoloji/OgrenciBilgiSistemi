@@ -89,6 +89,24 @@ namespace OgrenciBilgiSistemi.Mobil.Services
         }
 
         /// <summary>
+        /// Giriş yapmış kullanıcının şifresini değiştirir.
+        /// </summary>
+        public async Task<bool> SifreDegistirAsync(string yeniSifre)
+        {
+            try
+            {
+                var model = new { YeniSifre = yeniSifre };
+                var response = await PostAsJsonAsync($"{BaseUrl}kimlik-dogrulama/sifre-degistir", model);
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ŞİFRE DEĞİŞTİRME HATASI]: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
         /// Kullanıcı adının ilk harflerine göre eşleşen kullanıcı adlarını getirir.
         /// JWT gerektirmez (anonim endpoint).
         /// </summary>

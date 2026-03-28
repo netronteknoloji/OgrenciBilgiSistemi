@@ -135,6 +135,34 @@ namespace OgrenciBilgiSistemi.Api.Services
         }
 
         /// <summary>
+        /// Kullanıcının şifresini günceller. Yeni şifre PasswordHasher ile hash'lenir.
+        /// </summary>
+        public async Task<bool> SifreDegistirAsync(int kullaniciId, string yeniSifre)
+        {
+            var hasher = new PasswordHasher<KullaniciModel>();
+            var dummy = new KullaniciModel { KullaniciId = kullaniciId };
+            var hash = hasher.HashPassword(dummy, yeniSifre);
+
+            const string query = "UPDATE Kullanicilar SET Sifre = @sifre WHERE KullaniciId = @id AND KullaniciDurum = 1";
+
+            try
+            {
+                await using var conn = new SqlConnection(_connectionString);
+                await using var cmd = new SqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@sifre", hash);
+                cmd.Parameters.AddWithValue("@id", kullaniciId);
+
+                await conn.OpenAsync();
+                int etkilenen = await cmd.ExecuteNonQueryAsync();
+                return etkilenen > 0;
+            }
+            catch (SqlException ex)
+            {
+                throw new InvalidOperationException("Şifre güncellenemedi.", ex);
+            }
+        }
+
+        /// <summary>
         /// Kullanıcı adının ilk harflerine göre eşleşen aktif kullanıcıları arar.
         /// Admin kullanıcıları hariç tutulur (mobilde giriş yapamıyorlar).
         /// </summary>
