@@ -173,7 +173,7 @@ namespace OgrenciBilgiSistemi.Api.Services
                 FROM Kullanicilar
                 WHERE KullaniciDurum = 1
                   AND Rol <> @adminRol
-                  AND KullaniciAdi LIKE @aranan + '%'
+                  AND KullaniciAdi COLLATE Turkish_CI_AI LIKE @aranan + '%'
                 ORDER BY KullaniciAdi";
 
             var sonuclar = new List<string>();
