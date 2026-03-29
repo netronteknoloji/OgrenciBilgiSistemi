@@ -357,11 +357,11 @@ namespace OgrenciBilgiSistemi.Data
                 .HasFilter("[OgrenciKartNo] IS NOT NULL AND [OgrenciKartNo] != ''")
                 .HasDatabaseName("UX_Ogrenciler_OgrenciKartNo");
 
-            // Kullanıcı adı — tüm kayıtlar arasında benzersiz olmalı
-            modelBuilder.Entity<KullaniciModel>()
-                .HasIndex(k => k.KullaniciAdi)
-                .IsUnique()
-                .HasDatabaseName("UX_Kullanicilar_KullaniciAdi");
+            //// Kullanıcı adı — tüm kayıtlar arasında benzersiz olmalı
+            //modelBuilder.Entity<KullaniciModel>()
+            //    .HasIndex(k => k.KullaniciAdi)
+            //    .IsUnique()
+            //    .HasDatabaseName("UX_Kullanicilar_KullaniciAdi");
 
             // =========================
             // PERFORMANS INDEKSLERI

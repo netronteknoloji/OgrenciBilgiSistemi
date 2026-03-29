@@ -12,11 +12,19 @@ namespace OgrenciBilgiSistemi.Api.Controllers
     {
         private readonly OgrenciService _ogrenciService;
         private readonly ServisService _servisService;
+        private readonly IServiceScopeFactory _scopeFactory;
+        private readonly ILogger<OgrencilerController> _logger;
 
-        public OgrencilerController(OgrenciService ogrenciService, ServisService servisService)
+        public OgrencilerController(
+            OgrenciService ogrenciService,
+            ServisService servisService,
+            IServiceScopeFactory scopeFactory,
+            ILogger<OgrencilerController> logger)
         {
             _ogrenciService = ogrenciService;
             _servisService = servisService;
+            _scopeFactory = scopeFactory;
+            _logger = logger;
         }
 
         #region Rol Bazlı Öğrenci Metotları
@@ -264,14 +272,29 @@ namespace OgrenciBilgiSistemi.Api.Controllers
 
             try
             {
-                var formatliVeri = model.Kayitlar.Select(k => (k.OgrenciId, k.DurumId));
+                var kayitlar = model.Kayitlar.Select(k => (k.OgrenciId, k.DurumId)).ToList();
 
                 await _ogrenciService.TopluYoklamaKaydetAsync(
-                    formatliVeri,
+                    kayitlar,
                     model.SinifId,
                     tokenKullaniciId,
                     model.DersNumarasi
                 );
+
+                // SMS bildirimini arka planda gönder
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        using var scope = _scopeFactory.CreateScope();
+                        var smsBildirim = scope.ServiceProvider.GetRequiredService<YoklamaSmsBildirimService>();
+                        await smsBildirim.SinifYoklamaBildir(kayitlar, model.DersNumarasi);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Sınıf yoklama SMS gönderim hatası.");
+                    }
+                });
 
                 return Ok(new { message = "Yoklama başarıyla kaydedildi." });
             }

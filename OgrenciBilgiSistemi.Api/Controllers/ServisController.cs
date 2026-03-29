@@ -11,10 +11,14 @@ namespace OgrenciBilgiSistemi.Api.Controllers
     public class ServisController : ControllerBase
     {
         private readonly ServisService _servisService;
+        private readonly IServiceScopeFactory _scopeFactory;
+        private readonly ILogger<ServisController> _logger;
 
-        public ServisController(ServisService servisService)
+        public ServisController(ServisService servisService, IServiceScopeFactory scopeFactory, ILogger<ServisController> logger)
         {
             _servisService = servisService;
+            _scopeFactory = scopeFactory;
+            _logger = logger;
         }
 
         /// <summary>
@@ -89,13 +93,28 @@ namespace OgrenciBilgiSistemi.Api.Controllers
 
             try
             {
-                var formatliVeri = model.Kayitlar.Select(k => (k.OgrenciId, k.DurumId));
+                var kayitlar = model.Kayitlar.Select(k => (k.OgrenciId, k.DurumId)).ToList();
 
                 await _servisService.ServisYoklamaKaydet(
-                    formatliVeri,
+                    kayitlar,
                     tokenServisId,
                     model.Periyot
                 );
+
+                // SMS bildirimini arka planda gönder
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        using var scope = _scopeFactory.CreateScope();
+                        var smsBildirim = scope.ServiceProvider.GetRequiredService<YoklamaSmsBildirimService>();
+                        await smsBildirim.ServisYoklamaBildir(kayitlar, model.Periyot);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Servis yoklama SMS gönderim hatası.");
+                    }
+                });
 
                 return Ok(new { message = "Servis yoklaması başarıyla kaydedildi." });
             }

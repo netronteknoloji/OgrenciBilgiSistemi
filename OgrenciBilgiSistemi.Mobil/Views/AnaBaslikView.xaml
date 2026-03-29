@@ -24,31 +24,38 @@
             </Label.GestureRecognizers>
         </Label>
 
-        <Border x:Name="ProfileBtn"
-                Grid.Column="2"
-                HeightRequest="40"
-                WidthRequest="40"
-                StrokeShape="RoundRectangle 20"
-                BackgroundColor="White"
-                HorizontalOptions="End"
-                VerticalOptions="Center"
-                StrokeThickness="0"
-                IsVisible="{Binding ShowProfile, Source={x:Reference this}}">
-            <Border.Shadow>
-                <Shadow Brush="Black" Offset="0,2" Radius="3" Opacity="0.15" />
-            </Border.Shadow>
-
-            <Label x:Name="InitialLabel"
-                   Text="{Binding UserInitial, Source={x:Reference this}}"
-                   TextColor="#1ABC9C"
-                   FontSize="16"
-                   FontAttributes="Bold"
-                   HorizontalOptions="Center"
-                   VerticalOptions="Center" />
-
-            <Border.GestureRecognizers>
+        <Grid Grid.Column="2"
+              HeightRequest="44"
+              WidthRequest="44"
+              HorizontalOptions="End"
+              VerticalOptions="Center"
+              IsVisible="{Binding ShowProfile, Source={x:Reference this}}">
+            <Grid.GestureRecognizers>
                 <TapGestureRecognizer Tapped="OnProfileClicked" />
-            </Border.GestureRecognizers>
-        </Border>
+            </Grid.GestureRecognizers>
+
+            <Border x:Name="ProfileBtn"
+                    HeightRequest="40"
+                    WidthRequest="40"
+                    StrokeShape="RoundRectangle 20"
+                    BackgroundColor="White"
+                    HorizontalOptions="Center"
+                    VerticalOptions="Center"
+                    StrokeThickness="0"
+                    InputTransparent="True">
+                <Border.Shadow>
+                    <Shadow Brush="Black" Offset="0,2" Radius="3" Opacity="0.15" />
+                </Border.Shadow>
+
+                <Label x:Name="InitialLabel"
+                       Text="{Binding UserInitial, Source={x:Reference this}}"
+                       TextColor="#1ABC9C"
+                       FontSize="16"
+                       FontAttributes="Bold"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center"
+                       InputTransparent="True" />
+            </Border>
+        </Grid>
     </Grid>
 </ContentView>

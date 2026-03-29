@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
+using OgrenciBilgiSistemi.Api.Models;
 using OgrenciBilgiSistemi.Api.Services;
 using System.Text;
 
@@ -77,6 +78,11 @@ builder.Services.AddScoped<OgrenciService>();
 builder.Services.AddScoped<BirimService>();
 builder.Services.AddScoped<GecisKayitService>();
 builder.Services.AddScoped<ServisService>();
+
+// SMS
+builder.Services.Configure<SmsAyarlari>(builder.Configuration.GetSection(SmsAyarlari.SectionName));
+builder.Services.AddHttpClient<SmsService>();
+builder.Services.AddScoped<YoklamaSmsBildirimService>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
