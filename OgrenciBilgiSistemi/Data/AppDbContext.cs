@@ -27,7 +27,7 @@ namespace OgrenciBilgiSistemi.Data
         public DbSet<OgrenciYemekOdemeModel> OgrenciYemekOdemeler { get; set; }
         public DbSet<ZiyaretciModel> Ziyaretciler { get; set; }
         public DbSet<SinifYoklamaModel> SinifYoklamalar { get; set; }
-        public DbSet<SinifYoklamaDurumModel> SinifYoklamaDurumlar { get; set; }
+
         public DbSet<ServisProfilModel> ServisProfiller { get; set; }
         public DbSet<OgretmenProfilModel> OgretmenProfiller { get; set; }
         public DbSet<ServisYoklamaModel> ServisYoklamalar { get; set; }
@@ -327,17 +327,6 @@ namespace OgrenciBilgiSistemi.Data
 
             modelBuilder.Entity<ServisYoklamaModel>()
                 .HasQueryFilter(sy => sy.Ogrenci.OgrenciDurum || IncludePasifOgrenciler);
-
-            // =========================
-            // SINIF YOKLAMA DURUM (Seed Data)
-            // =========================
-            modelBuilder.Entity<SinifYoklamaDurumModel>().HasData(
-                new SinifYoklamaDurumModel { DurumId = 1, DurumAd = "Var" },
-                new SinifYoklamaDurumModel { DurumId = 2, DurumAd = "Yok" },
-                new SinifYoklamaDurumModel { DurumId = 3, DurumAd = "Geç" },
-                new SinifYoklamaDurumModel { DurumId = 4, DurumAd = "İzinli" },
-                new SinifYoklamaDurumModel { DurumId = 5, DurumAd = "Raporlu" }
-            );
 
             // =========================
             // UNIQUE INDEKSLER

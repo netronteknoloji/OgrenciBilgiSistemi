@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using OgrenciBilgiSistemi.Data;
 
@@ -11,9 +12,11 @@ using OgrenciBilgiSistemi.Data;
 namespace OgrenciBilgiSistemi.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260329152052_29032026")]
+    partial class _29032026
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -852,6 +855,51 @@ namespace OgrenciBilgiSistemi.Migrations
                     b.HasIndex("KullaniciId", "OgrenciId", "Periyot", "OlusturulmaTarihi");
 
                     b.ToTable("ServisYoklamalar");
+                });
+
+            modelBuilder.Entity("OgrenciBilgiSistemi.Models.SinifYoklamaDurumModel", b =>
+                {
+                    b.Property<int>("DurumId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("DurumId"));
+
+                    b.Property<string>("DurumAd")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.HasKey("DurumId");
+
+                    b.ToTable("SinifYoklamaDurumlar");
+
+                    b.HasData(
+                        new
+                        {
+                            DurumId = 1,
+                            DurumAd = "Var"
+                        },
+                        new
+                        {
+                            DurumId = 2,
+                            DurumAd = "Yok"
+                        },
+                        new
+                        {
+                            DurumId = 3,
+                            DurumAd = "Geç"
+                        },
+                        new
+                        {
+                            DurumId = 4,
+                            DurumAd = "İzinli"
+                        },
+                        new
+                        {
+                            DurumId = 5,
+                            DurumAd = "Raporlu"
+                        });
                 });
 
             modelBuilder.Entity("OgrenciBilgiSistemi.Models.SinifYoklamaModel", b =>
