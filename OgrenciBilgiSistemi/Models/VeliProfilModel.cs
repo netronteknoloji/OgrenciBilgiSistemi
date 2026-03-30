@@ -33,6 +33,9 @@ namespace OgrenciBilgiSistemi.Models
         [Display(Name = "Durum (Aktif)")]
         public bool VeliDurum { get; set; } = true;
 
+        [NotMapped]
+        public int OgrenciSayisi { get; set; }
+
         [ForeignKey(nameof(KullaniciId))]
         [ValidateNever]
         public virtual KullaniciModel Kullanici { get; set; } = null!;

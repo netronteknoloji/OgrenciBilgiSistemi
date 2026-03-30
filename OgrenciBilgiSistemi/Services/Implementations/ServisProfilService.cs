@@ -1,13 +1,17 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using OgrenciBilgiSistemi.Data;
 using OgrenciBilgiSistemi.Models;
 using OgrenciBilgiSistemi.Services.Interfaces;
+using OgrenciBilgiSistemi.Shared.Enums;
+using OgrenciBilgiSistemi.ViewModels;
 
 namespace OgrenciBilgiSistemi.Services.Implementations
 {
     public sealed class ServisProfilService : IServisProfilService
     {
         private readonly AppDbContext _db;
+        private readonly PasswordHasher<KullaniciModel> _passwordHasher = new();
 
         public ServisProfilService(AppDbContext db) => _db = db;
 
@@ -43,11 +47,26 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             return paged;
         }
 
-        public async Task<int> EkleAsync(ServisProfilModel model, CancellationToken ct = default)
+        public async Task<int> EkleKullaniciVeProfilAsync(ServisEkleVm vm, CancellationToken ct = default)
         {
-            _db.ServisProfiller.Add(model);
+            var kullanici = new KullaniciModel
+            {
+                KullaniciAdi = vm.KullaniciAdi,
+                Rol = KullaniciRolu.Servis,
+                Telefon = vm.Telefon,
+                KullaniciDurum = true,
+                ServisProfil = new ServisProfilModel
+                {
+                    Plaka = vm.Plaka,
+                    ServisDurum = true
+                }
+            };
+
+            kullanici.Sifre = _passwordHasher.HashPassword(kullanici, vm.Sifre);
+
+            _db.Kullanicilar.Add(kullanici);
             await _db.SaveChangesAsync(ct);
-            return model.KullaniciId;
+            return kullanici.KullaniciId;
         }
 
         public async Task GuncelleAsync(ServisProfilModel model, CancellationToken ct = default)

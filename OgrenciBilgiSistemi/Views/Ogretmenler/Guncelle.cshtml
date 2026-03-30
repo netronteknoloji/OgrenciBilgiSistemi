@@ -3,6 +3,7 @@
     ViewData["Title"] = "Öğretmen Güncelle";
     ViewData["Action"] = "Guncelle";
     ViewData["SubmitText"] = "Güncelle";
-    ViewData["IncludeId"] = true;
+    ViewData["KullaniciId"] = Model.KullaniciId;
+    ViewData["GorselPath"] = Model.GorselPath;
 }
-<partial name="~/Views/Ogretmenler/_OgretmenFormPartial.cshtml" model="Model" />
+<partial name="~/Views/Shared/_OgretmenFormPartial.cshtml" />

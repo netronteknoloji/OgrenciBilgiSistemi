@@ -1,7 +1,10 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using OgrenciBilgiSistemi.Data;
 using OgrenciBilgiSistemi.Models;
 using OgrenciBilgiSistemi.Services.Interfaces;
+using OgrenciBilgiSistemi.Shared.Enums;
+using OgrenciBilgiSistemi.ViewModels;
 
 namespace OgrenciBilgiSistemi.Services.Implementations
 {
@@ -9,6 +12,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
     {
         private readonly AppDbContext _db;
         private readonly IWebHostEnvironment _env;
+        private readonly PasswordHasher<KullaniciModel> _passwordHasher = new();
 
         public OgretmenProfilService(AppDbContext db, IWebHostEnvironment env)
         {
@@ -38,14 +42,32 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 .CreateAsync(query.OrderBy(o => o.Kullanici.KullaniciAdi), page, pageSize, ct);
         }
 
-        public async Task<int> EkleAsync(OgretmenProfilModel model, CancellationToken ct = default)
+        public async Task<int> EkleKullaniciVeProfilAsync(OgretmenEkleVm vm, CancellationToken ct = default)
         {
-            if (model.GorselFile != null && model.GorselFile.Length > 0)
-                model.GorselPath = await SaveImageAsync(model.GorselFile, ct);
+            var profil = new OgretmenProfilModel
+            {
+                Email = vm.Email,
+                BirimId = vm.BirimId,
+                OgretmenDurum = true
+            };
 
-            _db.OgretmenProfiller.Add(model);
+            if (vm.GorselFile != null && vm.GorselFile.Length > 0)
+                profil.GorselPath = await SaveImageAsync(vm.GorselFile, ct);
+
+            var kullanici = new KullaniciModel
+            {
+                KullaniciAdi = vm.KullaniciAdi,
+                Rol = KullaniciRolu.Ogretmen,
+                Telefon = vm.Telefon,
+                KullaniciDurum = true,
+                OgretmenProfil = profil
+            };
+
+            kullanici.Sifre = _passwordHasher.HashPassword(kullanici, vm.Sifre);
+
+            _db.Kullanicilar.Add(kullanici);
             await _db.SaveChangesAsync(ct);
-            return model.KullaniciId;
+            return kullanici.KullaniciId;
         }
 
         public async Task GuncelleAsync(OgretmenProfilModel model, CancellationToken ct = default)

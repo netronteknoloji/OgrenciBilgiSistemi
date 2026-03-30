@@ -1,12 +1,7 @@
-@model OgrenciBilgiSistemi.Models.ServisProfilModel
-@using Microsoft.AspNetCore.Mvc.Rendering
-
 @{
     var action = (ViewData["Action"] as string) ?? "Ekle";
     var submitText = (ViewData["SubmitText"] as string) ?? "Kaydet";
-    var includeId = (bool?)ViewData["IncludeId"] ?? false;
-
-    var kullanicilar = ViewBag.Kullanicilar as List<SelectListItem> ?? new List<SelectListItem>();
+    var isEkle = action == "Ekle";
 
     var formId = "servisForm";
     var submitBtnId = "submitBtn";
@@ -20,7 +15,7 @@
                     <div class="card rounded-3 border">
                         <div class="card-header bg-primary text-white text-center">
                             <h4 class="fw-bold mb-0">
-                                @(action == "Ekle" ? "Servis Ekle" : "Servis Güncelle")
+                                @(isEkle ? "Servis Ekle" : "Servis Güncelle")
                             </h4>
                         </div>
 
@@ -28,41 +23,65 @@
                             <form method="post" asp-action="@action" id="@formId" autocomplete="off">
                                 @Html.AntiForgeryToken()
 
-                                @if (includeId)
+                                @if (!isEkle)
                                 {
-                                    <input type="hidden" asp-for="KullaniciId" />
+                                    <input type="hidden" name="KullaniciId" value="@ViewData["KullaniciId"]" />
                                 }
 
                                 <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
+                                @if (isEkle)
+                                {
+                                    <!-- Kullanıcı Adı -->
+                                    <div class="mb-3">
+                                        <label for="KullaniciAdi" class="form-label fw-semibold">Kullanıcı Adı</label>
+                                        <input name="KullaniciAdi" id="KullaniciAdi"
+                                               class="form-control" required minlength="3"
+                                               placeholder="Kullanıcı adı giriniz" />
+                                        <span class="text-danger field-validation-valid" data-valmsg-for="KullaniciAdi" data-valmsg-replace="true"></span>
+                                    </div>
+
+                                    <!-- Şifre -->
+                                    <div class="mb-3">
+                                        <label for="Sifre" class="form-label fw-semibold">Şifre</label>
+                                        <input name="Sifre" id="Sifre" type="password"
+                                               class="form-control" required minlength="3"
+                                               placeholder="Şifre giriniz" />
+                                        <span class="text-danger field-validation-valid" data-valmsg-for="Sifre" data-valmsg-replace="true"></span>
+                                    </div>
+
+                                    <!-- Telefon -->
+                                    <div class="mb-3">
+                                        <label for="Telefon" class="form-label fw-semibold">Telefon</label>
+                                        <input name="Telefon" id="Telefon"
+                                               class="form-control" placeholder="5XXXXXXXXX" />
+                                        <span class="text-danger field-validation-valid" data-valmsg-for="Telefon" data-valmsg-replace="true"></span>
+                                    </div>
+
+                                    <hr class="my-3" />
+                                }
+
                                 <!-- Plaka -->
                                 <div class="mb-3">
-                                    <label asp-for="Plaka" class="form-label fw-semibold">Plaka</label>
-                                    <input asp-for="Plaka"
-                                           class="form-control"
-                                           required
+                                    <label for="Plaka" class="form-label fw-semibold">Plaka</label>
+                                    <input name="Plaka" id="Plaka"
+                                           class="form-control" required
                                            placeholder="34 ABC 123" />
-                                    <span asp-validation-for="Plaka" class="text-danger"></span>
+                                    <span class="text-danger field-validation-valid" data-valmsg-for="Plaka" data-valmsg-replace="true"></span>
                                 </div>
 
-                                <!-- Servis Kullanıcı (Kullanıcı) -->
-                                <div class="mb-3">
-                                    <label asp-for="KullaniciId" class="form-label fw-semibold">Servis Kullanıcı</label>
-                                    <select asp-for="KullaniciId" class="form-select" asp-items="kullanicilar">
-                                        <option value="">-- Servis Kullanıcı Seçiniz --</option>
-                                    </select>
-                                    <span asp-validation-for="KullaniciId" class="text-danger"></span>
-                                </div>
-
-                                <!-- Durum -->
-                                <div class="mb-3">
-                                    <label asp-for="ServisDurum" class="form-label fw-semibold">Durum</label>
-                                    <select asp-for="ServisDurum" class="form-select">
-                                        <option value="true">Aktif</option>
-                                        <option value="false">Pasif</option>
-                                    </select>
-                                    <span asp-validation-for="ServisDurum" class="text-danger"></span>
-                                </div>
+                                @if (!isEkle)
+                                {
+                                    <!-- Durum -->
+                                    <div class="mb-3">
+                                        <label for="ServisDurum" class="form-label fw-semibold">Durum</label>
+                                        <select name="ServisDurum" id="ServisDurum" class="form-select">
+                                            <option value="true">Aktif</option>
+                                            <option value="false">Pasif</option>
+                                        </select>
+                                        <span class="text-danger field-validation-valid" data-valmsg-for="ServisDurum" data-valmsg-replace="true"></span>
+                                    </div>
+                                }
 
                                 <!-- Butonlar -->
                                 <div class="d-flex justify-content-between gap-2">
@@ -81,4 +100,3 @@
         </div>
     </div>
 </div>
-

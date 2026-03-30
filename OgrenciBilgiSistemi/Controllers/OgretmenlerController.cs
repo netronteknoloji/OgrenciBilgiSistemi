@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OgrenciBilgiSistemi.Models;
 using OgrenciBilgiSistemi.Services.Interfaces;
+using OgrenciBilgiSistemi.ViewModels;
 
 namespace OgrenciBilgiSistemi.Controllers
 {
@@ -36,77 +37,77 @@ namespace OgrenciBilgiSistemi.Controllers
         [HttpGet]
         public async Task<IActionResult> Ekle()
         {
-            await DropdownDoldur();
-            return View(new OgretmenProfilModel());
+            ViewBag.Birimler = await _kullaniciService.GetBirimlerSelectListAsync();
+            return View(new OgretmenEkleVm());
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Ekle(OgretmenProfilModel model)
+        public async Task<IActionResult> Ekle(OgretmenEkleVm vm, CancellationToken ct = default)
         {
             if (!ModelState.IsValid)
             {
-                await DropdownDoldur();
-                return View(model);
+                ViewBag.Birimler = await _kullaniciService.GetBirimlerSelectListAsync(ct);
+                return View(vm);
             }
 
             try
             {
-                await _ogretmenProfilService.EkleAsync(model);
+                await _ogretmenProfilService.EkleKullaniciVeProfilAsync(vm, ct);
                 return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Öğretmen profili eklenirken hata oluştu.");
+                _logger.LogError(ex, "Öğretmen eklenirken hata oluştu.");
                 ModelState.AddModelError(string.Empty, "Kayıt sırasında bir hata oluştu.");
-                await DropdownDoldur();
-                return View(model);
+                ViewBag.Birimler = await _kullaniciService.GetBirimlerSelectListAsync(ct);
+                return View(vm);
             }
         }
 
         [HttpGet]
-        public async Task<IActionResult> Guncelle(int? id)
+        public async Task<IActionResult> Guncelle(int? id, CancellationToken ct = default)
         {
             if (id == null) return NotFound();
 
-            var profil = await _ogretmenProfilService.GetByIdAsync(id.Value);
+            var profil = await _ogretmenProfilService.GetByIdAsync(id.Value, ct);
             if (profil == null) return NotFound();
 
-            await DropdownDoldur();
+            ViewBag.Birimler = await _kullaniciService.GetBirimlerSelectListAsync(ct);
             return View(profil);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Guncelle(OgretmenProfilModel model)
+        public async Task<IActionResult> Guncelle(OgretmenProfilModel model, CancellationToken ct = default)
         {
             if (!ModelState.IsValid)
             {
-                await DropdownDoldur();
+                ViewBag.Birimler = await _kullaniciService.GetBirimlerSelectListAsync(ct);
                 return View(model);
             }
 
             try
             {
-                await _ogretmenProfilService.GuncelleAsync(model);
+                await _ogretmenProfilService.GuncelleAsync(model, ct);
                 return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Öğretmen profili güncellenirken hata oluştu.");
                 ModelState.AddModelError(string.Empty, "Güncelleme sırasında bir hata oluştu.");
-                await DropdownDoldur();
+                ViewBag.Birimler = await _kullaniciService.GetBirimlerSelectListAsync(ct);
                 return View(model);
             }
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Sil(int id)
+        public async Task<IActionResult> Sil(int id, CancellationToken ct = default)
         {
             try
             {
-                await _ogretmenProfilService.SilAsync(id);
+                await _ogretmenProfilService.SilAsync(id, ct);
             }
             catch (Exception ex)
             {
@@ -114,12 +115,6 @@ namespace OgrenciBilgiSistemi.Controllers
                 TempData["ErrMessage"] = "Öğretmen profili silinirken bir hata oluştu.";
             }
             return RedirectToAction(nameof(Index));
-        }
-
-        private async Task DropdownDoldur()
-        {
-            ViewBag.Kullanicilar = await _kullaniciService.GetPersonellerSelectListAsync();
-            ViewBag.Birimler = await _kullaniciService.GetBirimlerSelectListAsync();
         }
     }
 }

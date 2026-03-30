@@ -3,23 +3,22 @@ using Microsoft.AspNetCore.Mvc;
 using OgrenciBilgiSistemi.Models;
 using OgrenciBilgiSistemi.Services.Interfaces;
 using OgrenciBilgiSistemi.ViewModels;
-using OgrenciBilgiSistemi.Shared.Enums;
 
 namespace OgrenciBilgiSistemi.Controllers
 {
     [Authorize(Policy = "AdminOnly")]
-    public class ServislerController : Controller
+    public class VelilerController : Controller
     {
-        private readonly IServisProfilService _servisProfilService;
+        private readonly IVeliProfilService _veliProfilService;
         private readonly IKullaniciService _kullaniciService;
-        private readonly ILogger<ServislerController> _logger;
+        private readonly ILogger<VelilerController> _logger;
 
-        public ServislerController(
-            IServisProfilService servisProfilService,
+        public VelilerController(
+            IVeliProfilService veliProfilService,
             IKullaniciService kullaniciService,
-            ILogger<ServislerController> logger)
+            ILogger<VelilerController> logger)
         {
-            _servisProfilService = servisProfilService;
+            _veliProfilService = veliProfilService;
             _kullaniciService = kullaniciService;
             _logger = logger;
         }
@@ -28,31 +27,31 @@ namespace OgrenciBilgiSistemi.Controllers
         public async Task<IActionResult> Index(string searchString, int page = 1, CancellationToken ct = default)
         {
             ViewData["CurrentFilter"] = searchString;
-            var paged = await _servisProfilService.SearchPagedAsync(searchString, page, 50, ct);
+            var paged = await _veliProfilService.SearchPagedAsync(searchString, page, 50, ct);
             return View(paged);
         }
 
         [HttpGet]
         public IActionResult Ekle()
         {
-            return View(new ServisEkleVm());
+            return View(new VeliEkleVm());
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Ekle(ServisEkleVm vm, CancellationToken ct = default)
+        public async Task<IActionResult> Ekle(VeliEkleVm vm, CancellationToken ct = default)
         {
             if (!ModelState.IsValid)
                 return View(vm);
 
             try
             {
-                await _servisProfilService.EkleKullaniciVeProfilAsync(vm, ct);
+                await _veliProfilService.EkleKullaniciVeProfilAsync(vm, ct);
                 return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Servis eklenirken hata oluştu.");
+                _logger.LogError(ex, "Veli eklenirken hata oluştu.");
                 ModelState.AddModelError(string.Empty, "Kayıt sırasında bir hata oluştu.");
                 return View(vm);
             }
@@ -63,7 +62,7 @@ namespace OgrenciBilgiSistemi.Controllers
         {
             if (id == null) return NotFound();
 
-            var profil = await _servisProfilService.GetByIdAsync(id.Value, ct);
+            var profil = await _veliProfilService.GetByIdAsync(id.Value, ct);
             if (profil == null) return NotFound();
 
             return View(profil);
@@ -71,19 +70,19 @@ namespace OgrenciBilgiSistemi.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Guncelle(ServisProfilModel model, CancellationToken ct = default)
+        public async Task<IActionResult> Guncelle(VeliProfilModel model, CancellationToken ct = default)
         {
             if (!ModelState.IsValid)
                 return View(model);
 
             try
             {
-                await _servisProfilService.GuncelleAsync(model, ct);
+                await _veliProfilService.GuncelleAsync(model, ct);
                 return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Servis profili güncellenirken hata oluştu.");
+                _logger.LogError(ex, "Veli profili güncellenirken hata oluştu.");
                 ModelState.AddModelError(string.Empty, "Güncelleme sırasında bir hata oluştu.");
                 return View(model);
             }
@@ -92,14 +91,14 @@ namespace OgrenciBilgiSistemi.Controllers
         [HttpGet]
         public async Task<IActionResult> Detay(int id, CancellationToken ct = default)
         {
-            var servis = await _servisProfilService.GetByIdAsync(id, ct);
-            if (servis == null) return NotFound();
+            var veli = await _veliProfilService.GetByIdAsync(id, ct);
+            if (veli == null) return NotFound();
 
-            var ogrenciler = await _servisProfilService.GetOgrencilerAsync(id, ct);
+            var ogrenciler = await _veliProfilService.GetOgrencilerAsync(id, ct);
 
-            var vm = new ServisDetayVm
+            var vm = new VeliDetayVm
             {
-                Servis = servis,
+                Veli = veli,
                 Ogrenciler = ogrenciler
             };
 
@@ -108,16 +107,16 @@ namespace OgrenciBilgiSistemi.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Sil(int id)
+        public async Task<IActionResult> Sil(int id, CancellationToken ct = default)
         {
             try
             {
-                await _servisProfilService.SilAsync(id);
+                await _veliProfilService.SilAsync(id, ct);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Servis profili silinirken hata oluştu.");
-                TempData["ErrMessage"] = "Servis profili silinirken bir hata oluştu.";
+                _logger.LogError(ex, "Veli profili silinirken hata oluştu.");
+                TempData["ErrMessage"] = "Veli profili silinirken bir hata oluştu.";
             }
             return RedirectToAction(nameof(Index));
         }

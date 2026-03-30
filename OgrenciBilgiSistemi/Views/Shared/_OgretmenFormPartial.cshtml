@@ -1,12 +1,10 @@
-@model OgrenciBilgiSistemi.Models.OgretmenProfilModel
 @using Microsoft.AspNetCore.Mvc.Rendering
 
 @{
     var action = (ViewData["Action"] as string) ?? "Ekle";
     var submitText = (ViewData["SubmitText"] as string) ?? "Kaydet";
-    var includeId = (bool?)ViewData["IncludeId"] ?? false;
+    var isEkle = action == "Ekle";
 
-    var kullanicilar = ViewBag.Kullanicilar as List<SelectListItem> ?? new List<SelectListItem>();
     var birimler = ViewBag.Birimler as List<SelectListItem> ?? new List<SelectListItem>();
 
     var formId = "ogretmenForm";
@@ -21,7 +19,7 @@
                     <div class="card rounded-3 border">
                         <div class="card-header bg-primary text-white text-center">
                             <h4 class="fw-bold mb-0">
-                                @(action == "Ekle" ? "Öğretmen Ekle" : "Öğretmen Güncelle")
+                                @(isEkle ? "Öğretmen Ekle" : "Öğretmen Güncelle")
                             </h4>
                         </div>
 
@@ -29,73 +27,87 @@
                             <form method="post" asp-action="@action" id="@formId" enctype="multipart/form-data" autocomplete="off">
                                 @Html.AntiForgeryToken()
 
-                                @if (includeId)
+                                @if (!isEkle)
                                 {
-                                    <input type="hidden" asp-for="KullaniciId" />
+                                    <input type="hidden" name="KullaniciId" value="@ViewData["KullaniciId"]" />
                                 }
 
                                 <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
-                                <!-- Kullanıcı -->
-                                <div class="mb-3">
-                                    <label asp-for="KullaniciId" class="form-label fw-semibold">Kullanıcı</label>
-                                    @if (includeId)
-                                    {
-                                        <select asp-for="KullaniciId" class="form-select" asp-items="kullanicilar" disabled>
-                                            <option value="">-- Kullanıcı Seçiniz --</option>
-                                        </select>
-                                        <input type="hidden" asp-for="KullaniciId" />
-                                    }
-                                    else
-                                    {
-                                        <select asp-for="KullaniciId" class="form-select" asp-items="kullanicilar">
-                                            <option value="">-- Kullanıcı Seçiniz --</option>
-                                        </select>
-                                    }
-                                    <span asp-validation-for="KullaniciId" class="text-danger"></span>
-                                </div>
+                                @if (isEkle)
+                                {
+                                    <!-- Kullanıcı Adı -->
+                                    <div class="mb-3">
+                                        <label for="KullaniciAdi" class="form-label fw-semibold">Kullanıcı Adı</label>
+                                        <input name="KullaniciAdi" id="KullaniciAdi"
+                                               class="form-control" required minlength="3"
+                                               placeholder="Kullanıcı adı giriniz" />
+                                        <span class="text-danger field-validation-valid" data-valmsg-for="KullaniciAdi" data-valmsg-replace="true"></span>
+                                    </div>
+
+                                    <!-- Şifre -->
+                                    <div class="mb-3">
+                                        <label for="Sifre" class="form-label fw-semibold">Şifre</label>
+                                        <input name="Sifre" id="Sifre" type="password"
+                                               class="form-control" required minlength="3"
+                                               placeholder="Şifre giriniz" />
+                                        <span class="text-danger field-validation-valid" data-valmsg-for="Sifre" data-valmsg-replace="true"></span>
+                                    </div>
+
+                                    <!-- Telefon -->
+                                    <div class="mb-3">
+                                        <label for="Telefon" class="form-label fw-semibold">Telefon</label>
+                                        <input name="Telefon" id="Telefon"
+                                               class="form-control" placeholder="5XXXXXXXXX" />
+                                        <span class="text-danger field-validation-valid" data-valmsg-for="Telefon" data-valmsg-replace="true"></span>
+                                    </div>
+
+                                    <hr class="my-3" />
+                                }
 
                                 <!-- E-posta -->
                                 <div class="mb-3">
-                                    <label asp-for="Email" class="form-label fw-semibold">E-posta</label>
-                                    <input asp-for="Email"
-                                           class="form-control"
-                                           placeholder="ornek@okul.edu.tr" />
-                                    <span asp-validation-for="Email" class="text-danger"></span>
+                                    <label for="Email" class="form-label fw-semibold">E-posta</label>
+                                    <input name="Email" id="Email"
+                                           class="form-control" placeholder="ornek@okul.edu.tr" />
+                                    <span class="text-danger field-validation-valid" data-valmsg-for="Email" data-valmsg-replace="true"></span>
                                 </div>
 
                                 <!-- Birim -->
                                 <div class="mb-3">
-                                    <label asp-for="BirimId" class="form-label fw-semibold">Birim</label>
-                                    <select asp-for="BirimId" class="form-select" asp-items="birimler">
+                                    <label for="BirimId" class="form-label fw-semibold">Birim</label>
+                                    <select name="BirimId" id="BirimId" class="form-select" asp-items="birimler">
                                         <option value="">-- Birim Seçiniz --</option>
                                     </select>
-                                    <span asp-validation-for="BirimId" class="text-danger"></span>
+                                    <span class="text-danger field-validation-valid" data-valmsg-for="BirimId" data-valmsg-replace="true"></span>
                                 </div>
 
                                 <!-- Fotoğraf -->
                                 <div class="mb-3">
-                                    <label asp-for="GorselFile" class="form-label fw-semibold">Fotoğraf</label>
-                                    @if (!string.IsNullOrEmpty(Model?.GorselPath))
+                                    <label for="GorselFile" class="form-label fw-semibold">Fotoğraf</label>
+                                    @if (ViewData["GorselPath"] is string gorselPath && !string.IsNullOrEmpty(gorselPath))
                                     {
                                         <div class="mb-2">
-                                            <img src="@Model.GorselPath" alt="Mevcut fotoğraf"
+                                            <img src="@gorselPath" alt="Mevcut fotoğraf"
                                                  class="rounded" style="max-height:120px;" />
                                         </div>
                                     }
-                                    <input asp-for="GorselFile" class="form-control" accept="image/*" />
-                                    <span asp-validation-for="GorselFile" class="text-danger"></span>
+                                    <input name="GorselFile" id="GorselFile" type="file" class="form-control" accept="image/*" />
+                                    <span class="text-danger field-validation-valid" data-valmsg-for="GorselFile" data-valmsg-replace="true"></span>
                                 </div>
 
-                                <!-- Durum -->
-                                <div class="mb-3">
-                                    <label asp-for="OgretmenDurum" class="form-label fw-semibold">Durum</label>
-                                    <select asp-for="OgretmenDurum" class="form-select">
-                                        <option value="true">Aktif</option>
-                                        <option value="false">Pasif</option>
-                                    </select>
-                                    <span asp-validation-for="OgretmenDurum" class="text-danger"></span>
-                                </div>
+                                @if (!isEkle)
+                                {
+                                    <!-- Durum -->
+                                    <div class="mb-3">
+                                        <label for="OgretmenDurum" class="form-label fw-semibold">Durum</label>
+                                        <select name="OgretmenDurum" id="OgretmenDurum" class="form-select">
+                                            <option value="true">Aktif</option>
+                                            <option value="false">Pasif</option>
+                                        </select>
+                                        <span class="text-danger field-validation-valid" data-valmsg-for="OgretmenDurum" data-valmsg-replace="true"></span>
+                                    </div>
+                                }
 
                                 <!-- Butonlar -->
                                 <div class="d-flex justify-content-between gap-2">
@@ -114,4 +126,3 @@
         </div>
     </div>
 </div>
-

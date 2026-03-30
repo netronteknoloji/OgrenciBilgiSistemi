@@ -1,0 +1,8 @@
+@model OgrenciBilgiSistemi.Models.VeliProfilModel
+@{
+    ViewData["Title"] = "Veli Güncelle";
+    ViewData["Action"] = "Guncelle";
+    ViewData["SubmitText"] = "Güncelle";
+    ViewData["KullaniciId"] = Model.KullaniciId;
+}
+<partial name="~/Views/Veliler/_VeliFormPartial.cshtml" />

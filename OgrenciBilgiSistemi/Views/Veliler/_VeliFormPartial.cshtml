@@ -1,0 +1,128 @@
+@{
+    var action = (ViewData["Action"] as string) ?? "Ekle";
+    var submitText = (ViewData["SubmitText"] as string) ?? "Kaydet";
+    var isEkle = action == "Ekle";
+
+    var formId = "veliForm";
+    var submitBtnId = "submitBtn";
+}
+
+<div class="viewport-scroller">
+    <div class="fixed-canvas">
+        <div class="container py-4">
+            <div class="row justify-content-center">
+                <div class="col-8">
+                    <div class="card rounded-3 border">
+                        <div class="card-header bg-primary text-white text-center">
+                            <h4 class="fw-bold mb-0">
+                                @(isEkle ? "Veli Ekle" : "Veli Güncelle")
+                            </h4>
+                        </div>
+
+                        <div class="card-body p-4">
+                            <form method="post" asp-action="@action" id="@formId" autocomplete="off">
+                                @Html.AntiForgeryToken()
+
+                                @if (!isEkle)
+                                {
+                                    <input type="hidden" name="KullaniciId" value="@ViewData["KullaniciId"]" />
+                                }
+
+                                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                                <div class="row g-3">
+                                    <!-- Sol Sütun: Kullanıcı Bilgileri -->
+                                    <div class="col-6">
+                                        @if (isEkle)
+                                        {
+                                            <div class="mb-3">
+                                                <label for="KullaniciAdi" class="form-label fw-semibold">Kullanıcı Adı</label>
+                                                <input name="KullaniciAdi" id="KullaniciAdi"
+                                                       class="form-control" required minlength="3"
+                                                       placeholder="Kullanıcı adı giriniz" />
+                                                <span class="text-danger field-validation-valid" data-valmsg-for="KullaniciAdi" data-valmsg-replace="true"></span>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label for="Sifre" class="form-label fw-semibold">Şifre</label>
+                                                <input name="Sifre" id="Sifre" type="password"
+                                                       class="form-control" required minlength="3"
+                                                       placeholder="Şifre giriniz" />
+                                                <span class="text-danger field-validation-valid" data-valmsg-for="Sifre" data-valmsg-replace="true"></span>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label for="Telefon" class="form-label fw-semibold">Telefon</label>
+                                                <input name="Telefon" id="Telefon"
+                                                       class="form-control" placeholder="5XXXXXXXXX" />
+                                                <span class="text-danger field-validation-valid" data-valmsg-for="Telefon" data-valmsg-replace="true"></span>
+                                            </div>
+                                        }
+
+                                        <div class="mb-3">
+                                            <label for="VeliYakinlik" class="form-label fw-semibold">Yakınlık</label>
+                                            <select name="VeliYakinlik" id="VeliYakinlik" class="form-select"
+                                                    asp-items="Html.GetEnumSelectList<YakinlikTipi>()">
+                                                <option value="">-- Seçiniz --</option>
+                                            </select>
+                                            <span class="text-danger field-validation-valid" data-valmsg-for="VeliYakinlik" data-valmsg-replace="true"></span>
+                                        </div>
+
+                                        @if (!isEkle)
+                                        {
+                                            <div class="mb-3">
+                                                <label for="VeliDurum" class="form-label fw-semibold">Durum</label>
+                                                <select name="VeliDurum" id="VeliDurum" class="form-select">
+                                                    <option value="true">Aktif</option>
+                                                    <option value="false">Pasif</option>
+                                                </select>
+                                                <span class="text-danger field-validation-valid" data-valmsg-for="VeliDurum" data-valmsg-replace="true"></span>
+                                            </div>
+                                        }
+                                    </div>
+
+                                    <!-- Sağ Sütun: Profil Bilgileri -->
+                                    <div class="col-6">
+                                        <div class="mb-3">
+                                            <label for="VeliAdres" class="form-label fw-semibold">Adres</label>
+                                            <input name="VeliAdres" id="VeliAdres" class="form-control" placeholder="Adres" />
+                                            <span class="text-danger field-validation-valid" data-valmsg-for="VeliAdres" data-valmsg-replace="true"></span>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="VeliMeslek" class="form-label fw-semibold">Meslek</label>
+                                            <input name="VeliMeslek" id="VeliMeslek" class="form-control" placeholder="Meslek" />
+                                            <span class="text-danger field-validation-valid" data-valmsg-for="VeliMeslek" data-valmsg-replace="true"></span>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="VeliIsYeri" class="form-label fw-semibold">İş Yeri</label>
+                                            <input name="VeliIsYeri" id="VeliIsYeri" class="form-control" placeholder="İş yeri" />
+                                            <span class="text-danger field-validation-valid" data-valmsg-for="VeliIsYeri" data-valmsg-replace="true"></span>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="VeliEmail" class="form-label fw-semibold">E-posta</label>
+                                            <input name="VeliEmail" id="VeliEmail" type="email" class="form-control" placeholder="ornek@email.com" />
+                                            <span class="text-danger field-validation-valid" data-valmsg-for="VeliEmail" data-valmsg-replace="true"></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Butonlar -->
+                                <div class="d-flex justify-content-between gap-2 mt-3">
+                                    <a asp-action="Index" class="btn btn-outline-secondary">
+                                        <i class="bi bi-arrow-left"></i> Geri Dön
+                                    </a>
+                                    <button type="submit" class="btn btn-primary fw-bold" id="@submitBtnId">
+                                        <i class="bi bi-save"></i> @submitText
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
