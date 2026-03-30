@@ -15,6 +15,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\OgrenciBilgiSistemi.Shared\OgrenciBilgiSistemi.Shared.csproj" />
+    <ProjectReference Include="..\OgrenciBilgiSistemi.Sms\OgrenciBilgiSistemi.Sms.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,4 +1,4 @@
-namespace OgrenciBilgiSistemi.Api.Models;
+namespace OgrenciBilgiSistemi.Sms;
 
 public sealed class SmsAyarlari
 {

@@ -13,8 +13,8 @@
 		<ApplicationId>com.netronyazilim.ogrencibilgisistemi</ApplicationId>
 		<ApplicationTitle>OgrenciBilgiSistemi</ApplicationTitle>
 
-		<ApplicationDisplayVersion>1.1.17</ApplicationDisplayVersion>
-		<ApplicationVersion>7</ApplicationVersion>
+		<ApplicationDisplayVersion>1.1.18</ApplicationDisplayVersion>
+		<ApplicationVersion>8</ApplicationVersion>
 	</PropertyGroup>
 
 	<!-- Platform versiyonları -->

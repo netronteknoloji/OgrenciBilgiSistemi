@@ -1,19 +1,19 @@
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Options;
-using OgrenciBilgiSistemi.Api.Models;
+using OgrenciBilgiSistemi.Sms;
 
 namespace OgrenciBilgiSistemi.Api.Services;
 
 public sealed class YoklamaSmsBildirimService
 {
     private readonly string _connectionString;
-    private readonly SmsService _smsService;
+    private readonly ISmsService _smsService;
     private readonly SmsAyarlari _ayar;
     private readonly ILogger<YoklamaSmsBildirimService> _logger;
 
     public YoklamaSmsBildirimService(
         IConfiguration configuration,
-        SmsService smsService,
+        ISmsService smsService,
         IOptions<SmsAyarlari> ayar,
         ILogger<YoklamaSmsBildirimService> logger)
     {
@@ -26,6 +26,7 @@ public sealed class YoklamaSmsBildirimService
 
     /// <summary>
     /// Servis yoklamasında tüm öğrencilerin (Bindi/Binmedi) velilerine SMS gönderir.
+    /// Atomik claim ile tekrar gönderimi engeller.
     /// </summary>
     public async Task ServisYoklamaBildir(
         IReadOnlyList<(int OgrenciId, int DurumId)> yoklamaVerisi,
@@ -38,7 +39,11 @@ public sealed class YoklamaSmsBildirimService
         var tumOgrenciIdler = yoklamaVerisi.Select(x => x.OgrenciId).ToList();
         var durumMap = yoklamaVerisi.ToDictionary(x => x.OgrenciId, x => x.DurumId);
 
-        var ogrenciBilgileri = await VeliTelefonlariGetir(tumOgrenciIdler, ct);
+        // Atomik olarak SmsGonderildi=0 olan kayıtları claim et
+        var claimedIdler = await ServisSmsClaim(tumOgrenciIdler, periyot, ct);
+        if (claimedIdler.Count == 0) return;
+
+        var ogrenciBilgileri = await VeliTelefonlariGetir(claimedIdler, ct);
 
         var periyotMetni = periyot == 1 ? "sabah" : "akşam";
 
@@ -48,16 +53,17 @@ public sealed class YoklamaSmsBildirimService
             var durumMetni = durum == 1 ? "binmiştir" : "binmemiştir";
             var mesaj = $"Sayın Veli, {adSoyad} bugün {periyotMetni} servisine {durumMetni}.";
 
-            var (basarili, hata) = await _smsService.Gonder(veliTelefon, mesaj, ct);
-            if (basarili)
+            var sonuc = await _smsService.Gonder(veliTelefon, mesaj, ct);
+            if (sonuc.Basarili)
                 _logger.LogInformation("[SMS OK][ServisYoklama] OgrId:{OgrId}, Periyot:{Periyot}, Durum:{Durum}", ogrenciId, periyotMetni, durumMetni);
             else
-                _logger.LogWarning("[SMS FAIL][ServisYoklama] OgrId:{OgrId}, Hata:{Hata}", ogrenciId, hata);
+                _logger.LogWarning("[SMS FAIL][ServisYoklama] OgrId:{OgrId}, Hata:{Hata}", ogrenciId, sonuc.Hata);
         }
     }
 
     /// <summary>
     /// Sınıf yoklamasında "Yok" (DurumId=2) olan öğrencilerin velilerine SMS gönderir.
+    /// Atomik claim ile tekrar gönderimi engeller.
     /// </summary>
     public async Task SinifYoklamaBildir(
         IReadOnlyList<(int OgrenciId, int DurumId)> yoklamaVerisi,
@@ -69,18 +75,96 @@ public sealed class YoklamaSmsBildirimService
         var devamsizlar = yoklamaVerisi.Where(x => x.DurumId == 2).Select(x => x.OgrenciId).ToList();
         if (devamsizlar.Count == 0) return;
 
-        var ogrenciBilgileri = await VeliTelefonlariGetir(devamsizlar, ct);
+        // Atomik olarak ilgili ders bit'i set edilmemiş kayıtları claim et
+        var claimedIdler = await SinifSmsClaim(devamsizlar, dersNumarasi, ct);
+        if (claimedIdler.Count == 0) return;
+
+        var ogrenciBilgileri = await VeliTelefonlariGetir(claimedIdler, ct);
 
         foreach (var (ogrenciId, adSoyad, veliTelefon) in ogrenciBilgileri)
         {
             var mesaj = $"Sayın Veli, {adSoyad} bugün {dersNumarasi}. ders saatinde devamsız olarak işaretlenmiştir.";
 
-            var (basarili, hata) = await _smsService.Gonder(veliTelefon, mesaj, ct);
-            if (basarili)
+            var sonuc = await _smsService.Gonder(veliTelefon, mesaj, ct);
+            if (sonuc.Basarili)
                 _logger.LogInformation("[SMS OK][SinifYoklama] OgrId:{OgrId}, Ders:{Ders}", ogrenciId, dersNumarasi);
             else
-                _logger.LogWarning("[SMS FAIL][SinifYoklama] OgrId:{OgrId}, Hata:{Hata}", ogrenciId, hata);
+                _logger.LogWarning("[SMS FAIL][SinifYoklama] OgrId:{OgrId}, Hata:{Hata}", ogrenciId, sonuc.Hata);
         }
+    }
+
+    /// <summary>
+    /// ServisYoklamalar tablosunda SmsGonderildi=0 olan kayıtları atomik olarak 1'e çevirir
+    /// ve claim edilen öğrenci ID'lerini döndürür.
+    /// </summary>
+    private async Task<List<int>> ServisSmsClaim(List<int> ogrenciIdler, int periyot, CancellationToken ct)
+    {
+        var sonuc = new List<int>();
+
+        await using var conn = new SqlConnection(_connectionString);
+
+        var parametreAdlari = new string[ogrenciIdler.Count];
+        for (int i = 0; i < ogrenciIdler.Count; i++)
+            parametreAdlari[i] = $"@id{i}";
+
+        var query = $@"
+            UPDATE ServisYoklamalar
+            SET SmsGonderildi = 1
+            OUTPUT inserted.OgrenciId
+            WHERE CAST(OlusturulmaTarihi AS DATE) = CAST(GETDATE() AS DATE)
+              AND Periyot = @periyot
+              AND SmsGonderildi = 0
+              AND OgrenciId IN ({string.Join(", ", parametreAdlari)})";
+
+        await using var cmd = new SqlCommand(query, conn);
+        cmd.Parameters.AddWithValue("@periyot", periyot);
+        for (int i = 0; i < ogrenciIdler.Count; i++)
+            cmd.Parameters.AddWithValue(parametreAdlari[i], ogrenciIdler[i]);
+
+        await conn.OpenAsync(ct);
+        await using var reader = await cmd.ExecuteReaderAsync(ct);
+
+        while (await reader.ReadAsync(ct))
+            sonuc.Add((int)reader["OgrenciId"]);
+
+        return sonuc;
+    }
+
+    /// <summary>
+    /// SinifYoklamalar tablosunda ilgili ders bit'i set edilmemiş kayıtları atomik olarak set eder
+    /// ve claim edilen öğrenci ID'lerini döndürür.
+    /// </summary>
+    private async Task<List<int>> SinifSmsClaim(List<int> ogrenciIdler, int dersNumarasi, CancellationToken ct)
+    {
+        var sonuc = new List<int>();
+        var dersBit = 1 << (dersNumarasi - 1);
+
+        await using var conn = new SqlConnection(_connectionString);
+
+        var parametreAdlari = new string[ogrenciIdler.Count];
+        for (int i = 0; i < ogrenciIdler.Count; i++)
+            parametreAdlari[i] = $"@id{i}";
+
+        var query = $@"
+            UPDATE SinifYoklamalar
+            SET SmsDurumu = SmsDurumu | @dersBit
+            OUTPUT inserted.OgrenciId
+            WHERE CAST(OlusturulmaTarihi AS DATE) = CAST(GETDATE() AS DATE)
+              AND (SmsDurumu & @dersBit) = 0
+              AND OgrenciId IN ({string.Join(", ", parametreAdlari)})";
+
+        await using var cmd = new SqlCommand(query, conn);
+        cmd.Parameters.AddWithValue("@dersBit", dersBit);
+        for (int i = 0; i < ogrenciIdler.Count; i++)
+            cmd.Parameters.AddWithValue(parametreAdlari[i], ogrenciIdler[i]);
+
+        await conn.OpenAsync(ct);
+        await using var reader = await cmd.ExecuteReaderAsync(ct);
+
+        while (await reader.ReadAsync(ct))
+            sonuc.Add((int)reader["OgrenciId"]);
+
+        return sonuc;
     }
 
     /// <summary>
@@ -93,7 +177,6 @@ public sealed class YoklamaSmsBildirimService
 
         await using var conn = new SqlConnection(_connectionString);
 
-        // Parametre listesi oluştur: @id0, @id1, @id2 ...
         var parametreAdlari = new string[ogrenciIdler.Count];
         for (int i = 0; i < ogrenciIdler.Count; i++)
             parametreAdlari[i] = $"@id{i}";

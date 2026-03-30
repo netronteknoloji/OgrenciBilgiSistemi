@@ -34,6 +34,9 @@ namespace OgrenciBilgiSistemi.Models
         public int? Ders7 { get; set; }
         public int? Ders8 { get; set; }
 
+        // Bitmask: bit 0 = Ders1, bit 1 = Ders2, ..., bit 7 = Ders8
+        public int SmsDurumu { get; set; }
+
         public DateTime OlusturulmaTarihi { get; set; }
         public DateTime? GuncellenmeTarihi { get; set; }
     }

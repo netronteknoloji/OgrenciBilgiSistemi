@@ -5,8 +5,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using OgrenciBilgiSistemi.Data;
 using OgrenciBilgiSistemi.Models;
-using OgrenciBilgiSistemi.Models.Options;
 using OgrenciBilgiSistemi.Services.Interfaces;
+using OgrenciBilgiSistemi.Sms;
 using OgrenciBilgiSistemi.Shared.Enums;
 using zkemkeeper;
 
@@ -77,7 +77,12 @@ public sealed class YemekhanePollingService : BackgroundService
             .Select(c => new { c.CihazId, c.CihazAdi, c.IpAdresi, c.PortNo })
             .ToListAsync(ct);
 
-        if (cihazlar.Count == 0) return;
+        if (cihazlar.Count == 0)
+        {
+            _logger.LogDebug("Yemekhane ZKTeco cihazı bulunamadı.");
+            return;
+        }
+        _logger.LogInformation("{Count} yemekhane cihazı bulundu.", cihazlar.Count);
 
         var today = DateTime.Now.Date;
 
@@ -163,6 +168,7 @@ public sealed class YemekhanePollingService : BackgroundService
         try
         {
             zkem = new CZKEM();
+            _logger.LogDebug("Cihaza bağlanılıyor: {Ip}:{Port}", ip, port);
             connected = zkem.Connect_Net(ip, port);
             if (!connected)
             {
@@ -170,18 +176,23 @@ public sealed class YemekhanePollingService : BackgroundService
                 _logger.LogWarning("Yemekhane cihazına bağlanılamadı: {Ip}:{Port} Kod={Code}", ip, port, code);
                 return (yeniLoglar, false, false);
             }
+            _logger.LogDebug("Cihaza bağlandı: {Ip}:{Port}", ip, port);
 
             zkem.EnableDevice(MACHINE_NUMBER, false);
 
             if (!zkem.ReadGeneralLogData(MACHINE_NUMBER))
             {
+                _logger.LogDebug("Cihazda log yok: {Ip}", ip);
                 cihazOk = true;
                 return (yeniLoglar, cihazOk, false);
             }
 
+            _logger.LogDebug("Cihazdan loglar okunuyor. GecerliOgrSayisi={GecerliSayisi}, MevcutBugunSayisi={MevcutSayisi}", gecerliSet.Count, mevcutSet.Count);
+
             int dwTMachineNumber = 0, dwEnrollNumber = 0, dwEMachineNumber = 0;
             int dwVerifyMode = 0, dwInOutMode = 0;
             int dwYear = 0, dwMonth = 0, dwDay = 0, dwHour = 0, dwMinute = 0;
+            int toplamLog = 0, bugunLog = 0, yemekHakkiYok = 0, zatenVar = 0;
 
             while (zkem.GetGeneralLogData(
                 MACHINE_NUMBER,
@@ -189,6 +200,8 @@ public sealed class YemekhanePollingService : BackgroundService
                 ref dwVerifyMode, ref dwInOutMode,
                 ref dwYear, ref dwMonth, ref dwDay, ref dwHour, ref dwMinute))
             {
+                toplamLog++;
+
                 if (dwYear < 2000 || dwYear > DateTime.Now.Year ||
                     dwMonth is < 1 or > 12 ||
                     dwDay is < 1 or > 31)
@@ -197,11 +210,12 @@ public sealed class YemekhanePollingService : BackgroundService
                 var ts = new DateTime(dwYear, dwMonth, dwDay, dwHour, dwMinute, 0);
                 if (ts.Date != today) continue;
 
+                bugunLog++;
                 bugunLogVar = true;
                 int ogrenciId = dwEnrollNumber;
 
-                if (!gecerliSet.Contains(ogrenciId)) continue;
-                if (mevcutSet.Contains(ogrenciId)) continue;
+                if (!gecerliSet.Contains(ogrenciId)) { yemekHakkiYok++; continue; }
+                if (mevcutSet.Contains(ogrenciId)) { zatenVar++; continue; }
 
                 yeniLoglar.Add(new OgrenciDetayModel
                 {
@@ -216,6 +230,8 @@ public sealed class YemekhanePollingService : BackgroundService
 
                 mevcutSet.Add(ogrenciId);
             }
+
+            _logger.LogInformation("Cihaz özet: ToplamLog={ToplamLog}, BugünLog={BugunLog}, YemekHakkıYok={YemekHakkiYok}, ZatenVar={ZatenVar}, YeniKayıt={YeniKayit}", toplamLog, bugunLog, yemekHakkiYok, zatenVar, yeniLoglar.Count);
 
             cihazOk = true;
         }
@@ -252,43 +268,48 @@ public sealed class YemekhanePollingService : BackgroundService
     private static async Task<bool> TekilYemekhaneEkle(
         AppDbContext db, OgrenciDetayModel log, DateTime today, CancellationToken ct)
     {
-        var resource = $"YEMEKHANE:{log.OgrenciId}:{today:yyyyMMdd}";
+        var strategy = db.Database.CreateExecutionStrategy();
 
-        await using var tx = await db.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted, ct);
-        try
+        return await strategy.ExecuteAsync(async () =>
         {
-            var lockSql = "EXEC sp_getapplock @Resource=@p0, @LockMode='Exclusive', @LockOwner='Transaction', @LockTimeout=5000;";
-            await db.Database.ExecuteSqlRawAsync(lockSql, new object[] { resource }, ct);
+            var resource = $"YEMEKHANE:{log.OgrenciId}:{today:yyyyMMdd}";
 
-            bool varMi = await db.OgrenciDetaylar.AsNoTracking()
-                .AnyAsync(x =>
-                    x.OgrenciId == log.OgrenciId &&
-                    x.IstasyonTipi == IstasyonTipi.Yemekhane &&
-                    x.OgrenciGecisTipi == "GİRİŞ" &&
-                    x.OgrenciGTarih.HasValue &&
-                    x.OgrenciGTarih.Value.Date == today, ct);
-
-            if (varMi)
+            await using var tx = await db.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted, ct);
+            try
             {
+                var lockSql = "EXEC sp_getapplock @Resource=@p0, @LockMode='Exclusive', @LockOwner='Transaction', @LockTimeout=5000;";
+                await db.Database.ExecuteSqlRawAsync(lockSql, new object[] { resource }, ct);
+
+                bool varMi = await db.OgrenciDetaylar.AsNoTracking()
+                    .AnyAsync(x =>
+                        x.OgrenciId == log.OgrenciId &&
+                        x.IstasyonTipi == IstasyonTipi.Yemekhane &&
+                        x.OgrenciGecisTipi == "GİRİŞ" &&
+                        x.OgrenciGTarih.HasValue &&
+                        x.OgrenciGTarih.Value.Date == today, ct);
+
+                if (varMi)
+                {
+                    await tx.CommitAsync(ct);
+                    return false;
+                }
+
+                db.OgrenciDetaylar.Add(log);
+                await db.SaveChangesAsync(ct);
                 await tx.CommitAsync(ct);
+                return true;
+            }
+            catch (Microsoft.Data.SqlClient.SqlException ex) when (ex.Number == 1205)
+            {
+                await tx.RollbackAsync(ct);
                 return false;
             }
-
-            db.OgrenciDetaylar.Add(log);
-            await db.SaveChangesAsync(ct);
-            await tx.CommitAsync(ct);
-            return true;
-        }
-        catch (Microsoft.Data.SqlClient.SqlException ex) when (ex.Number == 1205)
-        {
-            await tx.RollbackAsync(ct);
-            return false;
-        }
-        catch
-        {
-            await tx.RollbackAsync(ct);
-            throw;
-        }
+            catch
+            {
+                await tx.RollbackAsync(ct);
+                throw;
+            }
+        });
     }
 
     /// <summary>

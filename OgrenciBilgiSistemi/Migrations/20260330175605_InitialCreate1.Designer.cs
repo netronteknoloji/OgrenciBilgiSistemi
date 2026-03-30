@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using OgrenciBilgiSistemi.Data;
 
@@ -11,9 +12,11 @@ using OgrenciBilgiSistemi.Data;
 namespace OgrenciBilgiSistemi.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260330175605_InitialCreate1")]
+    partial class InitialCreate1
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -860,9 +863,6 @@ namespace OgrenciBilgiSistemi.Migrations
                     b.Property<int>("Periyot")
                         .HasColumnType("int");
 
-                    b.Property<bool>("SmsGonderildi")
-                        .HasColumnType("bit");
-
                     b.HasKey("ServisYoklamaId");
 
                     b.HasIndex("OgrenciId");
@@ -915,9 +915,6 @@ namespace OgrenciBilgiSistemi.Migrations
 
                     b.Property<DateTime>("OlusturulmaTarihi")
                         .HasColumnType("datetime2");
-
-                    b.Property<int>("SmsDurumu")
-                        .HasColumnType("int");
 
                     b.HasKey("SinifYoklamaId");
 

@@ -33,6 +33,8 @@ namespace OgrenciBilgiSistemi.Models
         [Required]
         public int Periyot { get; set; }
 
+        public bool SmsGonderildi { get; set; }
+
         public DateTime OlusturulmaTarihi { get; set; }
         public DateTime? GuncellenmeTarihi { get; set; }
     }

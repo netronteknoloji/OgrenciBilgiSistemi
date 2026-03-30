@@ -25,8 +25,8 @@
         </Label>
 
         <Grid Grid.Column="2"
-              HeightRequest="44"
-              WidthRequest="44"
+              HeightRequest="48"
+              WidthRequest="48"
               HorizontalOptions="End"
               VerticalOptions="Center"
               IsVisible="{Binding ShowProfile, Source={x:Reference this}}">
@@ -35,9 +35,9 @@
             </Grid.GestureRecognizers>
 
             <Border x:Name="ProfileBtn"
-                    HeightRequest="40"
-                    WidthRequest="40"
-                    StrokeShape="RoundRectangle 20"
+                    HeightRequest="48"
+                    WidthRequest="48"
+                    StrokeShape="RoundRectangle 24"
                     BackgroundColor="White"
                     HorizontalOptions="Center"
                     VerticalOptions="Center"

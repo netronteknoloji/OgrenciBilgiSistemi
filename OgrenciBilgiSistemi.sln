@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OgrenciBilgiSistemi.Mobil",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OgrenciBilgiSistemi.Shared", "OgrenciBilgiSistemi.Shared\OgrenciBilgiSistemi.Shared.csproj", "{E2A331A1-57E4-407A-B706-71DDF2F40390}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OgrenciBilgiSistemi.Sms", "OgrenciBilgiSistemi.Sms\OgrenciBilgiSistemi.Sms.csproj", "{FE700AB5-AEF7-4D80-A7D1-520572CA9E66}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -75,6 +77,18 @@ Global
 		{E2A331A1-57E4-407A-B706-71DDF2F40390}.Release|x64.Build.0 = Release|Any CPU
 		{E2A331A1-57E4-407A-B706-71DDF2F40390}.Release|x86.ActiveCfg = Release|Any CPU
 		{E2A331A1-57E4-407A-B706-71DDF2F40390}.Release|x86.Build.0 = Release|Any CPU
+		{FE700AB5-AEF7-4D80-A7D1-520572CA9E66}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FE700AB5-AEF7-4D80-A7D1-520572CA9E66}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FE700AB5-AEF7-4D80-A7D1-520572CA9E66}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{FE700AB5-AEF7-4D80-A7D1-520572CA9E66}.Debug|x64.Build.0 = Debug|Any CPU
+		{FE700AB5-AEF7-4D80-A7D1-520572CA9E66}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{FE700AB5-AEF7-4D80-A7D1-520572CA9E66}.Debug|x86.Build.0 = Debug|Any CPU
+		{FE700AB5-AEF7-4D80-A7D1-520572CA9E66}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FE700AB5-AEF7-4D80-A7D1-520572CA9E66}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FE700AB5-AEF7-4D80-A7D1-520572CA9E66}.Release|x64.ActiveCfg = Release|Any CPU
+		{FE700AB5-AEF7-4D80-A7D1-520572CA9E66}.Release|x64.Build.0 = Release|Any CPU
+		{FE700AB5-AEF7-4D80-A7D1-520572CA9E66}.Release|x86.ActiveCfg = Release|Any CPU
+		{FE700AB5-AEF7-4D80-A7D1-520572CA9E66}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

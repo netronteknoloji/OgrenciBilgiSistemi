@@ -150,10 +150,12 @@ namespace OgrenciBilgiSistemi.Api.Services
                         AND target.Periyot = @periyot
                         AND CAST(target.OlusturulmaTarihi AS DATE) = @Bugun)
                     WHEN MATCHED THEN
-                        UPDATE SET DurumId = @durumId, GuncellenmeTarihi = GETDATE()
+                        UPDATE SET DurumId = @durumId,
+                                   GuncellenmeTarihi = GETDATE(),
+                                   SmsGonderildi = CASE WHEN target.DurumId <> @durumId THEN 0 ELSE target.SmsGonderildi END
                     WHEN NOT MATCHED THEN
-                        INSERT (OgrenciId, KullaniciId, DurumId, Periyot, OlusturulmaTarihi)
-                        VALUES (@ogrenciId, @kullaniciId, @durumId, @periyot, GETDATE());";
+                        INSERT (OgrenciId, KullaniciId, DurumId, Periyot, SmsGonderildi, OlusturulmaTarihi)
+                        VALUES (@ogrenciId, @kullaniciId, @durumId, @periyot, 0, GETDATE());";
 
                 foreach (var kayit in yoklamaVerisi)
                 {

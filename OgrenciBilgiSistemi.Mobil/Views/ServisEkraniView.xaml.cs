@@ -48,7 +48,7 @@ namespace OgrenciBilgiSistemi.Mobil.Views
                 _tumOgrenciler = ogrenciler.Select(o => new OgrenciGorunumModel
                 {
                     OgrenciData = o,
-                    ServisDurumId = 0 // Bekliyor
+                    ServisDurumId = 1 // Bindi
                 }).ToList();
 
                 OgrenciCollection.ItemsSource = _tumOgrenciler;

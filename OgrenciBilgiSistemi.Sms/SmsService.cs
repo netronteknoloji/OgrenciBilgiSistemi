@@ -1,27 +1,29 @@
-using System.Net;
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using OgrenciBilgiSistemi.Models.Options;
-using OgrenciBilgiSistemi.Services.Interfaces;
 
-namespace OgrenciBilgiSistemi.Services.Implementations;
+namespace OgrenciBilgiSistemi.Sms;
 
 public sealed class SmsService : ISmsService
 {
     private readonly HttpClient _http;
     private readonly SmsAyarlari _ayar;
+    private readonly ILogger<SmsService> _logger;
 
-    public SmsService(HttpClient http, IOptions<SmsAyarlari> ayar)
+    public SmsService(HttpClient http, IOptions<SmsAyarlari> ayar, ILogger<SmsService> logger)
     {
         _http = http;
         _ayar = ayar.Value;
-        _http.Timeout = TimeSpan.FromSeconds(_ayar.ZamanAsimiSaniye > 0 ? _ayar.ZamanAsimiSaniye : 30);
+        _logger = logger;
     }
 
     public async Task<SmsGonderimSonucu> Gonder(string telefon, string mesaj, CancellationToken ct = default)
     {
         if (!_ayar.Aktif)
             return new SmsGonderimSonucu(true, HamCevap: "SMS devre dışı.");
+
+        if (_http.BaseAddress is null)
+            return new SmsGonderimSonucu(false, Hata: "SmsAyarlari:ApiUrl yapılandırılmamış veya geçersiz.");
 
         if (string.IsNullOrWhiteSpace(telefon))
             return new SmsGonderimSonucu(false, Hata: "Telefon boş.");
@@ -53,7 +55,7 @@ public sealed class SmsService : ISmsService
         HttpResponseMessage resp;
         try
         {
-            resp = await _http.PostAsync(_ayar.ApiUrl, content, ct);
+            resp = await _http.PostAsync("", content, ct);
         }
         catch (TaskCanceledException ex) when (!ct.IsCancellationRequested)
         {
@@ -71,20 +73,13 @@ public sealed class SmsService : ISmsService
         return new SmsGonderimSonucu(true, HamCevap: body);
     }
 
-    /// <summary>
-    /// Telefon numarasını 05XXXXXXXXX formatına normalize eder.
-    /// </summary>
     private static string? TelefonNormalize(string input)
     {
         var d = new string(input.Where(char.IsDigit).ToArray());
 
-        // 5XXXXXXXXX -> 05XXXXXXXXX
         if (d.Length == 10 && d.StartsWith('5')) return "0" + d;
-        // 05XXXXXXXXX
         if (d.Length == 11 && d.StartsWith("05")) return d;
-        // 905XXXXXXXXX -> 05XXXXXXXXX
         if (d.Length == 12 && d.StartsWith("90") && d[2] == '5') return "0" + d[2..];
-        // 0905XXXXXXXXX -> 05XXXXXXXXX
         if (d.Length == 13 && d.StartsWith("090") && d[3] == '5') return "0" + d[3..];
 
         return null;

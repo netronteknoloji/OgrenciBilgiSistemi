@@ -45,7 +45,7 @@ public partial class OgrenciListeView : ContentPage
             _studentViewModels = students.Select(s => new OgrenciGorunumModel
             {
                 OgrenciData = s,
-                SecilenDurumId = 1 // Varsayılan: Geldi
+                SecilenDurumId = 0 // Ders seçilene kadar seçimsiz
             }).ToList();
 
             StudentCollection.ItemsSource = _studentViewModels;

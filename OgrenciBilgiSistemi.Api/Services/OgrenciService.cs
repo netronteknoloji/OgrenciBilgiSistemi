@@ -186,10 +186,16 @@ namespace OgrenciBilgiSistemi.Api.Services
                     USING (SELECT @ogrenciId AS OgrenciId) AS source
                     ON (target.OgrenciId = source.OgrenciId AND CAST(target.OlusturulmaTarihi AS DATE) = @Bugun)
                     WHEN MATCHED THEN
-                        UPDATE SET {dersKolonu} = @durumId, GuncellenmeTarihi = GETDATE()
+                        UPDATE SET {dersKolonu} = @durumId,
+                                   GuncellenmeTarihi = GETDATE(),
+                                   SmsDurumu = CASE WHEN ISNULL(target.{dersKolonu}, 0) <> @durumId
+                                               THEN target.SmsDurumu & ~@dersBit
+                                               ELSE target.SmsDurumu END
                     WHEN NOT MATCHED THEN
-                        INSERT (OgrenciId, KullaniciId, {dersKolonu}, OlusturulmaTarihi)
-                        VALUES (@ogrenciId, @kullaniciId, @durumId, GETDATE());";
+                        INSERT (OgrenciId, KullaniciId, {dersKolonu}, SmsDurumu, OlusturulmaTarihi)
+                        VALUES (@ogrenciId, @kullaniciId, @durumId, 0, GETDATE());";
+
+                var dersBit = 1 << (dersNumarasi - 1);
 
                 foreach (var kayit in yoklamaVerisi)
                 {
@@ -197,6 +203,7 @@ namespace OgrenciBilgiSistemi.Api.Services
                     cmd.Parameters.AddWithValue("@ogrenciId", kayit.OgrenciId);
                     cmd.Parameters.AddWithValue("@durumId",   kayit.DurumId);
                     cmd.Parameters.AddWithValue("@kullaniciId", ogretmenId);
+                    cmd.Parameters.AddWithValue("@dersBit", dersBit);
                     await cmd.ExecuteNonQueryAsync();
                 }
 
