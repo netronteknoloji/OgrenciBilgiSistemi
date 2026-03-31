@@ -1,0 +1,101 @@
+﻿@model OgrenciBilgiSistemi.Models.KitapModel
+
+@{
+    var action = (ViewData["Action"] as string) ?? "Ekle";      // "Ekle" | "Guncelle"
+    var submitText = (ViewData["SubmitText"] as string) ?? "Kaydet";    // "Kaydet" | "Güncelle"
+    var includeId = (bool?)ViewData["IncludeId"] ?? false;       // Güncelle'de true
+
+    var formId = "kitapForm";
+    var submitBtnId = "submitBtn";
+}
+
+<div class="viewport-scroller">
+    <div class="fixed-canvas">
+        <div class="container py-4">
+            <div class="row justify-content-center">
+                <div class="col-5">
+                    <div class="card rounded-3 border">
+                        <div class="card-header bg-primary text-white text-center">
+                            <h4 class="fw-bold mb-0">
+                                @(action == "Ekle" ? "Kitap Ekle" : "Kitap Güncelle")
+                            </h4>
+                        </div>
+
+                        <div class="card-body p-4">
+                            <form asp-action="@action" method="post" id="@formId" enctype="multipart/form-data" autocomplete="off">
+                                @Html.AntiForgeryToken()
+
+                                @if (includeId)
+                                {
+                                    <input type="hidden" asp-for="KitapId" />
+                                }
+
+                                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                                <!-- Kitap Adı -->
+                                <div class="mb-3">
+                                    <label asp-for="KitapAd" class="form-label fw-semibold">Kitap Adı</label>
+                                    <input asp-for="KitapAd"
+                                           class="form-control"
+                                           required maxlength="100"
+                                           placeholder="Kitap adını girin" />
+                                    <span asp-validation-for="KitapAd" class="text-danger"></span>
+                                </div>
+
+                                <!-- Kitap Görsel -->
+                                <div class="mb-3">
+                                    <label asp-for="KitapGorselFile" class="form-label fw-semibold">Kitap Görseli</label>
+                                    <input asp-for="KitapGorselFile" type="file" class="form-control" accept=".jpg,.jpeg,.png" />
+                                    <div class="form-text">Sadece .jpg, .jpeg, .png uzantılı dosyalar yüklenebilir.</div>
+                                    <span asp-validation-for="KitapGorselFile" class="text-danger"></span>
+                                </div>
+
+                                <!-- Kitap Türü -->
+                                <div class="mb-3">
+                                    <label asp-for="KitapTurAd" class="form-label fw-semibold">Kitap Türü</label>
+                                    <input asp-for="KitapTurAd"
+                                           class="form-control"
+                                           required maxlength="50"
+                                           placeholder="Kitap türü girin" />
+                                    <span asp-validation-for="KitapTurAd" class="text-danger"></span>
+                                </div>
+
+                                <!-- Kitap Gün -->
+                                <div class="mb-3">
+                                    <label asp-for="KitapGun" class="form-label fw-semibold">Kitap Gün</label>
+                                    <input asp-for="KitapGun"
+                                           type="number"
+                                           class="form-control"
+                                           required min="0" max="365"
+                                           placeholder="Kitap gün sayısı girin" />
+                                    <span asp-validation-for="KitapGun" class="text-danger"></span>
+                                </div>
+
+                                <!-- Kitap Durumu -->
+                                <div class="mb-4">
+                                    <label asp-for="KitapDurum" class="form-label fw-semibold">Kitap Durumu</label>
+                                    <select asp-for="KitapDurum" class="form-select">
+                                        <option value="true">Aktif</option>
+                                        <option value="false">Pasif</option>
+                                    </select>
+                                    <span asp-validation-for="KitapDurum" class="text-danger"></span>
+                                </div>
+
+                                <!-- Butonlar -->
+                                <div class="d-flex justify-content-between gap-2">
+                                    <a asp-action="Index" asp-controller="Kitaplar" class="btn btn-outline-secondary">
+                                        <i class="bi bi-arrow-left"></i> Geri Dön
+                                    </a>
+                                    <button type="submit" class="btn btn-primary fw-bold" id="@submitBtnId">
+                                        <i class="bi bi-save"></i> @submitText
+                                    </button>
+                                </div>
+                            </form>
+                        </div> <!-- /card-body -->
+                    </div> <!-- /card -->
+                </div>
+            </div>
+        </div> <!-- /container -->
+    </div>
+</div>
+

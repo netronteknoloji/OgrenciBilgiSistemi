@@ -1,0 +1,130 @@
+﻿@model OgrenciBilgiSistemi.Models.CihazModel
+@{
+    var action = (ViewData["Action"] as string) ?? "Ekle";
+    var submitText = (ViewData["SubmitText"] as string) ?? "Kaydet";
+    var includeId = (bool?)ViewData["IncludeId"] ?? false;
+    var showGuid = (bool?)ViewData["ShowGuid"] ?? false;
+    var guidStr = (ViewData["GuidStr"] as string) ?? "";
+
+    var submitingText = submitText == "Güncelle" ? "Güncelleniyor..." : "Kaydediliyor...";
+
+    var formId = "cihazForm";
+    var submitBtnId = "submitBtn";
+}
+
+<div class="viewport-scroller">
+    <div class="fixed-canvas">
+        <div class="container py-4">
+            <div class="row justify-content-center">
+                <div class="col-5">
+                    <div class="card rounded-3 border">
+                        <div class="card-header bg-primary text-white text-center">
+                            <h4 class="fw-bold mb-0">
+                                @(action == "Ekle" ? "Cihaz Ekle" : "Cihaz Güncelle")
+                            </h4>
+                        </div>
+
+                        <div class="card-body p-4">
+                            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                            <form asp-action="@action" method="post" autocomplete="off" id="@formId">
+                                @Html.AntiForgeryToken()
+
+                                @if (includeId)
+                                {
+                                    <input type="hidden" asp-for="CihazId" />
+                                }
+
+                                @if (showGuid)
+                                {
+                                    <div class="mb-3">
+                                        <label class="form-label fw-semibold">Cihaz Kodu (GUID)</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" value="@guidStr" readonly />
+                                            <button type="button" class="btn btn-outline-secondary"
+                                                    data-guid="@guidStr" onclick="copyGuid(this)" title="GUID kopyala">
+                                                <i class="bi bi-clipboard"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                }
+
+                                <!-- Cihaz Adı -->
+                                <div class="mb-3">
+                                    <label asp-for="CihazAdi" class="form-label fw-semibold">Cihaz Adı</label>
+                                    <input asp-for="CihazAdi"
+                                           class="form-control"
+                                           required minlength="3"
+                                           placeholder="Örn: RFID-ANA-01" />
+                                    <span asp-validation-for="CihazAdi" class="text-danger"></span>
+                                </div>
+
+                                <!-- Donanım Tipi -->
+                                <div class="mb-3">
+                                    <label asp-for="DonanimTipi" class="form-label fw-semibold">Donanım Tipi</label>
+                                    <select asp-for="DonanimTipi" class="form-select"
+                                            asp-items="Html.GetEnumSelectList<DonanimTipi>()" id="DonanimTipi" required>
+                                    </select>
+                                    <span asp-validation-for="DonanimTipi" class="text-danger"></span>
+                                </div>
+
+                                <!-- İstasyon Tipi -->
+                                <div class="mb-3">
+                                    <label asp-for="IstasyonTipi" class="form-label fw-semibold">İstasyon Tipi</label>
+                                    <select asp-for="IstasyonTipi" class="form-select"
+                                            asp-items="Html.GetEnumSelectList<IstasyonTipi>()" id="IstasyonTipi" required>
+                                    </select>
+                                    <span asp-validation-for="IstasyonTipi" class="text-danger"></span>
+                                </div>
+
+                                <!-- ZKTeco alanları -->
+                                <div id="zkFields" class="mb-3" style="display:none;">
+                                    <div class="mb-3">
+                                        <label asp-for="IpAdresi" class="form-label fw-semibold">IP Adresi</label>
+                                        <input asp-for="IpAdresi" class="form-control"
+                                               placeholder="Örn: 192.168.1.50"
+                                               inputmode="numeric" id="IpAdresi" />
+                                        <span asp-validation-for="IpAdresi" class="text-danger"></span>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label asp-for="PortNo" class="form-label fw-semibold">Port No</label>
+                                        <input asp-for="PortNo" class="form-control"
+                                               type="number" inputmode="numeric"
+                                               min="1" max="65535" step="1" placeholder="Örn: 4370" id="PortNo" />
+                                        <span asp-validation-for="PortNo" class="text-danger"></span>
+                                    </div>
+                                </div>
+
+                                <!-- Butonlar -->
+                                <div class="d-flex justify-content-between gap-2">
+                                    <a asp-action="Index" class="btn btn-outline-secondary">
+                                        <i class="bi bi-arrow-left"></i> Geri Dön
+                                    </a>
+                                    <button type="submit" class="btn btn-primary fw-bold" id="@submitBtnId">
+                                        <i class="bi bi-save"></i> @submitText
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Double-submit koruması
+    (function () {
+        var form = document.getElementById('@formId');
+        var btn  = document.getElementById('@submitBtnId');
+        if (!form || !btn) return;
+
+        form.addEventListener('submit', function () {
+            if (form.checkValidity()) {
+                btn.disabled = true;
+                btn.textContent = '@submitingText';
+            }
+        });
+    })();
+</script>

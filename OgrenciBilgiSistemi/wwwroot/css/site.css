@@ -1,0 +1,196 @@
+/* ==== 2) GLOBAL BOX-SIZING ==== */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+/* ---- Genel ---- */
+html, body {
+    overflow-x: hidden;
+    height: 100%;
+    background-color: #fff;
+    color: #000;
+}
+
+/* ---- Navbar ---- */
+.navbar {
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none;
+}
+
+.navbar-brand {
+    font-size: 1.1rem;
+}
+
+
+.navbar .navbar-nav .nav-link {
+    color: #000;
+    font-weight: 500;
+    transition: color .2s ease-in-out, background-color .2s ease-in-out;
+}
+
+    .navbar .navbar-nav .nav-link:hover,
+    .navbar .navbar-nav .nav-link:focus-visible {
+        color: #000;
+        text-decoration: none;
+    }
+
+    .navbar .navbar-nav .nav-link.active {
+        color: #000;
+        font-weight: 700;
+    }
+
+/* ---- Dropdown ---- */
+.navbar .dropdown-toggle::after {
+    margin-left: .35rem;
+}
+
+.navbar .dropdown-menu {
+    margin-top: .5rem;
+    border: 1px solid #ddd;
+    border-radius: .5rem;
+    background-color: #fff;
+    box-shadow: 0 8px 24px rgba(0,0,0,.06);
+}
+
+.navbar .dropdown-item {
+    font-weight: 500;
+}
+
+    .navbar .dropdown-item:hover,
+    .navbar .dropdown-item:focus-visible {
+        background-color: #f8f9fa;
+        color: #000;
+    }
+
+    .navbar .dropdown-item.active,
+    .navbar .dropdown-item:active {
+        background-color: #e9ecef;
+        color: #000;
+        font-weight: 700;
+    }
+
+/* ---- Sidebar ---- */
+.sidebar {
+    height: 100vh;
+    width: 180px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    background-color: #fdfdfd;
+    border-right: 1px solid #ddd;
+    padding-top: 20px;
+    box-shadow: 2px 0 4px rgba(0,0,0,.06);
+}
+
+    .sidebar a {
+        padding: 12px 15px;
+        display: block;
+        font-size: 1rem;
+        color: #000;
+        text-decoration: none;
+        transition: background .2s ease-in-out;
+        border-radius: 5px;
+    }
+
+        .sidebar a:hover,
+        .sidebar a:focus-visible {
+            background-color: #f1f1f1;
+            color: #000;
+        }
+
+    .sidebar .active {
+        background-color: #e9ecef;
+        font-weight: 700;
+        color: #000;
+    }
+
+    .sidebar a[data-bs-toggle="collapse"] {
+        font-weight: 700;
+        color: #000;
+        background-color: #f7f7f7;
+        border-radius: 5px;
+    }
+
+        .sidebar a[data-bs-toggle="collapse"]:hover {
+            background-color: #e2e2e2;
+        }
+
+    .sidebar .collapse a {
+        padding-left: 25px;
+        font-size: .95rem;
+    }
+
+/* ---- Ýçerik ---- */
+.content {
+    margin-left: 180px; /* sidebar ile tam hizalý */
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    color: #000;
+}
+
+/* ---- Yardýmcýlar ---- */
+.btn-group-gap {
+    gap: .25rem;
+}
+
+/* ---- Viewport / Canvas yapýsý ---- */
+.viewport-scroller {
+    width: 100%;
+    overflow-x: visible;
+    overflow-y: visible;
+    max-width: 100vw;
+    box-sizing: border-box;
+}
+
+.fixed-canvas {
+    width: clamp(1100px, 95%, 1366px);
+    margin: 0 auto;
+    box-sizing: border-box;
+}
+
+/* ---- Scroll Yardýmcýlarý ---- */
+.no-wrap-scroll {
+    overflow-x: auto;
+    white-space: nowrap;
+}
+
+    .no-wrap-scroll > * {
+        white-space: normal;
+    }
+
+.table-scroll {
+    overflow-x: auto;
+}
+
+#dashboardLine {
+    background: #fff;
+    border-radius: 16px;
+    padding: 12px;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    box-shadow: 0 3px 10px rgba(0,0,0,.05);
+}
+
+.chart-responsive {
+    position: relative;
+    height: 340px;
+}
+
+/* ---- Chart: belirgin çerçeve + yazý rengi ---- */
+/*#dashboardLine {
+    border: 2px solid rgba(0, 0, 0, 0.15);*/ /* belirgin dýþ çerçeve */
+    /*box-shadow: none;*/ /* gölgeyi korumak istersen bu satýrý kaldýr */
+/*}
+
+    #dashboardLine + small,
+    #dashboardLine + p,
+    #dashboardLine + div {
+        display: block;
+        text-align: center;
+        font-weight: 500;
+        color: #444;*/ /* yazýlar daha koyu */
+        /*margin-top: 6px;
+        letter-spacing: .2px;
+    }*/

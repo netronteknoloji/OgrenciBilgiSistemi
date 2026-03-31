@@ -1,0 +1,112 @@
+﻿@model OgrenciBilgiSistemi.ViewModels.KartOkumaVm
+@{
+    ViewData["Title"] = "Kart Okuma Ekranı";
+}
+
+<div class="viewport-scroller">
+    <div class="fixed-canvas">
+
+        <div class="container d-flex flex-column align-items-center justify-content-center" style="min-height: 80vh;">
+            <div class="card shadow my-4 w-100" style="max-width: 960px;">
+                <div class="card-body text-center">
+                    <h4 id="sayfaBasligi" class="card-title mb-3 fs-2 mt-1">Kart Okuma Ekranı</h4>
+
+                    <div asp-validation-summary="All" class="text-danger mb-3 fs-6 fs-md-5"></div>
+
+                    <!-- Kart okutma formu -->
+                    <div id="ogrenciFormAlani" class="w-100">
+                        <form id="kartForm" autocomplete="off" class="mx-auto" style="max-width: 520px;">
+                            <label class="form-label fs-5 mt-2">Lütfen Kartınızı Okutunuz:</label>
+                            <input id="kartInput"
+                                   name="kartNo"
+                                   class="form-control text-center"
+                                   inputmode="numeric"
+                                   placeholder="Kart numarası"
+                                   aria-label="Kart numarası" />
+                        </form>
+
+                        <!-- Çok istasyon desteği: GUID cihaz kodu -->
+                        <input type="hidden" id="cihazKodu" value="@ViewBag.CihazKodu" />
+                    </div>
+
+                    <!-- Öğrenci bilgisi buraya dinamik olarak gelecek -->
+                    <div id="ogrenciBilgisi" class="mt-4 w-100"></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<footer class="text-center text-white py-3 mt-auto" style="background-color: #2f3c50;">
+    © @DateTime.Now.Year Öğrenci Takip Sistemi | Tüm Hakları Saklıdır
+</footer>
+
+@section Scripts {
+    <!-- Yerel SignalR kütüphanesi -->
+    <script src="~/lib/microsoft/signalr/dist/browser/signalr.min.js" asp-append-version="true"></script>
+
+    <!-- Sayfa içi yardımcı JS -->
+    <script>
+        // 🔄 Sadece Kart Okuma ekranı açıkken keep-alive ping
+        (function keepAlive() {
+            const PERIOD = 4 * 60 * 1000; // 4 dk
+            let timerId = null;
+            const ping = () => fetch("/keep-alive", { method: "GET", cache: "no-store", credentials: "same-origin" }).catch(() => {});
+            const start = () => { if (timerId) return; ping(); timerId = setInterval(ping, PERIOD); };
+            const stop  = () => { if (!timerId) return; clearInterval(timerId); timerId = null; };
+            document.addEventListener("visibilitychange", () => document.visibilityState === "visible" ? start() : stop());
+            window.addEventListener("beforeunload", stop);
+            if (document.visibilityState === "visible") start();
+        })();
+
+        function focusKartInput(attempt = 0) {
+            const input = document.getElementById("kartInput");
+            if (input) {
+                input.focus();
+                if (document.activeElement !== input && attempt < 5) {
+                    setTimeout(() => focusKartInput(attempt + 1), 100);
+                }
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const form = document.getElementById("kartForm");
+            const input = document.getElementById("kartInput");
+            const gizliCihaz = document.getElementById("cihazKodu");
+
+            window.CIHAZ_GUID = (gizliCihaz?.value || "").toString();
+
+            setTimeout(() => focusKartInput(), 150);
+            form.addEventListener("submit", e => e.preventDefault());
+
+            input?.addEventListener("keydown", async (e) => {
+                if (e.key !== "Enter") return;
+                e.preventDefault();
+
+                const kartNo = (input.value || "").trim();
+                const cihazKodu = gizliCihaz?.value || "";
+                if (!kartNo) return;
+
+                try {
+                    const response = await fetch("/KartOku/UsbKartOkundu", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                        body: new URLSearchParams({ kartNo, cihazKodu })
+                    });
+                    if (!response.ok) console.warn("Sunucudan hata:", await response.text());
+                } catch (err) {
+                    console.error("İstek hatası:", err);
+                } finally {
+                    input.value = "";
+                    focusKartInput();
+                }
+            });
+
+            window.addEventListener("focus", () => setTimeout(() => focusKartInput(), 100));
+        });
+    </script>
+
+    <!-- Güncel SignalR handler -->
+    <script src="~/js/signalr-handler.js" asp-append-version="true"></script>
+}

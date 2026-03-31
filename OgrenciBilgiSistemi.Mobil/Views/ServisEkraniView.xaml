@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:views="clr-namespace:OgrenciBilgiSistemi.Mobil.Views"
+             x:Class="OgrenciBilgiSistemi.Mobil.Views.ServisEkraniView"
+             Title="Servis Yoklama"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="#F2F2F2">
+
+    <ContentPage.Resources>
+        <Style x:Key="ServisDurumBorderStyle" TargetType="Border">
+            <Setter Property="StrokeShape" Value="RoundRectangle 12" />
+            <Setter Property="StrokeThickness" Value="1" />
+            <Setter Property="Padding" Value="14,8" />
+            <Setter Property="Margin" Value="0,0,8,0" />
+            <Setter Property="BackgroundColor" Value="White" />
+            <Setter Property="Stroke" Value="#DCDDE1" />
+        </Style>
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="125, Auto, Auto, Auto, *, Auto">
+
+        <Border Grid.Row="0"
+                StrokeThickness="0"
+                BackgroundColor="#2980B9"
+                VerticalOptions="FillAndExpand">
+            <Border.Shadow>
+                <Shadow Brush="#2980B9" Offset="0,4" Radius="15" Opacity="0.4" />
+            </Border.Shadow>
+
+            <Grid>
+                <views:AnaBaslikView x:Name="MyHeader"
+                                      ShowBack="False"
+                                      ShowProfile="True" />
+
+                <VerticalStackLayout Spacing="2"
+                                     VerticalOptions="End"
+                                     Margin="20,0,20,35">
+                    <Label x:Name="WelcomeLabel"
+                           Text="Merhaba"
+                           FontSize="18"
+                           FontFamily="OpenSansSemibold"
+                           TextColor="White" />
+                    <Label x:Name="PlakaLabel"
+                           Text="Servis Öğrencileri"
+                           FontSize="14"
+                           FontFamily="OpenSansSemibold"
+                           TextColor="White" />
+                </VerticalStackLayout>
+            </Grid>
+        </Border>
+
+        <!-- Periyot seçici (Sabah / Akşam) -->
+        <Border Grid.Row="1"
+                Margin="15,-28,15,10"
+                HeightRequest="55"
+                StrokeShape="RoundRectangle 28"
+                StrokeThickness="0"
+                BackgroundColor="White">
+            <Border.Shadow>
+                <Shadow Brush="Black" Offset="0,10" Radius="20" Opacity="0.08" />
+            </Border.Shadow>
+            <Grid ColumnDefinitions="55, *">
+                <Label Grid.Column="0" Text="🚌" VerticalOptions="Center" HorizontalOptions="Center" FontSize="22" />
+                <Picker x:Name="PeriyotPicker" Grid.Column="1" Title="Periyot Seçiniz" TitleColor="#95A5A6"
+                        TextColor="#2C3E50" VerticalOptions="Center" SelectedIndexChanged="OnPeriyotChanged">
+                    <Picker.ItemsSource>
+                        <x:Array Type="{x:Type x:String}">
+                            <x:String>Sabah Servisi</x:String>
+                            <x:String>Akşam Servisi</x:String>
+                        </x:Array>
+                    </Picker.ItemsSource>
+                </Picker>
+            </Grid>
+        </Border>
+
+        <!-- Öğrenci sayısı + Arama -->
+        <Border Grid.Row="2"
+                Margin="15,0,15,10"
+                HeightRequest="45"
+                StrokeShape="RoundRectangle 22"
+                StrokeThickness="0"
+                BackgroundColor="White">
+            <Border.Shadow>
+                <Shadow Brush="Black" Offset="0,4" Radius="10" Opacity="0.05" />
+            </Border.Shadow>
+            <Grid ColumnDefinitions="45, *, Auto">
+                <Label Grid.Column="0" Text="🔍" VerticalOptions="Center" HorizontalOptions="Center" FontSize="16" TextColor="#95A5A6" />
+                <Entry Grid.Column="1" x:Name="SearchBar" Placeholder="Öğrenci ara..." PlaceholderColor="#95A5A6"
+                       TextColor="#2C3E50" FontSize="14" VerticalOptions="Center" TextChanged="OnSearchBarTextChanged" />
+                <Label Grid.Column="2" x:Name="OgrenciSayisiLabel" Text="Yükleniyor..."
+                       VerticalOptions="Center" FontSize="12" TextColor="#7F8C8D" Margin="0,0,15,0" />
+            </Grid>
+        </Border>
+
+        <!-- Uyarı: Daha önce kaydedilmiş yoklama -->
+        <Border x:Name="StatusWarningFrame" Grid.Row="3" IsVisible="False" Margin="15,0,15,10"
+                StrokeShape="RoundRectangle 10" StrokeThickness="0" BackgroundColor="#FFF3CD">
+            <Label Text="Bu periyodun yoklaması daha önce kaydedilmiştir." Padding="12"
+                   TextColor="#856404" HorizontalOptions="Center" FontSize="13" />
+        </Border>
+
+        <!-- Öğrenci listesi (yoklama kartları) -->
+        <CollectionView x:Name="OgrenciCollection" Grid.Row="4" Margin="15,0" SelectionMode="None">
+            <CollectionView.ItemsLayout>
+                <LinearItemsLayout Orientation="Vertical" ItemSpacing="10" />
+            </CollectionView.ItemsLayout>
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Border StrokeShape="RoundRectangle 15" StrokeThickness="0" BackgroundColor="White" Padding="15">
+                        <Border.Shadow>
+                            <Shadow Brush="Black" Offset="0,2" Radius="5" Opacity="0.05" />
+                        </Border.Shadow>
+                        <VerticalStackLayout Spacing="12">
+                            <!-- Öğrenci bilgileri -->
+                            <Grid ColumnDefinitions="Auto, *" ColumnSpacing="12" VerticalOptions="Center">
+                                <Border Grid.Column="0" StrokeShape="RoundRectangle 20" HeightRequest="40"
+                                        WidthRequest="40" StrokeThickness="0" BackgroundColor="#E0E0E0">
+                                    <Image Aspect="AspectFill" Source="{Binding OgrenciData.OgrenciGorsel, TargetNullValue='user_icon.png', FallbackValue='user_icon.png'}" />
+                                </Border>
+                                <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="2">
+                                    <Label Text="{Binding OgrenciData.OgrenciAdSoyad}" FontSize="16"
+                                           FontFamily="OpenSansSemibold" TextColor="#2C3E50" LineBreakMode="TailTruncation" />
+                                    <Label Text="{Binding OgrenciData.SinifAdi}" FontSize="11" TextColor="#7F8C8D" />
+                                </VerticalStackLayout>
+                            </Grid>
+
+                            <!-- Durum butonları: Bindi / Binmedi -->
+                            <FlexLayout Wrap="Wrap" Direction="Row" JustifyContent="Start">
+                                <Border Style="{StaticResource ServisDurumBorderStyle}">
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnServisDurumTapped" CommandParameter="1" />
+                                    </Border.GestureRecognizers>
+                                    <Label Text="Bindi" FontSize="13" TextColor="Black">
+                                        <Label.Triggers>
+                                            <DataTrigger TargetType="Label" Binding="{Binding ServisDurumId}" Value="1">
+                                                <Setter Property="TextColor" Value="White" />
+                                            </DataTrigger>
+                                        </Label.Triggers>
+                                    </Label>
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding ServisDurumId}" Value="1">
+                                            <Setter Property="BackgroundColor" Value="#2ECC71" />
+                                            <Setter Property="Stroke" Value="#2ECC71" />
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                </Border>
+
+                                <Border Style="{StaticResource ServisDurumBorderStyle}">
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnServisDurumTapped" CommandParameter="2" />
+                                    </Border.GestureRecognizers>
+                                    <Label Text="Binmedi" FontSize="13" TextColor="Black">
+                                        <Label.Triggers>
+                                            <DataTrigger TargetType="Label" Binding="{Binding ServisDurumId}" Value="2">
+                                                <Setter Property="TextColor" Value="White" />
+                                            </DataTrigger>
+                                        </Label.Triggers>
+                                    </Label>
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding ServisDurumId}" Value="2">
+                                            <Setter Property="BackgroundColor" Value="#E74C3C" />
+                                            <Setter Property="Stroke" Value="#E74C3C" />
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                </Border>
+                            </FlexLayout>
+                        </VerticalStackLayout>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+            <CollectionView.EmptyView>
+                <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="10" Padding="20">
+                    <Label Text="Bu serviste öğrenci bulunmuyor." FontSize="16" TextColor="#95A5A6" HorizontalOptions="Center" />
+                </VerticalStackLayout>
+            </CollectionView.EmptyView>
+        </CollectionView>
+
+        <!-- Kaydet / Güncelle butonları -->
+        <Border Grid.Row="5" Padding="15,10,15,20" BackgroundColor="White" StrokeThickness="0">
+            <Border.Shadow>
+                <Shadow Brush="Black" Offset="0,-5" Radius="10" Opacity="0.05" />
+            </Border.Shadow>
+            <Grid>
+                <Button x:Name="BtnKaydet" Text="YOKLAMAYI KAYDET" HeightRequest="55" CornerRadius="12"
+                        BackgroundColor="#2980B9" TextColor="White" Clicked="OnYoklamaKaydet" />
+                <Button x:Name="BtnGuncelle" Text="YOKLAMAYI GÜNCELLE" IsVisible="False" HeightRequest="55"
+                        CornerRadius="12" BackgroundColor="#2196F3" TextColor="White" Clicked="OnYoklamaGuncelle" />
+            </Grid>
+        </Border>
+    </Grid>
+</ContentPage>

@@ -1,0 +1,240 @@
+﻿@model SayfalanmisListeModel<OgrenciBilgiSistemi.Models.ZiyaretciModel>
+@using OgrenciBilgiSistemi.Models
+@using Microsoft.AspNetCore.Mvc.Rendering
+
+@{
+    ViewData["Title"] = "Ziyaretçi İşlemleri";
+
+    var q = ViewData["CurrentFilter"] as string;
+
+    var sadeceAktif = ViewData["SadeceAktif"] as bool? ?? true;
+    var seciliKullaniciId = ViewData["KullaniciId"] as int?;
+    var kullanicilar = ViewBag.Kullanicilar as IEnumerable<SelectListItem> ?? Enumerable.Empty<SelectListItem>();
+}
+
+<div class="viewport-scroller">
+    <div class="fixed-canvas">
+        <div class="card border rounded-4 p-4 mt-4">
+
+            <!-- Başlık + aksiyonlar -->
+            <div class="d-flex justify-content-between align-items-center mb-4 flex-nowrap no-wrap-scroll">
+                <h3 class="text-primary fw-bold mb-0">@ViewData["Title"]</h3>
+
+                <a class="btn btn-success fw-semibold"
+                   asp-controller="Ziyaretciler"
+                   asp-action="Ekle">
+                    <i class="bi bi-plus-lg"></i> Ziyaretçi Ekle
+                </a>
+            </div>
+
+            <!-- Filtre Formu -->
+            <form method="get"
+                  asp-controller="Ziyaretciler"
+                  asp-action="Index"
+                  id="ziyaretciFilterForm"
+                  class="d-flex align-items-end gap-3 flex-nowrap no-wrap-scroll w-100 bg-body-tertiary border rounded-3 p-3 mb-3">
+
+                <!-- Ziyaretçi Arama -->
+                <div>
+                    <label for="searchString" class="visually-hidden">Ziyaretçi</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                        <input type="text" id="searchString" name="searchString"
+                               class="form-control" placeholder="Ad, T.C. No, telefon, kart no ara…"
+                               value="@q" style="width:280px;" />
+                    </div>
+                </div>
+
+                <!-- Görüştüğü Personel -->
+                <div>
+                    <label for="kullaniciId" class="visually-hidden">Görüştüğü Personel</label>
+                    <select id="kullaniciId" name="kullaniciId" class="form-select" style="width:220px;">
+                        <option value="">Tüm Personeller</option>
+
+                        @foreach (var k in kullanicilar)
+                        {
+                            <option value="@k.Value">@k.Text</option>
+                        }
+                    </select>
+                </div>
+
+                <!-- Sadece aktif -->
+                <div class="form-check ms-2">
+                    <input class="form-check-input"
+                           type="checkbox"
+                           value="true"
+                           id="sadeceAktif"
+                           name="sadeceAktif"
+                           @(sadeceAktif ? "checked" : "") />
+                    <label class="form-check-label fw-semibold" for="sadeceAktif">
+                        Aktif ziyaretler
+                    </label>
+
+                    <!-- checkbox işaretli değilse false göndermek için -->
+                    <input type="hidden" name="sadeceAktif" value="false" />
+                </div>
+
+                <!-- Ara -->
+                <div class="ms-auto">
+                    <button class="btn btn-primary px-3 text-nowrap" type="submit">
+                        <i class="bi bi-search me-1"></i> Ara
+                    </button>
+                </div>
+            </form>
+
+            <!-- Liste -->
+            @if (Model == null || !Model.Any())
+            {
+                <div class="alert alert-warning mb-0">
+                    <i class="bi bi-exclamation-triangle-fill"></i> Kayıt bulunamadı.
+                </div>
+            }
+            else
+            {
+                <div class="table-scroll">
+                    <table class="table table-hover table-sm align-middle">
+                        <thead class="bg-dark text-white">
+                            <tr class="text-center">
+                                <th class="text-start">
+                                    @Html.DisplayNameFor(m => m[0].AdSoyad)
+                                </th>
+                                <th>
+                                    @Html.DisplayNameFor(m => m[0].TcKimlikNo)
+                                </th>
+                                <th>
+                                    @Html.DisplayNameFor(m => m[0].Telefon)
+                                </th>
+                                <th>Görüştüğü Personel</th>
+                                <th>
+                                    @Html.DisplayNameFor(m => m[0].ZiyaretSebebi)
+                                </th>
+                                <th>
+                                    @Html.DisplayNameFor(m => m[0].KartNo)
+                                </th>
+                                <th>
+                                    @Html.DisplayNameFor(m => m[0].GirisZamani)
+                                </th>
+                                <th>
+                                    @Html.DisplayNameFor(m => m[0].CikisZamani)
+                                </th>
+                                <th>
+                                    @Html.DisplayNameFor(m => m[0].AktifMi)
+                                </th>
+                                <th>İşlem</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var z in Model)
+                            {
+                                <tr class="text-center @(z.AktifMi ? "" : "table-secondary")">
+                                    <td class="text-start fw-semibold text-primary">@z.AdSoyad</td>
+                                    <td>@(z.TcKimlikNo ?? "-")</td>
+                                    <td>@(z.Telefon ?? "-")</td>
+                                    <td>@(z.Kullanici?.KullaniciAdi ?? "-")</td>
+                                    <td>@(z.ZiyaretSebebi ?? "-")</td>
+                                    <td>@(z.KartNo ?? "-")</td>
+                                    <td>@z.GirisZamani.ToString("dd.MM.yyyy HH:mm")</td>
+                                    <td>
+                                        @(z.CikisZamani.HasValue
+                                            ? z.CikisZamani.Value.ToString("dd.MM.yyyy HH:mm")
+                                            : "-")
+                                    </td>
+                                    <td>
+                                        <span class="badge @(z.AktifMi ? "bg-success" : "bg-danger")">
+                                            @(z.AktifMi ? "Aktif" : "Kapandı")
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-gap" role="group" style="min-width: 220px;">
+                                            <a asp-controller="Ziyaretciler" asp-action="Detay" asp-route-id="@z.ZiyaretciId"
+                                               class="btn btn-outline-secondary btn-sm">
+                                                <i class="bi bi-eye"></i> Detay
+                                            </a>
+
+                                            <a asp-controller="Ziyaretciler" asp-action="Guncelle" asp-route-id="@z.ZiyaretciId"
+                                               class="btn btn-primary btn-sm">
+                                                <i class="bi bi-pencil-square"></i> Güncelle
+                                            </a>
+
+                                            @if (z.AktifMi)
+                                            {
+                                                <form method="post"
+                                                      asp-controller="Ziyaretciler"
+                                                      asp-action="CikisYap"
+                                                      class="d-inline">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="id" value="@z.ZiyaretciId" />
+                                                    <button type="submit" class="btn btn-warning btn-sm">
+                                                        <i class="bi bi-door-closed"></i> Çıkış Yap
+                                                    </button>
+                                                </form>
+                                            }
+
+                                            <button type="button"
+                                                    class="btn btn-danger btn-sm"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#silModal"
+                                                    onclick="document.getElementById('ziyaretciId').value='@z.ZiyaretciId'">
+                                                <i class="bi bi-trash"></i> Sil
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                @await Html.PartialAsync("_SayfalamaFormPartial", OgrenciBilgiSistemi.ViewModels.SayfalamaVm.Olustur(Model,
+                    routeValues: new Dictionary<string, string?> {
+                        ["searchString"] = q,
+                        ["kullaniciId"] = seciliKullaniciId?.ToString(),
+                        ["sadeceAktif"] = sadeceAktif.ToString()
+                    }))
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Silme Modal -->
+<div class="modal fade" id="silModal" tabindex="-1" aria-labelledby="silModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="silModalLabel">Ziyaretçi Sil</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Bu ziyaretçi kaydını silmek istediğinize emin misiniz?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+
+                <form id="silForm" method="post" asp-action="Sil" asp-controller="Ziyaretciler">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" id="ziyaretciId" name="id" />
+                    <button type="submit" class="btn btn-danger">Evet, Sil!</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const chk = document.getElementById('sadeceAktif');
+            const form = document.getElementById('ziyaretciFilterForm');
+            if (!chk || !form) return;
+
+            chk.addEventListener('change', function () {
+                // filtre değişince sayfa her zaman 1. sayfadan başlasın istiyorsan:
+                // (şu an formda page input'u yok, ama ileride eklersen otomatik 1'e çeker)
+                const pageInput = form.querySelector('input[name="page"]');
+                if (pageInput) pageInput.value = '1';
+
+                form.submit();
+            });
+        })();
+    </script>
+}

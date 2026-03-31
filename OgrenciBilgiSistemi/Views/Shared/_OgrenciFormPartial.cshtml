@@ -1,0 +1,183 @@
+@model OgrenciBilgiSistemi.ViewModels.OgrenciVeliFormVm
+@using Microsoft.AspNetCore.Mvc.Rendering
+
+@{
+    var action = !string.IsNullOrWhiteSpace(Model.Action)
+        ? Model.Action
+        : "Ekle";
+
+    var submitText = !string.IsNullOrWhiteSpace(Model.SubmitText)
+        ? Model.SubmitText
+        : "Kaydet";
+
+    var includeId = Model.IncludeId;
+
+    var submitingText = submitText == "Güncelle" ? "Güncelleniyor..." : "Kaydediliyor...";
+
+    var formId = "ogrenciForm";
+    var submitBtnId = "submitBtn";
+
+    var ogretmenler = Model.Ogretmenler ?? new List<SelectListItem>();
+    var birimler = Model.Birimler ?? Enumerable.Empty<SelectListItem>();
+    var servisler = Model.Servisler ?? new List<SelectListItem>();
+    var veliler = Model.Veliler ?? new List<SelectListItem>();
+}
+
+<div class="viewport-scroller">
+    <div class="fixed-canvas">
+        <div class="container py-4">
+            <div class="row justify-content-center">
+                <div class="col-8">
+                    <div class="card rounded-3 border">
+                        <div class="card-header bg-primary text-white text-center">
+                            <h4 class="fw-bold mb-0">
+                                @(action == "Guncelle" ? "Öğrenci Güncelle" : "Öğrenci Ekle")
+                            </h4>
+                        </div>
+
+                        <div class="card-body p-4">
+                            <form method="post"
+                                  asp-action="@action"
+                                  enctype="multipart/form-data"
+                                  autocomplete="off"
+                                  id="@formId">
+                                @Html.AntiForgeryToken()
+
+                                @if (includeId)
+                                {
+                                    <input type="hidden" asp-for="Ogrenci.OgrenciId" />
+                                }
+
+                                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                                <div class="row g-3">
+                                    <!-- Sol Sütun -->
+                                    <div class="col-6">
+                                        <!-- Ad Soyad -->
+                                        <div class="mb-3">
+                                            <label asp-for="Ogrenci.OgrenciAdSoyad" class="form-label fw-semibold">Adı Soyadı</label>
+                                            <input asp-for="Ogrenci.OgrenciAdSoyad" class="form-control" required />
+                                            <span asp-validation-for="Ogrenci.OgrenciAdSoyad" class="text-danger"></span>
+                                        </div>
+
+                                        <!-- Öğrenci No -->
+                                        <div class="mb-3">
+                                            <label asp-for="Ogrenci.OgrenciNo" class="form-label fw-semibold">Numarası</label>
+                                            <input asp-for="Ogrenci.OgrenciNo" class="form-control" pattern="^\d{1,20}$" required placeholder="Örn: 202512345" />
+                                            <span asp-validation-for="Ogrenci.OgrenciNo" class="text-danger"></span>
+                                        </div>
+
+                                        <!-- Görsel -->
+                                        <div class="mb-3">
+                                            <label asp-for="Ogrenci.OgrenciGorselFile" class="form-label fw-semibold">Resim</label>
+                                            @if (!string.IsNullOrWhiteSpace(Model.Ogrenci.OgrenciGorsel))
+                                            {
+                                                <div class="mb-2">
+                                                    <img src="@Url.Content(Model.Ogrenci.OgrenciGorsel)"
+                                                         alt="Mevcut Fotoğraf"
+                                                         class="img-thumbnail d-block"
+                                                         style="max-height:80px;" />
+                                                </div>
+                                            }
+                                            <input asp-for="Ogrenci.OgrenciGorselFile" type="file" class="form-control" accept=".jpg,.jpeg,.png" />
+                                            <span asp-validation-for="Ogrenci.OgrenciGorselFile" class="text-danger"></span>
+                                        </div>
+
+                                        <!-- Kart No -->
+                                        <div class="mb-3">
+                                            <label asp-for="Ogrenci.OgrenciKartNo" class="form-label fw-semibold">Kart No</label>
+                                            <input asp-for="Ogrenci.OgrenciKartNo" class="form-control" />
+                                            <span asp-validation-for="Ogrenci.OgrenciKartNo" class="text-danger"></span>
+                                        </div>
+
+                                        <!-- Öğretmen -->
+                                        <div class="mb-3">
+                                            <label asp-for="Ogrenci.OgretmenId" class="form-label fw-semibold">Öğretmen</label>
+                                            <select asp-for="Ogrenci.OgretmenId" class="form-select" asp-items="ogretmenler">
+                                                <option value="">-- Seçiniz --</option>
+                                            </select>
+                                            <span asp-validation-for="Ogrenci.OgretmenId" class="text-danger"></span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Sağ Sütun -->
+                                    <div class="col-6">
+                                        <!-- Sınıf -->
+                                        <div class="mb-3">
+                                            <label asp-for="Ogrenci.BirimId" class="form-label fw-semibold">Sınıf</label>
+                                            <select asp-for="Ogrenci.BirimId" class="form-select" asp-items="birimler">
+                                            </select>
+                                            <span asp-validation-for="Ogrenci.BirimId" class="text-danger"></span>
+                                        </div>
+
+                                        <!-- Servis -->
+                                        <div class="mb-3">
+                                            <label asp-for="Ogrenci.ServisId" class="form-label fw-semibold">Servis</label>
+                                            <select asp-for="Ogrenci.ServisId" class="form-select" asp-items="servisler">
+                                                <option value="">-- Servis Yok --</option>
+                                            </select>
+                                            <span asp-validation-for="Ogrenci.ServisId" class="text-danger"></span>
+                                        </div>
+
+                                        <!-- Veli -->
+                                        <div class="mb-3">
+                                            <label asp-for="Ogrenci.VeliId" class="form-label fw-semibold">Veli</label>
+                                            <select asp-for="Ogrenci.VeliId" class="form-select" asp-items="veliler">
+                                                <option value="">-- Veli Yok --</option>
+                                            </select>
+                                            <span asp-validation-for="Ogrenci.VeliId" class="text-danger"></span>
+                                        </div>
+
+                                        <!-- Öğle Çıkışı -->
+                                        <div class="mb-3">
+                                            <label asp-for="Ogrenci.OgrenciCikisDurumu" class="form-label fw-semibold">Öğle Çıkışı</label>
+                                            <select asp-for="Ogrenci.OgrenciCikisDurumu" class="form-select"
+                                                    asp-items="Html.GetEnumSelectList<OglenCikisDurumu>()">
+                                            </select>
+                                            <span asp-validation-for="Ogrenci.OgrenciCikisDurumu" class="text-danger"></span>
+                                        </div>
+
+                                        <!-- Yemekhane (Bu Ay) -->
+                                        <div class="mb-3">
+                                            <label asp-for="BuAyYemekhaneAktif" class="form-label fw-semibold">Yemekhane (Bu Ay)</label>
+                                            <select asp-for="BuAyYemekhaneAktif" class="form-select">
+                                                <option value="true">Evet</option>
+                                                <option value="false">Hayır</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Butonlar -->
+                                <div class="d-flex justify-content-between gap-2 mt-3">
+                                    <a asp-action="Index" class="btn btn-outline-secondary">
+                                        <i class="bi bi-arrow-left"></i> Geri Dön
+                                    </a>
+                                    <button type="submit" class="btn btn-primary fw-bold" id="@submitBtnId">
+                                        <i class="bi bi-save"></i> @submitText
+                                    </button>
+                                </div>
+                            </form>
+                        </div> <!-- /card-body -->
+                    </div> <!-- /card -->
+                </div>
+            </div>
+        </div> <!-- /container -->
+    </div>
+</div>
+
+<script>
+    // Double-submit koruması
+    (function () {
+        var form = document.getElementById('@formId');
+        var btn  = document.getElementById('@submitBtnId');
+        if (!form || !btn) return;
+
+        form.addEventListener('submit', function () {
+            if (form.checkValidity()) {
+                btn.disabled = true;
+                btn.textContent = '@submitingText';
+            }
+        });
+    })();
+</script>

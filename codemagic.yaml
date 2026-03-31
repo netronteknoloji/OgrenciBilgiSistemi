@@ -1,6 +1,6 @@
-﻿workflows:
+workflows:
   ios-maui-release:
-    name: iOS MAUI Release - Manual Signing
+    name: iOS MAUI Release
     instance_type: mac_mini_m2
     max_build_duration: 120
 
@@ -10,9 +10,8 @@
     environment:
       xcode: latest
       vars:
-        BUNDLE_ID: com.netronyazilim.ogrencibilgisistemi
-        PROJECT_PATH: StudentTrackingSystem/StudentTrackingSystem.csproj
-        IOS_TFM: net9.0-ios18.0
+        PROJECT_PATH: OgrenciBilgiSistemi.Mobil/OgrenciBilgiSistemi.Mobil.csproj
+        IOS_TFM: net9.0-ios
         DOTNET_PATH: $CM_BUILD_DIR/dotnet
         DOTNET: $CM_BUILD_DIR/dotnet/dotnet
 
@@ -27,19 +26,19 @@
           curl -fsSL https://dot.net/v1/dotnet-install.sh -o dotnet-install.sh
           chmod +x dotnet-install.sh
           ./dotnet-install.sh --install-dir "$DOTNET_PATH" --channel 9.0
-          "$DOTNET" --info
 
-      - name: Install MAUI workloads
+      - name: Install MAUI iOS workload
         script: |
           set -e
-          "$DOTNET" workload install maui-ios maui --skip-manifest-update
-          "$DOTNET" workload list
+          "$DOTNET" workload install maui-ios --skip-manifest-update
 
       - name: Restore NuGet packages
         script: |
           set -e
           "$DOTNET" restore "$PROJECT_PATH" \
-            /p:TargetFramework=net9.0-ios18.0
+            /p:TargetFramework=$IOS_TFM \
+            -r ios-arm64
+          "$DOTNET" restore OgrenciBilgiSistemi.Shared/OgrenciBilgiSistemi.Shared.csproj
 
       - name: Setup iOS code signing
         script: |
@@ -48,52 +47,20 @@
           keychain initialize
           keychain add-certificates
           xcode-project use-profiles
-          echo "=== Certificates ==="
-          security find-identity -v -p codesigning
-          echo "=== Profiles ==="
-          ls -la "$HOME/Library/MobileDevice/Provisioning Profiles/" || true
 
       - name: Build IPA (Release)
         script: |
           set -e
-
-          # Signing identity bul
           SIGNING_IDENTITY=$(security find-identity -v -p codesigning | grep "Apple Distribution" | head -1 | awk -F'"' '{print $2}')
-          echo "Signing identity: $SIGNING_IDENTITY"
 
-          # Profile UUID bul
-          PROFILES_DIR="$HOME/Library/MobileDevice/Provisioning Profiles"
-          PROFILE_UUID=""
-          for f in "$PROFILES_DIR"/*.mobileprovision; do
-            UUID=$(/usr/libexec/PlistBuddy -c "Print :UUID" /dev/stdin <<< $(security cms -D -i "$f") 2>/dev/null || true)
-            APPID=$(/usr/libexec/PlistBuddy -c "Print :Entitlements:application-identifier" /dev/stdin <<< $(security cms -D -i "$f") 2>/dev/null || true)
-            if echo "$APPID" | grep -q "$BUNDLE_ID"; then
-              PROFILE_UUID="$UUID"
-              echo "Found profile UUID: $PROFILE_UUID"
-              break
-            fi
-          done
-
-          if [ -z "$PROFILE_UUID" ]; then
-            echo "ERROR: '$BUNDLE_ID' icin eslesen provisioning profile bulunamadi!"
-            exit 1
-          fi
-
-          # App Store'da zaten 1 var; CM_BUILD_NUMBER offset ile her build
-          # önceki versiyondan yüksek olacak şekilde hesaplanır.
-          APP_BUILD_NUMBER=$(($CM_BUILD_NUMBER + 1))
-          echo "CFBundleVersion: $APP_BUILD_NUMBER"
-
-          # Build + Sign (--no-restore YOK!)
           "$DOTNET" publish "$PROJECT_PATH" \
-            -c Release \
-            -f "$IOS_TFM" \
-            /p:RuntimeIdentifier=ios-arm64 \
-            /p:ArchiveOnBuild=true \
-            /p:BuildIpa=true \
-            /p:ApplicationVersion=$APP_BUILD_NUMBER \
-            /p:CodesignKey="$SIGNING_IDENTITY" \
-            /p:CodesignProvision="$PROFILE_UUID"
+          -c Release \
+          -f "$IOS_TFM" \
+          -r ios-arm64 \
+          --no-restore \
+          /p:ArchiveOnBuild=true \
+          /p:BuildIpa=true \
+          /p:CodesignKey="$SIGNING_IDENTITY"
 
     artifacts:
       - "**/*.ipa"
@@ -104,6 +71,7 @@
         submit_to_testflight: true
         submit_to_app_store: false
 
+
   android-maui-release:
     name: Android MAUI Release
     instance_type: mac_mini_m2
@@ -111,7 +79,7 @@
 
     environment:
       vars:
-        PROJECT_PATH: StudentTrackingSystem/StudentTrackingSystem.csproj
+        PROJECT_PATH: OgrenciBilgiSistemi.Mobil/OgrenciBilgiSistemi.Mobil.csproj
         ANDROID_TFM: net9.0-android
         DOTNET_PATH: $CM_BUILD_DIR/dotnet
         DOTNET: $CM_BUILD_DIR/dotnet/dotnet
@@ -126,37 +94,34 @@
           curl -fsSL https://dot.net/v1/dotnet-install.sh -o dotnet-install.sh
           chmod +x dotnet-install.sh
           ./dotnet-install.sh --install-dir "$DOTNET_PATH" --channel 9.0
-          "$DOTNET" --info
 
-      - name: Install MAUI workloads
+      - name: Install MAUI Android workload
         script: |
           set -e
-          "$DOTNET" workload install maui-android maui
-          "$DOTNET" workload list
+          "$DOTNET" workload install maui-android --skip-manifest-update
 
       - name: Restore NuGet packages
         script: |
           set -e
           "$DOTNET" restore "$PROJECT_PATH" \
-            /p:TargetFramework=net9.0-android
+            /p:TargetFramework=$ANDROID_TFM
+          "$DOTNET" restore OgrenciBilgiSistemi.Shared/OgrenciBilgiSistemi.Shared.csproj
 
       - name: Build AAB (Release)
         script: |
           set -e
 
-          APP_BUILD_NUMBER=$(($CM_BUILD_NUMBER + 1))
-          echo "Build number: $APP_BUILD_NUMBER"
-
           if [ -z "$CM_KEYSTORE_PATH" ]; then
-            echo "ERROR: Android keystore bulunamadi! Codemagic Code Signing ayarlarini kontrol edin."
+            echo "ERROR: Android keystore bulunamadi!"
             exit 1
           fi
 
           "$DOTNET" publish "$PROJECT_PATH" \
             -c Release \
             -f "$ANDROID_TFM" \
+            --no-restore \
+            /p:RuntimeIdentifier=android-arm64 \
             /p:AndroidPackageFormat=aab \
-            /p:ApplicationVersion=$APP_BUILD_NUMBER \
             /p:AndroidKeyStore=true \
             /p:AndroidSigningKeyStore="$CM_KEYSTORE_PATH" \
             /p:AndroidSigningKeyAlias="$CM_KEY_ALIAS" \

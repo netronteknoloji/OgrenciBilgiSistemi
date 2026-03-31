@@ -1,0 +1,90 @@
+﻿@model OgrenciBilgiSistemi.Models.CihazModel
+@{
+    ViewData["Title"] = "Yeni Cihaz Ekle";
+    ViewData["Action"] = "Ekle";
+    ViewData["SubmitText"] = "Kaydet";
+    ViewData["IncludeId"] = false;
+    ViewData["ShowGuid"] = false;
+    ViewData["GuidStr"] = "";
+}
+<partial name="~/Views/Shared/_CihazFormPartial.cshtml" model="Model" />
+
+@section Scripts {
+    <script>
+        // --- BURAYA _CihazFormPartial.cshtml içindeki JS’yi aynen taşı ---
+        (function () {
+          const form = document.getElementById('cihazForm');
+          const btn  = document.getElementById('submitBtn');
+          if (!form || !btn) return;
+          form.addEventListener('submit', function () {
+            if (form.checkValidity()) {
+              btn.disabled = true;
+              btn.textContent = 'Kaydediliyor...';
+            }
+          });
+        })();
+
+        (function () {
+          let tipSel = document.getElementById('DonanimTipi')
+                    || document.querySelector('select[name="DonanimTipi"]');
+          const zkDiv  = document.getElementById('zkFields');
+          const ip     = document.getElementById('IpAdresi');
+          const port   = document.getElementById('PortNo');
+          const ZK_VALUE = '@((int)OgrenciBilgiSistemi.Shared.Enums.DonanimTipi.ZKTeco)'; // "2"
+
+          function isZkSelected() {
+            if (!tipSel) return false;
+            const v = String(tipSel.value ?? '').trim();
+            const n = Number(v);
+            const nZk = Number(ZK_VALUE);
+            if (!Number.isNaN(n) && !Number.isNaN(nZk) && n === nZk) return true;
+            if (v.toLowerCase() === 'zkteco') return true;
+            const t = (tipSel.options[tipSel.selectedIndex]?.text ?? '').toLowerCase();
+            if (t.includes('zkteco')) return true;
+            return false;
+          }
+
+          function toggleZk() {
+            const isZk = isZkSelected();
+            if (!zkDiv) return;
+            zkDiv.style.display = isZk ? 'block' : 'none';
+            if (ip && port) {
+              if (isZk) {
+                ip.setAttribute('required', 'required');
+                port.setAttribute('required', 'required');
+              } else {
+                ip.removeAttribute('required');
+                port.removeAttribute('required');
+              }
+            }
+          }
+
+          if (tipSel) {
+            tipSel.addEventListener('change', toggleZk);
+            if (document.readyState === 'loading') {
+              document.addEventListener('DOMContentLoaded', toggleZk, { once: true });
+            } else {
+              toggleZk();
+            }
+            setTimeout(toggleZk, 0);
+          }
+        })();
+
+        async function copyGuid(btn) {
+          const guid = btn.getAttribute('data-guid') || '';
+          try {
+            await navigator.clipboard.writeText(guid);
+            btn.innerHTML = '<i class="bi bi-clipboard-check"></i>';
+            btn.classList.remove('btn-outline-secondary');
+            btn.classList.add('btn-success');
+            setTimeout(() => {
+              btn.innerHTML = '<i class="bi bi-clipboard"></i>';
+              btn.classList.remove('btn-success');
+              btn.classList.add('btn-outline-secondary');
+            }, 1200);
+          } catch {
+            alert('Kopyalama başarısız oldu.');
+          }
+        }
+    </script>
+}

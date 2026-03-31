@@ -1,0 +1,9 @@
+@model OgrenciBilgiSistemi.Models.OgretmenProfilModel
+@{
+    ViewData["Title"] = "Öğretmen Güncelle";
+    ViewData["Action"] = "Guncelle";
+    ViewData["SubmitText"] = "Güncelle";
+    ViewData["KullaniciId"] = Model.KullaniciId;
+    ViewData["GorselPath"] = Model.GorselPath;
+}
+<partial name="~/Views/Shared/_OgretmenFormPartial.cshtml" />

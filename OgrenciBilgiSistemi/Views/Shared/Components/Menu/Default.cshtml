@@ -1,0 +1,93 @@
+﻿@using Microsoft.AspNetCore.Html
+@model List<OgrenciBilgiSistemi.DTOs.MenuOgeDto>
+
+@functions {
+    bool IsActive(string? c, string? a)
+    {
+        var rc = ViewContext.RouteData.Values["controller"]?.ToString();
+        var ra = ViewContext.RouteData.Values["action"]?.ToString();
+        if (string.IsNullOrWhiteSpace(c) || string.IsNullOrWhiteSpace(a)) return false;
+        return string.Equals(rc, c, StringComparison.OrdinalIgnoreCase)
+            && string.Equals(ra, a, StringComparison.OrdinalIgnoreCase);
+    }
+
+    bool IsActiveTree(OgrenciBilgiSistemi.DTOs.MenuOgeDto node)
+    {
+        if (IsActive(node.Controller, node.Action)) return true;
+        if (node.AltOgeler == null || node.AltOgeler.Count == 0) return false;
+        return node.AltOgeler.Any(IsActiveTree);
+    }
+
+    IHtmlContent SafeLink(string? controller, string? action, string text, string extraClasses, bool active)
+    {
+        if (!string.IsNullOrWhiteSpace(controller) && !string.IsNullOrWhiteSpace(action))
+        {
+            var href = Url.Action(action, controller);
+            if (!string.IsNullOrWhiteSpace(href))
+            {
+                return new HtmlString($"<a class=\"{extraClasses}{(active ? " active" : "")}\" href=\"{href}\">{text}</a>");
+            }
+        }
+        // klavye ile focus olabilsin diye tabindex ekleyelim
+        return new HtmlString($"<span class=\"{extraClasses} disabled\" tabindex=\"-1\" aria-disabled=\"true\">{text}</span>");
+    }
+}
+
+@foreach (var m in Model.OrderBy(x => x.Sirala))
+{
+    var hasChildren = m.AltOgeler != null && m.AltOgeler.Count > 0;
+    var parentActive = hasChildren && IsActiveTree(m);
+
+    if (hasChildren)
+    {
+        var ddId = $"nav-dd-{m.Id}";
+        <li class="nav-item dropdown @(parentActive ? "show" : "")">
+            <a class="nav-link dropdown-toggle @(parentActive ? "active" : "")"
+               href="#"
+               id="@ddId"
+               role="button"
+               data-bs-toggle="dropdown"
+               data-bs-auto-close="outside"
+               aria-expanded="@(parentActive ? "true" : "false")"
+               tabindex="0">
+                @m.Baslik
+            </a>
+
+            <ul class="dropdown-menu" aria-labelledby="@ddId">
+                @foreach (var c in m.AltOgeler.OrderBy(x => x.Sirala))
+                {
+                    var hasGrand = c.AltOgeler != null && c.AltOgeler.Count > 0;
+
+                    if (hasGrand)
+                    {
+                        <li><h6 class="dropdown-header">@c.Baslik</h6></li>
+
+                        @foreach (var g in c.AltOgeler.OrderBy(x => x.Sirala))
+                        {
+                            var gActive = IsActive(g.Controller, g.Action);
+                            <li>
+                                @SafeLink(g.Controller, g.Action, g.Baslik, "dropdown-item", gActive)
+                            </li>
+                        }
+
+                        <li><hr class="dropdown-divider" /></li>
+                    }
+                    else
+                    {
+                        var cActive = IsActive(c.Controller, c.Action);
+                        <li>
+                            @SafeLink(c.Controller, c.Action, c.Baslik, "dropdown-item", cActive)
+                        </li>
+                    }
+                }
+            </ul>
+        </li>
+    }
+    else
+    {
+        var leafActive = IsActive(m.Controller, m.Action);
+        <li class="nav-item">
+            @SafeLink(m.Controller, m.Action, m.Baslik, "nav-link", leafActive)
+        </li>
+    }
+}

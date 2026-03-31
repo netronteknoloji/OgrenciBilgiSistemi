@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:views="clr-namespace:OgrenciBilgiSistemi.Mobil.Views"
+             x:Class="OgrenciBilgiSistemi.Mobil.Views.VeliAnaSayfaView"
+             Title="Çocuklarım"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="#F2F2F2">
+
+    <Grid RowDefinitions="125, Auto, *">
+
+        <Border Grid.Row="0"
+                StrokeThickness="0"
+                BackgroundColor="#8E44AD"
+                VerticalOptions="FillAndExpand">
+            <Border.Shadow>
+                <Shadow Brush="#8E44AD" Offset="0,4" Radius="15" Opacity="0.4" />
+            </Border.Shadow>
+
+            <Grid>
+                <views:AnaBaslikView x:Name="MyHeader"
+                                      ShowBack="False"
+                                      ShowProfile="True" />
+
+                <VerticalStackLayout Spacing="2"
+                                     VerticalOptions="End"
+                                     Margin="20,0,20,35">
+                    <Label x:Name="WelcomeLabel"
+                           Text="Merhaba"
+                           FontSize="18"
+                           FontFamily="OpenSansSemibold"
+                           TextColor="White" />
+                    <Label Text="Veli Paneli"
+                           FontSize="14"
+                           FontFamily="OpenSansSemibold"
+                           TextColor="White"
+                           Opacity="0.8" />
+                </VerticalStackLayout>
+            </Grid>
+        </Border>
+
+        <!-- Çocuk sayısı bilgisi -->
+        <Border Grid.Row="1"
+                Margin="15,-28,15,10"
+                HeightRequest="55"
+                StrokeShape="RoundRectangle 28"
+                StrokeThickness="0"
+                BackgroundColor="White">
+            <Border.Shadow>
+                <Shadow Brush="Black" Offset="0,10" Radius="20" Opacity="0.08" />
+            </Border.Shadow>
+            <Grid ColumnDefinitions="55, *">
+                <Label Grid.Column="0" Text="&#x1F468;&#x200D;&#x1F467;&#x200D;&#x1F466;"
+                       VerticalOptions="Center" HorizontalOptions="Center" FontSize="22" />
+                <Label Grid.Column="1" x:Name="CocukSayisiLabel"
+                       Text="Yükleniyor..."
+                       VerticalOptions="Center"
+                       FontSize="15"
+                       FontFamily="OpenSansSemibold"
+                       TextColor="#2C3E50" />
+            </Grid>
+        </Border>
+
+        <!-- Çocuk listesi -->
+        <CollectionView x:Name="CocukCollection" Grid.Row="2" Margin="15,0" SelectionMode="None">
+            <CollectionView.ItemsLayout>
+                <LinearItemsLayout Orientation="Vertical" ItemSpacing="10" />
+            </CollectionView.ItemsLayout>
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Border StrokeShape="RoundRectangle 16" StrokeThickness="0" BackgroundColor="White" Padding="0">
+                        <Border.Shadow>
+                            <Shadow Brush="Black" Offset="0,2" Radius="8" Opacity="0.06" />
+                        </Border.Shadow>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnCocukTapped" CommandParameter="{Binding .}" />
+                        </Border.GestureRecognizers>
+                        <Grid ColumnDefinitions="8, 65, *, Auto" Padding="0,12">
+                            <BoxView Grid.Column="0" BackgroundColor="#8E44AD" WidthRequest="8" HorizontalOptions="Start" />
+                            <Border Grid.Column="1" StrokeShape="RoundRectangle 25" StrokeThickness="0"
+                                    WidthRequest="50" HeightRequest="50" Margin="8,0">
+                                <Image Source="{Binding OgrenciGorsel}" Aspect="AspectFill"
+                                       WidthRequest="50" HeightRequest="50" />
+                            </Border>
+                            <VerticalStackLayout Grid.Column="2" VerticalOptions="Center" Spacing="3">
+                                <Label Text="{Binding OgrenciAdSoyad}" FontSize="16" FontFamily="OpenSansSemibold" TextColor="#2C3E50" />
+                                <Label Text="{Binding SinifAdi}" FontSize="12" TextColor="#7F8C8D" />
+                            </VerticalStackLayout>
+                            <Label Grid.Column="3" Text="&#x2192;" FontSize="22" TextColor="#8E44AD" VerticalOptions="Center" Margin="0,0,15,0" />
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+            <CollectionView.EmptyView>
+                <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="10" Padding="20">
+                    <Label Text="Kayıtlı öğrenci bulunamadı." FontSize="16" TextColor="#95A5A6" HorizontalOptions="Center" />
+                </VerticalStackLayout>
+            </CollectionView.EmptyView>
+        </CollectionView>
+    </Grid>
+</ContentPage>

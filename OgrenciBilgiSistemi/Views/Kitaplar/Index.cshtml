@@ -1,0 +1,175 @@
+﻿@model SayfalanmisListeModel<OgrenciBilgiSistemi.Models.KitapModel>
+
+@{
+    ViewData["Title"] = "Kitap Listesi";
+    var q = ViewData["CurrentFilter"]?.ToString();
+    var sort = ViewData["CurrentSort"]?.ToString();
+}
+
+<div class="viewport-scroller">
+    <div class="fixed-canvas">
+        <div class="card border rounded-4 p-4 mt-4">
+            <!-- Başlık + aksiyonlar -->
+            <div class="d-flex justify-content-between align-items-center mb-4 flex-nowrap no-wrap-scroll">
+                <h3 class="text-primary fw-bold mb-0">@ViewData["Title"]</h3>
+                <div class="d-flex gap-2">
+                    <a asp-action="Ekle" class="btn btn-success fw-bold">
+                        <i class="bi bi-plus-lg"></i> Kitap Ekle
+                    </a>
+                    <a asp-action="ExportToExcel"
+                       asp-route-searchString="@q"
+                       asp-route-sortOrder="@sort"
+                       class="btn btn-outline-success fw-bold">
+                        <i class="bi bi-file-earmark-excel"></i> Excel'e Aktar
+                    </a>
+                </div>
+            </div>
+
+            <!-- Arama (Aidat/Kullanıcı ile aynı yapı) -->
+            <form method="get" asp-action="Index"
+                  class="d-flex align-items-end gap-3 flex-nowrap no-wrap-scroll w-100 bg-body-tertiary border rounded-3 p-3 mb-3">
+                <div>
+                    <label for="searchString" class="visually-hidden">Kitap</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                        <input type="text" id="searchString" name="searchString"
+                               class="form-control" placeholder="Ad / Tür ara…"
+                               value="@q" style="width:280px;" />
+                    </div>
+                </div>
+
+                <div class="ms-auto">
+                    <button type="submit" class="btn btn-primary px-3 text-nowrap">
+                        <i class="bi bi-search me-1"></i> Ara
+                    </button>
+                    @if (!string.IsNullOrWhiteSpace(q))
+                    {
+                        <a asp-action="Index" class="btn btn-outline-secondary ms-2">Temizle</a>
+                    }
+                </div>
+            </form>
+
+            <!-- Liste -->
+            <div class="table-scroll">
+                <table class="table table-hover text-center align-middle">
+                    <thead class="bg-dark text-white">
+                        <tr>
+                            <th class="p-3">#</th>
+                            <th class="p-3">Kitap Adı</th>
+                            <th class="p-3">Görsel</th>
+                            <th class="p-3">Tür</th>
+                            <th class="p-3">Gün</th>
+                            <th class="p-3">Durum</th>
+                            <th class="p-3">İşlemler</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white">
+                        @if (Model == null || !Model.Any())
+                        {
+                            <tr>
+                                <td colspan="7" class="p-4">
+                                    <div class="alert alert-warning text-center fs-6 mb-0">
+                                        <i class="bi bi-exclamation-triangle-fill"></i> Kayıt bulunamadı.
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var kitap in Model)
+                            {
+                                <tr class="border-bottom">
+                                    <td class="fw-bold text-secondary">@kitap.KitapId</td>
+                                    <td class="fw-semibold text-primary">@kitap.KitapAd</td>
+                                    <td>
+                                        <img src="@(string.IsNullOrEmpty(kitap.KitapGorsel) ? "/images/default.png" : kitap.KitapGorsel)"
+                                             alt="Kitap Foto" style="width:50px;height:50px;border-radius:5px;" />
+                                    </td>
+                                    <td class="text-muted">@kitap.KitapTurAd</td>
+                                    <td class="text-muted">@kitap.KitapGun</td>
+                                    <td>
+                                        <span class="badge @(kitap.KitapDurum ? "bg-success" : "bg-danger")">
+                                            @(kitap.KitapDurum ? "🟢 Aktif" : "🔴 Pasif")
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-gap" role="group" aria-label="İşlemler" style="min-width: 180px;">
+                                            <a asp-action="Guncelle" asp-route-id="@kitap.KitapId" class="btn btn-primary btn-sm">
+                                                <i class="bi bi-pencil"></i> Güncelle
+                                            </a>
+                                            <button class="btn btn-danger btn-sm silButonu"
+                                                    data-id="@kitap.KitapId"
+                                                    data-bs-toggle="modal" data-bs-target="#silModal">
+                                                <i class="bi bi-trash"></i> Sil
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Sayfalama (filtre/sort korunur) -->
+            <div class="d-flex justify-content-between align-items-center mt-3">
+                <div class="text-muted">
+                    Toplam <strong>@Model.ToplamSayi</strong> kayıt • Sayfa <strong>@Model.SayfaIndeks</strong>/<strong>@Model.ToplamSayfa</strong>
+                </div>
+                <div class="btn-group btn-group-gap">
+                    <a class="btn btn-outline-secondary @(Model.OncekiSayfaVar ? "" : "disabled")"
+                       asp-action="Index"
+                       asp-route-pageNumber="@(Model.SayfaIndeks - 1)"
+                       asp-route-searchString="@q"
+                       asp-route-sortOrder="@sort">‹ Önceki</a>
+
+                    <a class="btn btn-outline-secondary @(Model.SonrakiSayfaVar ? "" : "disabled")"
+                       asp-action="Index"
+                       asp-route-pageNumber="@(Model.SayfaIndeks + 1)"
+                       asp-route-searchString="@q"
+                       asp-route-sortOrder="@sort">Sonraki ›</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toplam Kitap Sayısı (opsiyonel, yukarıda total verildiği için kaldırabilirsin) -->
+        <!--
+        <div class="mt-3 text-end">
+          <span class="fw-bold text-muted">
+            Toplam <span class="text-primary">@Model.ToplamSayi</span> kitap listelenmiştir.
+          </span>
+        </div>
+        -->
+        <!-- Silme Modal -->
+        <div class="modal fade" id="silModal" tabindex="-1" aria-labelledby="silModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="silModalLabel">Kitap Sil</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Bu kitabı silmek istediğinize emin misiniz?</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                        <form method="post" asp-action="Sil">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" id="kitapId" name="id" />
+                            <button type="submit" class="btn btn-danger">Evet, Sil!</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    document.querySelectorAll('.silButonu').forEach(btn => {
+      btn.addEventListener('click', function () {
+        document.getElementById('kitapId').value = this.getAttribute('data-id');
+      });
+    });
+</script>

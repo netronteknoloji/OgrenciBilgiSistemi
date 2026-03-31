@@ -1,0 +1,48 @@
+﻿@{
+    ViewData["Title"] = "Kontrol Paneli";
+}
+
+<div class="viewport-scroller">
+    <div class="fixed-canvas">
+        <div class="card border-1 shadow-sm rounded-4 p-4 mt-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3 class="text-primary fw-bold mb-0 fs-5">Günlük özet sayıları</h3>
+            </div>
+
+            <!-- KPI kartları -->
+            <div class="row row-cols-3 g-3 mb-4 text-center">
+                <div class="col">
+                    <div class="border rounded-4 p-3 h-100 d-flex flex-column justify-content-between">
+                        <div class="text-muted small">Toplam Öğrenci</div>
+                        <div id="kpi-toplam" class="display-6 fw-semibold text-truncate">—</div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="border rounded-4 p-3 h-100 d-flex flex-column justify-content-between">
+                        <div class="text-muted small">Bugün Yemekhane Giriş</div>
+                        <div id="kpi-yemekhane" class="display-6 fw-semibold text-truncate">—</div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="border rounded-4 p-3 h-100 d-flex flex-column justify-content-between">
+                        <div class="text-muted small">Bugün Anakapı Çıkış</div>
+                        <div id="kpi-anakapi" class="display-6 fw-semibold text-truncate">—</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Çizgi Grafik (ayın günleri) -->
+            <div class="border-0 rounded-4 p-3 bg-white shadow-soft">
+                <div class="chart-responsive">
+                    <canvas id="dashboardLine"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/lib/chart.js/dist/chart.umd.min.js"></script>
+    <script>window.Chart || document.write('<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"><\\/script>')</script>
+    <script src="~/js/home-dashboard.js" defer></script>
+}

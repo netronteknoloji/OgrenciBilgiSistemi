@@ -1,0 +1,232 @@
+@model OgrenciBilgiSistemi.ViewModels.YemekhaneRaporVm
+@{
+    ViewData["Title"] = "Toplu Yemekhane Raporu";
+    var r = Model.Rapor;
+    var query = Model.Query;
+
+    // Tarih alanlarını ViewData ya da QueryString'den güvenli al
+    var vBas = ViewData["Bas"]?.ToString();
+    var vBit = ViewData["Bit"]?.ToString();
+
+    var pageIndex = r.SayfaIndeks;
+    var totalPages = r.ToplamSayfa;
+
+    string Q(string? s) => s ?? "";
+}
+
+<div class="viewport-scroller">
+    <div class="fixed-canvas">
+
+        <div class="card border rounded-4 p-4 mt-4">
+
+            <!-- Başlık ve Butonlar -->
+            <div class="d-flex gap-2 justify-content-between align-items-center mb-3 flex-nowrap no-wrap-scroll">
+                <h3 class="text-primary fw-bold mb-0">Toplu Yemekhane Raporu</h3>
+                <div class="d-flex gap-2">
+                    <a class="btn btn-outline-success fw-bold"
+                       asp-controller="Yemekhane"
+                       asp-action="YemekRaporExcel"
+                       asp-route-q="@query"
+                       asp-route-bas="@vBas"
+                       asp-route-bit="@vBit">
+                        <i class="bi bi-file-earmark-excel"></i> Excel'e Aktar
+                    </a>
+                </div>
+            </div>
+
+            <!-- Filtre Formu -->
+            <form method="get" asp-controller="Yemekhane" asp-action="YemekRapor" class="row g-2 mb-3">
+                <!-- Öğrenci Ara -->
+                <div class="col-4">
+                    <input type="text"
+                           name="q"
+                           class="form-control"
+                           placeholder="Öğrenci ara..."
+                           value="@Q(query)" />
+                </div>
+
+                <!-- Başlangıç Tarihi -->
+                <div class="col-3">
+                    <input type="date"
+                           name="bas"
+                           class="form-control"
+                           value="@vBas" />
+                </div>
+
+                <!-- Bitiş Tarihi -->
+                <div class="col-3">
+                    <input type="date"
+                           name="bit"
+                           class="form-control"
+                           value="@vBit" />
+                </div>
+
+                <!-- Uygula -->
+                <div class="col-2 d-flex gap-2">
+                    <button class="btn btn-primary w-100" type="submit">
+                        <i class="bi bi-search"></i> Uygula
+                    </button>
+                </div>
+            </form>
+
+            <!-- Tablo -->
+            <div class="table-scroll">
+                <table class="table table-hover table-sm text-center align-middle">
+                    <thead class="bg-dark text-white">
+                        <tr>
+                            <th>Yıl</th>
+                            <th>Öğrenci</th>
+                            <th>Aylık Tarife</th>
+                            <th>Aktif Ay</th>
+                            <th>Toplam Borç</th>
+                            <th>Toplam Ödenen</th>
+                            <th>Kalan</th>
+                            <th>İşlem</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white">
+                        @if (r.Satirlar == null || !r.Satirlar.Any())
+                        {
+                            <tr>
+                                <td colspan="8" class="p-4">
+                                    <div class="alert alert-warning text-center mb-0">
+                                        <i class="bi bi-exclamation-triangle-fill"></i>
+                                        Kayıt bulunmamaktadır.
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            foreach (var s in r.Satirlar.OrderByDescending(x => x.Yil).ThenBy(x => x.OgrenciAdSoyad))
+                            {
+                                <tr>
+                                    <td>@s.Yil</td>
+                                    <td class="text-start">
+                                        <a class="text-decoration-none"
+                                           asp-controller="Yemekhane"
+                                           asp-action="Ozet"
+                                           asp-route-ogrenciId="@s.OgrenciId"
+                                           asp-route-yil="@s.Yil">
+                                            @s.OgrenciAdSoyad
+                                        </a>
+                                    </td>
+                                    <td>@s.AylikTutar.ToString("C")</td>
+                                    <td>@s.AktifAySayisi</td>
+                                    <td>@s.Borc.ToString("C")</td>
+                                    <td>@s.Odenen.ToString("C")</td>
+                                    <td>@s.Kalan.ToString("C")</td>
+                                    <td>
+                                        <a class="btn btn-sm btn-outline-primary"
+                                           asp-controller="Yemekhane"
+                                           asp-action="Ozet"
+                                           asp-route-ogrenciId="@s.OgrenciId"
+                                           asp-route-yil="@s.Yil">Detay</a>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Sayfalama -->
+            <div class="d-flex justify-content-between align-items-center mt-3">
+                <div class="text-muted">
+                    Toplam <strong>@((r.Satirlar?.Count() ?? 0))</strong> kayıt
+                </div>
+                <nav>
+                    <ul class="pagination mb-0">
+                        @* Önceki *@
+                        @if (pageIndex > 1)
+                        {
+                            <li class="page-item">
+                                <a class="page-link"
+                                   asp-controller="Yemekhane"
+                                   asp-action="YemekRapor"
+                                   asp-route-q="@query"
+                                   asp-route-bas="@vBas"
+                                   asp-route-bit="@vBit"
+                                   asp-route-page="@(pageIndex - 1)">
+                                    Önceki
+                                </a>
+                            </li>
+                        }
+
+                        @* İlk sayfa + ... *@
+                        @if (pageIndex > 3)
+                        {
+                            <li class="page-item">
+                                <a class="page-link"
+                                   asp-controller="Yemekhane"
+                                   asp-action="YemekRapor"
+                                   asp-route-q="@query"
+                                   asp-route-bas="@vBas"
+                                   asp-route-bit="@vBit"
+                                   asp-route-page="1">
+                                    1
+                                </a>
+                            </li>
+                            <li class="page-item disabled"><span class="page-link">...</span></li>
+                        }
+
+                        @* Yakın sayfalar *@
+                        @{
+                            var start = Math.Max(1, pageIndex - 2);
+                            var end = Math.Min(totalPages, pageIndex + 2);
+                        }
+                        @for (int i = start; i <= end; i++)
+                        {
+                            <li class="page-item @(i == pageIndex ? "active" : "")">
+                                <a class="page-link"
+                                   asp-controller="Yemekhane"
+                                   asp-action="YemekRapor"
+                                   asp-route-q="@query"
+                                   asp-route-bas="@vBas"
+                                   asp-route-bit="@vBit"
+                                   asp-route-page="@i">
+                                    @i
+                                </a>
+                            </li>
+                        }
+
+                        @* ... + Son sayfa *@
+                        @if (pageIndex < totalPages - 2)
+                        {
+                            <li class="page-item disabled"><span class="page-link">...</span></li>
+                            <li class="page-item">
+                                <a class="page-link"
+                                   asp-controller="Yemekhane"
+                                   asp-action="YemekRapor"
+                                   asp-route-q="@query"
+                                   asp-route-bas="@vBas"
+                                   asp-route-bit="@vBit"
+                                   asp-route-page="@totalPages">
+                                    @totalPages
+                                </a>
+                            </li>
+                        }
+
+                        @* Sonraki *@
+                        @if (pageIndex < totalPages)
+                        {
+                            <li class="page-item">
+                                <a class="page-link"
+                                   asp-controller="Yemekhane"
+                                   asp-action="YemekRapor"
+                                   asp-route-q="@query"
+                                   asp-route-bas="@vBas"
+                                   asp-route-bit="@vBit"
+                                   asp-route-page="@(pageIndex + 1)">
+                                    Sonraki
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                </nav>
+            </div>
+
+        </div>
+
+    </div>
+</div>

@@ -1,0 +1,156 @@
+@model OgrenciBilgiSistemi.ViewModels.ZiyaretciFormViewModel
+@using Microsoft.AspNetCore.Mvc.Rendering
+
+@{
+    var action = (ViewData["Action"] as string) ?? "Ekle";
+    var submitText = (ViewData["SubmitText"] as string) ?? "Kaydet";
+    var includeId = (bool?)ViewData["IncludeId"] ?? false;
+
+    var formId = "ziyaretciForm";
+    var submitBtnId = "submitBtn";
+}
+
+<div class="viewport-scroller">
+    <div class="fixed-canvas">
+        <div class="container py-4">
+            <div class="row justify-content-center">
+                <div class="col-8">
+                    <div class="card rounded-3 border">
+                        <div class="card-header bg-primary text-white text-center">
+                            <h4 class="fw-bold mb-0">
+                                @(action == "Ekle" ? "Yeni Ziyaretçi Ekle" : "Ziyaretçi Güncelle")
+                            </h4>
+                        </div>
+
+                        <div class="card-body p-4">
+                            <form method="post"
+                                  asp-action="@action"
+                                  id="@formId"
+                                  autocomplete="off">
+                                @Html.AntiForgeryToken()
+
+                                @if (includeId && Model.ZiyaretciId.HasValue)
+                                {
+                                    <input type="hidden" asp-for="ZiyaretciId" />
+                                }
+
+                                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                                <div class="row g-3">
+                                    <!-- Sol Sütun -->
+                                    <div class="col-6">
+                                        <!-- Ad Soyad -->
+                                        <div class="mb-3">
+                                            <label asp-for="AdSoyad" class="form-label fw-semibold"></label>
+                                            <input asp-for="AdSoyad" class="form-control" required />
+                                            <span asp-validation-for="AdSoyad" class="text-danger"></span>
+                                        </div>
+
+                                        <!-- T.C. Kimlik No -->
+                                        <div class="mb-3">
+                                            <label asp-for="TcKimlikNo" class="form-label fw-semibold"></label>
+                                            <input asp-for="TcKimlikNo"
+                                                   class="form-control"
+                                                   inputmode="numeric"
+                                                   autocomplete="off"
+                                                   placeholder="11 haneli T.C. Kimlik No" />
+                                            <span asp-validation-for="TcKimlikNo" class="text-danger"></span>
+                                        </div>
+
+                                        <!-- Telefon -->
+                                        <div class="mb-3">
+                                            <label asp-for="Telefon" class="form-label fw-semibold"></label>
+                                            <input asp-for="Telefon"
+                                                   class="form-control"
+                                                   placeholder="5XXXXXXXXX" />
+                                            <span asp-validation-for="Telefon" class="text-danger"></span>
+                                        </div>
+
+                                        <!-- Adres -->
+                                        <div class="mb-3">
+                                            <label asp-for="Adres" class="form-label fw-semibold"></label>
+                                            <textarea asp-for="Adres"
+                                                      class="form-control"
+                                                      rows="2"
+                                                      placeholder="Adres bilgisi"></textarea>
+                                            <span asp-validation-for="Adres" class="text-danger"></span>
+                                        </div>
+
+                                        <!-- Görüştüğü Personel -->
+                                        <div class="mb-3">
+                                            <label asp-for="KullaniciId" class="form-label fw-semibold"></label>
+                                            <select asp-for="KullaniciId"
+                                                    class="form-select"
+                                                    asp-items="Model.Kullanicilar">
+                                                <option value="">-- Seçiniz --</option>
+                                            </select>
+                                            <span asp-validation-for="KullaniciId" class="text-danger"></span>
+                                        </div>
+
+                                        <!-- Ziyaret Sebebi -->
+                                        <div class="mb-3">
+                                            <label asp-for="ZiyaretSebebi" class="form-label fw-semibold"></label>
+                                            <input asp-for="ZiyaretSebebi"
+                                                   class="form-control"
+                                                   placeholder="Ziyaret sebebi" />
+                                            <span asp-validation-for="ZiyaretSebebi" class="text-danger"></span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Sağ Sütun -->
+                                    <div class="col-6">
+                                        <!-- Kart Bilgisi -->
+                                        <div class="mb-3">
+                                            <label asp-for="KartNo" class="form-label fw-semibold"></label>
+                                            <input asp-for="KartNo"
+                                                   class="form-control"
+                                                   autocomplete="off"
+                                                   placeholder="Kart numarası" />
+                                            <span asp-validation-for="KartNo" class="text-danger"></span>
+                                        </div>
+
+                                        <div class="mb-3 form-check">
+                                            <input class="form-check-input"
+                                                   asp-for="KartVerildiMi" />
+                                            <label class="form-check-label fw-semibold" asp-for="KartVerildiMi"></label>
+                                        </div>
+
+                                        <!-- Giriş Zamanı -->
+                                        <div class="mb-3">
+                                            <label asp-for="GirisZamani" class="form-label fw-semibold"></label>
+                                            <input asp-for="GirisZamani"
+                                                   type="datetime-local"
+                                                   class="form-control"
+                                                   asp-format="{0:yyyy-MM-ddTHH:mm}" />
+                                            <span asp-validation-for="GirisZamani" class="text-danger"></span>
+                                        </div>
+
+                                        <!-- Çıkış Zamanı -->
+                                        <div class="mb-3">
+                                            <label asp-for="CikisZamani" class="form-label fw-semibold"></label>
+                                            <input asp-for="CikisZamani"
+                                                   type="datetime-local"
+                                                   class="form-control"
+                                                   asp-format="{0:yyyy-MM-ddTHH:mm}" />
+                                            <span asp-validation-for="CikisZamani" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Butonlar -->
+                                <div class="d-flex justify-content-between gap-2 mt-3">
+                                    <a asp-action="Index" class="btn btn-outline-secondary">
+                                        <i class="bi bi-arrow-left"></i> Geri
+                                    </a>
+                                    <button type="submit" class="btn btn-primary fw-bold" id="@submitBtnId">
+                                        <i class="bi bi-save"></i> @submitText
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,243 @@
+@model OgrenciBilgiSistemi.ViewModels.OgrenciGirisCikisListViewModel
+
+@{
+    ViewData["Title"] = "Öğrenci Giriş-Çıkış Listesi";
+    var currentYear = DateTime.Now.Year;
+
+    // ViewData -> güvenli parse
+    DateTime? vStart = null, vEnd = null;
+    if (ViewData["StartDate"] is DateTime d1) vStart = d1;
+    else if (ViewData["StartDate"] is string s1 && DateTime.TryParse(s1, out var p1)) vStart = p1;
+
+    if (ViewData["EndDate"] is DateTime d2) vEnd = d2;
+    else if (ViewData["EndDate"] is string s2 && DateTime.TryParse(s2, out var p2)) vEnd = p2;
+
+    var vIst = ViewData["IstasyonTipi"]?.ToString();
+}
+
+<div class="viewport-scroller">
+    <div class="fixed-canvas">
+        <!-- Üst Sekmeler + Yıl Seçimi -->
+        <ul class="nav nav-tabs mb-2 align-items-center">
+            <li class="nav-item">
+                <a class="nav-link active">Giriş/Çıkış</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link"
+                   asp-controller="Aidat"
+                   asp-action="Ozet"
+                   asp-route-ogrenciId="@Model.Ogrenci.OgrenciId"
+                   asp-route-yil="@currentYear">
+                    Aidat
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link"
+                   asp-controller="Yemekhane"
+                   asp-action="Ozet"
+                   asp-route-ogrenciId="@Model.Ogrenci.OgrenciId">Yemekhane</a>
+            </li>
+
+            <li class="ms-auto">
+                <form method="get" asp-controller="Aidat" asp-action="Ozet" class="d-flex gap-2">
+                    <input type="hidden" name="ogrenciId" value="@Model.Ogrenci.OgrenciId" />
+                </form>
+            </li>
+        </ul>
+
+        <div class="card rounded-4">
+            <!-- Başlık -->
+            <div class="card-header rounded-top-4 d-flex flex-row justify-content-between align-items-center gap-2">
+                <h5 class="mb-0 text-primary fw-bold">
+                    @Model.Ogrenci.OgrenciAdSoyad — Giriş/Çıkış
+                </h5>
+                <div class="d-flex gap-2">
+                    <a asp-action="DetayExportToExcel"
+                       asp-route-searchName="@ViewData["SearchName"]"
+                       asp-route-startDate="@(vStart?.ToString("yyyy-MM-dd"))"
+                       asp-route-endDate="@(vEnd?.ToString("yyyy-MM-dd"))"
+                       asp-route-istasyonTipi="@vIst"
+                       class="btn btn-outline-success btn-sm fw-bold">
+                        <i class="bi bi-file-earmark-excel"></i> Excel'e Aktar
+                    </a>
+                    <a asp-controller="Ogrenciler" asp-action="Index" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Listeye Dön
+                    </a>
+                </div>
+            </div>
+
+            <div class="card-body p-4">
+                <!-- Arama & Filtreleme -->
+                <form method="get" asp-action="GirisCikisDetay" class="row g-2 mb-3">
+                    <input type="hidden" name="id" value="@Model.Ogrenci.OgrenciId" />
+
+                    <div class="col-3">
+                        <input type="date" name="startDate" class="form-control" value="@(vStart?.ToString("yyyy-MM-dd"))" />
+                    </div>
+                    <div class="col-3">
+                        <input type="date" name="endDate" class="form-control" value="@(vEnd?.ToString("yyyy-MM-dd"))" />
+                    </div>
+
+                    <!-- İSTASYON TİPİ FİLTRESİ -->
+                    <div class="col-3">
+                        @{
+                            var istasyonItems = Html.GetEnumSelectList<IstasyonTipi>();
+                            var vIstStr = (ViewData["IstasyonTipi"]?.ToString() ?? "").Trim();
+                            var selectAll = string.IsNullOrEmpty(vIstStr);
+                        }
+                        <select name="istasyonTipi" class="form-select">
+                            @if (selectAll)
+                            {
+                                @:
+                                <option value="" selected>İstasyon (Tümü)</option>
+                            }
+                            else
+                            {
+                                @:
+                                <option value="">İstasyon (Tümü)</option>
+                            }
+
+                            @foreach (var item in istasyonItems)
+                            {
+                                if (vIstStr == item.Value)
+                                {
+                                    @:
+                                    <option value="@item.Value" selected>@item.Text</option>
+                                }
+                                else
+                                {
+                                    @:
+                                    <option value="@item.Value">@item.Text</option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <div class="col-2">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-search"></i> Ara
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Öğrenci Hareketleri Tablosu -->
+                <div class="table-scroll">
+                    <table class="table table-hover table-sm text-center align-middle">
+                        <thead class="bg-dark text-white">
+                            <tr>
+                                <th>#</th>
+                                <th>Giriş Tarihi</th>
+                                <th>Çıkış Tarihi</th>
+                                <th>Geçiş Tipi</th>
+                                <th>Cihaz Adı</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white">
+                            @if (!Model.Hareketler.Any())
+                            {
+                                <tr>
+                                    <td colspan="5" class="p-4">
+                                        <div class="alert alert-warning text-center m-0">
+                                            <i class="bi bi-exclamation-triangle-fill"></i> Henüz kayıtlı hareket bulunmamaktadır.
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                            else
+                            {
+                                foreach (var log in Model.Hareketler)
+                                {
+                                    <tr>
+                                        <td>@log.OgrenciDetayId</td>
+                                        <td>@(log.OgrenciGTarih?.ToString("dd.MM.yyyy HH:mm") ?? "-")</td>
+                                        <td>@(log.OgrenciCTarih?.ToString("dd.MM.yyyy HH:mm") ?? "-")</td>
+                                        <td>@log.OgrenciGecisTipi</td>
+                                        <td>@log.CihazAdi</td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toplam Kayıt -->
+        <div class="mt-3 text-end">
+            <span class="fw-bold text-muted">
+                Toplam <span class="text-primary">@Model.Hareketler.Count()</span> kayıt listelenmiştir.
+            </span>
+        </div>
+
+        <!-- Sayfalama -->
+        <nav class="mt-3">
+            <ul class="pagination justify-content-center">
+                @if (Model.Hareketler.OncekiSayfaVar)
+                {
+                    <li class="page-item">
+                        <a class="page-link" asp-action="GirisCikisDetay"
+                           asp-route-id="@Model.Ogrenci.OgrenciId"
+                           asp-route-pageNumber="@(Model.Hareketler.SayfaIndeks - 1)"
+                           asp-route-searchName="@ViewData["SearchName"]"
+                           asp-route-startDate="@(vStart?.ToString("yyyy-MM-dd"))"
+                           asp-route-endDate="@(vEnd?.ToString("yyyy-MM-dd"))"
+                           asp-route-istasyonTipi="@vIst">Önceki</a>
+                    </li>
+                }
+
+                @if (Model.Hareketler.SayfaIndeks > 3)
+                {
+                    <li class="page-item">
+                        <a class="page-link" asp-action="GirisCikisDetay" asp-route-pageNumber="1"
+                           asp-route-id="@Model.Ogrenci.OgrenciId"
+                           asp-route-searchName="@ViewData["SearchName"]"
+                           asp-route-startDate="@(vStart?.ToString("yyyy-MM-dd"))"
+                           asp-route-endDate="@(vEnd?.ToString("yyyy-MM-dd"))"
+                           asp-route-istasyonTipi="@vIst">1</a>
+                    </li>
+                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                }
+
+                @for (int i = Math.Max(1, Model.Hareketler.SayfaIndeks - 2); i <= Math.Min(Model.Hareketler.ToplamSayfa, Model.Hareketler.SayfaIndeks + 2); i++)
+                {
+                    <li class="page-item @(i == Model.Hareketler.SayfaIndeks ? "active" : "")">
+                        <a class="page-link" asp-action="GirisCikisDetay" asp-route-pageNumber="@i"
+                           asp-route-id="@Model.Ogrenci.OgrenciId"
+                           asp-route-searchName="@ViewData["SearchName"]"
+                           asp-route-startDate="@(vStart?.ToString("yyyy-MM-dd"))"
+                           asp-route-endDate="@(vEnd?.ToString("yyyy-MM-dd"))"
+                           asp-route-istasyonTipi="@vIst">@i</a>
+                    </li>
+                }
+
+                @if (Model.Hareketler.SayfaIndeks < Model.Hareketler.ToplamSayfa - 2)
+                {
+                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                    <li class="page-item">
+                        <a class="page-link" asp-action="GirisCikisDetay" asp-route-pageNumber="@Model.Hareketler.ToplamSayfa"
+                           asp-route-id="@Model.Ogrenci.OgrenciId"
+                           asp-route-searchName="@ViewData["SearchName"]"
+                           asp-route-startDate="@(vStart?.ToString("yyyy-MM-dd"))"
+                           asp-route-endDate="@(vEnd?.ToString("yyyy-MM-dd"))"
+                           asp-route-istasyonTipi="@vIst">@Model.Hareketler.ToplamSayfa</a>
+                    </li>
+                }
+
+                @if (Model.Hareketler.SonrakiSayfaVar)
+                {
+                    <li class="page-item">
+                        <a class="page-link" asp-action="GirisCikisDetay"
+                           asp-route-id="@Model.Ogrenci.OgrenciId"
+                           asp-route-pageNumber="@(Model.Hareketler.SayfaIndeks + 1)"
+                           asp-route-searchName="@ViewData["SearchName"]"
+                           asp-route-startDate="@(vStart?.ToString("yyyy-MM-dd"))"
+                           asp-route-endDate="@(vEnd?.ToString("yyyy-MM-dd"))"
+                           asp-route-istasyonTipi="@vIst">Sonraki</a>
+                    </li>
+                }
+            </ul>
+        </nav>
+
+    </div>
+</div>

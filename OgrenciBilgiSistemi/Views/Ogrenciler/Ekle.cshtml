@@ -1,0 +1,9 @@
+﻿@model OgrenciBilgiSistemi.Models.OgrenciModel
+@{
+    ViewData["Title"] = "Yeni Öğrenci";
+    ViewData["Action"] = "Ekle";
+    ViewData["SubmitText"] = "Kaydet";
+    ViewData["IncludeId"] = false;
+    ViewData["BuAyYemekhaneAktif"] = false;
+}
+<partial name="~/Views/Shared/_OgrenciFormPartial.cshtml" model="Model" />

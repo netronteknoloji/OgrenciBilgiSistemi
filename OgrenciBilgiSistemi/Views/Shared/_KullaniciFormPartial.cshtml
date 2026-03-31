@@ -1,0 +1,251 @@
+@model OgrenciBilgiSistemi.Models.KullaniciModel
+@using Microsoft.AspNetCore.Mvc.Rendering
+
+@{
+    var action = (ViewData["Action"] as string) ?? "Ekle";      // "Ekle" | "Guncelle"
+    var submitText = (ViewData["SubmitText"] as string) ?? "Kaydet";    // "Kaydet" | "Güncelle"
+    var includeId = (bool?)ViewData["IncludeId"] ?? false;       // Güncelle'de true
+
+    var formId = "kullaniciForm";
+    var submitBtnId = "submitBtn";
+
+    var servisler = Model?.Servisler ?? new List<SelectListItem>();
+    var birimler = ViewBag.Birimler as List<SelectListItem> ?? new List<SelectListItem>();
+
+    var adminRolDegeri = (int)OgrenciBilgiSistemi.Shared.Enums.KullaniciRolu.Admin;
+
+    // KullaniciRolu enum değerleri
+    var ogretmenRolDegeri = (int)OgrenciBilgiSistemi.Shared.Enums.KullaniciRolu.Ogretmen;
+    var servisRolDegeri = (int)OgrenciBilgiSistemi.Shared.Enums.KullaniciRolu.Servis;
+    var veliRolDegeri = (int)OgrenciBilgiSistemi.Shared.Enums.KullaniciRolu.Veli;
+}
+
+<div class="viewport-scroller">
+    <div class="fixed-canvas">
+        <div class="container py-4">
+            <div class="row justify-content-center">
+                <div class="col-8">
+                    <div class="card rounded-3 border">
+                        <div class="card-header bg-primary text-white text-center">
+                            <h4 class="fw-bold mb-0">
+                                @(action == "Ekle" ? "Kullanıcı Ekle" : "Kullanıcı Güncelle")
+                            </h4>
+                        </div>
+
+                        <div class="card-body p-4">
+                            <form method="post" asp-action="@action" id="@formId" autocomplete="off" enctype="multipart/form-data">
+                                @Html.AntiForgeryToken()
+
+                                @if (includeId)
+                                {
+                                    <input type="hidden" asp-for="KullaniciId" />
+                                    @if (ViewData["ReturnPage"] != null)
+                                    {
+                                        <input type="hidden" name="returnPage" value="@ViewData["ReturnPage"]" />
+                                    }
+                                    @if (ViewData["ReturnFilter"] != null)
+                                    {
+                                        <input type="hidden" name="returnFilter" value="@ViewData["ReturnFilter"]" />
+                                    }
+                                }
+
+                                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                                <div class="row g-3">
+                                    <!-- Sol Sütun: Temel Alanlar -->
+                                    <div class="col-6">
+                                        <!-- Rol (en üstte) -->
+                                        <div class="mb-3">
+                                            <label asp-for="Rol" class="form-label fw-semibold">Rol</label>
+                                            <select asp-for="Rol" class="form-select"
+                                                    asp-items="Html.GetEnumSelectList<OgrenciBilgiSistemi.Shared.Enums.KullaniciRolu>()">
+                                            </select>
+                                            <span asp-validation-for="Rol" class="text-danger"></span>
+                                        </div>
+
+                                        <!-- Kullanıcı Adı -->
+                                        <div class="mb-3">
+                                            <label asp-for="KullaniciAdi" class="form-label fw-semibold">Kullanıcı Adı</label>
+                                            <input asp-for="KullaniciAdi"
+                                                   class="form-control"
+                                                   required minlength="3"
+                                                   placeholder="Kullanıcı adı giriniz" />
+                                            <span asp-validation-for="KullaniciAdi" class="text-danger"></span>
+                                        </div>
+
+                                        <!-- Şifre -->
+                                        <div class="mb-3">
+                                            <label asp-for="Sifre" class="form-label fw-semibold">Şifre</label>
+                                            @if (action == "Ekle")
+                                            {
+                                                <input asp-for="Sifre"
+                                                       class="form-control"
+                                                       type="password"
+                                                       required minlength="3"
+                                                       placeholder="Şifre giriniz" />
+                                            }
+                                            else
+                                            {
+                                                <input asp-for="Sifre"
+                                                       class="form-control"
+                                                       type="password"
+                                                       data-val="false"
+                                                       placeholder="Değiştirmek istemiyorsanız boş bırakın" />
+                                                <small class="text-muted">Boş bırakırsanız mevcut şifre korunur.</small>
+                                            }
+                                            <span asp-validation-for="Sifre" class="text-danger"></span>
+                                        </div>
+
+                                        <!-- Kullanıcı Durumu -->
+                                        <div class="mb-3">
+                                            <label asp-for="KullaniciDurum" class="form-label fw-semibold">Kullanıcı Durumu</label>
+                                            <select asp-for="KullaniciDurum" class="form-select">
+                                                <option value="true">Aktif</option>
+                                                <option value="false">Pasif</option>
+                                            </select>
+                                            <span asp-validation-for="KullaniciDurum" class="text-danger"></span>
+                                        </div>
+
+                                        <!-- Telefon -->
+                                        <div class="mb-3">
+                                            <label asp-for="Telefon" class="form-label fw-semibold">Telefon</label>
+                                            <input asp-for="Telefon"
+                                                   class="form-control"
+                                                   placeholder="5XXXXXXXXX" />
+                                            <span asp-validation-for="Telefon" class="text-danger"></span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Sağ Sütun: Role Göre Koşullu Alanlar -->
+                                    <div class="col-6">
+                                        <!-- Öğretmen Profil Alanları -->
+                                        <div id="ogretmenAlanlari" style="display:none;">
+                                            <div class="mb-3">
+                                                <label asp-for="OgretmenProfil.Email" class="form-label fw-semibold">E-posta</label>
+                                                <input asp-for="OgretmenProfil.Email" class="form-control" placeholder="ornek@email.com" />
+                                                <span asp-validation-for="OgretmenProfil.Email" class="text-danger"></span>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label asp-for="OgretmenProfil.BirimId" class="form-label fw-semibold">Birim</label>
+                                                <select asp-for="OgretmenProfil.BirimId" class="form-select" asp-items="birimler">
+                                                    <option value="">-- Birim Seçiniz --</option>
+                                                </select>
+                                                <span asp-validation-for="OgretmenProfil.BirimId" class="text-danger"></span>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label asp-for="OgretmenProfil.GorselFile" class="form-label fw-semibold">Fotoğraf</label>
+                                                @if (!string.IsNullOrWhiteSpace(Model?.OgretmenProfil?.GorselPath))
+                                                {
+                                                    <div class="mb-2">
+                                                        <img src="@Url.Content(Model.OgretmenProfil.GorselPath)"
+                                                             alt="Mevcut Fotoğraf"
+                                                             class="img-thumbnail d-block"
+                                                             style="max-height:80px;" />
+                                                    </div>
+                                                }
+                                                <input asp-for="OgretmenProfil.GorselFile" type="file" class="form-control" accept=".jpg,.jpeg,.png" />
+                                                <span asp-validation-for="OgretmenProfil.GorselFile" class="text-danger"></span>
+                                            </div>
+                                        </div>
+
+                                        <!-- Servis Profil Alanları -->
+                                        <div id="servisAlanlari" style="display:none;">
+                                            <div class="mb-3">
+                                                <label asp-for="ServisProfil.Plaka" class="form-label fw-semibold">Plaka</label>
+                                                <input asp-for="ServisProfil.Plaka" class="form-control" placeholder="Plaka" />
+                                                <span asp-validation-for="ServisProfil.Plaka" class="text-danger"></span>
+                                            </div>
+                                        </div>
+
+                                        <!-- Veli Profil Alanları -->
+                                        <div id="veliAlanlari" style="display:none;">
+                                            <div class="mb-3">
+                                                <label asp-for="VeliProfil.VeliAdres" class="form-label fw-semibold">Adres</label>
+                                                <input asp-for="VeliProfil.VeliAdres" class="form-control" placeholder="Adres" />
+                                                <span asp-validation-for="VeliProfil.VeliAdres" class="text-danger"></span>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label asp-for="VeliProfil.VeliMeslek" class="form-label fw-semibold">Meslek</label>
+                                                <input asp-for="VeliProfil.VeliMeslek" class="form-control" placeholder="Meslek" />
+                                                <span asp-validation-for="VeliProfil.VeliMeslek" class="text-danger"></span>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label asp-for="VeliProfil.VeliIsYeri" class="form-label fw-semibold">İş Yeri</label>
+                                                <input asp-for="VeliProfil.VeliIsYeri" class="form-control" placeholder="İş Yeri" />
+                                                <span asp-validation-for="VeliProfil.VeliIsYeri" class="text-danger"></span>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label asp-for="VeliProfil.VeliEmail" class="form-label fw-semibold">E-posta</label>
+                                                <input asp-for="VeliProfil.VeliEmail" class="form-control" placeholder="ornek@email.com" />
+                                                <span asp-validation-for="VeliProfil.VeliEmail" class="text-danger"></span>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label asp-for="VeliProfil.VeliYakinlik" class="form-label fw-semibold">Yakınlık</label>
+                                                <select asp-for="VeliProfil.VeliYakinlik" class="form-select"
+                                                        asp-items="Html.GetEnumSelectList<YakinlikTipi>()">
+                                                    <option value="">-- Seçiniz --</option>
+                                                </select>
+                                                <span asp-validation-for="VeliProfil.VeliYakinlik" class="text-danger"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Butonlar -->
+                                <div class="d-flex justify-content-between gap-2 mt-3">
+                                    <a asp-action="Index" class="btn btn-outline-secondary">
+                                        <i class="bi bi-arrow-left"></i> Geri Dön
+                                    </a>
+                                    <button type="submit" class="btn btn-primary fw-bold" id="@submitBtnId">
+                                        <i class="bi bi-save"></i> @submitText
+                                    </button>
+                                </div>
+                            </form>
+                        </div> <!-- /card-body -->
+                    </div> <!-- /card -->
+                </div>
+            </div>
+        </div> <!-- /container -->
+    </div>
+</div>
+
+<script>
+    // Rol değiştiğinde ilgili alanları göster/gizle
+    (function () {
+        const OGRETMEN_ROL = '@ogretmenRolDegeri';
+        const SERVIS_ROL = '@servisRolDegeri';
+        const ADMIN_ROL = '@adminRolDegeri';
+        const VELI_ROL = '@veliRolDegeri';
+
+        const rolSelect = document.getElementById('Rol');
+        const ogretmenAlanlari = document.getElementById('ogretmenAlanlari');
+        const servisAlanlari = document.getElementById('servisAlanlari');
+        const veliAlanlari = document.getElementById('veliAlanlari');
+
+        function alanToggle(container, gorunur) {
+            if (!container) return;
+            container.style.display = gorunur ? '' : 'none';
+            // Gizlenen bölümdeki input/select'leri disabled yap (validation ve binding sorunlarını önler)
+            container.querySelectorAll('input, select').forEach(function (el) { el.disabled = !gorunur; });
+        }
+
+        function rolDegisti() {
+            if (!rolSelect) return;
+            var val = rolSelect.value;
+            alanToggle(ogretmenAlanlari, val === OGRETMEN_ROL);
+            alanToggle(servisAlanlari, val === SERVIS_ROL);
+            alanToggle(veliAlanlari, val === VELI_ROL);
+        }
+
+        if (rolSelect) {
+            rolSelect.addEventListener('change', rolDegisti);
+            rolDegisti(); // sayfa yüklendiğinde de kontrol et
+        }
+    })();
+</script>

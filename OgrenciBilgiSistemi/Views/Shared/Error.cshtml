@@ -1,0 +1,15 @@
+﻿@model HataGorunumModel
+
+@{
+    ViewData["Title"] = "Hata";
+}
+
+<div class="container mt-5">
+    <div class="alert alert-danger">
+        <h1 class="display-4">Bir Hata Oluştu!</h1>
+        <p class="lead">@ViewBag.Error</p>
+        <hr />
+        <p>Lütfen daha sonra tekrar deneyiniz veya destek ekibi ile iletişime geçiniz.</p>
+        <a class="btn btn-primary" href='@Url.Action("Index", "Home")'>Ana Sayfaya Dön</a>
+    </div>
+</div>

@@ -1,0 +1,229 @@
+﻿@model SayfalanmisListeModel<OgrenciBilgiSistemi.Models.KitapDetayModel>
+
+@{
+    ViewData["Title"] = "Kitap Detay İşlemleri";
+    var q = ViewData["CurrentFilter"] as string;
+    var durum = ViewData["DurumFilter"] as string;
+    var page = Model.SayfaIndeks;
+    var total = Model.ToplamSayfa;
+    var count = Model.ToplamSayi;
+}
+
+<div class="viewport-scroller">
+    <div class="fixed-canvas">
+        <div class="card border rounded-4 p-4 mt-4">
+
+            <!-- Başlık + aksiyonlar (Kitap Listesi ile aynı yapı) -->
+            <div class="d-flex align-items-center mb-4 flex-nowrap no-wrap-scroll">
+                <h3 class="text-primary fw-bold mb-0">@ViewData["Title"]</h3>
+
+                <div class="d-flex gap-2 ms-auto">
+                    <a class="btn btn-success fw-semibold"
+                       asp-action="Ekle">
+                        <i class="bi bi-plus-lg"></i> Detay Ekle
+                    </a>
+
+                    <a class="btn btn-outline-success fw-semibold"
+                       asp-action="ExportToExcel"
+                       asp-route-sortOrder="@(ViewData["CurrentSort"] as string)"
+                       asp-route-searchString="@q"
+                       asp-route-durumFilter="@durum">
+                        <i class="bi bi-file-earmark-excel"></i> Excel'e Aktar
+                    </a>
+                </div>
+            </div>
+
+            <!-- Filtre Formu (Kitap cshtml ile aynı stil) -->
+            <form method="get" asp-action="Index"
+                  class="d-flex align-items-end gap-3 flex-nowrap no-wrap-scroll w-100 bg-body-tertiary border rounded-3 p-3 mb-3">
+
+                <!-- Arama -->
+                <div>
+                    <label for="searchString" class="visually-hidden">Kitap/Öğrenci</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                        <input type="text" id="searchString" name="searchString"
+                               class="form-control"
+                               placeholder="Kitap adı / öğrenci adı…"
+                               value="@q" style="width:280px;" />
+                    </div>
+                </div>
+
+                <!-- Durum -->
+                <div>
+                    <label for="durumFilter" class="visually-hidden">Durum</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white"><i class="bi bi-check2-circle"></i></span>
+                        <select id="durumFilter" name="durumFilter" class="form-select" style="width:190px;">
+                            <option value="">Tümü</option>
+
+                            <option value="Alındı"
+                                    selected="@(durum == "Alındı" ? "selected" : null)">
+                                📖 Alındı
+                            </option>
+
+                            <option value="TeslimEdildi"
+                                    selected="@(durum == "TeslimEdildi" ? "selected" : null)">
+                                ✅ Teslim Edildi
+                            </option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Ara / Temizle -->
+                <div class="ms-auto">
+                    <button class="btn btn-primary px-3 text-nowrap" type="submit">
+                        <i class="bi bi-search me-1"></i> Ara
+                    </button>
+                    @if (!string.IsNullOrWhiteSpace(q) || !string.IsNullOrWhiteSpace(durum))
+                    {
+                        <a asp-action="Index" class="btn btn-outline-secondary ms-2">Temizle</a>
+                    }
+                </div>
+            </form>
+
+            <!-- Liste -->
+            @if (Model == null || !Model.Any())
+            {
+                <div class="table-scroll">
+                    <table class="table table-hover text-center align-middle">
+                        <tbody>
+                            <tr>
+                                <td class="p-4">
+                                    <div class="alert alert-warning text-center fs-6 mb-0">
+                                        <i class="bi bi-exclamation-triangle-fill"></i> Kayıt bulunamadı.
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="table-scroll">
+                    <table class="table table-hover text-center align-middle">
+                        <thead class="bg-dark text-white">
+                            <tr>
+                                <th class="p-3 text-start">Kitap</th>
+                                <th class="p-3">Öğrenci</th>
+                                <th class="p-3">Alış</th>
+                                <th class="p-3">Kalan Gün</th>
+                                <th class="p-3">Veriliş</th>
+                                <th class="p-3">Durum</th>
+                                <th class="p-3">İşlem</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white">
+                            @foreach (var d in Model)
+                            {
+                                var kitapAd = d.Kitap?.KitapAd ?? "Bilinmiyor";
+                                var ogrAd = d.Ogrenci?.OgrenciAdSoyad ?? "Bilinmiyor";
+                                var alisStr = d.KitapAlTarih.ToString("dd.MM.yyyy");
+                                var verStr = d.KitapVerTarih.HasValue
+                                    ? d.KitapVerTarih.Value.ToString("dd.MM.yyyy")
+                                    : "-";
+
+                                var gun = d.Kitap?.KitapGun ?? 0;
+                                var deadline = d.KitapAlTarih.Date.AddDays(gun);
+                                var kalan = Math.Max(0, (int)(deadline - DateTime.Today).TotalDays);
+                                var badgeText = d.KitapDurum == KitapDurumu.Alındı
+                                    ? "📖 Alındı"
+                                    : "✅ Teslim Edildi";
+
+                                <tr class="border-bottom">
+                                    <td class="text-start fw-semibold text-primary">@kitapAd</td>
+                                    <td class="text-muted">@ogrAd</td>
+                                    <td class="text-muted">@alisStr</td>
+                                    <td class="text-muted">
+                                        @(d.KitapDurum == KitapDurumu.Alındı ? kalan.ToString() : "-")
+                                    </td>
+                                    <td class="text-muted">@verStr</td>
+                                    <td>
+                                        <span class="badge @(d.KitapDurum == KitapDurumu.Alındı ? "bg-warning text-dark" : "bg-success")">
+                                            @badgeText
+                                        </span>
+                                    </td>
+                                    <td class="text-nowrap">
+                                        <a asp-action="Guncelle"
+                                           asp-route-id="@d.KitapDetayId"
+                                           class="btn btn-sm btn-primary">
+                                            <i class="bi bi-pencil-square"></i> Güncelle
+                                        </a>
+                                        <button class="btn btn-sm btn-danger ms-1"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#silModal"
+                                                data-id="@d.KitapDetayId">
+                                            <i class="bi bi-trash"></i> Sil
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Sayfalama -->
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <div class="text-muted">
+                        Toplam <strong>@Model.ToplamSayi</strong> kayıt •
+                        Sayfa <strong>@Model.SayfaIndeks</strong>/<strong>@Model.ToplamSayfa</strong>
+                    </div>
+                    <div class="btn-group btn-group-gap">
+                        <a class="btn btn-outline-secondary @(Model.OncekiSayfaVar ? "" : "disabled")"
+                           asp-action="Index"
+                           asp-route-searchString="@q"
+                           asp-route-durumFilter="@durum"
+                           asp-route-pageNumber="@(page - 1)">
+                            ‹ Önceki
+                        </a>
+
+                        <a class="btn btn-outline-secondary @(Model.SonrakiSayfaVar ? "" : "disabled")"
+                           asp-action="Index"
+                           asp-route-searchString="@q"
+                           asp-route-durumFilter="@durum"
+                           asp-route-pageNumber="@(page + 1)">
+                            Sonraki ›
+                        </a>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Silme Modal -->
+<div class="modal fade" id="silModal" tabindex="-1" aria-labelledby="silModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="silModalLabel">Kayıt Sil</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Bu kitap detayı kaydını silmek istediğinize emin misiniz?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <form method="post" asp-action="Sil">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" id="kdId" name="id" />
+                    <button type="submit" class="btn btn-danger">Evet, Sil!</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const modal = document.getElementById('silModal');
+        if (!modal) return;
+
+        modal.addEventListener('show.bs.modal', function (e) {
+            const id = e.relatedTarget?.getAttribute('data-id') ?? '';
+            const hidden = modal.querySelector('#kdId');
+            if (hidden) hidden.value = id;
+        });
+    });
+</script>

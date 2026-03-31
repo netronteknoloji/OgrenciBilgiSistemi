@@ -1,0 +1,548 @@
+﻿@using OgrenciBilgiSistemi.Models
+@using System.Globalization
+@model OgrenciBilgiSistemi.ViewModels.YemekhaneOzetVm
+@{
+    var ogrenciId = Model.OgrenciId;
+    var yil = Model.Yil;
+    ViewData["Title"] = "Yemekhane - Özet";
+    string Money(decimal v) => v.ToString("N2") + " ₺";
+
+    var akademikYillar = ViewBag.Yillar as List<int> ?? new List<int> { yil };
+    var odemeler = ViewBag.Odemeler as List<OgrenciYemekOdemeModel> ?? new List<OgrenciYemekOdemeModel>();
+    var tr = new CultureInfo("tr-TR");
+}
+
+<div class="viewport-scroller">
+    <div class="fixed-canvas">
+
+        <!-- ÜST SEKMELER (Standart) -->
+        <ul class="nav nav-tabs mb-2 align-items-center">
+            <li class="nav-item">
+                <a class="nav-link"
+                   asp-controller="OgrenciGirisCikis"
+                   asp-action="GirisCikisDetay"
+                   asp-route-id="@ogrenciId">Giriş/Çıkış</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link"
+                   asp-controller="Aidat"
+                   asp-action="Ozet"
+                   asp-route-ogrenciId="@ogrenciId"
+                   asp-route-yil="@(DateTime.Now.Month >= 9 ? DateTime.Now.Year : DateTime.Now.Year - 1)">Aidat</a>
+            </li>
+            <li class="nav-item"><a class="nav-link active">Yemekhane</a></li>
+
+            <!-- Sağ tarafta yıl seçici -->
+            <li class="ms-auto">
+                <form method="get" asp-controller="Yemekhane" asp-action="Ozet" class="d-flex gap-2">
+                    <input type="hidden" name="ogrenciId" value="@ogrenciId" />
+                    <select name="yil" class="form-select form-select-sm w-auto">
+                        @foreach (var y in akademikYillar)
+                        {
+                            <option value="@y" selected="@(y == yil ? "selected" : null)">@y-@(y + 1)</option>
+                        }
+                    </select>
+                    <button class="btn btn-sm btn-outline-primary" type="submit">Seçili Döneme Git</button>
+                </form>
+            </li>
+        </ul>
+
+        <!-- MESAJLAR (Standart) -->
+        @if (TempData["Bilgi"] is string infoMsg)
+        {
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                @infoMsg <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+        @if (TempData["Hata"] is string errMsg)
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                @errMsg <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+
+        <!-- ANA KART (Standart başlık + aksiyonlar) -->
+        <div class="card rounded-4">
+            <div class="card-header rounded-top-4 d-flex flex-row justify-content-between align-items-center gap-2">
+                <h5 class="mb-0 text-primary fw-bold">@yil-@(yil + 1) Yemekhane Özeti</h5>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-secondary">Aylık Tarife: <strong>@Money(Model.AylikTutar)</strong></span>
+                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#tarifeModal">Tarife Ayarla</button>
+                    <a asp-controller="Ogrenciler" asp-action="Index" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Listeye Dön
+                    </a>
+                </div>
+            </div>
+
+            <div class="card-body p-4">
+                <!-- Özet kutuları (Standart 3 sütun dizilim) -->
+                <div class="row row-cols-1 row-cols-md-3 text-center g-3 mb-3">
+                    <div><div class="fw-semibold">Toplam Borç</div><div class="fs-5">@Money(Model.ToplamBorc)</div></div>
+                    <div><div class="fw-semibold">Toplam Ödenen</div><div class="fs-5">@Money(Model.ToplamOdenen)</div></div>
+                    <div><div class="fw-semibold">Toplam Kalan</div><div class="fs-5">@Money(Model.ToplamKalan)</div></div>
+                </div>
+
+                <hr />
+
+                <!-- 12 Ay Tablosu (Standart tablo stilleri) -->
+                <div class="table-scroll">
+                    <table class="table table-hover text-center align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="rounded-start-4">Ay</th>
+                                <th>Durum</th>
+                                <th>Aylık Tutar</th>
+                                <th>Ay Borç</th>
+                                <th>Ödenen</th>
+                                <th>Kalan</th>
+                                <th class="rounded-end-4 text-end">İşlem</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white">
+                            @for (int i = 0; i < Model.Aylar.Count; i++)
+                            {
+                                var a = Model.Aylar[i];
+                                var count = odemeler.Count(o => o.Yil == a.YilGercek && o.Ay == a.AyGercek);
+                                var modalId = $"ayHareket_{a.YilGercek}_{a.AyGercek}";
+
+                                <tr>
+                                    <td>@a.AyAd</td>
+                                    <td>
+                                        @if (a.Aktif)
+                                        {
+                                            <span class="badge bg-success">Aktif</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">Pasif</span>
+                                        }
+                                    </td>
+                                    <td>@Money(a.AylikTutar)</td>
+                                    <td>@Money(a.Borc)</td>
+                                    <td>@Money(a.Odenen)</td>
+                                    <td>@Money(a.Kalan)</td>
+                                    <td class="text-end">
+                                        <div class="d-inline-flex gap-2">
+                                            <form method="post" asp-action="AyDurumKaydet" asp-controller="Yemekhane" class="d-inline-flex gap-2">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="ogrenciId" value="@ogrenciId" />
+                                                <input type="hidden" name="yil" value="@a.YilGercek" />
+                                                <input type="hidden" name="ay" value="@a.AyGercek" />
+                                                <select name="aktif" class="form-select form-select-sm w-auto">
+                                                    @if (a.Aktif)
+                                                    {
+                                                        <option value="true" selected>Aktif</option>
+                                                        <option value="false">Pasif</option>
+                                                    }
+                                                    else
+                                                    {
+                                                        <option value="true">Aktif</option>
+                                                        <option value="false" selected>Pasif</option>
+                                                    }
+                                                </select>
+                                                <input name="not" class="form-control form-control-sm" value="@a.Not" placeholder="Not (opsiyonel)" />
+                                                <button type="submit" class="btn btn-outline-primary btn-sm">Kaydet</button>
+                                            </form>
+
+                                            <button type="button"
+                                                    class="btn btn-outline-secondary btn-sm"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#@modalId">
+                                                Hareketler@(count > 0 ? $" ({count})" : "")
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- MODALLAR -->
+                @for (int i = 0; i < Model.Aylar.Count; i++)
+                {
+                    var a = Model.Aylar[i];
+                    var modalId = $"ayHareket_{a.YilGercek}_{a.AyGercek}";
+                    var ayOdemeler = odemeler.Where(o => o.Yil == a.YilGercek && o.Ay == a.AyGercek)
+                    .OrderByDescending(o => o.Tarih).ToList();
+                    var ayBaslik = $"{a.YilGercek} {(new DateTime(a.YilGercek, a.AyGercek, 1).ToString("MMMM", tr))} — Ödeme Hareketleri";
+
+                    <div class="modal fade" id="@modalId" tabindex="-1" aria-labelledby="@($"{modalId}_lbl")" aria-hidden="true">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content rounded-4">
+                                <div class="modal-header bg-light rounded-top-4">
+                                    <h5 class="modal-title fw-bold" id="@($"{modalId}_lbl")">@ayBaslik</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="table-scroll mb-3">
+                                        <table class="table table-hover align-middle text-center">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th class="rounded-start-4">Tarih</th>
+                                                    <th class="text-end">Tutar</th>
+                                                    <th>Açıklama</th>
+                                                    <th class="rounded-end-4 text-end"></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody class="bg-white">
+                                                @if (ayOdemeler.Any())
+                                                {
+                                                    foreach (var o in ayOdemeler)
+                                                    {
+                                                        <tr>
+                                                            <td>@o.Tarih.ToString("dd.MM.yyyy HH:mm")</td>
+                                                            <td class="text-end">@Money(o.Tutar)</td>
+                                                            <td>@(string.IsNullOrWhiteSpace(o.Aciklama) ? "-" : o.Aciklama)</td>
+                                                            <td class="text-end">
+                                                                <form method="post" asp-action="OdemeSil" asp-controller="Yemekhane" class="d-inline">
+                                                                    @Html.AntiForgeryToken()
+                                                                    <input type="hidden" name="ogrenciId" value="@ogrenciId" />
+                                                                    <input type="hidden" name="yil" value="@(a.AyGercek >= 9 ? a.YilGercek : a.YilGercek - 1)" />
+                                                                    <input type="hidden" name="odemeId" value="@o.OgrenciYemekOdemeId" />
+                                                                    <button type="submit" class="btn btn-outline-danger btn-sm">Sil</button>
+                                                                </form>
+                                                            </td>
+                                                        </tr>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    <tr>
+                                                        <td colspan="4" class="p-3">
+                                                            <div class="alert alert-warning m-0">Bu ay için henüz ödeme yok.</div>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    <!-- Bu aya hızlı ödeme ekle -->
+                                    <form method="post" asp-action="OdemeEkle" asp-controller="Yemekhane" class="d-flex flex-wrap gap-2">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="ogrenciId" value="@ogrenciId" />
+                                        <input type="hidden" name="yil" value="@a.YilGercek" />
+                                        <input type="hidden" name="ay" value="@a.AyGercek" />
+                                        <input type="number" name="tutar" step="0.01" min="0" class="form-control" placeholder="Tutar" required />
+                                        <input type="datetime-local" name="tarih" class="form-control" value="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" />
+                                        <input type="text" name="aciklama" maxlength="200" class="form-control" placeholder="Açıklama" />
+                                        <button type="submit" class="btn btn-primary">Ödeme Ekle</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- TARİFE Modal -->
+<div class="modal fade" id="tarifeModal" tabindex="-1" aria-labelledby="tarifeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content rounded-4">
+            <div class="modal-header bg-primary text-white rounded-top-4">
+                <h5 class="modal-title fw-bold" id="tarifeModalLabel">Tarife Ayarla</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" asp-action="TarifeKaydet" asp-controller="Yemekhane">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="ogrenciId" value="@ogrenciId" />
+                    <input type="hidden" name="yil" value="@yil" />
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Aylık Tutar</label>
+                        <input type="number" name="aylikTutar" step="0.01" min="0" class="form-control" value="@Model.AylikTutar" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Açıklama</label>
+                        <input type="text" name="aciklama" maxlength="200" class="form-control" />
+                    </div>
+                    <div class="text-end">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Vazgeç</button>
+                        <button type="submit" class="btn btn-primary">Kaydet</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* @using OgrenciBilgiSistemi.Models
+@using System.Globalization
+@model OgrenciBilgiSistemi.ViewModels.YemekhaneOzetVm
+@{
+    var ogrenciId = Model.OgrenciId;
+    var yil = Model.Yil;
+    ViewData["Title"] = "Yemekhane - Özet";
+    string Money(decimal v) => v.ToString("N2") + " ₺";
+
+    var akademikYillar = ViewBag.Yillar as List<int> ?? new List<int> { yil };
+    var odemeler = ViewBag.Odemeler as List<OgrenciYemekOdemeModel> ?? new List<OgrenciYemekOdemeModel>();
+    var tr = new CultureInfo("tr-TR");
+}
+
+<div class="viewport-scroller">
+    <div class="fixed-canvas">
+        <div class="container mt-5">
+            <!-- Sekmeler -->
+            <ul class="nav nav-tabs mb-3 align-items-center">
+                <li class="nav-item">
+                    <a class="nav-link" asp-controller="OgrenciGirisCikis" asp-action="GirisCikisDetay" asp-route-id="@ogrenciId">Giriş/Çıkış</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link"
+                       asp-controller="Aidat"
+                       asp-action="Ozet"
+                       asp-route-ogrenciId="@ogrenciId"
+                       asp-route-yil="@(DateTime.Now.Month >= 9 ? DateTime.Now.Year : DateTime.Now.Year - 1)">Aidat</a>
+                </li>
+                <li class="nav-item"><a class="nav-link active">Yemekhane</a></li>
+
+                <!-- Akademik yıl seçici -->
+                <li class="ms-auto">
+                    <form method="get" asp-controller="Yemekhane" asp-action="Ozet" class="d-flex gap-2">
+                        <input type="hidden" name="ogrenciId" value="@ogrenciId" />
+                        <select name="yil" class="form-select form-select-sm w-auto">
+                            @foreach (var y in akademikYillar)
+                            {
+                                if (y == yil)
+                                {
+                                    <option value="@y" selected>@y-@(y + 1)</option>
+                                }
+                                else
+                                {
+                                    <option value="@y">@y-@(y + 1)</option>
+                                }
+                            }
+                        </select>
+                        <button class="btn btn-sm btn-outline-primary" type="submit">Seçili Döneme Git</button>
+                    </form>
+                </li>
+            </ul>
+
+            <!-- Mesajlar -->
+            @if (TempData["Bilgi"] is string infoMsg)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    @infoMsg <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+            @if (TempData["Hata"] is string errMsg)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    @errMsg <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            <div class="card rounded-4">
+                <div class="card-header rounded-top-4 d-flex flex-row justify-content-between align-items-center gap-2">
+                    <h5 class="mb-0 text-primary fw-bold">@yil-@(yil + 1) Yemekhane Özeti</h5>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-secondary">Aylık Tarife: <strong>@Money(Model.AylikTutar)</strong></span>
+                        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#tarifeModal">Tarife Ayarla</button>
+                        <a asp-controller="Ogrenciler" asp-action="Index" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Listeye Dön
+                        </a>
+                    </div>
+                </div>
+
+                <div class="card-body p-4">
+                    <!-- Özet Kartlar -->
+                    <div class="row row-cols-1 row-cols-md-3 text-center g-3 mb-3">
+                        <div><div class="fw-semibold">Toplam Borç</div><div class="fs-5">@Money(Model.ToplamBorc)</div></div>
+                        <div><div class="fw-semibold">Toplam Ödenen</div><div class="fs-5">@Money(Model.ToplamOdenen)</div></div>
+                        <div><div class="fw-semibold">Toplam Kalan</div><div class="fs-5">@Money(Model.ToplamKalan)</div></div>
+                    </div>
+
+                    <hr />
+
+                    <!-- 12 Ay Tablosu (Eyl..Ağu) -->
+                    <div class="table-responsive">
+                        <table class="table table-hover text-center align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="rounded-start-4">Ay</th>
+                                    <th>Durum</th>
+                                    <th>Aylık Tutar</th>
+                                    <th>Ay Borç</th>
+                                    <th>Ödenen</th>
+                                    <th>Kalan</th>
+                                    <th class="rounded-end-4 text-end">İşlem</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (int i = 0; i < Model.Aylar.Count; i++)
+                                {
+                                    var a = Model.Aylar[i];
+                                    var count = odemeler.Count(o => o.Yil == a.YilGercek && o.Ay == a.AyGercek);
+                                    var modalId = $"ayHareket_{a.YilGercek}_{a.AyGercek}";
+
+                                    <tr>
+                                        <td>@a.AyAd</td>
+                                        <td>
+                                            @if (a.Aktif)
+                                            {
+                                                <span class="badge bg-success">Aktif</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary">Pasif</span>
+                                            }
+                                        </td>
+                                        <td>@Money(a.AylikTutar)</td>
+                                        <td>@Money(a.Borc)</td>
+                                        <td>@Money(a.Odenen)</td>
+                                        <td>@Money(a.Kalan)</td>
+                                        <td class="text-end">
+                                            <div class="d-inline-flex gap-2">
+                                                <form method="post" asp-action="AyDurumKaydet" asp-controller="Yemekhane" class="d-inline-flex gap-2">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="ogrenciId" value="@ogrenciId" />
+                                                    <input type="hidden" name="yil" value="@a.YilGercek" />
+                                                    <input type="hidden" name="ay" value="@a.AyGercek" />
+                                                    <select name="aktif" class="form-select form-select-sm w-auto">
+                                                        @if (a.Aktif)
+                                                        {
+                                                            <option value="true" selected>Aktif</option>
+                                                            <option value="false">Pasif</option>
+                                                        }
+                                                        else
+                                                        {
+                                                            <option value="true">Aktif</option>
+                                                            <option value="false" selected>Pasif</option>
+                                                        }
+                                                    </select>
+                                                    <input name="not" class="form-control form-control-sm" value="@a.Not" placeholder="Not (opsiyonel)" />
+                                                    <button type="submit" class="btn btn-outline-primary btn-sm">Kaydet</button>
+                                                </form>
+
+                                                <button type="button"
+                                                        class="btn btn-outline-secondary btn-sm"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#@modalId">
+                                                    Hareketler@(count > 0 ? $" ({count})" : "")
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- *** MODALLAR TABLO DIŞINDA *** -->
+                    @for (int i = 0; i < Model.Aylar.Count; i++)
+                    {
+                        var a = Model.Aylar[i];
+                        var modalId = $"ayHareket_{a.YilGercek}_{a.AyGercek}";
+                        var ayOdemeler = odemeler.Where(o => o.Yil == a.YilGercek && o.Ay == a.AyGercek)
+                        .OrderByDescending(o => o.Tarih).ToList();
+                        var ayBaslik = $"{a.YilGercek} {(new DateTime(a.YilGercek, a.AyGercek, 1).ToString("MMMM", tr))} — Ödeme Hareketleri";
+
+                        <div class="modal fade" id="@modalId" tabindex="-1" aria-labelledby="@($"{modalId}_lbl")" aria-hidden="true">
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content rounded-4">
+                                    <div class="modal-header bg-light rounded-top-4">
+                                        <h5 class="modal-title fw-bold" id="@($"{modalId}_lbl")">@ayBaslik</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="table-responsive mb-3">
+                                            <table class="table table-hover align-middle text-center">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th class="rounded-start-4">Tarih</th>
+                                                        <th class="text-end">Tutar</th>
+                                                        <th>Açıklama</th>
+                                                        <th class="rounded-end-4 text-end"></th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @if (ayOdemeler.Any())
+                                                    {
+                                                        foreach (var o in ayOdemeler)
+                                                        {
+                                                            <tr>
+                                                                <td>@o.Tarih.ToString("dd.MM.yyyy HH:mm")</td>
+                                                                <td class="text-end">@Money(o.Tutar)</td>
+                                                                <td>@(string.IsNullOrWhiteSpace(o.Aciklama) ? "-" : o.Aciklama)</td>
+                                                                <td class="text-end">
+                                                                    <form method="post" asp-action="OdemeSil" asp-controller="Yemekhane" class="d-inline">
+                                                                        @Html.AntiForgeryToken()
+                                                                        <input type="hidden" name="ogrenciId" value="@ogrenciId" />
+                                                                        <input type="hidden" name="yil" value="@(a.AyGercek >= 9 ? a.YilGercek : a.YilGercek - 1)" />
+                                                                        <input type="hidden" name="odemeId" value="@o.OgrenciYemekOdemeId" />
+                                                                        <button type="submit" class="btn btn-outline-danger btn-sm">Sil</button>
+                                                                    </form>
+                                                                </td>
+                                                            </tr>
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        <tr>
+                                                            <td colspan="4" class="p-3">
+                                                                <div class="alert alert-warning m-0">Bu ay için henüz ödeme yok.</div>
+                                                            </td>
+                                                        </tr>
+                                                    }
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                        <!-- Bu aya hızlı ödeme ekle -->
+                                        <form method="post" asp-action="OdemeEkle" asp-controller="Yemekhane" class="d-flex flex-wrap gap-2">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="ogrenciId" value="@ogrenciId" />
+                                            <input type="hidden" name="yil" value="@a.YilGercek" />
+                                            <input type="hidden" name="ay" value="@a.AyGercek" />
+                                            <input type="number" name="tutar" step="0.01" min="0" class="form-control" placeholder="Tutar" required />
+                                            <input type="datetime-local" name="tarih" class="form-control" value="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" />
+                                            <input type="text" name="aciklama" maxlength="200" class="form-control" placeholder="Açıklama" />
+                                            <button type="submit" class="btn btn-primary">Ödeme Ekle</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- TARIFE Modal -->
+<div class="modal fade" id="tarifeModal" tabindex="-1" aria-labelledby="tarifeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content rounded-4">
+            <div class="modal-header bg-primary text-white rounded-top-4">
+                <h5 class="modal-title fw-bold" id="tarifeModalLabel">Tarife Ayarla</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" asp-action="TarifeKaydet" asp-controller="Yemekhane">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="ogrenciId" value="@ogrenciId" />
+                    <input type="hidden" name="yil" value="@yil" />
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Aylık Tutar</label>
+                        <input type="number" name="aylikTutar" step="0.01" min="0" class="form-control" value="@Model.AylikTutar" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Açıklama</label>
+                        <input type="text" name="aciklama" maxlength="200" class="form-control" />
+                    </div>
+                    <div class="text-end">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Vazgeç</button>
+                        <button type="submit" class="btn btn-primary">Kaydet</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div> *@

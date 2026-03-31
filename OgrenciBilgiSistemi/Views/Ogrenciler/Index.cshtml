@@ -1,0 +1,233 @@
+﻿@model OgrenciBilgiSistemi.ViewModels.OgrenciListeVm
+@using Microsoft.AspNetCore.Mvc.Rendering
+
+@{
+    ViewData["Title"] = "Öğrenci Listesi";
+
+    string GetSortIcon(string column)
+    {
+        return Model.CurrentSort == column ? "↑" :
+               Model.CurrentSort == column + "_desc" ? "↓" : "";
+    }
+}
+
+<div class="viewport-scroller">
+    <div class="fixed-canvas">
+        <div class="card border rounded-4 p-4 mt-4">
+            <!-- Başlık -->
+            <div class="d-flex justify-content-between align-items-center mb-4 flex-nowrap no-wrap-scroll">
+                <h3 class="text-primary fw-bold mb-0">Öğrenci Listesi</h3>
+                <div class="d-flex gap-2">
+                    <a asp-action="Ekle" class="btn btn-success fw-bold">
+                        <i class="bi bi-plus-lg"></i> Öğrenci Ekle
+                    </a>
+                    <a asp-action="ExportToExcel"
+                       asp-route-sortOrder="@Model.CurrentSort"
+                       asp-route-searchString="@Model.CurrentFilter"
+                       asp-route-birimId="@Model.BirimId"
+                       class="btn btn-outline-success fw-bold">
+                        <i class="bi bi-file-earmark-excel"></i> Excel'e Aktar
+                    </a>
+                </div>
+            </div>
+
+            <!-- Arama + Birim Filtresi -->
+            <form method="get" asp-action="Index"
+                  class="d-flex align-items-end gap-3 flex-nowrap no-wrap-scroll w-100 bg-body-tertiary border rounded-3 p-3 mb-3">
+                <div>
+                    <label for="searchString" class="visually-hidden">Öğrenci</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                        <input type="text" id="searchString" name="searchString"
+                               class="form-control" placeholder="Ad/soyad, numara veya kartno"
+                               value="@Model.CurrentFilter" style="width:280px;" />
+                    </div>
+                </div>
+
+                <div>
+                    <label for="birimId" class="visually-hidden">Birim</label>
+                    <select asp-for="BirimId"
+                            asp-items="Model.Birimler"
+                            class="form-select"
+                            id="birimId"
+                            style="width:190px;">
+                    </select>
+                </div>
+
+                <div class="ms-auto">
+                    <button type="submit" class="btn btn-primary px-3 text-nowrap">
+                        <i class="bi bi-search me-1"></i> Ara
+                    </button>
+                    @if (!string.IsNullOrWhiteSpace(Model.CurrentFilter) || Model.BirimId.HasValue)
+                    {
+                        <a asp-action="Index" class="btn btn-outline-secondary ms-2">Temizle</a>
+                    }
+                </div>
+            </form>
+
+            <!-- Liste -->
+            <div class="table-scroll">
+                <table class="table table-hover table-sm text-center align-middle">
+                    <thead class="bg-dark text-white">
+                        <tr>
+                            <th class="p-3">#</th>
+                            <th class="p-3">
+                                <a asp-action="Index"
+                                   asp-route-pageNumber="1"
+                                   asp-route-sortOrder="@(Model.CurrentSort == "AdSoyad" ? "AdSoyad_desc" : "AdSoyad")"
+                                   asp-route-searchString="@Model.CurrentFilter"
+                                   asp-route-birimId="@Model.BirimId"
+                                   class="text-white text-decoration-none">
+                                    @Html.DisplayNameFor(m => m.Page[0].OgrenciAdSoyad) @GetSortIcon("AdSoyad")
+                                </a>
+                            </th>
+                            <th class="p-3">
+                                @Html.DisplayNameFor(m => m.Page[0].OgrenciNo)
+                            </th>
+                            <th class="p-3">
+                                @Html.DisplayNameFor(m => m.Page[0].OgrenciGorsel)
+                            </th>
+                            <th class="p-3">
+                                @Html.DisplayNameFor(m => m.Page[0].OgrenciKartNo)
+                            </th>
+                            <th class="p-3">
+                                @Html.DisplayNameFor(m => m.Page[0].Birim)
+                            </th>
+                            <th class="p-3">
+                                @Html.DisplayNameFor(m => m.Page[0].OgrenciCikisDurumu)
+                            </th>
+                            <th class="p-3">
+                                Yemekhane (Bu Ay)
+                            </th>
+                            <th class="p-3">
+                                @Html.DisplayNameFor(m => m.Page[0].OgrenciDurum)
+                            </th>
+                            <th class="p-3">İşlem</th>
+                        </tr>
+                    </thead>
+
+                    <tbody class="bg-white">
+                        @if (!Model.Page.Any())
+                        {
+                            <tr>
+                                <td colspan="12" class="p-4">
+                                    <div class="alert alert-warning text-center fs-6 mb-0">
+                                        <i class="bi bi-exclamation-triangle-fill"></i> Kayıt bulunamadı.
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var ogrenci in Model.Page)
+                            {
+                                <tr class="border-bottom">
+                                    <td class="fw-bold text-secondary">@ogrenci.OgrenciId</td>
+                                    <td class="fw-semibold text-primary">@ogrenci.OgrenciAdSoyad</td>
+                                    <td>@ogrenci.OgrenciNo</td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(ogrenci.OgrenciGorsel))
+                                        {
+                                            <img src="@ogrenci.OgrenciGorsel" alt="Foto" class="rounded-circle" width="40" height="40" />
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-person-circle fs-3 text-secondary"></i>
+                                        }
+                                    </td>
+                                    <td>@ogrenci.OgrenciKartNo</td>
+                                    <td>@(ogrenci.Birim?.BirimAd ?? "-")</td>
+
+                                    <td>
+                                        @{
+                                            var oglenEvet = ogrenci.OgrenciCikisDurumu == OglenCikisDurumu.Evet;
+                                            var oglenBadge = oglenEvet ? "bg-success" : "bg-danger";
+                                            var oglenText = oglenEvet ? "Evet" : "Hayır";
+                                        }
+                                        <span class="badge @oglenBadge">@oglenText</span>
+                                    </td>
+
+                                    <td>
+                                        @{
+                                            bool aktifMi = false;
+                                            if (ViewBag.YemekDurumMap is IDictionary<int, bool> dict && dict.TryGetValue(ogrenci.OgrenciId, out var v))
+                                            { aktifMi = v; }
+                                            var yemekBadge = aktifMi ? "bg-success" : "bg-danger";
+                                            var yemekText = aktifMi ? "Evet" : "Hayır";
+                                        }
+                                        <span class="badge @yemekBadge">@yemekText</span>
+                                    </td>
+
+                                    <td>
+                                        <span class="badge @(ogrenci.OgrenciDurum ? "bg-success" : "bg-danger")">
+                                            @(ogrenci.OgrenciDurum ? "Aktif" : "Pasif")
+                                        </span>
+                                    </td>
+
+                                    <td>
+                                        <div class="btn-group btn-group-gap" style="min-width: 200px;">
+                                            <a asp-controller="OgrenciGirisCikis"
+                                               asp-action="GirisCikisDetay"
+                                               asp-route-id="@ogrenci.OgrenciId"
+                                               class="btn btn-info btn-sm">
+                                                <i class="bi bi-eye"></i> Detay
+                                            </a>
+                                            <a asp-action="Guncelle" asp-route-id="@ogrenci.OgrenciId" class="btn btn-primary btn-sm">
+                                                <i class="bi bi-pencil-square"></i> Güncelle
+                                            </a>
+                                            <button class="btn btn-danger btn-sm silButonu"
+                                                    data-id="@ogrenci.OgrenciId"
+                                                    data-bs-toggle="modal" data-bs-target="#silModal">
+                                                <i class="bi bi-trash"></i> Sil
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            @await Html.PartialAsync("_SayfalamaFormPartial", OgrenciBilgiSistemi.ViewModels.SayfalamaVm.Olustur(Model.Page,
+                sayfaParametreAdi: "pageNumber",
+                routeValues: new Dictionary<string, string?> {
+                    ["searchString"] = Model.CurrentFilter,
+                    ["sortOrder"] = Model.CurrentSort,
+                    ["birimId"] = Model.BirimId?.ToString()
+                }))
+
+        </div>
+    </div>
+</div>
+
+<!-- Silme Modal -->
+<div class="modal fade" id="silModal" tabindex="-1" aria-labelledby="silModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="silModalLabel">Öğrenci Sil</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body"><p>Bu öğrenciyi silmek istediğinize emin misiniz?</p></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <form method="post" asp-action="Sil">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" id="ogrenciId" name="id" />
+                    <button type="submit" class="btn btn-danger">Evet, Sil!</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('.silButonu').forEach(btn => {
+          btn.addEventListener('click', function () {
+            document.getElementById('ogrenciId').value = this.getAttribute('data-id');
+          });
+        });
+    </script>
+}

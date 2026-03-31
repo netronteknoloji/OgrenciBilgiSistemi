@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:views="clr-namespace:OgrenciBilgiSistemi.Mobil.Views"
+             x:Class="OgrenciBilgiSistemi.Mobil.Views.OgrenciListeView"
+             Title="Yoklama Ekranı"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="#F2F2F2">
+
+    <ContentPage.Resources>
+        <Style x:Key="StatusBorderStyle" TargetType="Border">
+            <Setter Property="StrokeShape" Value="RoundRectangle 12" />
+            <Setter Property="StrokeThickness" Value="1" />
+            <Setter Property="Padding" Value="10,6" />
+            <Setter Property="Margin" Value="0,0,6,6" />
+            <Setter Property="BackgroundColor" Value="White" />
+            <Setter Property="Stroke" Value="#DCDDE1" />
+        </Style>
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="125, Auto, Auto, *, Auto">
+
+        <Border Grid.Row="0"
+                StrokeThickness="0"
+                BackgroundColor="#1ABC9C">
+            <Border.Shadow>
+                <Shadow Brush="#1ABC9C" Offset="0,4" Radius="15" Opacity="0.4" />
+            </Border.Shadow>
+
+            <Grid>
+                <views:AnaBaslikView x:Name="MyHeader"
+                                      ShowBack="True"
+                                      ShowProfile="True" />
+
+                <Label x:Name="LblClassName"
+                       Text="Sınıf Listesi"
+                       FontSize="18"
+                       FontFamily="OpenSansSemibold"
+                       HorizontalOptions="Center"
+                       VerticalOptions="End"
+                       Margin="0,0,0,35"
+                       TextColor="White" />
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="1"
+                Margin="15,-28,15,10"
+                HeightRequest="55"
+                StrokeShape="RoundRectangle 28"
+                StrokeThickness="0"
+                BackgroundColor="White">
+            <Border.Shadow>
+                <Shadow Brush="Black" Offset="0,10" Radius="20" Opacity="0.08" />
+            </Border.Shadow>
+            <Grid ColumnDefinitions="55, *">
+                <Label Grid.Column="0" Text="⏰" VerticalOptions="Center" HorizontalOptions="Center" FontSize="18" />
+                <Picker x:Name="PeriodPicker" Grid.Column="1" Title="Ders Saati Seçiniz" TitleColor="#95A5A6" 
+                        TextColor="#2C3E50" VerticalOptions="Center" SelectedIndexChanged="OnPeriodChanged">
+                    <Picker.ItemsSource>
+                        <x:Array Type="{x:Type x:String}">
+                            <x:String>1. Ders</x:String>
+                            <x:String>2. Ders</x:String>
+                            <x:String>3. Ders</x:String>
+                            <x:String>4. Ders</x:String>
+                            <x:String>5. Ders</x:String>
+                            <x:String>6. Ders</x:String>
+                            <x:String>7. Ders</x:String>
+                            <x:String>8. Ders</x:String>
+                        </x:Array>
+                    </Picker.ItemsSource>
+                </Picker>
+            </Grid>
+        </Border>
+
+        <Border x:Name="StatusWarningFrame" Grid.Row="2" IsVisible="False" Margin="15,5,15,10" 
+                StrokeShape="RoundRectangle 10" StrokeThickness="0" BackgroundColor="#FFF3CD">
+            <Label Text="⚠️ Bu dersin yoklaması daha önce kaydedilmiştir." Padding="12" 
+                   TextColor="#856404" HorizontalOptions="Center" FontSize="13" />
+        </Border>
+
+        <CollectionView x:Name="StudentCollection" Grid.Row="3" Margin="15,5">
+            <CollectionView.ItemsLayout>
+                <LinearItemsLayout Orientation="Vertical" ItemSpacing="10" />
+            </CollectionView.ItemsLayout>
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Border StrokeShape="RoundRectangle 15" StrokeThickness="0" BackgroundColor="White" Padding="15">
+                        <Border.Shadow>
+                            <Shadow Brush="Black" Offset="0,2" Radius="5" Opacity="0.05" />
+                        </Border.Shadow>
+                        <VerticalStackLayout Spacing="12">
+                            <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="12" VerticalOptions="Center">
+                                <Border Grid.Column="0" StrokeShape="RoundRectangle 20" HeightRequest="40" 
+                                        WidthRequest="40" StrokeThickness="0" BackgroundColor="#E0E0E0">
+                                    <Image Aspect="AspectFill" Source="{Binding OgrenciData.OgrenciGorsel, TargetNullValue='user_icon.png', FallbackValue='user_icon.png'}" />
+                                </Border>
+                                <Label Grid.Column="1" Text="{Binding OgrenciData.OgrenciAdSoyad}" FontSize="16" 
+                                       FontFamily="OpenSansSemibold" TextColor="#2C3E50" VerticalOptions="Center" LineBreakMode="TailTruncation" />
+                                <Frame Grid.Column="2" Padding="0" HeightRequest="30" WidthRequest="30" CornerRadius="15" 
+                                       BackgroundColor="#007BFF" HasShadow="False" BorderColor="Transparent" HorizontalOptions="End" VerticalOptions="Center">
+                                    <Frame.Shadow>
+                                        <Shadow Brush="#007BFF" Offset="0,2" Radius="5" Opacity="0.4" />
+                                    </Frame.Shadow>
+                                    <Frame.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnStudentDetailClicked" />
+                                    </Frame.GestureRecognizers>
+                                    <Label Text="i" TextColor="White" FontSize="15" FontAttributes="Bold" 
+                                           HorizontalTextAlignment="Center" VerticalTextAlignment="Center" />
+                                </Frame>
+                            </Grid>
+
+                            <FlexLayout Wrap="Wrap" Direction="Row" JustifyContent="Start">
+                                <Border Style="{StaticResource StatusBorderStyle}">
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnStatusTapped" CommandParameter="1" />
+                                    </Border.GestureRecognizers>
+                                    <Label Text="Geldi" FontSize="12" TextColor="Black">
+                                        <Label.Triggers>
+                                            <DataTrigger TargetType="Label" Binding="{Binding SecilenDurumId}" Value="1">
+                                                <Setter Property="TextColor" Value="White" />
+                                            </DataTrigger>
+                                        </Label.Triggers>
+                                    </Label>
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding SecilenDurumId}" Value="1">
+                                            <Setter Property="BackgroundColor" Value="#1ABC9C" />
+                                            <Setter Property="Stroke" Value="#1ABC9C" />
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                </Border>
+
+                                <Border Style="{StaticResource StatusBorderStyle}">
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnStatusTapped" CommandParameter="2" />
+                                    </Border.GestureRecognizers>
+                                    <Label Text="Gelmedi" FontSize="12" TextColor="Black">
+                                        <Label.Triggers>
+                                            <DataTrigger TargetType="Label" Binding="{Binding SecilenDurumId}" Value="2">
+                                                <Setter Property="TextColor" Value="White" />
+                                            </DataTrigger>
+                                        </Label.Triggers>
+                                    </Label>
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding SecilenDurumId}" Value="2">
+                                            <Setter Property="BackgroundColor" Value="#E74C3C" />
+                                            <Setter Property="Stroke" Value="#E74C3C" />
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                </Border>
+
+                                <Border Style="{StaticResource StatusBorderStyle}">
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnStatusTapped" CommandParameter="3" />
+                                    </Border.GestureRecognizers>
+                                    <Label Text="Geç Geldi" FontSize="12" TextColor="Black">
+                                        <Label.Triggers>
+                                            <DataTrigger TargetType="Label" Binding="{Binding SecilenDurumId}" Value="3">
+                                                <Setter Property="TextColor" Value="White" />
+                                            </DataTrigger>
+                                        </Label.Triggers>
+                                    </Label>
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding SecilenDurumId}" Value="3">
+                                            <Setter Property="BackgroundColor" Value="#F1C40F" />
+                                            <Setter Property="Stroke" Value="#F1C40F" />
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                </Border>
+
+                                <Border Style="{StaticResource StatusBorderStyle}">
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnStatusTapped" CommandParameter="4" />
+                                    </Border.GestureRecognizers>
+                                    <Label Text="İzinli" FontSize="12" TextColor="Black">
+                                        <Label.Triggers>
+                                            <DataTrigger TargetType="Label" Binding="{Binding SecilenDurumId}" Value="4">
+                                                <Setter Property="TextColor" Value="White" />
+                                            </DataTrigger>
+                                        </Label.Triggers>
+                                    </Label>
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding SecilenDurumId}" Value="4">
+                                            <Setter Property="BackgroundColor" Value="#3498DB" />
+                                            <Setter Property="Stroke" Value="#3498DB" />
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                </Border>
+
+                                <Border Style="{StaticResource StatusBorderStyle}">
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnStatusTapped" CommandParameter="5" />
+                                    </Border.GestureRecognizers>
+                                    <Label Text="Raporlu" FontSize="12" TextColor="Black">
+                                        <Label.Triggers>
+                                            <DataTrigger TargetType="Label" Binding="{Binding SecilenDurumId}" Value="5">
+                                                <Setter Property="TextColor" Value="White" />
+                                            </DataTrigger>
+                                        </Label.Triggers>
+                                    </Label>
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding SecilenDurumId}" Value="5">
+                                            <Setter Property="BackgroundColor" Value="#9B59B6" />
+                                            <Setter Property="Stroke" Value="#9B59B6" />
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                </Border>
+
+                                <Border Style="{StaticResource StatusBorderStyle}">
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnStatusTapped" CommandParameter="6" />
+                                    </Border.GestureRecognizers>
+                                    <Label Text="Nöbetçi" FontSize="12" TextColor="Black">
+                                        <Label.Triggers>
+                                            <DataTrigger TargetType="Label" Binding="{Binding SecilenDurumId}" Value="6">
+                                                <Setter Property="TextColor" Value="White" />
+                                            </DataTrigger>
+                                        </Label.Triggers>
+                                    </Label>
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding SecilenDurumId}" Value="6">
+                                            <Setter Property="BackgroundColor" Value="#34495E" />
+                                            <Setter Property="Stroke" Value="#34495E" />
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                </Border>
+
+                                <Border Style="{StaticResource StatusBorderStyle}">
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnStatusTapped" CommandParameter="7" />
+                                    </Border.GestureRecognizers>
+                                    <Label Text="Görevli" FontSize="12" TextColor="Black">
+                                        <Label.Triggers>
+                                            <DataTrigger TargetType="Label" Binding="{Binding SecilenDurumId}" Value="7">
+                                                <Setter Property="TextColor" Value="White" />
+                                            </DataTrigger>
+                                        </Label.Triggers>
+                                    </Label>
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding SecilenDurumId}" Value="7">
+                                            <Setter Property="BackgroundColor" Value="#95A5A6" />
+                                            <Setter Property="Stroke" Value="#95A5A6" />
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                </Border>
+                            </FlexLayout>
+                        </VerticalStackLayout>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <Border Grid.Row="4" Padding="15,10,15,20" BackgroundColor="White" StrokeThickness="0">
+            <Border.Shadow>
+                <Shadow Brush="Black" Offset="0,-5" Radius="10" Opacity="0.05" />
+            </Border.Shadow>
+            <Grid>
+                <Button x:Name="BtnSave" Text="YOKLAMAYI KAYDET" HeightRequest="55" CornerRadius="12" 
+                        BackgroundColor="#1ABC9C" TextColor="White" Clicked="OnSaveAttendanceClicked" />
+                <Button x:Name="BtnUpdate" Text="YOKLAMAYI GÜNCELLE" IsVisible="False" HeightRequest="55"
+                        CornerRadius="12" BackgroundColor="#2196F3" TextColor="White" Clicked="OnUpdateAttendanceClicked" />
+            </Grid>
+        </Border>
+    </Grid>
+</ContentPage>

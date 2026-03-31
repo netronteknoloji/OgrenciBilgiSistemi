@@ -1,0 +1,73 @@
+﻿@model OgrenciBilgiSistemi.ViewModels.OgrenciVeliFormVm
+
+@{
+    ViewData["Title"] = Model.Action == "Guncelle"
+        ? "Öğrenci + Veli Güncelle"
+        : "Yeni Öğrenci + Veli";
+}
+
+<partial name="~/Views/Shared/_OgrenciFormPartial.cshtml" model="Model" />
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        // 1) Submit butonuna basılınca disable + metin değişimi + manualSubmit
+        (function () {
+          const form = document.getElementById('ogrenciForm');
+          const btn  = document.getElementById('submitBtn');
+          if (!form || !btn) return;
+
+          let manualSubmit = false;
+          btn.addEventListener('click', () => { manualSubmit = true; });
+
+          form.addEventListener('submit', function (e) {
+            if (!manualSubmit) {
+              e.preventDefault();
+              return;
+            }
+            manualSubmit = false;
+
+            if (form.checkValidity()) {
+              btn.disabled = true;
+              const originalText = btn.textContent.trim();
+              btn.textContent = originalText === 'Güncelle' ? 'Güncelleniyor...' : 'Kaydediliyor...';
+            }
+          });
+        })();
+
+        // 2) Form içinde Enter ile gelen "implicit submit"i engelle
+        (function () {
+          const form = document.getElementById('ogrenciForm');
+          if (!form) return;
+          form.addEventListener('keydown', function (e) {
+            const isTextArea = e.target && e.target.tagName === 'TEXTAREA';
+            if (e.key === 'Enter' && !isTextArea) {
+              e.preventDefault();
+            }
+          });
+        })();
+
+        // 3) Kart No: baştaki sıfırları temizle + Enter’ı yut
+        (function () {
+          const cardInput = document.getElementById('Ogrenci_OgrenciKartNo');
+          if (!cardInput) return;
+          cardInput.addEventListener('input', function () {
+            this.value = this.value.replace(/^0+/, '');
+          });
+          cardInput.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') { e.preventDefault(); }
+          });
+        })();
+
+        // 4) Ad Soyad: focus kaybedince uppercase
+        (function () {
+          const nameInput = document.getElementById('Ogrenci_OgrenciAdSoyad');
+          if (!nameInput) return;
+          nameInput.addEventListener('blur', function () {
+            if (this.value) this.value = this.value.toUpperCase();
+          });
+        })();
+
+    </script>
+}

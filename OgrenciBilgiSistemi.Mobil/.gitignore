@@ -1,0 +1,31 @@
+# Build outputs
+bin/
+obj/
+
+# User secrets and local config overrides
+appsettings.Local.json
+appsettings.Production.json
+secrets.json
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+
+# Rider
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# MSBuild / VS per-user files
+*.csproj.user
+
+# Local tooling/config
+**/.config/
+
+# Publish profiles (often environment-specific / sensitive)
+**/Properties/PublishProfiles/
+
+CLAUDE.md

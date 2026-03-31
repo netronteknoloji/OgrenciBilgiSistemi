@@ -1,0 +1,168 @@
+﻿workflows:
+  ios-maui-release:
+    name: iOS MAUI Release - Manual Signing
+    instance_type: mac_mini_m2
+    max_build_duration: 120
+
+    integrations:
+      app_store_connect: "Codemagic API Key"
+
+    environment:
+      xcode: latest
+      vars:
+        BUNDLE_ID: com.netronyazilim.ogrencibilgisistemi
+        PROJECT_PATH: OgrenciBilgiSistemi.Mobil.csproj
+        IOS_TFM: net9.0-ios18.0
+        DOTNET_PATH: $CM_BUILD_DIR/dotnet
+        DOTNET: $CM_BUILD_DIR/dotnet/dotnet
+
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.netronyazilim.ogrencibilgisistemi
+
+    scripts:
+      - name: Install .NET SDK 9.0
+        script: |
+          set -e
+          curl -fsSL https://dot.net/v1/dotnet-install.sh -o dotnet-install.sh
+          chmod +x dotnet-install.sh
+          ./dotnet-install.sh --install-dir "$DOTNET_PATH" --channel 9.0
+          "$DOTNET" --info
+
+      - name: Install MAUI workloads
+        script: |
+          set -e
+          "$DOTNET" workload install maui-ios maui-android --skip-manifest-update
+          "$DOTNET" workload list
+
+      - name: Restore NuGet packages
+        script: |
+          set -e
+          "$DOTNET" restore "$PROJECT_PATH" \
+            /p:TargetFramework=net9.0-ios18.0
+
+      - name: Setup iOS code signing
+        script: |
+          set -e
+          python3 -m pip install --upgrade codemagic-cli-tools
+          keychain initialize
+          keychain add-certificates
+          xcode-project use-profiles
+          echo "=== Certificates ==="
+          security find-identity -v -p codesigning
+          echo "=== Profiles ==="
+          ls -la "$HOME/Library/MobileDevice/Provisioning Profiles/" || true
+
+      - name: Build IPA (Release)
+        script: |
+          set -e
+
+          SIGNING_IDENTITY=$(security find-identity -v -p codesigning | grep "Apple Distribution" | head -1 | awk -F'"' '{print $2}')
+          echo "Signing identity: $SIGNING_IDENTITY"
+
+          PROFILES_DIR="$HOME/Library/MobileDevice/Provisioning Profiles"
+          PROFILE_UUID=""
+          for f in "$PROFILES_DIR"/*.mobileprovision; do
+            UUID=$(/usr/libexec/PlistBuddy -c "Print :UUID" /dev/stdin <<< $(security cms -D -i "$f") 2>/dev/null || true)
+            APPID=$(/usr/libexec/PlistBuddy -c "Print :Entitlements:application-identifier" /dev/stdin <<< $(security cms -D -i "$f") 2>/dev/null || true)
+            if echo "$APPID" | grep -q "$BUNDLE_ID"; then
+              PROFILE_UUID="$UUID"
+              echo "Found profile UUID: $PROFILE_UUID"
+              break
+            fi
+          done
+
+          if [ -z "$PROFILE_UUID" ]; then
+            echo "ERROR: '$BUNDLE_ID' icin eslesen provisioning profile bulunamadi!"
+            exit 1
+          fi
+
+          APP_BUILD_NUMBER=$(($CM_BUILD_NUMBER + 9))
+          echo "CFBundleVersion: $APP_BUILD_NUMBER"
+
+          "$DOTNET" publish "$PROJECT_PATH" \
+            -c Release \
+            -f "$IOS_TFM" \
+            /p:RuntimeIdentifier=ios-arm64 \
+            /p:ArchiveOnBuild=true \
+            /p:BuildIpa=true \
+            /p:ApplicationVersion=$APP_BUILD_NUMBER \
+            /p:CodesignKey="$SIGNING_IDENTITY" \
+            /p:CodesignProvision="$PROFILE_UUID"
+
+    artifacts:
+      - "**/*.ipa"
+
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        submit_to_app_store: false
+
+  android-maui-release:
+    name: Android MAUI Release
+    instance_type: mac_mini_m2
+    max_build_duration: 120
+
+    environment:
+      vars:
+        PROJECT_PATH: OgrenciBilgiSistemi.Mobil.csproj
+        ANDROID_TFM: net9.0-android
+        DOTNET_PATH: $CM_BUILD_DIR/dotnet
+        DOTNET: $CM_BUILD_DIR/dotnet/dotnet
+
+      android_signing:
+        - android_keystore
+
+    scripts:
+      - name: Install .NET SDK 9.0
+        script: |
+          set -e
+          curl -fsSL https://dot.net/v1/dotnet-install.sh -o dotnet-install.sh
+          chmod +x dotnet-install.sh
+          ./dotnet-install.sh --install-dir "$DOTNET_PATH" --channel 9.0
+          "$DOTNET" --info
+
+      - name: Install MAUI workloads
+        script: |
+          set -e
+          "$DOTNET" workload install maui-android maui
+          "$DOTNET" workload list
+
+      - name: Restore NuGet packages
+        script: |
+          set -e
+          "$DOTNET" restore "$PROJECT_PATH" \
+            /p:TargetFramework=net9.0-android
+
+      - name: Build AAB (Release)
+        script: |
+          set -e
+
+          APP_BUILD_NUMBER=$(($CM_BUILD_NUMBER + 9))
+          echo "Build number: $APP_BUILD_NUMBER"
+
+          if [ -z "$CM_KEYSTORE_PATH" ]; then
+            echo "ERROR: Android keystore bulunamadi!"
+            exit 1
+          fi
+
+          "$DOTNET" publish "$PROJECT_PATH" \
+            -c Release \
+            -f "$ANDROID_TFM" \
+            /p:AndroidPackageFormat=aab \
+            /p:ApplicationVersion=$APP_BUILD_NUMBER \
+            /p:AndroidKeyStore=true \
+            /p:AndroidSigningKeyStore="$CM_KEYSTORE_PATH" \
+            /p:AndroidSigningKeyAlias="$CM_KEY_ALIAS" \
+            /p:AndroidSigningKeyPass="$CM_KEY_PASSWORD" \
+            /p:AndroidSigningStorePass="$CM_KEYSTORE_PASSWORD"
+
+    artifacts:
+      - "**/*.aab"
+
+    publishing:
+      google_play:
+        credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
+        track: internal
+        submit_as_draft: true

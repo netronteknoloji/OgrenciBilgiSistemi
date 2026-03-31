@@ -1,0 +1,706 @@
+﻿@using OgrenciBilgiSistemi.Dtos
+@model OgrenciBilgiSistemi.Dtos.OgrenciAidatDto
+
+@{
+    var yil = Model.Yil != 0 ? Model.Yil : (DateTime.Now.Month >= 9 ? DateTime.Now.Year : DateTime.Now.Year - 1);
+
+    var adSoyad = string.IsNullOrWhiteSpace(Model.OgrenciAdSoyad) ? "Öğrenci" : Model.OgrenciAdSoyad;
+    ViewData["Title"] = $"{adSoyad} - {yil}-{yil + 1} Aidat";
+
+    decimal borc = Model.ToplamBorc;
+    decimal odenen = Model.ToplamOdenen;
+    decimal kalan = Model.Muaf ? 0m : Math.Max(0, borc - odenen);
+
+    bool muafGosterim = Model.Muaf;
+    bool odemeButonuPasif = Model.Muaf;
+    bool kapandi = Model.Muaf || kalan == 0m;
+
+    var sonOdemeTarihi = Model.SonOdemeTarihi;
+    var fromBag = ViewBag.KullanilabilirYillar as IEnumerable<int>;
+    var kullanilabilirYillar = (fromBag != null && fromBag.Any()) ? fromBag : new List<int> { yil };
+
+    var tarifeVar = Model.Tarife is not null;
+    string Money(decimal v) => v.ToString("N2") + " ₺";
+}
+
+<div class="viewport-scroller">
+    <div class="fixed-canvas">
+        <!-- ÜST SEKMELER (Standart) -->
+        <ul class="nav nav-tabs mb-2 align-items-center">
+            <li class="nav-item">
+                <a class="nav-link"
+                   asp-controller="OgrenciGirisCikis"
+                   asp-action="GirisCikisDetay"
+                   asp-route-id="@Model.OgrenciId">Giriş/Çıkış</a>
+            </li>
+            <li class="nav-item"><a class="nav-link active">Aidat</a></li>
+            <li class="nav-item">
+                <a class="nav-link"
+                   asp-controller="Yemekhane"
+                   asp-action="Ozet"
+                   asp-route-ogrenciId="@Model.OgrenciId">Yemekhane</a>
+            </li>
+
+            <!-- Sağ tarafta yıl seçici -->
+            <li class="ms-auto">
+                <form method="get" asp-controller="Aidat" asp-action="Ozet" class="d-flex gap-2">
+                    <input type="hidden" name="ogrenciId" value="@Model.OgrenciId" />
+                    <select name="yil" class="form-select form-select-sm w-auto">
+                        @foreach (var y in kullanilabilirYillar)
+                        {
+                            <option value="@y" selected="@(y == yil ? "selected" : null)">@y-@(y + 1)</option>
+                        }
+                    </select>
+                    <button class="btn btn-sm btn-outline-primary" type="submit">Seçili Döneme Git</button>
+                </form>
+            </li>
+        </ul>
+
+        <!-- MESAJLAR (Standart) -->
+        @if (TempData["Bilgi"] is string infoMsg)
+        {
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                @infoMsg
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Kapat"></button>
+            </div>
+        }
+        @if (TempData["Hata"] is string errMsg)
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                @errMsg
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Kapat"></button>
+            </div>
+        }
+
+        <!-- ANA KART (Standart başlık + aksiyonlar) -->
+        <div class="card rounded-4">
+            <div class="card-header rounded-top-4 d-flex flex-row justify-content-between align-items-center gap-2">
+                <h5 class="mb-0 text-primary fw-bold">@adSoyad — @yil-@(yil + 1) Aidat</h5>
+                <div class="d-flex align-items-center gap-2">
+                    @{
+                        var badgeText = kapandi ? "Kapalı" : "Açık";
+                        var badgeClass = kapandi ? "bg-success text-white" : "bg-danger text-white";
+                    }
+                    <span class="badge @badgeClass">@badgeText</span>
+
+                    @if (muafGosterim)
+                    {
+                        <span class="badge bg-warning text-dark">Muaf</span>
+                    }
+
+                    <form asp-controller="Aidat" asp-action="MuafiyetAyarla" method="post" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="ogrenciId" value="@Model.OgrenciId" />
+                        <input type="hidden" name="yil" value="@yil" />
+                        <input type="hidden" name="muaf" value="@(muafGosterim ? "false" : "true")" />
+                        <input type="hidden" name="returnUrl" value="@(ViewBag.ReturnUrl ?? "")" />
+                        <button type="submit" class="btn btn-sm @(muafGosterim ? "btn-outline-secondary" : "btn-outline-warning")">
+                            @(muafGosterim ? "Muafiyeti Kaldır" : "Bu Yılı Muaf Yap")
+                        </button>
+                    </form>
+
+                    @if (ViewBag.ReturnUrl is string ret && !string.IsNullOrEmpty(ret))
+                    {
+                        <a href="@ret" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Listeye Dön
+                        </a>
+                    }
+                    else
+                    {
+                        <a asp-controller="Ogrenciler" asp-action="Index" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Listeye Dön
+                        </a>
+                    }
+                </div>
+            </div>
+
+            <div class="card-body p-4">
+                <!-- Özet kutuları (Standart 4 sütun dizilim) -->
+                <div class="row row-cols-4 text-center g-3 mb-3">
+                    <div><div class="fw-semibold">Borç</div><div class="fs-5">@Money(borc)</div></div>
+                    <div><div class="fw-semibold">Ödenen</div><div class="fs-5">@Money(odenen)</div></div>
+                    <div><div class="fw-semibold">Kalan</div><div class="fs-5">@Money(kalan)</div></div>
+                    <div><div class="fw-semibold">Son Ödeme</div><div class="fs-6">@(sonOdemeTarihi?.ToString("dd.MM.yyyy HH:mm") ?? "-")</div></div>
+                </div>
+
+                @if (!tarifeVar && !muafGosterim)
+                {
+                    <div class="alert alert-warning d-flex justify-content-between align-items-center mt-3">
+                        <div>Bu akademik yıl için tarife tanımlı değil. Lütfen önce tarife ekleyin.</div>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="small text-muted">Akademik Yıl: <strong>@yil-@(yil + 1)</strong></span>
+                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#tarifeEkle">Tarife Ekle</button>
+                        </div>
+                    </div>
+                }
+
+                <hr />
+
+                <!-- Ödemeler başlık + buton (Standart) -->
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="mb-0">Ödeme Hareketleri</h6>
+                    <button type="button" class="btn btn-primary btn-sm"
+                            data-bs-toggle="modal"
+                            data-bs-target="#odemeEkleModal"
+                            data-ogrenci-id="@Model.OgrenciId"
+                            data-yil="@yil"
+                            data-ogrenciad="@adSoyad"
+                            @(odemeButonuPasif ? "disabled" : "")>
+                        + Ödeme Ekle
+                    </button>
+                </div>
+
+                <!-- Tablo (Standart stiller) -->
+                <div class="table-scroll">
+                    <table class="table table-hover text-center align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="rounded-start-4">Tarih</th>
+                                <th class="text-end">Tutar</th>
+                                <th>Açıklama</th>
+                                <th class="rounded-end-4 text-end"></th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white">
+                            @if (Model.Odemeler?.Any() == true)
+                            {
+                                @foreach (var o in Model.Odemeler.OrderByDescending(x => x.Tarih))
+                                {
+                                    <tr>
+                                        <td>@o.Tarih.ToString("dd.MM.yyyy HH:mm")</td>
+                                        <td class="text-end">@Money(o.Tutar)</td>
+                                        <td>@(string.IsNullOrWhiteSpace(o.Aciklama) ? "-" : o.Aciklama)</td>
+                                        <td class="text-end">
+                                            <form method="post" asp-action="OdemeSil" asp-controller="Aidat">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="ogrenciId" value="@Model.OgrenciId" />
+                                                <input type="hidden" name="yil" value="@yil" />
+                                                <input type="hidden" name="odemeId" value="@o.OgrenciAidatOdemeId" />
+                                                <input type="hidden" name="returnUrl" value="@(Context.Request.Path + Context.Request.QueryString)" />
+
+                                                <button type="button"
+                                                        class="btn btn-outline-danger btn-sm"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#confirmSilModal"
+                                                        data-odeme-id="@o.OgrenciAidatOdemeId"
+                                                        data-ogrenci-id="@Model.OgrenciId"
+                                                        data-yil="@yil"
+                                                        data-tutar="@o.Tutar"
+                                                        data-tarih="@o.Tarih.ToString("dd.MM.yyyy HH:mm")">
+                                                    Sil
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="4" class="p-4">
+                                        <div class="alert alert-warning text-center m-0">
+                                            <i class="bi bi-exclamation-triangle-fill"></i> Henüz ödeme yok.
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        @await Html.PartialAsync("_OdemeEkleModal", new OgrenciBilgiSistemi.Dtos.AidatOdemeEkleDto())
+
+        <!-- Ödeme Sil Onay Modal (Standart) -->
+        <div class="modal fade" id="confirmSilModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content rounded-4">
+                    <div class="modal-header bg-danger text-white rounded-top-4">
+                        <h5 class="modal-title">Ödemeyi Sil</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="mb-2">Bu ödemeyi silmek istediğinize emin misiniz?</p>
+                        <div class="small text-muted" id="silDetay"></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Vazgeç</button>
+                        <form method="post" asp-action="OdemeSil" asp-controller="Aidat" id="silForm" class="m-0">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="ogrenciId" />
+                            <input type="hidden" name="yil" />
+                            <input type="hidden" name="odemeId" />
+                            <input type="hidden" name="returnUrl" value="@(Context.Request.Path + Context.Request.QueryString)" />
+                            <button type="submit" class="btn btn-danger">Evet, Sil</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tarife Ekle Modal (Standart başlık) -->
+        <div class="modal fade" id="tarifeEkle" tabindex="-1" aria-labelledby="tarifeEkleLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content rounded-4">
+                    <div class="modal-header bg-primary text-white rounded-top-4">
+                        <h5 class="modal-title fw-bold" id="tarifeEkleLabel">Tarife Kaydet</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form method="post" asp-action="TarifeKaydet" asp-controller="Aidat">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="ogrenciId" value="@Model.OgrenciId" />
+                            <input type="hidden" name="yil" value="@yil" />
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Akademik Yıl</label>
+                                <input type="text" class="form-control" value="@yil-@(yil + 1)" disabled />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Tutar</label>
+                                <input type="number" name="tutar" step="0.01" min="0" class="form-control" required />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Açıklama</label>
+                                <input type="text" name="aciklama" maxlength="200" class="form-control" />
+                            </div>
+
+                            <div class="text-end">
+                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Vazgeç</button>
+                                <button type="submit" class="btn btn-primary">Kaydet</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const modalEl = document.getElementById('odemeEkleModal');
+            if (!modalEl) return;
+
+            modalEl.addEventListener('show.bs.modal', function (event) {
+                const btn = event.relatedTarget;
+                if (!btn) return;
+
+                const ogrenciId = btn.getAttribute('data-ogrenci-id');
+                const yil       = btn.getAttribute('data-yil');
+                const ad        = btn.getAttribute('data-ad')
+                                   || btn.getAttribute('data-ogrenciad')
+                                   || 'Öğrenci';
+
+                document.getElementById('odm-ogrenciId').value = ogrenciId || '';
+                document.getElementById('odm-yil').value       = yil || '';
+                document.getElementById('odm-returnUrl').value = window.location.pathname + window.location.search;
+
+                const adInput = document.getElementById('odm-ogrenciAd');
+                if (adInput) adInput.value = ad;
+
+                const sub = modalEl.querySelector('#odemeEkleSub');
+                if (sub) sub.textContent = ad;
+            });
+        })();
+
+        (function () {
+            const silModal = document.getElementById('confirmSilModal');
+            if (!silModal) return;
+
+            silModal.addEventListener('show.bs.modal', function (ev) {
+                const btn = ev.relatedTarget;
+                if (!btn) return;
+
+                const odemeId   = btn.getAttribute('data-odeme-id') ?? '';
+                const ogrenciId = btn.getAttribute('data-ogrenci-id') ?? '';
+                const yil       = btn.getAttribute('data-yil') ?? '';
+                const tutar     = btn.getAttribute('data-tutar') ?? '';
+                const tarih     = btn.getAttribute('data-tarih') ?? '';
+
+                const detay = silModal.querySelector('#silDetay');
+                if (detay) detay.textContent = `Tarih: ${tarih} · Tutar: ${tutar} ₺`;
+
+                const form = silModal.querySelector('#silForm');
+                if (form) {
+                    form.querySelector('input[name="odemeId"]').value = odemeId;
+                    form.querySelector('input[name="ogrenciId"]').value = ogrenciId;
+                    form.querySelector('input[name="yil"]').value = yil;
+                }
+            });
+        })();
+    </script>
+}
+
+
+@* @using OgrenciBilgiSistemi.Dtos
+@model OgrenciBilgiSistemi.Dtos.OgrenciAidatDto
+
+@{
+    // Akademik yıl başlangıcı: Eylül ve sonrası => o yıl; aksi halde bir önceki yıl
+    var yil = Model.Yil != 0 ? Model.Yil : (DateTime.Now.Month >= 9 ? DateTime.Now.Year : DateTime.Now.Year - 1);
+
+    var adSoyad = string.IsNullOrWhiteSpace(Model.OgrenciAdSoyad) ? "Öğrenci" : Model.OgrenciAdSoyad;
+    ViewData["Title"] = $"{adSoyad} - {yil}-{yil + 1} Aidat";
+
+    decimal borc = Model.ToplamBorc;
+    decimal odenen = Model.ToplamOdenen;
+    decimal kalan = Model.Muaf ? 0m : Math.Max(0, borc - odenen);
+
+    // Görsel durumlar
+    bool muafGosterim = Model.Muaf;
+    bool odemeButonuPasif = Model.Muaf;
+    bool kapandi = Model.Muaf || kalan == 0m;
+
+    var sonOdemeTarihi = Model.SonOdemeTarihi;
+
+    var fromBag = ViewBag.KullanilabilirYillar as IEnumerable<int>;
+    var kullanilabilirYillar = (fromBag != null && fromBag.Any())
+        ? fromBag
+        : new List<int> { yil };
+
+    var tarifeVar = Model.Tarife is not null;
+
+    string Money(decimal v) => v.ToString("N2") + " ₺";
+}
+
+<div class="viewport-scroller">
+    <div class="fixed-canvas mt-5">
+
+        <!-- Üst sekmeler -->
+        <ul class="nav nav-tabs mb-3 align-items-center no-wrap-scroll">
+            <li class="nav-item">
+                <a class="nav-link"
+                   asp-controller="OgrenciGirisCikis"
+                   asp-action="GirisCikisDetay"
+                   asp-route-id="@Model.OgrenciId">Giriş/Çıkış</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link active">Aidat</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link"
+                   asp-controller="Yemekhane"
+                   asp-action="Ozet"
+                   asp-route-ogrenciId="@Model.OgrenciId">Yemekhane</a>
+            </li>
+
+            <!-- Yıl seçici -->
+            <li class="ms-auto">
+                <form method="get" asp-controller="Aidat" asp-action="Ozet" class="d-flex gap-2">
+                    <input type="hidden" name="ogrenciId" value="@Model.OgrenciId" />
+                    <select name="yil" class="form-select form-select-sm w-auto">
+                        @foreach (var y in kullanilabilirYillar)
+                        {
+                            <option value="@y" selected="@(y == yil ? "selected" : null)">@y-@(y + 1)</option>
+                        }
+                    </select>
+                    <button class="btn btn-sm btn-outline-primary" type="submit">Seçili Döneme Git</button>
+                </form>
+            </li>
+        </ul>
+
+        <!-- TempData mesajları -->
+        @if (TempData["Bilgi"] is string infoMsg)
+        {
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                @infoMsg
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Kapat"></button>
+            </div>
+        }
+        @if (TempData["Hata"] is string errMsg)
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                @errMsg
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Kapat"></button>
+            </div>
+        }
+
+        <div class="card rounded-4">
+            <div class="card-header rounded-top-4 d-flex flex-row justify-content-between align-items-center gap-2">
+                <h5 class="mb-0 text-primary fw-bold">@adSoyad — @yil-@(yil + 1) Aidat</h5>
+                <div class="d-flex align-items-center gap-2">
+                    @{
+                        var badgeText = kapandi ? "Kapalı" : "Açık";
+                        var badgeClass = kapandi ? "bg-success text-white" : "bg-danger text-white";
+                    }
+                    <span class="badge @badgeClass">@badgeText</span>
+
+                    @if (muafGosterim)
+                    {
+                        <span class="badge bg-warning text-dark">Muaf</span>
+                    }
+
+                    <!-- Yıl bazlı muafiyet -->
+                    <form asp-controller="Aidat" asp-action="MuafiyetAyarla" method="post" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="ogrenciId" value="@Model.OgrenciId" />
+                        <input type="hidden" name="yil" value="@yil" />
+                        <input type="hidden" name="muaf" value="@(muafGosterim ? "false" : "true")" />
+                        <input type="hidden" name="returnUrl" value="@(ViewBag.ReturnUrl ?? "")" />
+                        <button type="submit" class="btn btn-sm @(muafGosterim ? "btn-outline-secondary" : "btn-outline-warning")">
+                            @(muafGosterim ? "Muafiyeti Kaldır" : "Bu Yılı Muaf Yap")
+                        </button>
+                    </form>
+
+                    @if (ViewBag.ReturnUrl is string ret && !string.IsNullOrEmpty(ret))
+                    {
+                        <a href="@ret" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Listeye Dön
+                        </a>
+                    }
+                    else
+                    {
+                        <a asp-controller="Ogrenciler" asp-action="Index" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Listeye Dön
+                        </a>
+                    }
+                </div>
+            </div>
+
+            <div class="card-body p-4">
+                <!-- Özet kartları (sabit 4 sütun) -->
+                <div class="row row-cols-4 text-center g-3 mb-3">
+                    <div>
+                        <div class="fw-semibold">Borç</div>
+                        <div class="fs-5">@Money(borc)</div>
+                    </div>
+                    <div>
+                        <div class="fw-semibold">Ödenen</div>
+                        <div class="fs-5">@Money(odenen)</div>
+                    </div>
+                    <div>
+                        <div class="fw-semibold">Kalan</div>
+                        <div class="fs-5">@Money(kalan)</div>
+                    </div>
+                    <div>
+                        <div class="fw-semibold">Son Ödeme</div>
+                        <div class="fs-6">@(sonOdemeTarihi?.ToString("dd.MM.yyyy HH:mm") ?? "-")</div>
+                    </div>
+                </div>
+
+                @if (!tarifeVar && !muafGosterim)
+                {
+                    <div class="alert alert-warning d-flex justify-content-between align-items-center mt-3">
+                        <div>Bu akademik yıl için tarife tanımlı değil. Lütfen önce tarife ekleyin.</div>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="small text-muted">Akademik Yıl: <strong>@yil-@(yil + 1)</strong></span>
+                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#tarifeEkle">Tarife Ekle</button>
+                        </div>
+                    </div>
+                }
+
+                <hr />
+
+                <!-- Ödemeler -->
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="mb-0">Ödeme Hareketleri</h6>
+                    <button type="button" class="btn btn-primary btn-sm"
+                            data-bs-toggle="modal"
+                            data-bs-target="#odemeEkleModal"
+                            data-ogrenci-id="@Model.OgrenciId"
+                            data-yil="@yil"
+                            data-ogrenciad="@adSoyad"
+                            @(odemeButonuPasif ? "disabled" : "")>
+                        + Ödeme Ekle
+                    </button>
+                </div>
+
+                <div class="table-scroll">
+                    <table class="table table-hover text-center align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="rounded-start-4">Tarih</th>
+                                <th class="text-end">Tutar</th>
+                                <th>Açıklama</th>
+                                <th class="rounded-end-4 text-end"></th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white">
+                            @if (Model.Odemeler?.Any() == true)
+                            {
+                                @foreach (var o in Model.Odemeler.OrderByDescending(x => x.Tarih))
+                                {
+                                    <tr>
+                                        <td>@o.Tarih.ToString("dd.MM.yyyy HH:mm")</td>
+                                        <td class="text-end">@Money(o.Tutar)</td>
+                                        <td>@(string.IsNullOrWhiteSpace(o.Aciklama) ? "-" : o.Aciklama)</td>
+                                        <td class="text-end">
+                                            <form method="post" asp-action="OdemeSil" asp-controller="Aidat">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="ogrenciId" value="@Model.OgrenciId" />
+                                                <input type="hidden" name="yil" value="@yil" />
+                                                <input type="hidden" name="odemeId" value="@o.OgrenciAidatOdemeId" />
+                                                <input type="hidden" name="returnUrl" value="@(Context.Request.Path + Context.Request.QueryString)" />
+
+                                                <button type="button"
+                                                        class="btn btn-outline-danger btn-sm"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#confirmSilModal"
+                                                        data-odeme-id="@o.OgrenciAidatOdemeId"
+                                                        data-ogrenci-id="@Model.OgrenciId"
+                                                        data-yil="@yil"
+                                                        data-tutar="@o.Tutar"
+                                                        data-tarih="@o.Tarih.ToString("dd.MM.yyyy HH:mm")">
+                                                    Sil
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="4" class="p-4">
+                                        <div class="alert alert-warning text-center m-0">
+                                            <i class="bi bi-exclamation-triangle-fill"></i> Henüz ödeme yok.
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        @await Html.PartialAsync("_OdemeEkleModal", new OgrenciBilgiSistemi.Dtos.AidatOdemeEkleDto())
+
+        <!-- Ödeme Sil Onay Modal -->
+        <div class="modal fade" id="confirmSilModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content rounded-4">
+                    <div class="modal-header bg-danger text-white rounded-top-4">
+                        <h5 class="modal-title">Ödemeyi Sil</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="mb-2">Bu ödemeyi silmek istediğinize emin misiniz?</p>
+                        <div class="small text-muted" id="silDetay"></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Vazgeç</button>
+                        <!-- Silme POST'unu yapan TEK form -->
+                        <form method="post" asp-action="OdemeSil" asp-controller="Aidat" id="silForm" class="m-0">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="ogrenciId" />
+                            <input type="hidden" name="yil" />
+                            <input type="hidden" name="odemeId" />
+                            <input type="hidden" name="returnUrl" value="@(Context.Request.Path + Context.Request.QueryString)" />
+                            <button type="submit" class="btn btn-danger">Evet, Sil</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tarife Ekle Modal -->
+        <div class="modal fade" id="tarifeEkle" tabindex="-1" aria-labelledby="tarifeEkleLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content rounded-4">
+                    <div class="modal-header bg-primary text-white rounded-top-4">
+                        <h5 class="modal-title fw-bold" id="tarifeEkleLabel">Tarife Kaydet</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form method="post" asp-action="TarifeKaydet" asp-controller="Aidat">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="ogrenciId" value="@Model.OgrenciId" />
+                            <input type="hidden" name="yil" value="@yil" />
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Akademik Yıl</label>
+                                <input type="text" class="form-control" value="@yil-@(yil + 1)" disabled />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Tutar</label>
+                                <input type="number" name="tutar" step="0.01" min="0" class="form-control" required />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Açıklama</label>
+                                <input type="text" name="aciklama" maxlength="200" class="form-control" />
+                            </div>
+
+                            <div class="text-end">
+                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Vazgeç</button>
+                                <button type="submit" class="btn btn-primary">Kaydet</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Ödeme Ekle modal: butondan gelen veriler
+        (function () {
+            const modalEl = document.getElementById('odemeEkleModal');
+            if (!modalEl) return;
+
+            modalEl.addEventListener('show.bs.modal', function (event) {
+                const btn = event.relatedTarget;
+                if (!btn) return;
+
+                const ogrenciId = btn.getAttribute('data-ogrenci-id');
+                const yil       = btn.getAttribute('data-yil');
+                // Ozet’te kullandığın attribute: data-ad
+                // (İstersen Index ile aynı olması için data-ogrenciad da ekleyebilirsin)
+                const ad        = btn.getAttribute('data-ad')
+                               || btn.getAttribute('data-ogrenciad')
+                               || 'Öğrenci';
+
+                document.getElementById('odm-ogrenciId').value = ogrenciId || '';
+                document.getElementById('odm-yil').value       = yil || '';
+                document.getElementById('odm-returnUrl').value = window.location.pathname + window.location.search;
+
+                // Öğrenci adını modal input'a yaz
+                const adInput = document.getElementById('odm-ogrenciAd');
+                if (adInput) adInput.value = ad;
+
+                // Alt başlık varsa güncelle
+                const sub = modalEl.querySelector('#odemeEkleSub');
+                if (sub) sub.textContent = ad;
+            });
+        })();
+
+        (function () {
+            const silModal = document.getElementById('confirmSilModal');
+            if (!silModal) return;
+
+            silModal.addEventListener('show.bs.modal', function (ev) {
+                const btn = ev.relatedTarget;
+                if (!btn) return;
+
+                const odemeId   = btn.getAttribute('data-odeme-id') ?? '';
+                const ogrenciId = btn.getAttribute('data-ogrenci-id') ?? '';
+                const yil       = btn.getAttribute('data-yil') ?? '';
+                const tutar     = btn.getAttribute('data-tutar') ?? '';
+                const tarih     = btn.getAttribute('data-tarih') ?? '';
+
+                // Detay metni
+                const detay = silModal.querySelector('#silDetay');
+                if (detay) detay.textContent = `Tarih: ${tarih} · Tutar: ${tutar} ₺`;
+
+                // Modal içindeki formun hidden inputlarını doldur
+                const form = silModal.querySelector('#silForm');
+                if (form) {
+                    form.querySelector('input[name="odemeId"]').value = odemeId;
+                    form.querySelector('input[name="ogrenciId"]').value = ogrenciId;
+                    form.querySelector('input[name="yil"]').value = yil;
+                }
+            });
+        })();
+    </script>
+} *@

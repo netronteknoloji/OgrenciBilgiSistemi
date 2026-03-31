@@ -1,0 +1,30 @@
+@{
+    ViewData["Title"] = "Erişim Reddedildi";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-6 text-center">
+            <div class="card border-danger shadow-sm">
+                <div class="card-body p-5">
+                    <h1 class="display-1 text-danger fw-bold">403</h1>
+                    <h2 class="card-title mb-3">Erişim Reddedildi</h2>
+                    <p class="card-text text-muted mb-4">
+                        Bu sayfayı görüntülemek için gerekli yetkiye sahip değilsiniz.
+                        Bir yönetici ile iletişime geçin.
+                    </p>
+                    <a asp-controller="Home" asp-action="Index" class="btn btn-primary me-2">
+                        Ana Sayfaya Dön
+                    </a>
+                    <form asp-controller="Hesaplar" asp-action="Cikis" method="post" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-outline-secondary">
+                            Farklı Hesapla Giriş Yap
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

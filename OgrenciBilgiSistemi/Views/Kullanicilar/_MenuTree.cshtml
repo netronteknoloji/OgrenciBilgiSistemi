@@ -1,0 +1,29 @@
+@model OgrenciBilgiSistemi.ViewModels.MenuOgeAtamaVm
+@{
+    // Unique id
+    var cid = $"menu_{Model.MenuOgeId}";
+}
+
+<li class="mb-1">
+    <details class="menu-node" @(Model.AltOgeler?.Any() == true ? "" : "open")>
+        <summary class="d-flex align-items-center gap-2">
+            <input class="form-check-input"
+                   type="checkbox"
+                   id="@cid"
+                   data-menu-id="@Model.MenuOgeId"
+                   data-parent-id="@(Model.AnaMenuId?.ToString() ?? "")"
+                   @(Model.AtandiMi ? "checked" : "") />
+            <label class="form-check-label" for="@cid">@Model.Baslik</label>
+        </summary>
+
+        @if (Model.AltOgeler != null && Model.AltOgeler.Count > 0)
+        {
+            <ul class="list-unstyled ms-4 mt-1">
+                @foreach (var child in Model.AltOgeler)
+                {
+                    @Html.Partial("_MenuTree", child)
+                }
+            </ul>
+        }
+    </details>
+</li>

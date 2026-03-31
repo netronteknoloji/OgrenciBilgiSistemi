@@ -1,0 +1,60 @@
+﻿@using System.Collections
+@{
+    // TempData anahtarları → Bootstrap alert sınıfları ve ikonları
+    var alerts = new[]
+    {
+        new { Key = "Success", Css = "success", Icon = "fa-check-circle" },
+        new { Key = "Error",   Css = "danger",  Icon = "fa-times-circle" },
+        new { Key = "Warning", Css = "warning", Icon = "fa-exclamation-triangle" },
+        new { Key = "Info",    Css = "info",    Icon = "fa-info-circle" }
+    };
+
+    // Yardımcı yerel fonksiyon: Tek string ya da string listesi destekle
+    IEnumerable<string> AsMessages(object? value)
+    {
+        if (value is null) yield break;
+        if (value is string s) { yield return s; yield break; }
+        if (value is IEnumerable enumerable)
+        {
+            foreach (var item in enumerable)
+            {
+                if (item is string si && !string.IsNullOrWhiteSpace(si))
+                    yield return si;
+            }
+        }
+    }
+}
+
+<div class="container mt-3">
+    @foreach (var a in alerts)
+    {
+        var raw = TempData[a.Key];
+        var messages = AsMessages(raw).ToList();
+        if (!messages.Any()) { continue; }
+
+        foreach (var msg in messages)
+        {
+            <div class="alert alert-@a.Css alert-dismissible fade show" role="alert" data-autohide="true">
+                <i class="fas @a.Icon me-2"></i>
+                @msg
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+    }
+</div>
+
+@section Scripts {
+    <script>
+        // Otomatik gizleme (4 sn). data-autohide="false" verilirse gizlenmez.
+        (function () {
+            const alerts = document.querySelectorAll('.alert[data-autohide="true"]');
+            alerts.forEach(el => {
+                setTimeout(() => {
+                    // Bootstrap 5: Dismiss programatik (trigger click)
+                    const btn = el.querySelector('.btn-close');
+                    if (btn) btn.click();
+                }, 4000);
+            });
+        })();
+    </script>
+}

@@ -1,0 +1,8 @@
+﻿@model OgrenciBilgiSistemi.Models.KitapDetayModel
+@{
+    ViewData["Title"] = "Yeni Kitap Detayı Ekle";
+    ViewData["Action"] = "Ekle";
+    ViewData["SubmitText"] = "Kaydet";
+    ViewData["IncludeId"] = false;
+}
+<partial name="~/Views/Shared/_KitapDetayFormPartial.cshtml" model="Model" />

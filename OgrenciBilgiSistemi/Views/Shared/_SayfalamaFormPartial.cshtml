@@ -1,0 +1,48 @@
+@model OgrenciBilgiSistemi.ViewModels.SayfalamaVm
+
+@{
+    // Önceki sayfa route değerleri
+    var oncekiRoute = new Dictionary<string, string?>(Model.RouteValues)
+    {
+        [Model.SayfaParametreAdi] = (Model.SayfaIndeks - 1).ToString()
+    };
+
+    // Sonraki sayfa route değerleri
+    var sonrakiRoute = new Dictionary<string, string?>(Model.RouteValues)
+    {
+        [Model.SayfaParametreAdi] = (Model.SayfaIndeks + 1).ToString()
+    };
+
+    var oncekiUrl = Model.OncekiSayfaVar
+        ? Url.Action(Model.Action, oncekiRoute)
+        : null;
+
+    var sonrakiUrl = Model.SonrakiSayfaVar
+        ? Url.Action(Model.Action, sonrakiRoute)
+        : null;
+}
+
+<div class="d-flex justify-content-between align-items-center mt-3">
+    <div class="text-muted">
+        Toplam <strong>@Model.ToplamSayi</strong> kayıt &bull; Sayfa <strong>@Model.SayfaIndeks</strong>/<strong>@Model.ToplamSayfa</strong>
+    </div>
+    <div class="btn-group btn-group-gap">
+        @if (Model.OncekiSayfaVar)
+        {
+            <a class="btn btn-outline-secondary" href="@oncekiUrl">&#8249; Önceki</a>
+        }
+        else
+        {
+            <a class="btn btn-outline-secondary disabled">&#8249; Önceki</a>
+        }
+
+        @if (Model.SonrakiSayfaVar)
+        {
+            <a class="btn btn-outline-secondary" href="@sonrakiUrl">Sonraki &#8250;</a>
+        }
+        else
+        {
+            <a class="btn btn-outline-secondary disabled">Sonraki &#8250;</a>
+        }
+    </div>
+</div>

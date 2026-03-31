@@ -1,0 +1,75 @@
+﻿@model BirimModel
+@{
+    var action = (ViewData["Action"] as string) ?? "Ekle";
+    var submitText = (ViewData["SubmitText"] as string) ?? "Kaydet";
+    var includeId = (bool?)ViewData["IncludeId"] ?? false;
+
+    var formId = "birimForm";
+    var submitBtnId = "submitBtn";
+}
+<div class="viewport-scroller">
+    <div class="fixed-canvas">
+        <div class="container py-4">
+            <div class="row justify-content-center">
+                <div class="col-5">
+                    <div class="card rounded-3 border">
+                        <div class="card-header bg-primary text-white text-center">
+                            <h4 class="fw-bold mb-0">@(action == "Ekle" ? "Birim Ekle" : "Birim Güncelle")</h4>
+                        </div>
+
+                        <div class="card-body p-4">
+                            <form asp-action="@action" method="post" id="@formId" autocomplete="off">
+                                @Html.AntiForgeryToken()
+
+                                @if (includeId)
+                                {
+                                    <input type="hidden" asp-for="BirimId" />
+                                }
+
+                                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                                <!-- Birim Adı -->
+                                <div class="mb-3">
+                                    <label asp-for="BirimAd" class="form-label fw-semibold"></label>
+                                    <input asp-for="BirimAd" class="form-control" required minlength="3"
+                                           placeholder="Birim adı girin" autocomplete="off" autofocus />
+                                    <span asp-validation-for="BirimAd" class="text-danger"></span>
+                                </div>
+
+                                <!-- Sınıf Birimi -->
+                                <div class="mb-3">
+                                    <label asp-for="BirimSinifMi" class="form-label fw-semibold"></label>
+                                    <select asp-for="BirimSinifMi" class="form-select" id="sinifSelect">
+                                        <option value="true">Evet</option>
+                                        <option value="false">Hayır</option>
+                                    </select>
+                                </div>
+
+                                <!-- Birim Durumu -->
+                                <div class="mb-4">
+                                    <label asp-for="BirimDurum" class="form-label fw-semibold"></label>
+                                    <select asp-for="BirimDurum" class="form-select" id="durumSelect">
+                                        <option value="true">Aktif</option>
+                                        <option value="false">Pasif</option>
+                                    </select>
+                                </div>
+
+                                <!-- Butonlar -->
+                                <div class="d-flex justify-content-between gap-2">
+                                    <a asp-action="Index" class="btn btn-outline-secondary">
+                                        <i class="bi bi-arrow-left"></i> Geri Dön
+                                    </a>
+                                    <button type="submit" class="btn btn-primary fw-bold" id="@submitBtnId">
+                                        <i class="bi bi-save"></i> @submitText
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

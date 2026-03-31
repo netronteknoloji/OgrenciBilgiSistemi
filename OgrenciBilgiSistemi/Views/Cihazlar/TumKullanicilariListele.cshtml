@@ -1,0 +1,87 @@
+@using OgrenciBilgiSistemi.Dtos
+
+@model List<ZkUserDto>
+@{
+    ViewData["Title"] = "Cihaz Kullanıcıları";
+    var cihazId = (int)ViewBag.CihazId;
+}
+
+<div class="viewport-scroller">
+    <div class="fixed-canvas">
+
+        <div class="card border rounded-4 p-4 mt-4">
+
+            <!-- Başlık + Aksiyonlar -->
+            <div class="d-flex gap-2 justify-content-between align-items-center mb-3 flex-nowrap no-wrap-scroll">
+                <h3 class="text-primary fw-bold mb-0">Cihaz @cihazId – Kullanıcılar (@Model.Count)</h3>
+                <div class="d-flex gap-2">
+                    <a asp-action="Index" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Cihaz Listesine Dön
+                    </a>
+                    <form asp-action="TumKullanicilariSil" method="post"
+                          onsubmit="return confirm('Bu cihazdaki TÜM kullanıcılar silinecek. Emin misiniz?');">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="cihazId" value="@cihazId" />
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-person-x"></i> Tümünü Sil
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            @if (TempData["Message"] is string ok && !string.IsNullOrWhiteSpace(ok))
+            {
+                <div class="alert alert-success">@ok</div>
+            }
+            @if (TempData["Error"] is string err && !string.IsNullOrWhiteSpace(err))
+            {
+                <div class="alert alert-danger">@err</div>
+            }
+
+            <!-- Liste -->
+            <div class="table-scroll">
+                <table class="table table-hover table-sm align-middle">
+                    <thead class="bg-dark text-white">
+                        <tr class="text-center">
+                            <th>#</th>
+                            <th>UserId</th>
+                            <th>Ad</th>
+                            <th>Yetki</th>
+                            <th>Aktif</th>
+                            <th>Kart No</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model == null || Model.Count == 0)
+                        {
+                            <tr>
+                                <td colspan="6" class="p-4">
+                                    <div class="alert alert-warning text-center mb-0">
+                                        <i class="bi bi-exclamation-triangle-fill"></i> Kayıt bulunamadı.
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            var i = 1;
+                            foreach (var u in Model)
+                            {
+                                <tr class="text-center">
+                                    <td>@i</td>
+                                    <td>@u.UserId</td>
+                                    <td>@(u.Name ?? "-")</td>
+                                    <td>@u.Privilege</td>
+                                    <td>@(u.Enabled ? "Evet" : "Hayır")</td>
+                                    <td>@(string.IsNullOrWhiteSpace(u.CardNumber) ? "-" : u.CardNumber)</td>
+                                </tr>
+                                i++;
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>

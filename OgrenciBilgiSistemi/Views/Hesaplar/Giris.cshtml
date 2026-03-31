@@ -1,0 +1,60 @@
+﻿@model OgrenciBilgiSistemi.Dtos.GirisIstegiDto
+@{
+    ViewData["Title"] = "Giriş Ekranı";
+}
+
+<div class="min-vh-95 d-flex align-items-center justify-content-center">
+    <div class="card shadow-sm rounded-4 w-100" style="max-width:380px;">
+        <!-- Üst şerit (istersen kaldır) -->
+        <div class="bg-primary bg-gradient rounded-top-4" style="height:4px;"></div>
+
+        <!-- Logo & başlık -->
+        <div class="card-body text-center pb-0">
+            <img src="~/images/logo.svg"
+                 onerror="this.src='@Url.Content("~/images/logo.png")'"
+                 alt="Okul Logosu"
+                 class="img-fluid mx-auto d-block my-3"
+                 style="max-width:110px;" />
+            <h4 class="fw-semibold mb-1">Öğrenci Bilgi Sistemi</h4>
+            <p class="text-muted mb-3">Giriş Ekranı</p>
+        </div>
+
+        <!-- Form -->
+        <div class="card-body pt-2">
+            <form asp-action="Giris" method="post" class="needs-validation" novalidate>
+                @Html.AntiForgeryToken()
+
+                <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+                <div class="form-floating mb-3">
+                    <input asp-for="KullaniciAdi" class="form-control" placeholder="Kullanıcı Adınız" required />
+                    <label asp-for="KullaniciAdi">Kullanıcı Adı</label>
+                </div>
+
+                <div class="form-floating mb-2">
+                    <input asp-for="Sifre" type="password" class="form-control" placeholder="Şifreniz" required />
+                    <label asp-for="Sifre">Şifre</label>
+                </div>
+
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div class="form-check">
+                        <input asp-for="BeniHatirla" class="form-check-input" id="beniHatirlaCheck" />
+                        <label for="beniHatirlaCheck" class="form-check-label">Beni Hatırla</label>
+                    </div>
+                    <a asp-controller="Hesap" asp-action="SifreSifirla" class="link-primary text-decoration-none">
+                        Şifreyi unuttum
+                    </a>
+                </div>
+
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary py-2">Giriş Yap</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Alt bilgi -->
+        <div class="card-footer bg-transparent border-0 text-center small text-muted py-3">
+            © @DateTime.Now.Year • Abdülhamit Han Ortaokulu
+        </div>
+    </div>
+</div>

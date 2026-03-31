@@ -1,0 +1,109 @@
+﻿@model OgrenciBilgiSistemi.Dtos.AidatOdemeEkleDto
+
+<div class="modal fade" id="odemeEkleModal" tabindex="-1" aria-labelledby="odemeEkleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="OdemeEkle" asp-controller="Aidat" method="post">
+                @Html.AntiForgeryToken()
+
+                <!-- Gizli alanlar -->
+                <input asp-for="OgrenciId" type="hidden" id="odm-ogrenciId" />
+                <input asp-for="Yil" type="hidden" id="odm-yil" />
+                <input type="hidden" name="returnUrl" id="odm-returnUrl" />
+
+                <div class="modal-header">
+                    <h5 class="modal-title" id="odemeEkleModalLabel">Ödeme Ekle</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="mb-2">
+                        <label class="form-label">Öğrenci</label>
+                        <input type="text" class="form-control" id="odm-ogrenciAd" readonly />
+                    </div>
+
+                    <div class="mb-2">
+                        <label asp-for="Tutar" class="form-label"></label>
+                        <input asp-for="Tutar" class="form-control" step="0.01" inputmode="decimal" />
+                        <span asp-validation-for="Tutar" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-2">
+                        <label asp-for="Tarih" class="form-label"></label>
+                        <input asp-for="Tarih" class="form-control" type="datetime-local" asp-format="{0:yyyy-MM-ddTHH:mm}" />
+                        <span asp-validation-for="Tarih" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-2">
+                        <label asp-for="Aciklama" class="form-label"></label>
+                        <input asp-for="Aciklama" class="form-control" />
+                        <span asp-validation-for="Aciklama" class="text-danger"></span>
+                    </div>
+
+                    <div asp-validation-summary="ModelOnly" class="text-danger small"></div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Kaydet</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">İptal</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+
+@* @model OgrenciBilgiSistemi.Dtos.AidatOdemeEkleDto
+
+<div class="modal fade" id="odemeEkleModal" tabindex="-1" aria-labelledby="odemeEkleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="OdemeEkle" asp-controller="Aidat" method="post">
+                @Html.AntiForgeryToken()
+
+                <!-- Gizli alanlar (TEK KERE) -->
+                <input asp-for="OgrenciId" type="hidden" id="odm-ogrenciId" />
+                <input asp-for="Yil" type="hidden" id="odm-yil" />
+                <input type="hidden" name="ReturnUrl" id="odm-returnUrl" />
+
+                <div class="modal-header">
+                    <h5 class="modal-title" id="odemeEkleModalLabel">Ödeme Ekle</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="mb-2">
+                        <label class="form-label">Öğrenci</label>
+                        <input type="text" class="form-control" id="odm-ogrenciAd" disabled />
+                    </div>
+
+                    <div class="mb-2">
+                        <label asp-for="Tutar" class="form-label"></label>
+                        <input asp-for="Tutar" class="form-control" />
+                        <span asp-validation-for="Tutar" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-2">
+                        <label asp-for="Tarih" class="form-label"></label>
+                        <input asp-for="Tarih" class="form-control" type="datetime-local" asp-format="{0:yyyy-MM-ddTHH:mm}" />
+                        <span asp-validation-for="Tarih" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-2">
+                        <label asp-for="Aciklama" class="form-label"></label>
+                        <input asp-for="Aciklama" class="form-control" />
+                        <span asp-validation-for="Aciklama" class="text-danger"></span>
+                    </div>
+
+                    <div asp-validation-summary="ModelOnly" class="text-danger small"></div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Kaydet</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">İptal</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div> *@

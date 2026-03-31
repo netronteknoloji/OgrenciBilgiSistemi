@@ -1,0 +1,158 @@
+@model OgrenciBilgiSistemi.ViewModels.KullaniciMenuAtamaVm
+@{
+    ViewData["Title"] = "Menü Yetkilerini Güncelle";
+}
+
+<div class="viewport-scroller">
+    <div class="fixed-canvas">
+
+        <div class="card border rounded-4 p-4 mt-4">
+
+            <!-- Başlık -->
+            <div class="d-flex gap-2 justify-content-between align-items-center mb-3 flex-nowrap no-wrap-scroll">
+                <h3 class="text-primary fw-bold mb-0">
+                    <i class="bi bi-key me-1"></i> @Model.KullaniciAdi – Menü Yetkileri
+                </h3>
+                <a asp-action="Index" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Geri Dön
+                </a>
+            </div>
+
+            <form asp-action="YetkiGuncelle" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="KullaniciId" />
+
+                <div id="menuTree" class="menu-tree">
+                    @if (Model.Menuler != null && Model.Menuler.Count > 0)
+                    {
+                        <ul class="list-unstyled">
+                            @foreach (var node in Model.Menuler)
+                            {
+                                @Html.Partial("_MenuTree", node)
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <div class="alert alert-info mb-0">Tanımlı menü bulunamadı.</div>
+                    }
+                </div>
+
+                <div id="selectedIdsContainer"></div>
+
+                <div class="d-flex gap-2 mt-3">
+                    <button type="submit" class="btn btn-primary fw-bold">
+                        <i class="bi bi-save me-1"></i> Kaydet
+                    </button>
+                </div>
+            </form>
+
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+          // ---- Parent/Child senkronizasyonu + indeterminate ----
+          const treeEl = document.getElementById('menuTree');
+          treeEl.querySelectorAll('details').forEach(d => d.open = true);
+          if (!treeEl) return;
+
+          // Checkbox'ları bul
+          const checks = treeEl.querySelectorAll('input[type="checkbox"][data-menu-id]');
+          const byId = new Map();
+          checks.forEach(ch => byId.set(ch.dataset.menuId, ch));
+
+          // Parent -> children ilişkisini hazırla
+          const childrenMap = new Map();
+          checks.forEach(ch => {
+            const parentId = ch.dataset.parentId || "";
+            if (!childrenMap.has(parentId)) childrenMap.set(parentId, []);
+            childrenMap.get(parentId).push(ch);
+          });
+
+          // Çocukları parent'a göre ayarla
+          function setChildren(parent, checked) {
+            const pid = parent.dataset.menuId;
+            const list = childrenMap.get(pid);
+            if (!list) return;
+
+            list.forEach(ch => {
+              ch.checked = checked;
+              ch.indeterminate = false;
+              setChildren(ch, checked);
+            });
+          }
+
+          // Parent'ların indeterminate durumunu güncelle
+          function updateParents(child) {
+            const parentId = child.dataset.parentId;
+            if (!parentId) return;
+
+            const parent = byId.get(parentId);
+            if (!parent) return;
+
+            const siblings = childrenMap.get(parentId) || [];
+            const allChecked = siblings.every(x => x.checked);
+            const noneChecked = siblings.every(x => !x.checked && !x.indeterminate);
+
+            if (allChecked) {
+              parent.checked = true;
+              parent.indeterminate = false;
+            } else if (noneChecked) {
+              parent.checked = false;
+              parent.indeterminate = false;
+            } else {
+              parent.checked = false;
+              parent.indeterminate = true;
+            }
+            updateParents(parent);
+          }
+
+          // Başlangıç: indeterminate'leri hesapla
+          checks.forEach(ch => ch.indeterminate = false);
+          Array.from(checks).reverse().forEach(updateParents);
+
+          // Değişiklik olayları
+          checks.forEach(ch => {
+            ch.addEventListener('change', () => {
+              setChildren(ch, ch.checked);
+              updateParents(ch);
+            });
+          });
+
+          // Form submit'te seçilen ID'leri gizli inputlara yaz
+          const form = treeEl.closest('form');
+          const selectedContainer = document.getElementById('selectedIdsContainer');
+
+          function rebuildSelectedIds() {
+            selectedContainer.innerHTML = '';
+            checks.forEach(ch => {
+              if (ch.checked) {
+                const hid = document.createElement('input');
+                hid.type = 'hidden';
+                hid.name = 'SelectedMenuIds';
+                hid.value = ch.dataset.menuId;
+                selectedContainer.appendChild(hid);
+              }
+            });
+          }
+
+          form.addEventListener('submit', () => {
+            rebuildSelectedIds();
+          });
+
+          // Tümünü aç/kapa
+          const btnExpandAll = document.getElementById('btnExpandAll');
+          if (btnExpandAll) {
+            let expanded = false;
+            btnExpandAll.addEventListener('click', () => {
+              expanded = !expanded;
+              treeEl.querySelectorAll('details').forEach(d => d.open = expanded);
+            });
+          }
+        })();
+    </script>
+}
