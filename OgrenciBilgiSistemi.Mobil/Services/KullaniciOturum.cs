@@ -30,6 +30,7 @@ namespace OgrenciBilgiSistemi.Mobil.Services
         private const string AnahtarGirisZamani = "session_login_time";
         private const string AnahtarRefreshToken = "session_refresh_token";
         private const string AnahtarOkulKodu = "session_okul_kodu";
+        private const string AnahtarOkulApiUrl = "session_okul_api_url";
 
         // Oturum zaman aşımı (8 saat)
         private static readonly TimeSpan OturumSuresi = TimeSpan.FromHours(8);
@@ -39,7 +40,7 @@ namespace OgrenciBilgiSistemi.Mobil.Services
         /// <summary>
         /// Giriş başarılı olduğunda tüm oturum bilgilerini SecureStorage'a kaydeder.
         /// </summary>
-        public static async Task OturumAyarlaAsync(int kullaniciId, string adSoyad, int? birimId, KullaniciRolu rol = KullaniciRolu.Ogretmen, int? servisId = null, int? veliId = null, string yetkiToken = null, string refreshToken = null, string okulKodu = null)
+        public static async Task OturumAyarlaAsync(int kullaniciId, string adSoyad, int? birimId, KullaniciRolu rol = KullaniciRolu.Ogretmen, int? servisId = null, int? veliId = null, string yetkiToken = null, string refreshToken = null, string okulKodu = null, string okulApiUrl = null)
         {
             _kullaniciId = kullaniciId;
             _adSoyad = string.IsNullOrEmpty(adSoyad) ? "Kullanıcı" : adSoyad;
@@ -61,6 +62,9 @@ namespace OgrenciBilgiSistemi.Mobil.Services
 
                 if (!string.IsNullOrEmpty(okulKodu))
                     await SecureStorage.Default.SetAsync(AnahtarOkulKodu, okulKodu);
+
+                if (!string.IsNullOrEmpty(okulApiUrl))
+                    await SecureStorage.Default.SetAsync(AnahtarOkulApiUrl, okulApiUrl);
 
                 if (birimId.HasValue)
                     await SecureStorage.Default.SetAsync(AnahtarBirimId, birimId.Value.ToString());
@@ -93,13 +97,17 @@ namespace OgrenciBilgiSistemi.Mobil.Services
             try
             {
                 var girisZamaniStr = await SecureStorage.Default.GetAsync(AnahtarGirisZamani);
-                if (!string.IsNullOrEmpty(girisZamaniStr) && DateTime.TryParse(girisZamaniStr, out var girisZamani))
+                if (string.IsNullOrEmpty(girisZamaniStr) || !DateTime.TryParse(girisZamaniStr, out var girisZamani))
                 {
-                    if (DateTime.UtcNow - girisZamani > OturumSuresi)
-                    {
-                        await OturumTemizleAsync();
-                        return;
-                    }
+                    // Giriş zamanı yoksa veya parse edilemezse oturumu geçersiz say
+                    await OturumTemizleAsync();
+                    return;
+                }
+
+                if (DateTime.UtcNow - girisZamani > OturumSuresi)
+                {
+                    await OturumTemizleAsync();
+                    return;
                 }
 
                 var kullaniciIdStr = await SecureStorage.Default.GetAsync(AnahtarKullaniciId);
@@ -128,10 +136,16 @@ namespace OgrenciBilgiSistemi.Mobil.Services
                 _refreshToken = await SecureStorage.Default.GetAsync(AnahtarRefreshToken);
                 _okulKodu = await SecureStorage.Default.GetAsync(AnahtarOkulKodu) ?? string.Empty;
 
+                // Oturumdaki okul API URL'ini Preferences'a yaz (TemelApiService doğru sunucuya bağlansın)
+                var okulApiUrl = await SecureStorage.Default.GetAsync(AnahtarOkulApiUrl);
+                if (!string.IsNullOrEmpty(okulApiUrl))
+                    Preferences.Default.Set("AktifOkulApiUrl", okulApiUrl);
+
                 _yuklendi = true;
             }
             catch (Exception ex)
             {
+                _yuklendi = false;
                 System.Diagnostics.Debug.WriteLine($"[SecureStorage YÜKLEME HATASI]: {ex.Message}");
             }
         }
@@ -167,7 +181,10 @@ namespace OgrenciBilgiSistemi.Mobil.Services
                 SecureStorage.Default.Remove(AnahtarYetkiToken);
                 SecureStorage.Default.Remove(AnahtarRefreshToken);
                 SecureStorage.Default.Remove(AnahtarOkulKodu);
+                SecureStorage.Default.Remove(AnahtarOkulApiUrl);
                 SecureStorage.Default.Remove(AnahtarGirisZamani);
+
+                Preferences.Default.Remove("AktifOkulApiUrl");
             }
             catch (Exception ex)
             {
@@ -187,7 +204,7 @@ namespace OgrenciBilgiSistemi.Mobil.Services
                 if (string.IsNullOrEmpty(token))
                     return;
 
-                var baseUrl = Preferences.Default.Get("ApiBaseUrl", Constants.ApiBaseUrl);
+                var baseUrl = Preferences.Default.Get("AktifOkulApiUrl", Constants.VarsayilanApiUrl);
                 using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
                 client.DefaultRequestHeaders.Authorization =
                     new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);

@@ -3,8 +3,14 @@ namespace OgrenciBilgiSistemi.Mobil;
 // Uygulama genelinde kullanılan sabitler
 public static class Constants
 {
-    // API baz URL'i - değiştirmek için buradan güncelle
-    public const string ApiBaseUrl = "http://81.214.75.22:5196/api/";
+    // Merkezi okul kayıt sunucusu URL'i
+    public const string KayitSunucuUrl = "http://www.netronyazilim.com/okullar.json";
+
+    // Kayıt sunucusuna ulaşılamazsa ve cache yoksa kullanılacak varsayılan API URL'i
+    public const string VarsayilanApiUrl = "http://81.214.75.22:5196/api/";
+
+    // Aktif okulun API URL'i (Preferences'dan dinamik olarak okunur)
+    public static string AktifApiUrl => Preferences.Default.Get("AktifOkulApiUrl", VarsayilanApiUrl);
 
     /// <summary>
     /// Sunucu kök URL'i (API prefix'i olmadan). Resim URL'leri için kullanılır.
@@ -13,7 +19,7 @@ public static class Constants
     {
         get
         {
-            var url = Preferences.Default.Get("ApiBaseUrl", ApiBaseUrl);
+            var url = AktifApiUrl;
             // "http://host:port/api/" → "http://host:port"
             var idx = url.IndexOf("/api", StringComparison.OrdinalIgnoreCase);
             return idx >= 0 ? url[..idx] : url.TrimEnd('/');

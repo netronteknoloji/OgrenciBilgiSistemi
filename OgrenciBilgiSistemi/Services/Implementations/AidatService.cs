@@ -348,51 +348,58 @@ namespace OgrenciBilgiSistemi.Services.Implementations
         // ---------------------- Ödeme İşlemleri ----------------------
         public async Task<OdemeSatiriDto> OdemeEkleAsync(AidatOdemeEkleDto dto, CancellationToken ct = default)
         {
-            var aidat = await _db.OgrenciAidatlar
-                .FirstOrDefaultAsync(a => a.OgrenciId == dto.OgrenciId && a.BaslangicYil == dto.Yil, ct);
-
-            var tarife = await GetTarifeTutarAsync(dto.Yil, ct);
-
-            if (aidat == null)
+            var strategy = _db.Database.CreateExecutionStrategy();
+            return await strategy.ExecuteAsync(async () =>
             {
-                // kayıt yoksa oluştur
-                aidat = new OgrenciAidatModel
+                await using var tx = await _db.Database.BeginTransactionAsync(ct);
+
+                var aidat = await _db.OgrenciAidatlar
+                    .FirstOrDefaultAsync(a => a.OgrenciId == dto.OgrenciId && a.BaslangicYil == dto.Yil, ct);
+
+                var tarife = await GetTarifeTutarAsync(dto.Yil, ct);
+
+                if (aidat == null)
                 {
-                    OgrenciId = dto.OgrenciId,
-                    BaslangicYil = dto.Yil,
-                    Borc = tarife,          // borcu tarifeden başlat
-                    Odenen = 0m,
-                    Muaf = false
+                    // kayıt yoksa oluştur
+                    aidat = new OgrenciAidatModel
+                    {
+                        OgrenciId = dto.OgrenciId,
+                        BaslangicYil = dto.Yil,
+                        Borc = tarife,          // borcu tarifeden başlat
+                        Odenen = 0m,
+                        Muaf = false
+                    };
+                    _db.OgrenciAidatlar.Add(aidat);
+                }
+                else if (!aidat.Muaf && aidat.Borc <= 0m)
+                {
+                    // kayıt var ama Borc<=0 ise tarifeye yükselt
+                    aidat.Borc = tarife;
+                }
+
+                var ent = new OgrenciAidatOdemeModel
+                {
+                    OgrenciAidat = aidat,
+                    OdemeTarihi = dto.Tarih,
+                    Tutar = dto.Tutar,
+                    Aciklama = dto.Aciklama
                 };
-                _db.OgrenciAidatlar.Add(aidat);
-            }
-            else if (!aidat.Muaf && aidat.Borc <= 0m)
-            {
-                // kayıt var ama Borc<=0 ise tarifeye yükselt
-                aidat.Borc = tarife;
-            }
+                _db.OgrenciAidatOdemeler.Add(ent);
 
-            var ent = new OgrenciAidatOdemeModel
-            {
-                OgrenciAidat = aidat,
-                OdemeTarihi = dto.Tarih,
-                Tutar = dto.Tutar,
-                Aciklama = dto.Aciklama
-            };
-            _db.OgrenciAidatOdemeler.Add(ent);
+                aidat.Odenen += dto.Tutar;
+                aidat.SonOdemeTarihi = dto.Tarih;
 
-            aidat.Odenen += dto.Tutar;
-            aidat.SonOdemeTarihi = dto.Tarih;
+                await _db.SaveChangesAsync(ct);
+                await tx.CommitAsync(ct);
 
-            await _db.SaveChangesAsync(ct);
-
-            return new OdemeSatiriDto
-            {
-                OgrenciAidatOdemeId = ent.OgrenciAidatOdemeId,
-                Tarih = ent.OdemeTarihi,
-                Tutar = ent.Tutar,
-                Aciklama = ent.Aciklama
-            };
+                return new OdemeSatiriDto
+                {
+                    OgrenciAidatOdemeId = ent.OgrenciAidatOdemeId,
+                    Tarih = ent.OdemeTarihi,
+                    Tutar = ent.Tutar,
+                    Aciklama = ent.Aciklama
+                };
+            });
         }
 
         public async Task<bool> OdemeSilAsync(int ogrenciAidatOdemeId, CancellationToken ct = default)

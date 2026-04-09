@@ -34,6 +34,38 @@ namespace OgrenciBilgiSistemi.Controllers
             _kullaniciService = kullaniciService;
         }
 
+        // Ortak arama filtresi — öğrenci listesi ve raporlarda tekrar eden sorgu mantığını merkezileştirir
+        private static IQueryable<OgrenciModel> AramaFiltreUygula(
+            IQueryable<OgrenciModel> q, string? searchString, bool veliDahil = false)
+        {
+            if (string.IsNullOrWhiteSpace(searchString))
+                return q;
+
+            var s = searchString.Trim();
+
+            if (long.TryParse(s, out var no))
+            {
+                q = q.Where(o =>
+                    o.OgrenciNo == no ||
+                    (o.OgrenciAdSoyad != null &&
+                     (EF.Functions.Like(EF.Functions.Collate(o.OgrenciAdSoyad, "Turkish_100_CI_AI"), $"%{s}%")
+                      || EF.Functions.Like(EF.Functions.Collate(o.OgrenciAdSoyad, "Latin1_General_CI_AI"), $"%{s}%")))
+                    || (veliDahil && o.Veli != null && o.Veli.KullaniciAdi != null &&
+                        EF.Functions.Like(o.Veli.KullaniciAdi, $"%{s}%")));
+            }
+            else
+            {
+                q = q.Where(o =>
+                    (o.OgrenciAdSoyad != null &&
+                     (EF.Functions.Like(EF.Functions.Collate(o.OgrenciAdSoyad, "Turkish_100_CI_AI"), $"%{s}%")
+                      || EF.Functions.Like(EF.Functions.Collate(o.OgrenciAdSoyad, "Latin1_General_CI_AI"), $"%{s}%")))
+                    || (veliDahil && o.Veli != null && o.Veli.KullaniciAdi != null &&
+                        EF.Functions.Like(o.Veli.KullaniciAdi, $"%{s}%")));
+            }
+
+            return q;
+        }
+
         #region Index
 
         [HttpGet]
@@ -343,25 +375,7 @@ namespace OgrenciBilgiSistemi.Controllers
                     .ThenInclude(k => k!.VeliProfil)
                 .Where(o => o.OgrenciDurum);
 
-            if (!string.IsNullOrWhiteSpace(searchString))
-            {
-                var s = searchString.Trim();
-                if (long.TryParse(s, out var no))
-                {
-                    ogrenciler = ogrenciler.Where(o =>
-                        o.OgrenciNo == no ||
-                        (o.OgrenciAdSoyad != null &&
-                         (EF.Functions.Like(EF.Functions.Collate(o.OgrenciAdSoyad, "Turkish_100_CI_AI"), $"%{s}%")
-                          || EF.Functions.Like(EF.Functions.Collate(o.OgrenciAdSoyad, "Latin1_General_CI_AI"), $"%{s}%"))));
-                }
-                else
-                {
-                    ogrenciler = ogrenciler.Where(o =>
-                        o.OgrenciAdSoyad != null &&
-                        (EF.Functions.Like(EF.Functions.Collate(o.OgrenciAdSoyad, "Turkish_100_CI_AI"), $"%{s}%")
-                         || EF.Functions.Like(EF.Functions.Collate(o.OgrenciAdSoyad, "Latin1_General_CI_AI"), $"%{s}%")));
-                }
-            }
+            ogrenciler = AramaFiltreUygula(ogrenciler, searchString);
 
             if (birimId.HasValue)
                 ogrenciler = ogrenciler.Where(o => o.BirimId == birimId.Value);
@@ -547,26 +561,7 @@ namespace OgrenciBilgiSistemi.Controllers
             if (birimId.HasValue)
                 q = q.Where(o => o.BirimId == birimId.Value);
 
-            if (!string.IsNullOrWhiteSpace(query))
-            {
-                var s = query.Trim();
-
-                if (int.TryParse(s, out var no))
-                {
-                    q = q.Where(o =>
-                        o.OgrenciNo == no ||
-                        (o.OgrenciAdSoyad != null && EF.Functions.Like(o.OgrenciAdSoyad, $"%{s}%")) ||
-                        (o.Veli != null && o.Veli.KullaniciAdi != null &&
-                         EF.Functions.Like(o.Veli.KullaniciAdi, $"%{s}%")));
-                }
-                else
-                {
-                    q = q.Where(o =>
-                        (o.OgrenciAdSoyad != null && EF.Functions.Like(o.OgrenciAdSoyad, $"%{s}%")) ||
-                        (o.Veli != null && o.Veli.KullaniciAdi != null &&
-                         EF.Functions.Like(o.Veli.KullaniciAdi, $"%{s}%")));
-                }
-            }
+            q = AramaFiltreUygula(q, query, veliDahil: true);
 
             q = q
                 .OrderBy(o => o.Birim!.BirimAd)

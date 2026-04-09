@@ -221,41 +221,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 zk.EnableDevice(MACHINE_NO, false);
 
                 // 0) ÖNCE SİL — ClearData(1) YOK (loglar korunur)
-                bool cleared = false;
-
-                // 5 → kullanıcı bilgileri + şablonlar
-                try
-                {
-                    if (zk.ClearData(MACHINE_NO, 5))
-                    {
-                        _logger.LogInformation("ClearData(5) başarılı: {ip}", cihaz.IpAdresi);
-                        cleared = true;
-                    }
-                    else
-                    {
-                        var err = GetZkLastError(zk);
-                        _logger.LogWarning("ClearData(5) başarısız: {ip} (ZKERR={err})", cihaz.IpAdresi, err);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "ClearData(5) exception: {ip}", cihaz.IpAdresi);
-                }
-
-                // 5 çalışmazsa 2 (şablonlar) + 4 (user/pin)
-                if (!cleared)
-                {
-                    bool partTpl = false, partUsr = false;
-
-                    try { partTpl = zk.ClearData(MACHINE_NO, 2); } catch (Exception ex) { _logger.LogWarning(ex, "ClearData(2) exception: {ip}", cihaz.IpAdresi); }
-                    try { partUsr = zk.ClearData(MACHINE_NO, 4); } catch (Exception ex) { _logger.LogWarning(ex, "ClearData(4) exception: {ip}", cihaz.IpAdresi); }
-
-                    _logger.LogInformation("ClearData(2)={tpl} ClearData(4)={usr} ip={ip}", partTpl, partUsr, cihaz.IpAdresi);
-                    cleared = partTpl || partUsr;
-                }
-
-                // Silme başarısızsa eklemeyi durdur
-                try { zk.RefreshData(MACHINE_NO); } catch { /* ignore */ }
+                bool cleared = ClearKullaniciVerisi(zk, cihaz.IpAdresi, genelTemizlikDahil: false);
                 if (!cleared)
                 {
                     _logger.LogWarning("Toplu kullanıcı silme başarısız; ekleme yapılmadı. ip={ip}", cihaz.IpAdresi);
@@ -349,80 +315,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
 
                 zk.EnableDevice(MACHINE_NO, false);
 
-                // --- SADECE CLEAR DATA DENEMELERİ (no fallback to per-user) ---
-                bool cleared = false;
-
-                // 1) En yaygın: 5 → kullanıcı bilgileri + şablonlar
-                try
-                {
-                    if (zk.ClearData(MACHINE_NO, 5))
-                    {
-                        _logger.LogInformation("ClearData(5) başarılı: {ip}", cihaz.IpAdresi);
-                        cleared = true;
-                    }
-                    else
-                    {
-                        var err = GetZkLastError(zk);
-                        _logger.LogWarning("ClearData(5) başarısız: {ip} (ZKERR={err})", cihaz.IpAdresi, err);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "ClearData(5) exception: {ip}", cihaz.IpAdresi);
-                }
-
-                // 2) Bazı firmware’larda 5 çalışmaz; kullanıcı verisi iki parçaya bölünür:
-                //    2 = fingerprint templates, 4 = password/user info
-                if (!cleared)
-                {
-                    bool part1 = false, part2 = false;
-
-                    try
-                    {
-                        part1 = zk.ClearData(MACHINE_NO, 2); // şablonlar
-                        _logger.LogInformation("ClearData(2) sonuc={ok} ip={ip}", part1, cihaz.IpAdresi);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogWarning(ex, "ClearData(2) exception: {ip}", cihaz.IpAdresi);
-                    }
-
-                    try
-                    {
-                        part2 = zk.ClearData(MACHINE_NO, 4); // user/pin
-                        _logger.LogInformation("ClearData(4) sonuc={ok} ip={ip}", part2, cihaz.IpAdresi);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogWarning(ex, "ClearData(4) exception: {ip}", cihaz.IpAdresi);
-                    }
-
-                    cleared = part1 || part2;
-                }
-
-                // (OPSİYONEL) 3) Bazı FW’larda 1 tüm veri: İSTEMİYORSANIZ KALDIRIN
-                if (!cleared)
-                {
-                    try
-                    {
-                        if (zk.ClearData(MACHINE_NO, 1))
-                        {
-                            _logger.LogInformation("ClearData(1) (genel) başarılı: {ip}", cihaz.IpAdresi);
-                            cleared = true;
-                        }
-                        else
-                        {
-                            var err = GetZkLastError(zk);
-                            _logger.LogWarning("ClearData(1) başarısız: {ip} (ZKERR={err})", cihaz.IpAdresi, err);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogWarning(ex, "ClearData(1) exception: {ip}", cihaz.IpAdresi);
-                    }
-                }
-
-                try { zk.RefreshData(MACHINE_NO); } catch { /* ignore */ }
+                bool cleared = ClearKullaniciVerisi(zk, cihaz.IpAdresi, genelTemizlikDahil: true);
 
                 _logger.LogInformation("SC403 toplu kullanıcı silme bitti: cihazId={id}, ip={ip}, sonuc={ok}",
                     cihazId, cihaz.IpAdresi, cleared);
@@ -489,7 +382,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                         Name = name,
                         Privilege = privilege,
                         Enabled = enabled,
-                        CardNumber = "1"
+                        CardNumber = string.Empty
                     });
 
                     next = zk.GetAllUserInfo(MACHINE_NO, ref id, ref name, ref pwd, ref privilege, ref enabled);
@@ -657,6 +550,88 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 _logger.LogError(ex, "❌ CihazSilAsync hata");
                 return false;
             }
+        }
+
+        /// <summary>
+        /// Cihazdan kullanıcı verilerini temizler. Firmware uyumluluğuna göre fallback stratejisi uygular:
+        /// ClearData(5) → ClearData(2)+ClearData(4) → opsiyonel ClearData(1)
+        /// </summary>
+        private bool ClearKullaniciVerisi(CZKEM zk, string ipAdresi, bool genelTemizlikDahil)
+        {
+            bool cleared = false;
+
+            // 1) ClearData(5): kullanıcı bilgileri + şablonlar (en yaygın)
+            try
+            {
+                if (zk.ClearData(MACHINE_NO, 5))
+                {
+                    _logger.LogInformation("ClearData(5) başarılı: {ip}", ipAdresi);
+                    cleared = true;
+                }
+                else
+                {
+                    var err = GetZkLastError(zk);
+                    _logger.LogWarning("ClearData(5) başarısız: {ip} (ZKERR={err})", ipAdresi, err);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "ClearData(5) exception: {ip}", ipAdresi);
+            }
+
+            // 2) Bazı firmware'larda 5 çalışmaz; 2 (şablonlar) + 4 (user/pin) dene
+            if (!cleared)
+            {
+                bool part1 = false, part2 = false;
+
+                try
+                {
+                    part1 = zk.ClearData(MACHINE_NO, 2);
+                    _logger.LogInformation("ClearData(2) sonuc={ok} ip={ip}", part1, ipAdresi);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "ClearData(2) exception: {ip}", ipAdresi);
+                }
+
+                try
+                {
+                    part2 = zk.ClearData(MACHINE_NO, 4);
+                    _logger.LogInformation("ClearData(4) sonuc={ok} ip={ip}", part2, ipAdresi);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "ClearData(4) exception: {ip}", ipAdresi);
+                }
+
+                cleared = part1 || part2;
+            }
+
+            // 3) Opsiyonel: ClearData(1) — tüm veri (loglar dahil silinir)
+            if (!cleared && genelTemizlikDahil)
+            {
+                try
+                {
+                    if (zk.ClearData(MACHINE_NO, 1))
+                    {
+                        _logger.LogInformation("ClearData(1) (genel) başarılı: {ip}", ipAdresi);
+                        cleared = true;
+                    }
+                    else
+                    {
+                        var err = GetZkLastError(zk);
+                        _logger.LogWarning("ClearData(1) başarısız: {ip} (ZKERR={err})", ipAdresi, err);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "ClearData(1) exception: {ip}", ipAdresi);
+                }
+            }
+
+            try { zk.RefreshData(MACHINE_NO); } catch { /* ignore */ }
+
+            return cleared;
         }
 
         private static int GetZkLastError(CZKEM zk)

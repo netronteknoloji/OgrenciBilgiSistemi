@@ -15,17 +15,17 @@ public partial class OgrenciListeView : ContentPage
     #endregion
 
     #region Yapıcı Metot (Constructor)
-    public OgrenciListeView(int classId, string className)
+    public OgrenciListeView(int classId, string className, OgrenciService? ogrenciService = null)
     {
         try
         {
             InitializeComponent();
-            _ogrenciService = IPlatformApplication.Current.Services.GetRequiredService<OgrenciService>();
+            _ogrenciService = ogrenciService ?? IPlatformApplication.Current.Services.GetRequiredService<OgrenciService>();
             _classId = classId;
             LblClassName.Text = className;
 
-            // Veri yüklemeyi tetikle
-            LoadStudents();
+            // Veri yüklemeyi tetikle (constructor'da await yapılamaz)
+            _ = LoadStudents();
         }
         catch (Exception ex)
         {
@@ -35,7 +35,7 @@ public partial class OgrenciListeView : ContentPage
     #endregion
 
     #region Veri Yükleme İşlemleri
-    private async void LoadStudents()
+    private async Task LoadStudents()
     {
         try
         {

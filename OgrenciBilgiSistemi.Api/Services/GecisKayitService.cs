@@ -13,7 +13,7 @@ namespace OgrenciBilgiSistemi.Api.Services
             _tenantBaglami = tenantBaglami;
         }
 
-        private string _connectionString => _tenantBaglami.ConnectionString;
+        private string ConnectionString => _tenantBaglami.ConnectionString;
 
         /// <summary>
         /// OgrenciDetaylar tablosundan filtrelenmiş giriş/çıkış kayıtlarını getirir.
@@ -25,9 +25,15 @@ namespace OgrenciBilgiSistemi.Api.Services
             string?   arama,
             int?      sinifId,
             int?      veliId = null,
-            int?      servisId = null)
+            int?      servisId = null,
+            int       pageNumber = 1,
+            int       pageSize = 100)
         {
             var kayitlar = new List<GecisKayitModel>();
+
+            pageNumber = Math.Max(1, pageNumber);
+            pageSize = Math.Clamp(pageSize, 1, 500);
+            int offset = (pageNumber - 1) * pageSize;
 
             // Dinamik WHERE koşulları (soft-delete: sadece aktif öğrenciler)
             var kosullar = new List<string> { "o.OgrenciDurum = 1" };
@@ -44,7 +50,7 @@ namespace OgrenciBilgiSistemi.Api.Services
                 : string.Empty;
 
             string query = $@"
-                SELECT TOP 500
+                SELECT
                     od.OgrenciDetayId, od.OgrenciId, o.OgrenciAdSoyad, o.OgrenciKartNo,
                     b.BirimAd, od.OgrenciGTarih, od.OgrenciCTarih,
                     od.OgrenciGecisTipi, od.IstasyonTipi, c.CihazAdi
@@ -53,12 +59,16 @@ namespace OgrenciBilgiSistemi.Api.Services
                 LEFT  JOIN Birimler    b ON o.BirimId    = b.BirimId
                 LEFT  JOIN Cihazlar    c ON od.CihazId   = c.CihazId
                 {where}
-                ORDER BY COALESCE(od.OgrenciGTarih, od.OgrenciCTarih) DESC";
+                ORDER BY COALESCE(od.OgrenciGTarih, od.OgrenciCTarih) DESC
+                OFFSET @offset ROWS FETCH NEXT @pageSize ROWS ONLY";
 
             try
             {
-                await using var conn = new SqlConnection(_connectionString);
+                await using var conn = new SqlConnection(ConnectionString);
                 await using var cmd  = new SqlCommand(query, conn);
+
+                cmd.Parameters.AddWithValue("@offset", offset);
+                cmd.Parameters.AddWithValue("@pageSize", pageSize);
 
                 if (baslangic.HasValue) cmd.Parameters.AddWithValue("@baslangic", baslangic.Value.Date);
                 if (bitis.HasValue)    cmd.Parameters.AddWithValue("@bitis",     bitis.Value.Date.AddDays(1).AddTicks(-1));
@@ -103,7 +113,7 @@ namespace OgrenciBilgiSistemi.Api.Services
 
             try
             {
-                await using var conn = new SqlConnection(_connectionString);
+                await using var conn = new SqlConnection(ConnectionString);
                 await using var cmd  = new SqlCommand(query, conn);
                 cmd.Parameters.AddWithValue("@ogrenciId", ogrenciId);
 

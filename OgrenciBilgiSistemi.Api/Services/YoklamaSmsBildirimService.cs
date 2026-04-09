@@ -24,7 +24,7 @@ public sealed class YoklamaSmsBildirimService
         _logger = logger;
     }
 
-    private string _connectionString => _tenantBaglami.ConnectionString;
+    private string ConnectionString => _tenantBaglami.ConnectionString;
 
     /// <summary>
     /// Servis yoklamasında tüm öğrencilerin (Bindi/Binmedi) velilerine SMS gönderir.
@@ -100,7 +100,7 @@ public sealed class YoklamaSmsBildirimService
     {
         var sonuc = new List<int>();
 
-        await using var conn = new SqlConnection(_connectionString);
+        await using var conn = new SqlConnection(ConnectionString);
 
         var parametreAdlari = new string[ogrenciIdler.Count];
         for (int i = 0; i < ogrenciIdler.Count; i++)
@@ -138,7 +138,7 @@ public sealed class YoklamaSmsBildirimService
         var sonuc = new List<int>();
         var dersBit = 1 << (dersNumarasi - 1);
 
-        await using var conn = new SqlConnection(_connectionString);
+        await using var conn = new SqlConnection(ConnectionString);
 
         var parametreAdlari = new string[ogrenciIdler.Count];
         for (int i = 0; i < ogrenciIdler.Count; i++)
@@ -174,7 +174,7 @@ public sealed class YoklamaSmsBildirimService
     {
         var sonuc = new List<(int, string, string)>();
 
-        await using var conn = new SqlConnection(_connectionString);
+        await using var conn = new SqlConnection(ConnectionString);
 
         var parametreAdlari = new string[ogrenciIdler.Count];
         for (int i = 0; i < ogrenciIdler.Count; i++)

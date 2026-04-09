@@ -25,7 +25,9 @@ namespace OgrenciBilgiSistemi.Api.Controllers
             [FromQuery] DateTime? baslangic,
             [FromQuery] DateTime? bitis,
             [FromQuery] string?   arama,
-            [FromQuery] int?      sinifId)
+            [FromQuery] int?      sinifId,
+            [FromQuery] int       pageNumber = 1,
+            [FromQuery] int       pageSize = 100)
         {
             if (baslangic.HasValue && bitis.HasValue && baslangic > bitis)
                 return BadRequest(new { error = "Başlangıç tarihi bitiş tarihinden sonra olamaz." });
@@ -49,7 +51,7 @@ namespace OgrenciBilgiSistemi.Api.Controllers
 
             try
             {
-                var kayitlar = await _gecisKayitService.GetListAsync(baslangic, bitis, arama, sinifId, veliId, servisId);
+                var kayitlar = await _gecisKayitService.GetListAsync(baslangic, bitis, arama, sinifId, veliId, servisId, pageNumber, pageSize);
                 return Ok(kayitlar);
             }
             catch (Exception)

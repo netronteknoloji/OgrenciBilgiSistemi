@@ -92,7 +92,8 @@ public partial class AnaBaslikView : ContentView
 
         try
         {
-            var girisService = IPlatformApplication.Current.Services.GetRequiredService<GirisService>();
+            var girisService = IPlatformApplication.Current?.Services.GetService<GirisService>();
+            if (girisService == null) return;
             bool sonuc = await girisService.SifreDegistirAsync(yeniSifre);
 
             if (sonuc)

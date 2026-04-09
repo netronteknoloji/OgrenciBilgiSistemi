@@ -91,7 +91,7 @@ builder.Services.AddScoped<IGecisService, GecisService>();
 builder.Services.AddSingleton<IZKTecoService, ZKTecoService>();
 builder.Services.AddScoped<IKartOkuService, KartOkuService>();
 builder.Services.AddScoped<IYemekhaneService, YemekhaneService>();
-builder.Services.AddScoped<ICihazService, CihazService>();
+builder.Services.AddSingleton<ICihazService, CihazService>();
 builder.Services.AddScoped<IOgrenciService, OgrenciService>();
 builder.Services.AddScoped<IVeliProfilService, VeliProfilService>();
 builder.Services.AddScoped<IServisProfilService, ServisProfilService>();

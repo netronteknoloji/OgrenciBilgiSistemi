@@ -13,7 +13,7 @@ namespace OgrenciBilgiSistemi.Mobil.Services
         {
             try
             {
-                var response = await _httpClient.GetAsync($"{BaseUrl}/api/uygulama-versiyon");
+                var response = await _httpClient.GetAsync($"{BaseUrl}uygulama-versiyon");
                 if (!response.IsSuccessStatusCode) return;
 
                 var bilgi = await response.Content.ReadFromJsonAsync<UygulamaVersiyonBilgi>(_jsonOptions);

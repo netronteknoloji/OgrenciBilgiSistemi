@@ -9,14 +9,9 @@ public partial class App : Application                                          
     {                                                                               // Metot bloğu başlangıcı.
         InitializeComponent();                                                      // XAML arayüz bileşenleri yüklenir.
 
-        // 401 alındığında otomatik login ekranına yönlendir
-        TemelApiService.OturumSuresiDoldu += async () =>
-        {
-            await MainThread.InvokeOnMainThreadAsync(async () =>
-            {
-                await Shell.Current.GoToAsync("///GirisView");
-            });
-        };
+        // 401 alındığında otomatik login ekranına yönlendir (tek seferlik subscribe)
+        TemelApiService.OturumSuresiDoldu -= OturumSuresiDolduHandler;
+        TemelApiService.OturumSuresiDoldu += OturumSuresiDolduHandler;
 
         #region Platform Bazlı Kontrol Özelleştirmeleri (Handler Mapping)
 
@@ -60,6 +55,14 @@ public partial class App : Application                                          
         MainPage = new AppShell();                                                  // Uygulamanın ana navigasyon yapısı olan AppShell başlatılır.
         #endregion
     }                                                                               // Yapıcı metot sonu.
+
+    private static async void OturumSuresiDolduHandler()
+    {
+        await MainThread.InvokeOnMainThreadAsync(async () =>
+        {
+            await Shell.Current.GoToAsync("///GirisView");
+        });
+    }
 
     protected override void OnStart()
     {

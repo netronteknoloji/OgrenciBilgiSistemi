@@ -13,7 +13,7 @@ namespace OgrenciBilgiSistemi.Api.Services
             _tenantBaglami = tenantBaglami;
         }
 
-        private string _connectionString => _tenantBaglami.ConnectionString;
+        private string ConnectionString => _tenantBaglami.ConnectionString;
 
         /// <summary>
         /// Belirtilen servise (KullaniciId) atanmış aktif öğrencileri getirir.
@@ -23,7 +23,7 @@ namespace OgrenciBilgiSistemi.Api.Services
             var ogrenciler = new List<OgrenciModel>();
             try
             {
-                await using var conn = new SqlConnection(_connectionString);
+                await using var conn = new SqlConnection(ConnectionString);
                 const string query = @"
                     SELECT O.OgrenciId, O.OgrenciAdSoyad, O.OgrenciGorsel, O.BirimId,
                            B.BirimAd AS SinifAdi
@@ -64,7 +64,7 @@ namespace OgrenciBilgiSistemi.Api.Services
         {
             try
             {
-                await using var conn = new SqlConnection(_connectionString);
+                await using var conn = new SqlConnection(ConnectionString);
                 const string query = @"
                     SELECT SP.KullaniciId, SP.Plaka, K.Telefon AS ServisTelefon, SP.ServisDurum
                     FROM ServisProfiller SP
@@ -103,7 +103,7 @@ namespace OgrenciBilgiSistemi.Api.Services
 
             try
             {
-                await using var conn = new SqlConnection(_connectionString);
+                await using var conn = new SqlConnection(ConnectionString);
                 const string query = @"
                     SELECT SY.OgrenciId, SY.DurumId
                     FROM ServisYoklamalar SY
@@ -137,7 +137,7 @@ namespace OgrenciBilgiSistemi.Api.Services
             int kullaniciId,
             int periyot)
         {
-            await using var conn = new SqlConnection(_connectionString);
+            await using var conn = new SqlConnection(ConnectionString);
             await conn.OpenAsync();
             await using var transaction = (SqlTransaction)await conn.BeginTransactionAsync();
 

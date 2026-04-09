@@ -6,6 +6,8 @@ using Microsoft.EntityFrameworkCore;
 using OgrenciBilgiSistemi.Data;
 using OgrenciBilgiSistemi.Dtos;
 
+namespace OgrenciBilgiSistemi.Controllers;
+
 public class HomeController : Controller
 {
     private readonly AppDbContext _db;

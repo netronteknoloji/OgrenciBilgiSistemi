@@ -10,25 +10,40 @@ namespace OgrenciBilgiSistemi.Mobil.Services
         // 401 alındığında ve refresh da başarısız olduğunda tüm aboneleri uyarır
         public static event Action OturumSuresiDoldu;
 
-        protected readonly HttpClient _httpClient;
+        // Tüm Singleton servisler aynı HttpClient'ı paylaşır — socket exhaustion ve DNS cache sorununu önler
+        private static readonly Lazy<HttpClient> _paylasimliClient = new(() =>
+        {
+            var handler = new SocketsHttpHandler
+            {
+                PooledConnectionLifetime = TimeSpan.FromMinutes(5) // DNS refresh
+            };
+            return new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(30) };
+        });
 
-        // API URL Yapılandırması - HTTPS zorunlu
-        protected readonly string BaseUrl;
+        protected readonly HttpClient _httpClient = _paylasimliClient.Value;
+
+        // Token refresh için ayrı kısa timeout'lu client (ana client'ın header'ını bozmamak için)
+        private static readonly Lazy<HttpClient> _refreshClient = new(() =>
+        {
+            var handler = new SocketsHttpHandler
+            {
+                PooledConnectionLifetime = TimeSpan.FromMinutes(5)
+            };
+            return new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(15) };
+        });
+
+        // API URL Yapılandırması - seçilen okulun sunucu adresi
+        protected string BaseUrl => Preferences.Default.Get("AktifOkulApiUrl", Constants.VarsayilanApiUrl);
 
         // JSON Serileştirme Seçenekleri
         protected readonly JsonSerializerOptions _jsonOptions;
 
         // Eş zamanlı refresh isteklerini önlemek için kilit
         private static readonly SemaphoreSlim _refreshKilidi = new(1, 1);
-        private static bool _refreshDevamEdiyor;
+        private static Task<bool>? _aktifRefreshGorevi;
 
         public TemelApiService()
         {
-            // API base URL'yi yapılandırmadan oku, yoksa Constants.cs'deki değeri kullan
-            BaseUrl = Preferences.Default.Get("ApiBaseUrl", Constants.ApiBaseUrl);
-
-            _httpClient = new HttpClient();
-            _httpClient.Timeout = TimeSpan.FromSeconds(30);
 
             // Authorization header'ı varsa ekle
             var token = KullaniciOturum.YetkiToken;
@@ -171,18 +186,42 @@ namespace OgrenciBilgiSistemi.Mobil.Services
             await _refreshKilidi.WaitAsync();
             try
             {
-                // Başka bir thread zaten refresh yaptıysa sonucu kullan
-                if (_refreshDevamEdiyor)
-                    return false;
+                // Başka bir thread zaten refresh yapıyorsa aynı görevi bekle
+                if (_aktifRefreshGorevi != null)
+                {
+                    _refreshKilidi.Release();
+                    return await _aktifRefreshGorevi;
+                }
 
-                _refreshDevamEdiyor = true;
+                _aktifRefreshGorevi = GercekTokenYenilemeAsync(refreshToken);
+            }
+            finally
+            {
+                if (_aktifRefreshGorevi == null)
+                    _refreshKilidi.Release();
+            }
 
+            try
+            {
+                return await _aktifRefreshGorevi;
+            }
+            finally
+            {
+                await _refreshKilidi.WaitAsync();
+                _aktifRefreshGorevi = null;
+                _refreshKilidi.Release();
+            }
+        }
+
+        private async Task<bool> GercekTokenYenilemeAsync(string refreshToken)
+        {
+            try
+            {
                 var requestBody = new { RefreshToken = refreshToken };
                 var json = JsonSerializer.Serialize(requestBody);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                using var tempClient = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
-                var response = await tempClient.PostAsync($"{BaseUrl}kimlik-dogrulama/refresh", content);
+                var response = await _refreshClient.Value.PostAsync($"{BaseUrl}kimlik-dogrulama/refresh", content);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -213,11 +252,6 @@ namespace OgrenciBilgiSistemi.Mobil.Services
             {
                 System.Diagnostics.Debug.WriteLine($"[TOKEN YENİLEME HATASI]: {ex.Message}");
                 return false;
-            }
-            finally
-            {
-                _refreshDevamEdiyor = false;
-                _refreshKilidi.Release();
             }
         }
     }

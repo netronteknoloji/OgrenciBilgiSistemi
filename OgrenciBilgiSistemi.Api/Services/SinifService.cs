@@ -13,14 +13,14 @@ namespace OgrenciBilgiSistemi.Api.Services
             _tenantBaglami = tenantBaglami;
         }
 
-        private string _connectionString => _tenantBaglami.ConnectionString;
+        private string ConnectionString => _tenantBaglami.ConnectionString;
 
         public async Task<List<BirimOgrenciSayisiModel>> TumSiniflariOgrenciSayisiIleGetirAsync()
         {
             var resultList = new List<BirimOgrenciSayisiModel>();
             try
             {
-                await using var conn = new SqlConnection(_connectionString);
+                await using var conn = new SqlConnection(ConnectionString);
                 const string query = @"
                     SELECT BirimId, BirimAd, BirimSinifMi, BirimDurum,
                            (SELECT COUNT(*) FROM Ogrenciler

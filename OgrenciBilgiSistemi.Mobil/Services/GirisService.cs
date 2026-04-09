@@ -7,28 +7,6 @@ namespace OgrenciBilgiSistemi.Mobil.Services
 {
     public class GirisService : TemelApiService
     {
-        /// <summary>
-        /// Yapılandırılmış okul listesini API'den çeker.
-        /// </summary>
-        public async Task<List<OkulBilgi>> OkullariGetirAsync()
-        {
-            try
-            {
-                var response = await _httpClient.GetAsync($"{BaseUrl}kimlik-dogrulama/okullar");
-                if (response.IsSuccessStatusCode)
-                {
-                    var json = await response.Content.ReadAsStringAsync();
-                    return JsonSerializer.Deserialize<List<OkulBilgi>>(json, _jsonOptions) ?? new List<OkulBilgi>();
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[OkullariGetir HATASI]: {ex.Message}");
-            }
-
-            return new List<OkulBilgi>();
-        }
-
         public async Task<bool> KullaniciGirisYapAsync(string kullaniciAdi, string sifre, string okulKodu)
         {
             try
@@ -77,7 +55,8 @@ namespace OgrenciBilgiSistemi.Mobil.Services
                             veliId: veliId,
                             yetkiToken: token,
                             refreshToken: refreshToken,
-                            okulKodu: okulKodu
+                            okulKodu: okulKodu,
+                            okulApiUrl: Preferences.Default.Get("AktifOkulApiUrl", Constants.VarsayilanApiUrl)
                         );
 
                         YetkiBasliginiYenile();

@@ -263,12 +263,16 @@ namespace OgrenciBilgiSistemi.Controllers
             string? query,
             DateTime? startDate,
             DateTime? endDate,
+            int page = 1,
+            int pageSize = 200,
             CancellationToken ct = default)
         {
             var raporList = await _ziyaretciService.GetRaporAsync(
                 query,
                 startDate,
                 endDate,
+                page,
+                pageSize,
                 ct);
 
             var vm = new ZiyaretciRaporVm

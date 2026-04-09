@@ -16,6 +16,7 @@ namespace OgrenciBilgiSistemi.Mobil.Views
         private readonly int _studentId;
         private readonly OgrenciService _ogrenciService;
         private DateTime currentWeekStart;
+        private CancellationTokenSource _haftaCts;
 
         private readonly Dictionary<int, Color> StatusColors = new()
         {
@@ -28,11 +29,11 @@ namespace OgrenciBilgiSistemi.Mobil.Views
             { 7, Color.FromArgb("#95A5A6") }  // Görevli
         };
 
-        public OgrenciDetayView(int studentId)
+        public OgrenciDetayView(int studentId, OgrenciService? ogrenciService = null)
         {
             InitializeComponent();
             _studentId = studentId;
-            _ogrenciService = IPlatformApplication.Current.Services.GetRequiredService<OgrenciService>();
+            _ogrenciService = ogrenciService ?? IPlatformApplication.Current.Services.GetRequiredService<OgrenciService>();
         }
 
         protected override async void OnAppearing()
@@ -91,8 +92,14 @@ namespace OgrenciBilgiSistemi.Mobil.Views
 
         private async Task LoadWeeklyAttendanceMatrix()
         {
+            // Önceki hafta yükleme isteğini iptal et
+            _haftaCts?.Cancel();
+            _haftaCts = new CancellationTokenSource();
+            var ct = _haftaCts.Token;
+
             try
             {
+                ct.ThrowIfCancellationRequested();
                 var weeklyRecords = await _ogrenciService.HaftalikYoklamaGetirAsync(_studentId, currentWeekStart, currentWeekStart.AddDays(6));
 
                 // Dinamik kutucukları temizle
@@ -142,6 +149,7 @@ namespace OgrenciBilgiSistemi.Mobil.Views
 
                 UpdateAttendanceUI(recordedLessonsCount, totalAbsent);
             }
+            catch (OperationCanceledException) { /* Yeni hafta seçildi, eski istek iptal edildi */ }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[HATA] Matris: {ex.Message}");

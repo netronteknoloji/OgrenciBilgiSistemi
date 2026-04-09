@@ -335,36 +335,56 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 .Take(pageSize)
                 .ToListAsync(ct);
 
-            // 4) Satırlar
+            // 4) Batch sorgular — N+1 yerine 3 toplu sorgu
+            var ogrenciIds = rows.Select(r => r.OgrenciId).Distinct().ToList();
+            var akYillar = rows.Select(r => r.AkYil).Distinct().ToList();
+
+            // Batch: Aylık tarifeler (OgrenciId, Yil) → AylikTutar
+            var tarifeler = await _ctx.OgrenciYemekTarifeler.AsNoTracking()
+                .Where(t => ogrenciIds.Contains(t.OgrenciId) && akYillar.Contains(t.Yil))
+                .Select(t => new { t.OgrenciId, t.Yil, t.AylikTutar })
+                .ToListAsync(ct);
+            var tarifeDict = tarifeler.ToDictionary(t => (t.OgrenciId, t.Yil), t => t.AylikTutar);
+
+            // Batch: Aktif ay sayıları (OgrenciId) → Count
+            // Akademik yıl aralığını kapsayan tüm ay kayıtlarını çek, bellekte grupla
+            var yilMin = akYillar.Min();
+            var yilMax = akYillar.Max() + 1;
+            var ayKayitlari = await _ctx.OgrenciYemekler.AsNoTracking()
+                .Where(a => ogrenciIds.Contains(a.OgrenciId) && a.Aktif
+                         && a.Yil >= yilMin && a.Yil <= yilMax
+                         && (!sy.HasValue || a.Yil > sy.Value || a.Yil == sy.Value && a.Ay >= sm.Value)
+                         && (!ey.HasValue || a.Yil < ey.Value || a.Yil == ey.Value && a.Ay <= em.Value))
+                .Select(a => new { a.OgrenciId, a.Yil, a.Ay })
+                .ToListAsync(ct);
+
+            // Batch: Ödemeler (OgrenciId, AkYil) → Toplam
+            var odemeler = await _ctx.OgrenciYemekOdemeler.AsNoTracking()
+                .Where(o => ogrenciIds.Contains(o.OgrenciId)
+                    && (!startDate.HasValue || o.Tarih >= startDate.Value)
+                    && (!endDateExcl.HasValue || o.Tarih < endDateExcl.Value))
+                .Select(o => new { o.OgrenciId, o.Tarih, o.Tutar })
+                .ToListAsync(ct);
+            var odemeDict = odemeler
+                .GroupBy(o => (o.OgrenciId, AkYil: o.Tarih.Month >= 9 ? o.Tarih.Year : o.Tarih.Year - 1))
+                .ToDictionary(g => g.Key, g => g.Sum(o => o.Tutar));
+
+            // 5) Satırları oluştur — DB çağrısı yok, tamamen bellekte
             var satirlar = new List<YemekhaneRaporSatirVm>();
             foreach (var row in rows)
             {
-                int y1 = row.AkYil;       // Eyl..Ara
-                int y2 = row.AkYil + 1;   // Oca..Ağu
+                int y1 = row.AkYil;
+                int y2 = row.AkYil + 1;
 
-                // Aylık tarife
-                var aylikTutar = await _ctx.OgrenciYemekTarifeler.AsNoTracking()
-                    .Where(t => t.OgrenciId == row.OgrenciId && t.Yil == y1)
-                    .Select(t => (decimal?)t.AylikTutar)
-                    .FirstOrDefaultAsync(ct) ?? 0m;
+                var aylikTutar = tarifeDict.TryGetValue((row.OgrenciId, y1), out var t) ? t : 0m;
 
-                // Aktif ay sayısı — seçilen tarih aralığına düşen aylar
-                var aktifAy = await _ctx.OgrenciYemekler.AsNoTracking()
-                    .Where(a => a.OgrenciId == row.OgrenciId && a.Aktif
-                             && (a.Yil == y1 && a.Ay >= 9 && a.Ay <= 12 || a.Yil == y2 && a.Ay >= 1 && a.Ay <= 8)
-                             && (!sy.HasValue || a.Yil > sy.Value || a.Yil == sy.Value && a.Ay >= sm.Value)
-                             && (!ey.HasValue || a.Yil < ey.Value || a.Yil == ey.Value && a.Ay <= em.Value))
-                    .CountAsync(ct);
+                var aktifAy = ayKayitlari.Count(a =>
+                    a.OgrenciId == row.OgrenciId
+                    && (a.Yil == y1 && a.Ay >= 9 && a.Ay <= 12 || a.Yil == y2 && a.Ay >= 1 && a.Ay <= 8));
 
                 var borc = aylikTutar * aktifAy;
 
-                // Ödenen — yalnızca ödeme tarihine göre + aynı akademik yıl
-                var odenen = await _ctx.OgrenciYemekOdemeler.AsNoTracking()
-                    .Where(o => o.OgrenciId == row.OgrenciId
-                        && (!startDate.HasValue || o.Tarih >= startDate.Value)
-                        && (!endDateExcl.HasValue || o.Tarih < endDateExcl.Value)
-                        && (o.Tarih.Month >= 9 ? o.Tarih.Year : o.Tarih.Year - 1) == row.AkYil)
-                    .SumAsync(o => (decimal?)o.Tutar, ct) ?? 0m;
+                var odenen = odemeDict.TryGetValue((row.OgrenciId, row.AkYil), out var od) ? od : 0m;
 
                 satirlar.Add(new YemekhaneRaporSatirVm
                 {
@@ -411,8 +431,8 @@ namespace OgrenciBilgiSistemi.Services.Implementations
         // ─────────────────────────────────────────────────────────────────────────────
         public async Task<byte[]> ExportTopluRaporExcelAsync(DateTime? bas, DateTime? bit, string? q, CancellationToken ct = default)
         {
-            // Tüm sonuçlar: dev pageSize
-            var vm = await GetTopluRaporAsync(bas, bit, q, page: 1, pageSize: int.MaxValue, ct);
+            // Tüm sonuçlar: makul üst sınır (N+1 batch sorgu ile artık güvenli)
+            var vm = await GetTopluRaporAsync(bas, bit, q, page: 1, pageSize: 50_000, ct);
 
             using var wb = new XLWorkbook();
             var ws = wb.Worksheets.Add("Yemekhane Raporu");

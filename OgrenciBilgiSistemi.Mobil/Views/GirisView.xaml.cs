@@ -10,16 +10,18 @@ namespace OgrenciBilgiSistemi.Mobil.Views
     public partial class GirisView : ContentPage
     {
         private readonly GirisService _girisService;
+        private readonly OkulKayitServisi _okulKayitServisi;
         private CancellationTokenSource _aramaIptalToken;
         private bool _oneridenSecildi;
         private List<OkulBilgi> _okullar = new();
 
-        public GirisView(GirisService girisService)
+        public GirisView(GirisService girisService, OkulKayitServisi okulKayitServisi)
         {
             try
             {
                 InitializeComponent();
                 _girisService = girisService;
+                _okulKayitServisi = okulKayitServisi;
                 _ = IlkYuklemeAsync();
             }
             catch (Exception ex)
@@ -38,8 +40,18 @@ namespace OgrenciBilgiSistemi.Mobil.Views
         {
             try
             {
-                _okullar = await _girisService.OkullariGetirAsync();
+                _okullar = await _okulKayitServisi.OkullariGetirAsync();
                 PckOkul.ItemsSource = _okullar.Select(o => o.OkulAdi).ToList();
+
+                // Okul seçimi değiştiğinde aktif API URL'ini güncelle
+                PckOkul.SelectedIndexChanged += (s, e) =>
+                {
+                    if (PckOkul.SelectedIndex >= 0 && PckOkul.SelectedIndex < _okullar.Count)
+                    {
+                        var okul = _okullar[PckOkul.SelectedIndex];
+                        Preferences.Default.Set("AktifOkulApiUrl", okul.ApiUrl);
+                    }
+                };
 
                 // Kayıtlı okul seçimini geri yükle
                 var savedOkulKodu = await SecureStorage.Default.GetAsync("SavedOkulKodu");
@@ -85,6 +97,9 @@ namespace OgrenciBilgiSistemi.Mobil.Views
                 }
 
                 var secilenOkul = _okullar[PckOkul.SelectedIndex];
+
+                // Seçilen okulun API sunucu adresini aktif yap
+                Preferences.Default.Set("AktifOkulApiUrl", secilenOkul.ApiUrl);
 
                 BtnLogin.IsEnabled = false;
                 BtnLogin.Text = "Giriş Yapılıyor...";

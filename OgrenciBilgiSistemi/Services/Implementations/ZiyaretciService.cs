@@ -230,12 +230,19 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             string? query,
             DateTime? startDate,
             DateTime? endDate,
+            int pageNumber = 1,
+            int pageSize = 200,
             CancellationToken ct = default)
         {
             var baseQuery = BuildRaporQuery(query, startDate, endDate);
 
+            pageNumber = Math.Max(1, pageNumber);
+            pageSize = Math.Clamp(pageSize, 1, 5000);
+
             var list = await baseQuery
                 .OrderByDescending(z => z.GirisZamani)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
                 .Select(z => new ZiyaretciRaporDto
                 {
                     ZiyaretciId = z.ZiyaretciId,

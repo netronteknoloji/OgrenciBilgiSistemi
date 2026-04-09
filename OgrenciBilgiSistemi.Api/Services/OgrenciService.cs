@@ -21,14 +21,14 @@ namespace OgrenciBilgiSistemi.Api.Services
             _tenantBaglami = tenantBaglami;
         }
 
-        private string _connectionString => _tenantBaglami.ConnectionString;
+        private string ConnectionString => _tenantBaglami.ConnectionString;
 
         public async Task<List<OgrenciModel>> SinifaGoreOgrencileriGetirAsync(int sinifId)
         {
             var ogrenciler = new List<OgrenciModel>();
             try
             {
-                await using var conn = new SqlConnection(_connectionString);
+                await using var conn = new SqlConnection(ConnectionString);
                 const string query = @"
                     SELECT OgrenciId, OgrenciAdSoyad, OgrenciGorsel
                     FROM Ogrenciler
@@ -62,7 +62,7 @@ namespace OgrenciBilgiSistemi.Api.Services
             var ogrenciler = new List<OgrenciModel>();
             try
             {
-                await using var conn = new SqlConnection(_connectionString);
+                await using var conn = new SqlConnection(ConnectionString);
                 const string query = @"
                     SELECT O.OgrenciId, O.OgrenciAdSoyad, O.OgrenciGorsel, O.OgrenciNo,
                            O.BirimId, O.ServisId, B.BirimAd AS SinifAdi
@@ -101,7 +101,7 @@ namespace OgrenciBilgiSistemi.Api.Services
         {
             try
             {
-                await using var conn = new SqlConnection(_connectionString);
+                await using var conn = new SqlConnection(ConnectionString);
                 const string query = @"
                     SELECT OgrenciId, OgrenciAdSoyad, OgrenciGorsel, BirimId, VeliId, ServisId
                     FROM Ogrenciler
@@ -141,7 +141,7 @@ namespace OgrenciBilgiSistemi.Api.Services
 
             try
             {
-                await using var conn = new SqlConnection(_connectionString);
+                await using var conn = new SqlConnection(ConnectionString);
                 string query = $@"
                     SELECT SY.OgrenciId, SY.{dersKolonu}
                     FROM SinifYoklamalar SY
@@ -176,7 +176,7 @@ namespace OgrenciBilgiSistemi.Api.Services
             if (!_dersKolonlari.TryGetValue(dersNumarasi, out var dersKolonu))
                 throw new ArgumentOutOfRangeException(nameof(dersNumarasi), "Ders numarası 1-8 arasında olmalıdır.");
 
-            await using var conn = new SqlConnection(_connectionString);
+            await using var conn = new SqlConnection(ConnectionString);
             await conn.OpenAsync();
             await using var transaction = (SqlTransaction)await conn.BeginTransactionAsync();
 
@@ -223,7 +223,7 @@ namespace OgrenciBilgiSistemi.Api.Services
             var sonuc = new List<SinifYoklamaModel>();
             try
             {
-                await using var conn = new SqlConnection(_connectionString);
+                await using var conn = new SqlConnection(ConnectionString);
                 const string query = @"
                     SELECT SinifYoklamaId, OgrenciId, KullaniciId,
                            Ders1, Ders2, Ders3, Ders4, Ders5, Ders6, Ders7, Ders8,
@@ -271,7 +271,7 @@ namespace OgrenciBilgiSistemi.Api.Services
         {
             try
             {
-                await using var conn = new SqlConnection(_connectionString);
+                await using var conn = new SqlConnection(ConnectionString);
                 const string query = @"
                     SELECT
                         s.OgrenciAdSoyad, s.OgrenciNo, s.OgrenciKartNo, s.OgrenciGorsel,
@@ -342,7 +342,7 @@ namespace OgrenciBilgiSistemi.Api.Services
 
             try
             {
-                await using var conn = new SqlConnection(_connectionString);
+                await using var conn = new SqlConnection(ConnectionString);
                 await using var cmd  = new SqlCommand(query, conn);
 
                 cmd.Parameters.AddWithValue("@adSoyad",      dto.OgrenciAdSoyad.Trim().ToUpperInvariant());
@@ -382,11 +382,11 @@ namespace OgrenciBilgiSistemi.Api.Services
                     VeliId           = @veliId,
                     ServisId         = @servisId,
                     OgrenciGorsel    = @gorsel
-                WHERE OgrenciId = @id";
+                WHERE OgrenciId = @id AND OgrenciDurum = 1";
 
             try
             {
-                await using var conn = new SqlConnection(_connectionString);
+                await using var conn = new SqlConnection(ConnectionString);
                 await using var cmd  = new SqlCommand(query, conn);
 
                 cmd.Parameters.AddWithValue("@id",           ogrenciId);
@@ -420,7 +420,7 @@ namespace OgrenciBilgiSistemi.Api.Services
 
             try
             {
-                await using var conn = new SqlConnection(_connectionString);
+                await using var conn = new SqlConnection(ConnectionString);
                 await using var cmd  = new SqlCommand(query, conn);
                 cmd.Parameters.AddWithValue("@id", ogrenciId);
 

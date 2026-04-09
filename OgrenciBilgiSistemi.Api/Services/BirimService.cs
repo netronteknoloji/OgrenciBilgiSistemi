@@ -13,7 +13,7 @@ namespace OgrenciBilgiSistemi.Api.Services
             _tenantBaglami = tenantBaglami;
         }
 
-        private string _connectionString => _tenantBaglami.ConnectionString;
+        private string ConnectionString => _tenantBaglami.ConnectionString;
 
         /// <summary>
         /// Verilen ID'ye göre birimi getirir. Bulunamazsa null döner.
@@ -22,7 +22,7 @@ namespace OgrenciBilgiSistemi.Api.Services
         {
             try
             {
-                await using var conn = new SqlConnection(_connectionString);
+                await using var conn = new SqlConnection(ConnectionString);
                 const string query = "SELECT BirimId, BirimAd, BirimSinifMi, BirimDurum FROM Birimler WHERE BirimId = @birimId AND BirimDurum = 1";
 
                 await using var cmd = new SqlCommand(query, conn);

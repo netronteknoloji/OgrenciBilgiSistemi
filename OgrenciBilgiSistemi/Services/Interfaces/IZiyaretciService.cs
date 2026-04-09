@@ -35,6 +35,8 @@ namespace OgrenciBilgiSistemi.Services.Interfaces
             string? query,
             DateTime? startDate,
             DateTime? endDate,
+            int pageNumber = 1,
+            int pageSize = 200,
             CancellationToken ct = default);
 
         // 🔹 Rapor (Excel)

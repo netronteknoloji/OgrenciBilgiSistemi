@@ -141,6 +141,8 @@ namespace OgrenciBilgiSistemi.Services.Implementations
 
         public async Task MonitorConnectionsAsync(CancellationToken cancellationToken)
         {
+            int ardisikBasarisiz = 0;
+
             while (!cancellationToken.IsCancellationRequested)
             {
                 try
@@ -149,15 +151,30 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                     {
                         _logger.LogDebug("ZKTeco bağlı değil. Yeniden bağlanma deneniyor…");
                         var ok = await ConnectAsync();
-                        if (ok) _logger.LogInformation("ZKTeco yeniden bağlandı.");
+                        if (ok)
+                        {
+                            _logger.LogInformation("ZKTeco yeniden bağlandı.");
+                            ardisikBasarisiz = 0;
+                        }
+                        else
+                        {
+                            ardisikBasarisiz++;
+                        }
+                    }
+                    else
+                    {
+                        ardisikBasarisiz = 0;
                     }
                 }
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "MonitorConnections döngü hatası.");
+                    ardisikBasarisiz++;
                 }
 
-                try { await Task.Delay(TimeSpan.FromSeconds(3), cancellationToken); }
+                // Exponential backoff: 3s → 6s → 12s → 24s → 48s → max 60s
+                int beklemeSaniye = Math.Min(3 * (1 << Math.Min(ardisikBasarisiz, 5)), 60);
+                try { await Task.Delay(TimeSpan.FromSeconds(beklemeSaniye), cancellationToken); }
                 catch (TaskCanceledException) { /* iptal edildi */ }
             }
         }

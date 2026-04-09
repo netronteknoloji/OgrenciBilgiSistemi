@@ -14,6 +14,13 @@ public sealed class BekleyenYoklamaSmsRetryService : BackgroundService
 {
     private static readonly TimeSpan POLL_INTERVAL = TimeSpan.FromMinutes(2);
 
+    // SQL injection'a karşı güvenli kolon adı whitelist'i
+    private static readonly Dictionary<int, string> _dersKolonlari = new()
+    {
+        { 1, "Ders1" }, { 2, "Ders2" }, { 3, "Ders3" }, { 4, "Ders4" },
+        { 5, "Ders5" }, { 6, "Ders6" }, { 7, "Ders7" }, { 8, "Ders8" }
+    };
+
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly IOptions<List<OkulBilgiAyari>> _okullar;
     private readonly ILogger<BekleyenYoklamaSmsRetryService> _logger;
@@ -152,7 +159,7 @@ public sealed class BekleyenYoklamaSmsRetryService : BackgroundService
             ct.ThrowIfCancellationRequested();
 
             int dersBit = 1 << (dersNo - 1);
-            string dersKolonu = $"Ders{dersNo}";
+            string dersKolonu = _dersKolonlari[dersNo];
 
             string selectSql = $@"
                 SELECT sy.SinifYoklamaId, sy.OgrenciId, o.OgrenciAdSoyad, k.Telefon

@@ -32,6 +32,7 @@ namespace OgrenciBilgiSistemi.Mobil
             builder.Services.AddSingleton<ServisService>();
             builder.Services.AddSingleton<VeliService>();
             builder.Services.AddSingleton<GuncellemeKontrolService>();
+            builder.Services.AddSingleton<OkulKayitServisi>();
 
             // Sayfa kayıtları
             // GirisView ve SinifListeView Shell tarafından DI ile çözümleniyor
@@ -48,8 +49,8 @@ namespace OgrenciBilgiSistemi.Mobil
         }
 
         /// <summary>
-        /// Gömülü appsettings.json dosyasını okur ve ApiBaseUrl değerini Preferences'a yazar.
-        /// Her okul kurulumunda sadece bu JSON dosyasındaki IP değiştirilir.
+        /// Gömülü appsettings.json dosyasını okur ve KayitSunucuUrl değerini Preferences'a yazar.
+        /// Merkezi okul kayıt sunucusu URL'ini yapılandırır.
         /// </summary>
         private static void YukleApiAyarlari()
         {
@@ -68,14 +69,14 @@ namespace OgrenciBilgiSistemi.Mobil
                 var json = reader.ReadToEnd();
 
                 var ayarlar = JsonSerializer.Deserialize<Dictionary<string, string>>(json);
-                if (ayarlar != null && ayarlar.TryGetValue("ApiBaseUrl", out var apiUrl) && !string.IsNullOrWhiteSpace(apiUrl))
+                if (ayarlar != null && ayarlar.TryGetValue("KayitSunucuUrl", out var kayitUrl) && !string.IsNullOrWhiteSpace(kayitUrl))
                 {
-                    Preferences.Default.Set("ApiBaseUrl", apiUrl);
+                    Preferences.Default.Set("KayitSunucuUrl", kayitUrl);
                 }
             }
             catch
             {
-                // Okuma başarısız olursa TemelApiService'teki varsayılan URL kullanılır
+                // Okuma başarısız olursa Constants.KayitSunucuUrl varsayılan olarak kullanılır
             }
         }
     }

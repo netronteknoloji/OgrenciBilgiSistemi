@@ -110,28 +110,36 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 await tx.CommitAsync(ct);
             });
 
+            // Cihaz senkronizasyonu transaction dışında — uzak cihaz çağrısı transaction'ı uzun tutmamalı.
+            // Committed entity (DB'deki güncel değerler) üzerinden çalışır.
             if (buAyYemekhaneAktif.HasValue)
             {
-                var cihazlar = await _db.Cihazlar
-                    .Where(c => c.Aktif && c.IstasyonTipi == IstasyonTipi.Yemekhane)
-                    .ToListAsync(ct);
+                var commitliOgrenci = await _db.Ogrenciler.AsNoTracking()
+                    .FirstOrDefaultAsync(o => o.OgrenciId == model.OgrenciId, ct);
 
-                foreach (var cihaz in cihazlar)
+                if (commitliOgrenci != null)
                 {
-                    try
+                    var cihazlar = await _db.Cihazlar
+                        .Where(c => c.Aktif && c.IstasyonTipi == IstasyonTipi.Yemekhane)
+                        .ToListAsync(ct);
+
+                    foreach (var cihaz in cihazlar)
                     {
-                        if (buAyYemekhaneAktif.Value)
+                        try
                         {
-                            await _cihaz.CihazaOgrenciGuncelleAsync(model, ct);
+                            if (buAyYemekhaneAktif.Value)
+                            {
+                                await _cihaz.CihazaOgrenciGuncelleAsync(commitliOgrenci, ct);
+                            }
+                            else
+                            {
+                                await _cihaz.CihazaOgrenciSilAsync(commitliOgrenci.OgrenciId, ct);
+                            }
                         }
-                        else
+                        catch (Exception ex)
                         {
-                            await _cihaz.CihazaOgrenciSilAsync(model.OgrenciId, ct);
+                            _log.LogError(ex, "Cihaz senkron hatası. Cihaz: {ip}, ÖğrenciId: {id}", cihaz.IpAdresi, commitliOgrenci.OgrenciId);
                         }
-                    }
-                    catch (Exception ex)
-                    {
-                        _log.LogError(ex, "Cihaz senkron hatası. Cihaz: {ip}, ÖğrenciId: {id}", cihaz.IpAdresi, model.OgrenciId);
                     }
                 }
             }
