@@ -12,6 +12,9 @@ secrets.json
 # Mobile embedded config hariç tutulmaz (build-time gömülü)
 !OgrenciBilgiSistemi.Mobil/appsettings.json
 
+# StudentTrackingSystem config
+StudentTrackingSystem/appsettings.json
+
 # Visual Studio
 .vs/
 *.user
