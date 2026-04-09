@@ -123,14 +123,26 @@ app.UseSwaggerUI();
 // MVC projesinin wwwroot klasörünü statik dosya olarak sun
 var mvcWwwRoot = app.Configuration["MvcWwwRootPath"];
 if (string.IsNullOrWhiteSpace(mvcWwwRoot))
-    mvcWwwRoot = Path.Combine(app.Environment.ContentRootPath, "..", "OgrenciBilgiSistemi", "wwwroot");
-if (Directory.Exists(mvcWwwRoot))
+{
+    // Production (IIS) ve development fallback yolları
+    var adayYollar = new[]
+    {
+        @"C:\inetpub\wwwroot\obs\wwwroot",
+        Path.Combine(app.Environment.ContentRootPath, "..", "OgrenciBilgiSistemi", "wwwroot")
+    };
+    mvcWwwRoot = adayYollar.FirstOrDefault(Directory.Exists);
+}
+if (!string.IsNullOrWhiteSpace(mvcWwwRoot) && Directory.Exists(mvcWwwRoot))
 {
     app.UseStaticFiles(new StaticFileOptions
     {
         FileProvider = new PhysicalFileProvider(Path.GetFullPath(mvcWwwRoot)),
         RequestPath = ""
     });
+}
+else
+{
+    app.Logger.LogWarning("MVC wwwroot klasörü bulunamadı. Resimler sunulamayacak. MvcWwwRootPath ayarını kontrol edin.");
 }
 
 // Rate limiting
