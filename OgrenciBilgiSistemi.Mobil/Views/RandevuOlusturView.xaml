@@ -59,6 +59,10 @@
                             <Label Text="Benim Sınıfım" FontSize="14" FontAttributes="Bold"
                                    TextColor="#2C3E50" VerticalOptions="Center" />
                         </HorizontalStackLayout>
+                        <SearchBar x:Name="OgrenciAramaBar" Placeholder="Öğrenci ara (ad veya sınıf)"
+                                   PlaceholderColor="#95A5A6" TextColor="#2C3E50"
+                                   CancelButtonColor="#27AE60"
+                                   TextChanged="OnOgrenciAramaDegisti" />
                         <Border StrokeShape="RoundRectangle 8" Stroke="#E5E7EB" StrokeThickness="1" Padding="0">
                             <CollectionView x:Name="VeliOgrenciCollectionView"
                                             IsGrouped="True"

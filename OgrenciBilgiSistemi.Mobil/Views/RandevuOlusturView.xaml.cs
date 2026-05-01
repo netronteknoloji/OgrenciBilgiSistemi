@@ -118,20 +118,51 @@ namespace OgrenciBilgiSistemi.Mobil.Views
             }
         }
 
-        private void ListeyiUygula()
+        private void ListeyiUygula(bool secimTemizle = true)
         {
-            var hedef = BenimSinifimCheckBox.IsChecked ? _kendiSinifGrubu : _digerSiniflarGruplari;
+            var kaynak = BenimSinifimCheckBox.IsChecked ? _kendiSinifGrubu : _digerSiniflarGruplari;
+            var arama = (OgrenciAramaBar?.Text ?? "").Trim();
+
+            List<OgrenciGrubu> hedef;
+            if (string.IsNullOrEmpty(arama))
+            {
+                hedef = kaynak;
+            }
+            else
+            {
+                hedef = kaynak
+                    .Select(g => new
+                    {
+                        Grup = g,
+                        Eslesen = g.Where(o =>
+                            (o.OgrenciAdSoyad ?? "").Contains(arama, StringComparison.CurrentCultureIgnoreCase) ||
+                            (o.SinifAdi ?? "").Contains(arama, StringComparison.CurrentCultureIgnoreCase))
+                          .ToList()
+                    })
+                    .Where(x => x.Eslesen.Count > 0)
+                    .Select(x => new OgrenciGrubu(x.Grup.BaslikAdi, x.Grup.KendiSinifi, x.Eslesen))
+                    .ToList();
+            }
+
             _ogrenciGruplari = new System.Collections.ObjectModel.ObservableCollection<OgrenciGrubu>(hedef);
             VeliOgrenciCollectionView.ItemsSource = _ogrenciGruplari;
 
-            _seciliOgrenci = null;
-            SeciliOgrenciLabel.IsVisible = false;
-            VeliOgrenciCollectionView.SelectedItem = null;
+            if (secimTemizle)
+            {
+                _seciliOgrenci = null;
+                SeciliOgrenciLabel.IsVisible = false;
+                VeliOgrenciCollectionView.SelectedItem = null;
+            }
         }
 
         private void OnBenimSinifimDegisti(object? sender, CheckedChangedEventArgs e)
         {
             ListeyiUygula();
+        }
+
+        private void OnOgrenciAramaDegisti(object? sender, TextChangedEventArgs e)
+        {
+            ListeyiUygula(secimTemizle: false);
         }
 
         private void OnVeliOgrenciSecildi(object sender, SelectionChangedEventArgs e)
