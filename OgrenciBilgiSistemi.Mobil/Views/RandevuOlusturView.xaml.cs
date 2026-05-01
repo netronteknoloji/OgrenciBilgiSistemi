@@ -13,6 +13,8 @@ namespace OgrenciBilgiSistemi.Mobil.Views
 
         private List<Ogrenci> _cocuklar = new();
         private System.Collections.ObjectModel.ObservableCollection<OgrenciGrubu> _ogrenciGruplari = new();
+        private List<OgrenciGrubu> _kendiSinifGrubu = new();
+        private List<OgrenciGrubu> _digerSiniflarGruplari = new();
         private Ogrenci? _seciliOgrenci;
         private List<OgretmenBilgi> _ogretmenler = new();
         private List<RandevuSlot> _randevuSlotlar = new();
@@ -83,9 +85,7 @@ namespace OgrenciBilgiSistemi.Mobil.Views
                 var tumOgrenciler = await _ogrenciService.TumOgrencileriGetirAsync();
                 var ogretmenBirimId = KullaniciOturum.BirimId;
 
-                var gruplar = new List<OgrenciGrubu>();
-
-                // Önce öğretmenin kendi sınıfı (varsa) — isme göre sıralı
+                _kendiSinifGrubu = new List<OgrenciGrubu>();
                 if (ogretmenBirimId.HasValue)
                 {
                     var kendiSinifOgrencileri = tumOgrenciler
@@ -96,26 +96,42 @@ namespace OgrenciBilgiSistemi.Mobil.Views
                     if (kendiSinifOgrencileri.Count > 0)
                     {
                         var sinifAdi = kendiSinifOgrencileri[0].SinifAdi ?? "Sınıfım";
-                        gruplar.Add(new OgrenciGrubu($"★ Benim Sınıfım: {sinifAdi}", true, kendiSinifOgrencileri));
+                        _kendiSinifGrubu.Add(new OgrenciGrubu($"★ Benim Sınıfım: {sinifAdi}", true, kendiSinifOgrencileri));
                     }
                 }
 
-                // Sonra diğer sınıflar — sınıf adına göre alfabetik, her grupta öğrenciler isme göre sıralı
-                var digerGruplar = tumOgrenciler
+                _digerSiniflarGruplari = tumOgrenciler
                     .Where(o => !ogretmenBirimId.HasValue || o.BirimId != ogretmenBirimId.Value)
                     .GroupBy(o => o.SinifAdi ?? "(Sınıfsız)")
                     .OrderBy(g => g.Key, StringComparer.CurrentCultureIgnoreCase)
-                    .Select(g => new OgrenciGrubu(g.Key, false, g.OrderBy(o => o.OgrenciAdSoyad)));
+                    .Select(g => new OgrenciGrubu(g.Key, false, g.OrderBy(o => o.OgrenciAdSoyad)))
+                    .ToList();
 
-                gruplar.AddRange(digerGruplar);
+                BenimSinifimToggle.IsVisible = _kendiSinifGrubu.Count > 0;
+                BenimSinifimCheckBox.IsChecked = _kendiSinifGrubu.Count > 0;
 
-                _ogrenciGruplari = new System.Collections.ObjectModel.ObservableCollection<OgrenciGrubu>(gruplar);
-                VeliOgrenciCollectionView.ItemsSource = _ogrenciGruplari;
+                ListeyiUygula();
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[RANDEVU FORM HATASI]: {ex.Message}");
             }
+        }
+
+        private void ListeyiUygula()
+        {
+            var hedef = BenimSinifimCheckBox.IsChecked ? _kendiSinifGrubu : _digerSiniflarGruplari;
+            _ogrenciGruplari = new System.Collections.ObjectModel.ObservableCollection<OgrenciGrubu>(hedef);
+            VeliOgrenciCollectionView.ItemsSource = _ogrenciGruplari;
+
+            _seciliOgrenci = null;
+            SeciliOgrenciLabel.IsVisible = false;
+            VeliOgrenciCollectionView.SelectedItem = null;
+        }
+
+        private void OnBenimSinifimDegisti(object? sender, CheckedChangedEventArgs e)
+        {
+            ListeyiUygula();
         }
 
         private void OnVeliOgrenciSecildi(object sender, SelectionChangedEventArgs e)

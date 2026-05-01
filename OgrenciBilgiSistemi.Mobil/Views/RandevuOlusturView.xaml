@@ -52,6 +52,13 @@
                         BackgroundColor="White" Padding="20" IsVisible="False">
                     <VerticalStackLayout Spacing="10">
                         <Label Text="Öğrenci Seçin" FontSize="13" FontAttributes="Bold" TextColor="#7F8C8D" />
+                        <HorizontalStackLayout x:Name="BenimSinifimToggle" Spacing="8" IsVisible="False">
+                            <CheckBox x:Name="BenimSinifimCheckBox" IsChecked="True"
+                                      Color="#27AE60" VerticalOptions="Center"
+                                      CheckedChanged="OnBenimSinifimDegisti" />
+                            <Label Text="Benim Sınıfım" FontSize="14" FontAttributes="Bold"
+                                   TextColor="#2C3E50" VerticalOptions="Center" />
+                        </HorizontalStackLayout>
                         <Border StrokeShape="RoundRectangle 8" Stroke="#E5E7EB" StrokeThickness="1" Padding="0">
                             <CollectionView x:Name="VeliOgrenciCollectionView"
                                             IsGrouped="True"
