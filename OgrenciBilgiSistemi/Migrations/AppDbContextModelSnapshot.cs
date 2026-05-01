@@ -1083,6 +1083,65 @@ namespace OgrenciBilgiSistemi.Migrations
                     b.ToTable("SinifYoklamalar");
                 });
 
+            modelBuilder.Entity("OgrenciBilgiSistemi.Models.SmsGonderimGecmisiModel", b =>
+                {
+                    b.Property<int>("SmsGonderimGecmisiId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SmsGonderimGecmisiId"));
+
+                    b.Property<bool>("Basarili")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("DenemeNumarasi")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("GonderimZamani")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("HamCevap")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Hata")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("HataKategorisi")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("HttpDurumKodu")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Mesaj")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int?>("OgrenciId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Telefon")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Tip")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("SmsGonderimGecmisiId");
+
+                    b.HasIndex("OgrenciId", "GonderimZamani")
+                        .HasDatabaseName("IX_SmsGonderimGecmisi_Ogrenci_Zaman");
+
+                    b.HasIndex("Tip", "GonderimZamani")
+                        .HasDatabaseName("IX_SmsGonderimGecmisi_Tip_Zaman");
+
+                    b.ToTable("SmsGonderimGecmisleri");
+                });
+
             modelBuilder.Entity("OgrenciBilgiSistemi.Models.VeliProfilModel", b =>
                 {
                     b.Property<int>("KullaniciId")
@@ -1445,6 +1504,16 @@ namespace OgrenciBilgiSistemi.Migrations
                         .IsRequired();
 
                     b.Navigation("Kullanici");
+
+                    b.Navigation("Ogrenci");
+                });
+
+            modelBuilder.Entity("OgrenciBilgiSistemi.Models.SmsGonderimGecmisiModel", b =>
+                {
+                    b.HasOne("OgrenciBilgiSistemi.Models.OgrenciModel", "Ogrenci")
+                        .WithMany()
+                        .HasForeignKey("OgrenciId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Ogrenci");
                 });
