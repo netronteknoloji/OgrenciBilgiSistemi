@@ -12,7 +12,8 @@ namespace OgrenciBilgiSistemi.Mobil.Views
         private readonly OgretmenListeService _ogretmenListeService;
 
         private List<Ogrenci> _cocuklar = new();
-        private List<Ogrenci> _sinifOgrencileri = new();
+        private System.Collections.ObjectModel.ObservableCollection<OgrenciGrubu> _ogrenciGruplari = new();
+        private Ogrenci? _seciliOgrenci;
         private List<OgretmenBilgi> _ogretmenler = new();
         private List<RandevuSlot> _randevuSlotlar = new();
         private RandevuSlot _secilenSlot;
@@ -80,25 +81,55 @@ namespace OgrenciBilgiSistemi.Mobil.Views
             try
             {
                 var tumOgrenciler = await _ogrenciService.TumOgrencileriGetirAsync();
+                var ogretmenBirimId = KullaniciOturum.BirimId;
 
-                if (KullaniciOturum.BirimId.HasValue)
+                var gruplar = new List<OgrenciGrubu>();
+
+                // Önce öğretmenin kendi sınıfı (varsa) — isme göre sıralı
+                if (ogretmenBirimId.HasValue)
                 {
-                    var kendiSinifi = tumOgrenciler.Where(o => o.BirimId == KullaniciOturum.BirimId.Value).ToList();
-                    var digerleri = tumOgrenciler.Where(o => o.BirimId != KullaniciOturum.BirimId.Value).ToList();
-                    _sinifOgrencileri = kendiSinifi.Concat(digerleri).ToList();
-                }
-                else
-                {
-                    _sinifOgrencileri = tumOgrenciler;
+                    var kendiSinifOgrencileri = tumOgrenciler
+                        .Where(o => o.BirimId == ogretmenBirimId.Value)
+                        .OrderBy(o => o.OgrenciAdSoyad)
+                        .ToList();
+
+                    if (kendiSinifOgrencileri.Count > 0)
+                    {
+                        var sinifAdi = kendiSinifOgrencileri[0].SinifAdi ?? "Sınıfım";
+                        gruplar.Add(new OgrenciGrubu($"★ Benim Sınıfım: {sinifAdi}", true, kendiSinifOgrencileri));
+                    }
                 }
 
-                VeliOgrenciPicker.ItemsSource = _sinifOgrencileri
-                    .Select(o => string.IsNullOrEmpty(o.SinifAdi) ? o.OgrenciAdSoyad : $"{o.OgrenciAdSoyad} ({o.SinifAdi})")
-                    .ToList();
+                // Sonra diğer sınıflar — sınıf adına göre alfabetik, her grupta öğrenciler isme göre sıralı
+                var digerGruplar = tumOgrenciler
+                    .Where(o => !ogretmenBirimId.HasValue || o.BirimId != ogretmenBirimId.Value)
+                    .GroupBy(o => o.SinifAdi ?? "(Sınıfsız)")
+                    .OrderBy(g => g.Key, StringComparer.CurrentCultureIgnoreCase)
+                    .Select(g => new OgrenciGrubu(g.Key, false, g.OrderBy(o => o.OgrenciAdSoyad)));
+
+                gruplar.AddRange(digerGruplar);
+
+                _ogrenciGruplari = new System.Collections.ObjectModel.ObservableCollection<OgrenciGrubu>(gruplar);
+                VeliOgrenciCollectionView.ItemsSource = _ogrenciGruplari;
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[RANDEVU FORM HATASI]: {ex.Message}");
+            }
+        }
+
+        private void OnVeliOgrenciSecildi(object sender, SelectionChangedEventArgs e)
+        {
+            _seciliOgrenci = e.CurrentSelection.FirstOrDefault() as Ogrenci;
+            if (_seciliOgrenci != null)
+            {
+                var sinifBilgisi = string.IsNullOrEmpty(_seciliOgrenci.SinifAdi) ? "" : $" ({_seciliOgrenci.SinifAdi})";
+                SeciliOgrenciLabel.Text = $"Seçili: {_seciliOgrenci.OgrenciAdSoyad}{sinifBilgisi}";
+                SeciliOgrenciLabel.IsVisible = true;
+            }
+            else
+            {
+                SeciliOgrenciLabel.IsVisible = false;
             }
         }
 
@@ -213,16 +244,14 @@ namespace OgrenciBilgiSistemi.Mobil.Views
                 }
                 else
                 {
-                    var veliIndex = VeliOgrenciPicker.SelectedIndex;
-                    if (veliIndex < 0 || veliIndex >= _sinifOgrencileri.Count)
+                    if (_seciliOgrenci is null)
                     {
                         await DisplayAlert("Uyarı", "Lütfen bir öğrenci seçin.", "Tamam");
                         return;
                     }
 
-                    var secilenOgrenci = _sinifOgrencileri[veliIndex];
-                    _karsiTarafId = secilenOgrenci.VeliId;
-                    ogrenciId = secilenOgrenci.OgrenciId;
+                    _karsiTarafId = _seciliOgrenci.VeliId;
+                    ogrenciId = _seciliOgrenci.OgrenciId;
                     randevuTarihi = TarihSecici.Date + SaatSecici.Time;
                     sureDakika = 30;
                 }

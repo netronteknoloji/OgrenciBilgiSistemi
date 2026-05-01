@@ -2,6 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:views="clr-namespace:OgrenciBilgiSistemi.Mobil.Views"
+             xmlns:models="clr-namespace:OgrenciBilgiSistemi.Mobil.Models"
              x:Class="OgrenciBilgiSistemi.Mobil.Views.RandevuOlusturView"
              Title="Randevu Oluştur"
              Shell.NavBarIsVisible="False"
@@ -51,7 +52,32 @@
                         BackgroundColor="White" Padding="20" IsVisible="False">
                     <VerticalStackLayout Spacing="10">
                         <Label Text="Öğrenci Seçin" FontSize="13" FontAttributes="Bold" TextColor="#7F8C8D" />
-                        <Picker x:Name="VeliOgrenciPicker" Title="Öğrenci seçiniz..." FontSize="14" TextColor="#2C3E50" />
+                        <Border StrokeShape="RoundRectangle 8" Stroke="#E5E7EB" StrokeThickness="1" Padding="0">
+                            <CollectionView x:Name="VeliOgrenciCollectionView"
+                                            IsGrouped="True"
+                                            SelectionMode="Single"
+                                            SelectionChanged="OnVeliOgrenciSecildi"
+                                            HeightRequest="320">
+                                <CollectionView.GroupHeaderTemplate>
+                                    <DataTemplate x:DataType="models:OgrenciGrubu">
+                                        <Grid Padding="12,10" BackgroundColor="#F1F5F9">
+                                            <Label Text="{Binding BaslikAdi}" FontSize="14" FontAttributes="Bold" TextColor="#2C3E50" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </CollectionView.GroupHeaderTemplate>
+                                <CollectionView.ItemTemplate>
+                                    <DataTemplate x:DataType="models:Ogrenci">
+                                        <Grid Padding="16,10">
+                                            <Label Text="{Binding OgrenciAdSoyad}" FontSize="14" TextColor="#2C3E50" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </CollectionView.ItemTemplate>
+                                <CollectionView.EmptyView>
+                                    <Label Text="Öğrenci bulunamadı" HorizontalOptions="Center" Padding="20" TextColor="#7F8C8D" />
+                                </CollectionView.EmptyView>
+                            </CollectionView>
+                        </Border>
+                        <Label x:Name="SeciliOgrenciLabel" Text="" FontSize="13" TextColor="#16A34A" IsVisible="False" />
                     </VerticalStackLayout>
                 </Border>
 
