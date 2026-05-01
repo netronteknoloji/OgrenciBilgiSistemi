@@ -25,6 +25,7 @@
                        asp-route-sortOrder="@Model.CurrentSort"
                        asp-route-searchString="@Model.CurrentFilter"
                        asp-route-birimId="@Model.BirimId"
+                       asp-route-durum="@((int)Model.Durum)"
                        class="btn btn-outline-success fw-bold">
                         <i class="bi bi-file-earmark-excel"></i> Excel'e Aktar
                     </a>
@@ -54,6 +55,15 @@
                     </select>
                 </div>
 
+                <div>
+                    <label for="durum" class="visually-hidden">Durum</label>
+                    <select id="durum" name="durum" class="form-select" style="width:200px;">
+                        <option value="0" selected="@(Model.Durum == OgrenciFiltre.Tum)">Tüm Öğrenciler</option>
+                        <option value="1" selected="@(Model.Durum == OgrenciFiltre.Aktif)">Aktif Öğrenciler</option>
+                        <option value="2" selected="@(Model.Durum == OgrenciFiltre.Pasif)">Pasif Öğrenciler</option>
+                    </select>
+                </div>
+
                 <div class="ms-auto">
                     <button type="submit" class="btn btn-primary px-3 text-nowrap">
                         <i class="bi bi-search me-1"></i> Ara
@@ -77,6 +87,7 @@
                                    asp-route-sortOrder="@(Model.CurrentSort == "AdSoyad" ? "AdSoyad_desc" : "AdSoyad")"
                                    asp-route-searchString="@Model.CurrentFilter"
                                    asp-route-birimId="@Model.BirimId"
+                                   asp-route-durum="@((int)Model.Durum)"
                                    class="text-white text-decoration-none">
                                     @Html.DisplayNameFor(m => m.Page[0].OgrenciAdSoyad) @GetSortIcon("AdSoyad")
                                 </a>
@@ -194,7 +205,8 @@
                 routeValues: new Dictionary<string, string?> {
                     ["searchString"] = Model.CurrentFilter,
                     ["sortOrder"] = Model.CurrentSort,
-                    ["birimId"] = Model.BirimId?.ToString()
+                    ["birimId"] = Model.BirimId?.ToString(),
+                    ["durum"] = ((int)Model.Durum).ToString()
                 }))
 
         </div>

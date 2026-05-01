@@ -1,6 +1,11 @@
 namespace OgrenciBilgiSistemi.Sms;
 
-public sealed record SmsGonderimSonucu(bool Basarili, string? Hata = null, string? HamCevap = null);
+public sealed record SmsGonderimSonucu(
+    bool Basarili,
+    string? Hata = null,
+    string? HamCevap = null,
+    SmsHataKategorisi HataKategorisi = SmsHataKategorisi.Yok,
+    int? HttpDurumKodu = null);
 
 public interface ISmsService
 {

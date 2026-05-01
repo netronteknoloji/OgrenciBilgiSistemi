@@ -42,7 +42,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             var strategy = _db.Database.CreateExecutionStrategy();
             return await strategy.ExecuteAsync(async () =>
             {
-                await using var tx = await _db.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
+                await using var tx = await _db.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted, ct);
 
                 // Yemekhane kuralı: aynı gün içinde sadece tek bir GİRİŞ kaydı tutulur.
                 // Çıkış kaydı oluşturulmaz, tekrarlı okutmalar mevcut girişi döner.

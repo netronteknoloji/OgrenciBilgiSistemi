@@ -16,21 +16,38 @@ namespace OgrenciBilgiSistemi.Controllers
         private readonly AppDbContext _db;
         private readonly IGecisService _gecisService;
         private readonly IHubContext<KartOkuHub> _hub;
-        private readonly ISmsGonderimService _smsGonderimService;
+        private readonly IServiceScopeFactory _scopeFactory;
         private readonly ILogger<KartOkuController> _logger;
 
         public KartOkuController(
             AppDbContext db,
             IGecisService gecisService,
             IHubContext<KartOkuHub> hub,
-            ISmsGonderimService smsGonderimService,
+            IServiceScopeFactory scopeFactory,
             ILogger<KartOkuController> logger)
         {
             _db = db;
             _gecisService = gecisService;
             _hub = hub;
-            _smsGonderimService = smsGonderimService;
+            _scopeFactory = scopeFactory;
             _logger = logger;
+        }
+
+        // Yavaş/ölü client'ın kart okumayı blocklamasını engellemek için
+        // SignalR yayınlarını kısa bir timeout ile sarmalar.
+        private static async Task GuvenliYayinAsync<T>(
+            IHubContext<KartOkuHub> hub, T dto, CancellationToken ct, int timeoutMs = 3000)
+        {
+            using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            cts.CancelAfter(timeoutMs);
+            try
+            {
+                await hub.Clients.All.SendAsync("OgrenciBilgisiAl", dto, cts.Token);
+            }
+            catch (OperationCanceledException) when (cts.IsCancellationRequested && !ct.IsCancellationRequested)
+            {
+                // Sessiz: client cevap vermedi, kart akışını blocklamayalım
+            }
         }
 
         private static string NormalizeKartNo(string? kartNo)
@@ -135,7 +152,7 @@ namespace OgrenciBilgiSistemi.Controllers
                 if (cihaz.IstasyonTipi == IstasyonTipi.AnaKapi &&
                     ogrenci.OgrenciCikisDurumu == OglenCikisDurumu.Hayir)
                 {
-                    await _hub.Clients.All.SendAsync("OgrenciBilgisiAl", new OgrenciBilgisiDto
+                    await GuvenliYayinAsync(_hub, new OgrenciBilgisiDto
                     {
                         OgrenciAdSoyad = ogrenci.OgrenciAdSoyad,
                         OgrenciNo = ogrenci.OgrenciNo,
@@ -168,7 +185,7 @@ namespace OgrenciBilgiSistemi.Controllers
 
                     if (!ayAktif && !odemeVarMi)
                     {
-                        await _hub.Clients.All.SendAsync("OgrenciBilgisiAl", new OgrenciBilgisiDto
+                        await GuvenliYayinAsync(_hub, new OgrenciBilgisiDto
                         {
                             OgrenciAdSoyad = ogrenci.OgrenciAdSoyad,
                             OgrenciNo = ogrenci.OgrenciNo,
@@ -204,7 +221,7 @@ namespace OgrenciBilgiSistemi.Controllers
 
                     if (bugunYemekhaneVarMi)
                     {
-                        await _hub.Clients.All.SendAsync("OgrenciBilgisiAl", new OgrenciBilgisiDto
+                        await GuvenliYayinAsync(_hub, new OgrenciBilgisiDto
                         {
                             OgrenciAdSoyad = ogrenci.OgrenciAdSoyad,
                             OgrenciNo = ogrenci.OgrenciNo,
@@ -256,7 +273,7 @@ namespace OgrenciBilgiSistemi.Controllers
                     else
                     {
                         // Çıkış + Giriş zaten yapılmış -> üçüncü ve sonrası RED
-                        await _hub.Clients.All.SendAsync("OgrenciBilgisiAl", new OgrenciBilgisiDto
+                        await GuvenliYayinAsync(_hub, new OgrenciBilgisiDto
                         {
                             OgrenciAdSoyad = ogrenci.OgrenciAdSoyad,
                             OgrenciNo = ogrenci.OgrenciNo,
@@ -325,15 +342,32 @@ namespace OgrenciBilgiSistemi.Controllers
                             ? Msg.InfoOglenOk : Msg.InfoGenelOk
                 };
 
-                await _hub.Clients.All.SendAsync("OgrenciBilgisiAl", dto, ct);
+                await GuvenliYayinAsync(_hub, dto, ct);
 
                 // Ana Kapı geçişlerinde veliye SMS bildirimi (yemekhane hariç)
+                // Fire-and-forget: SMS sağlayıcı yavaşsa kart okuma yanıtını blocklamasın.
                 if (cihaz.IstasyonTipi == IstasyonTipi.AnaKapi &&
                     (string.Equals(sonuc.GecisTipi, "Giriş", StringComparison.OrdinalIgnoreCase) ||
                      string.Equals(sonuc.GecisTipi, "Çıkış", StringComparison.OrdinalIgnoreCase)))
                 {
-                    await _smsGonderimService.GecisSmsBildir(
-                        ogrenci.OgrenciId, ogrenci.OgrenciAdSoyad, sonuc.GecisTipi, now, ct);
+                    var ogrId = ogrenci.OgrenciId;
+                    var ogrAdSoyad = ogrenci.OgrenciAdSoyad;
+                    var gecisTipiKopya = sonuc.GecisTipi;
+                    var anlikZaman = now;
+
+                    _ = Task.Run(async () =>
+                    {
+                        try
+                        {
+                            using var smsScope = _scopeFactory.CreateScope();
+                            var smsSvc = smsScope.ServiceProvider.GetRequiredService<ISmsGonderimService>();
+                            await smsSvc.GecisSmsBildir(ogrId, ogrAdSoyad, gecisTipiKopya, anlikZaman);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "SMS gönderim hatası. Öğrenci: {OgrId}", ogrId);
+                        }
+                    });
                 }
 
                 return Ok(new

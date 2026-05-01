@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc.Rendering;
 using OgrenciBilgiSistemi.Models;
+using OgrenciBilgiSistemi.Shared.Enums;
 
 namespace OgrenciBilgiSistemi.ViewModels
 {
@@ -14,5 +15,7 @@ namespace OgrenciBilgiSistemi.ViewModels
         public string? CurrentSort { get; set; }
 
         public int? BirimId { get; set; }
+
+        public OgrenciFiltre Durum { get; set; } = OgrenciFiltre.Aktif;
     }
 }

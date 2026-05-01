@@ -78,20 +78,26 @@ public class KartOkumaOlayIsleyiciService : IHostedService
             // 3) Geçişi kaydet — yön kararı (giriş/çıkış) GecisService.KaydetAsync içinde belirlenir
             var sonuc = await svc.KaydetAsync(cihaz.CihazId, ogr.OgrenciId, cihaz.IstasyonTipi, now);
 
-            // 3.5) SMS bildirimi (fire-and-forget)
-            _ = Task.Run(async () =>
+            // 3.5) SMS bildirimi - sadece Ana Kapı geçişlerinde (Yemekhane SMS'i ayrı serviste).
+            // Fire-and-forget: SMS gönderimi kart okuma response'unu bloklamaz.
+            if (cihaz.IstasyonTipi == IstasyonTipi.AnaKapi &&
+                (string.Equals(sonuc.GecisTipi, "Giriş", StringComparison.OrdinalIgnoreCase) ||
+                 string.Equals(sonuc.GecisTipi, "Çıkış", StringComparison.OrdinalIgnoreCase)))
             {
-                try
+                _ = Task.Run(async () =>
                 {
-                    using var smsScope = _scopeFactory.CreateScope();
-                    var smsSvc = smsScope.ServiceProvider.GetRequiredService<ISmsGonderimService>();
-                    await smsSvc.GecisSmsBildir(ogr.OgrenciId, ogr.OgrenciAdSoyad, sonuc.GecisTipi, now);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "SMS gönderim hatası. Öğrenci: {OgrId}", ogr.OgrenciId);
-                }
-            });
+                    try
+                    {
+                        using var smsScope = _scopeFactory.CreateScope();
+                        var smsSvc = smsScope.ServiceProvider.GetRequiredService<ISmsGonderimService>();
+                        await smsSvc.GecisSmsBildir(ogr.OgrenciId, ogr.OgrenciAdSoyad, sonuc.GecisTipi, now);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "SMS gönderim hatası. Öğrenci: {OgrId}", ogr.OgrenciId);
+                    }
+                });
+            }
 
             // 4) Sınıf bilgisini çek
             var sinifAdi = await db.Birimler.AsNoTracking()
@@ -124,11 +130,28 @@ public class KartOkumaOlayIsleyiciService : IHostedService
                 Info = "Geçiş başarılı."
             };
 
-            await _hub.Clients.All.SendAsync("OgrenciBilgisiAl", dto);
+            await GuvenliYayinAsync(_hub, dto, CancellationToken.None);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Kart okuma işleminde hata. Kart: {Kart}", norm);
+        }
+    }
+
+    // Yavaş/ölü client kart akışını blocklamasın diye SignalR yayınını
+    // kısa bir timeout ile sarmalar.
+    private static async Task GuvenliYayinAsync<T>(
+        IHubContext<KartOkuHub> hub, T dto, CancellationToken ct, int timeoutMs = 3000)
+    {
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        cts.CancelAfter(timeoutMs);
+        try
+        {
+            await hub.Clients.All.SendAsync("OgrenciBilgisiAl", dto, cts.Token);
+        }
+        catch (OperationCanceledException) when (cts.IsCancellationRequested && !ct.IsCancellationRequested)
+        {
+            // Sessiz: client cevap vermedi, kart akışını blocklamayalım
         }
     }
 }

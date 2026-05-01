@@ -35,6 +35,7 @@ namespace OgrenciBilgiSistemi.Data
         public DbSet<RandevuModel> Randevular { get; set; }
         public DbSet<OgretmenRandevuModel> OgretmenRandevular { get; set; }
         public DbSet<BildirimModel> Bildirimler { get; set; }
+        public DbSet<SmsGonderimGecmisiModel> SmsGonderimGecmisleri { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -420,6 +421,26 @@ namespace OgrenciBilgiSistemi.Data
             modelBuilder.Entity<BildirimModel>()
                 .HasIndex(b => new { b.AliciKullaniciId, b.Okundu })
                 .HasDatabaseName("IX_Bildirimler_Alici_Okundu");
+
+            // =========================
+            // SMS GONDERIM GECMISI
+            // =========================
+            modelBuilder.Entity<SmsGonderimGecmisiModel>(e =>
+            {
+                e.HasOne(g => g.Ogrenci)
+                 .WithMany()
+                 .HasForeignKey(g => g.OgrenciId)
+                 .OnDelete(DeleteBehavior.SetNull)
+                 .IsRequired(false);
+
+                // Bir öğrencinin SMS geçmişi sorguları
+                e.HasIndex(g => new { g.OgrenciId, g.GonderimZamani })
+                 .HasDatabaseName("IX_SmsGonderimGecmisi_Ogrenci_Zaman");
+
+                // Tip + tarih bazlı raporlama
+                e.HasIndex(g => new { g.Tip, g.GonderimZamani })
+                 .HasDatabaseName("IX_SmsGonderimGecmisi_Tip_Zaman");
+            });
 
             // =========================
             // PERFORMANS INDEKSLERI

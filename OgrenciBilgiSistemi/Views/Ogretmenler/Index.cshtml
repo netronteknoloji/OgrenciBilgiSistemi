@@ -1,8 +1,10 @@
 @model SayfalanmisListeModel<OgrenciBilgiSistemi.Models.OgretmenProfilModel>
+@using OgrenciBilgiSistemi.Models
 
 @{
     ViewData["Title"] = "Öğretmen İşlemleri";
     var q = ViewData["CurrentFilter"] as string;
+    var durum = (OgretmenFiltre)(ViewData["Durum"] ?? OgretmenFiltre.Aktif);
 }
 
 <div class="viewport-scroller">
@@ -32,6 +34,15 @@
                                value="@q" style="width:280px;" />
                     </div>
                 </div>
+                <div>
+                    <label for="durum" class="visually-hidden">Durum</label>
+                    <select id="durum" name="durum" class="form-select" style="width:200px;">
+                        <option value="0" selected="@(durum == OgretmenFiltre.Tum)">Tüm Öğretmenler</option>
+                        <option value="1" selected="@(durum == OgretmenFiltre.Aktif)">Aktif Öğretmenler</option>
+                        <option value="2" selected="@(durum == OgretmenFiltre.Pasif)">Pasif Öğretmenler</option>
+                    </select>
+                </div>
+
                 <div class="ms-auto">
                     <button class="btn btn-primary px-3 text-nowrap" type="submit">
                         <i class="bi bi-search me-1"></i> Ara
@@ -105,7 +116,7 @@
                 </div>
 
                 @await Html.PartialAsync("_SayfalamaFormPartial", OgrenciBilgiSistemi.ViewModels.SayfalamaVm.Olustur(Model,
-                    routeValues: new Dictionary<string, string?> { ["searchString"] = q }))
+                    routeValues: new Dictionary<string, string?> { ["searchString"] = q, ["durum"] = ((int)durum).ToString() }))
             }
         </div>
     </div>

@@ -23,17 +23,19 @@ public sealed class SmsService : ISmsService
             return new SmsGonderimSonucu(true, HamCevap: "SMS devre dışı.");
 
         if (_http.BaseAddress is null)
-            return new SmsGonderimSonucu(false, Hata: "SmsAyarlari:ApiUrl yapılandırılmamış veya geçersiz.");
+            return new SmsGonderimSonucu(false,
+                Hata: "SmsAyarlari:ApiUrl yapılandırılmamış veya geçersiz.",
+                HataKategorisi: SmsHataKategorisi.Kalici);
 
         if (string.IsNullOrWhiteSpace(telefon))
-            return new SmsGonderimSonucu(false, Hata: "Telefon boş.");
+            return new SmsGonderimSonucu(false, Hata: "Telefon boş.", HataKategorisi: SmsHataKategorisi.Kalici);
 
         if (string.IsNullOrWhiteSpace(mesaj))
-            return new SmsGonderimSonucu(false, Hata: "Mesaj boş.");
+            return new SmsGonderimSonucu(false, Hata: "Mesaj boş.", HataKategorisi: SmsHataKategorisi.Kalici);
 
         var gsm05 = TelefonNormalize(telefon);
         if (gsm05 is null)
-            return new SmsGonderimSonucu(false, Hata: "Geçersiz telefon formatı.");
+            return new SmsGonderimSonucu(false, Hata: "Geçersiz telefon formatı.", HataKategorisi: SmsHataKategorisi.Kalici);
 
         var metin = _ayar.TurkceKarakter ? mesaj : TurkceTemizle(mesaj);
 
@@ -59,19 +61,39 @@ public sealed class SmsService : ISmsService
         }
         catch (TaskCanceledException ex) when (!ct.IsCancellationRequested)
         {
-            return new SmsGonderimSonucu(false, Hata: "İstek zaman aşımı.", HamCevap: ex.Message);
+            return new SmsGonderimSonucu(false,
+                Hata: "İstek zaman aşımı.",
+                HamCevap: ex.Message,
+                HataKategorisi: SmsHataKategorisi.Gecici);
         }
         catch (Exception ex)
         {
-            return new SmsGonderimSonucu(false, Hata: ex.Message, HamCevap: ex.ToString());
+            return new SmsGonderimSonucu(false,
+                Hata: ex.Message,
+                HamCevap: ex.ToString(),
+                HataKategorisi: SmsHataKategorisi.Gecici);
         }
 
         var body = await resp.Content.ReadAsStringAsync(ct);
-        if (!resp.IsSuccessStatusCode)
-            return new SmsGonderimSonucu(false, Hata: $"HTTP {(int)resp.StatusCode} {resp.ReasonPhrase}", HamCevap: body);
+        var statusCode = (int)resp.StatusCode;
 
-        return new SmsGonderimSonucu(true, HamCevap: body);
+        if (!resp.IsSuccessStatusCode)
+            return new SmsGonderimSonucu(false,
+                Hata: $"HTTP {statusCode} {resp.ReasonPhrase}",
+                HamCevap: body,
+                HataKategorisi: HttpKategorize(statusCode),
+                HttpDurumKodu: statusCode);
+
+        return new SmsGonderimSonucu(true, HamCevap: body, HttpDurumKodu: statusCode);
     }
+
+    private static SmsHataKategorisi HttpKategorize(int statusCode) => statusCode switch
+    {
+        400 or 401 or 403 or 404 or 422 => SmsHataKategorisi.Kalici,
+        408 or 429 => SmsHataKategorisi.Gecici,
+        >= 500 and <= 599 => SmsHataKategorisi.Gecici,
+        _ => SmsHataKategorisi.Bilinmiyor
+    };
 
     private static string? TelefonNormalize(string input)
     {

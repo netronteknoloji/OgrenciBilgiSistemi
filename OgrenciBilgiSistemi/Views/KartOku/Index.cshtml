@@ -88,18 +88,25 @@
                 const cihazKodu = gizliCihaz?.value || "";
                 if (!kartNo) return;
 
+                // Optimistic reset: input alanını anında temizle ve focus'la,
+                // SMS/DB yavaşlığı arka planda devam etsin.
+                input.value = "";
+                focusKartInput();
+
+                const ac = new AbortController();
+                const t = setTimeout(() => ac.abort(), 5000);
                 try {
                     const response = await fetch("/KartOku/UsbKartOkundu", {
                         method: "POST",
                         headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                        body: new URLSearchParams({ kartNo, cihazKodu })
+                        body: new URLSearchParams({ kartNo, cihazKodu }),
+                        signal: ac.signal
                     });
                     if (!response.ok) console.warn("Sunucudan hata:", await response.text());
                 } catch (err) {
-                    console.error("İstek hatası:", err);
+                    if (err.name !== "AbortError") console.error("İstek hatası:", err);
                 } finally {
-                    input.value = "";
-                    focusKartInput();
+                    clearTimeout(t);
                 }
             });
 

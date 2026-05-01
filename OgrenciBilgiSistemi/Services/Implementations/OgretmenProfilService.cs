@@ -21,13 +21,21 @@ namespace OgrenciBilgiSistemi.Services.Implementations
         }
 
         public async Task<SayfalanmisListeModel<OgretmenProfilModel>> SearchPagedAsync(
-            string? searchString, int page, int pageSize = 20, CancellationToken ct = default)
+            string? searchString, int page, int pageSize = 20,
+            OgretmenFiltre filtre = OgretmenFiltre.Aktif, CancellationToken ct = default)
         {
             var query = _db.OgretmenProfiller
                 .Include(o => o.Kullanici)
                 .Include(o => o.Birim)
                 .AsNoTracking()
                 .AsQueryable();
+
+            query = filtre switch
+            {
+                OgretmenFiltre.Aktif => query.Where(o => o.OgretmenDurum),
+                OgretmenFiltre.Pasif => query.Where(o => !o.OgretmenDurum),
+                _ => query
+            };
 
             if (!string.IsNullOrWhiteSpace(searchString))
             {

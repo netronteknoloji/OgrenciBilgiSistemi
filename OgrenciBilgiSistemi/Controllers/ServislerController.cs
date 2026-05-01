@@ -123,5 +123,51 @@ namespace OgrenciBilgiSistemi.Controllers
             }
             return RedirectToAction(nameof(Index));
         }
+
+        [HttpGet]
+        public async Task<IActionResult> OgrenciAra(int servisId, string q, CancellationToken ct = default)
+        {
+            var sonuclar = await _servisProfilService.AtanmamisOgrenciAraAsync(servisId, q, ct);
+            var json = sonuclar.Select(o => new
+            {
+                o.OgrenciId,
+                o.OgrenciAdSoyad,
+                o.OgrenciNo,
+                BirimAd = o.Birim?.BirimAd ?? "-"
+            });
+            return Json(json);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> OgrenciAta(int servisId, int ogrenciId, CancellationToken ct = default)
+        {
+            try
+            {
+                await _servisProfilService.OgrenciAtaAsync(servisId, ogrenciId, ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Öğrenci servise atanırken hata oluştu.");
+                TempData["ErrMessage"] = "Öğrenci atanırken bir hata oluştu.";
+            }
+            return RedirectToAction(nameof(Detay), new { id = servisId });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> OgrenciCikar(int servisId, int ogrenciId, CancellationToken ct = default)
+        {
+            try
+            {
+                await _servisProfilService.OgrenciCikarAsync(servisId, ogrenciId, ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Öğrenci servisten çıkarılırken hata oluştu.");
+                TempData["ErrMessage"] = "Öğrenci çıkarılırken bir hata oluştu.";
+            }
+            return RedirectToAction(nameof(Detay), new { id = servisId });
+        }
     }
 }

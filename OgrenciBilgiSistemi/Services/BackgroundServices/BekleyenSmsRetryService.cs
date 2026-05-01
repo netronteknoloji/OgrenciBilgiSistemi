@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using OgrenciBilgiSistemi.Data;
+using OgrenciBilgiSistemi.Models;
 using OgrenciBilgiSistemi.Shared.Enums;
 using OgrenciBilgiSistemi.Sms;
 
@@ -13,6 +14,9 @@ namespace OgrenciBilgiSistemi.Services.BackgroundServices;
 /// </summary>
 public sealed class BekleyenSmsRetryService : BackgroundService
 {
+    private const string TIP = "AnaKapi";
+    private const int MAX_DENEME = 10;
+
     private static readonly TimeSpan POLL_INTERVAL = TimeSpan.FromMinutes(2);
 
     private readonly IServiceScopeFactory _scopeFactory;
@@ -78,6 +82,21 @@ public sealed class BekleyenSmsRetryService : BackgroundService
             })
             .ToDictionaryAsync(o => o.OgrenciId, ct);
 
+        // Bugün için bu öğrenciye ait önceki deneme sayılarını topluca çek
+        var oncekiDenemeler = await db.SmsGonderimGecmisleri
+            .AsNoTracking()
+            .Where(g => g.Tip == TIP
+                     && g.GonderimZamani >= today
+                     && g.GonderimZamani < tomorrow
+                     && g.OgrenciId != null
+                     && ogrIdler.Contains(g.OgrenciId.Value))
+            .GroupBy(g => g.OgrenciId!.Value)
+            .Select(grp => new { OgrenciId = grp.Key, Sayi = grp.Count() })
+            .ToDictionaryAsync(x => x.OgrenciId, x => x.Sayi, ct);
+
+        // Önce eligible kayıtları topla; giveup edilenleri burada işaretle
+        var gonderilecekler = new List<(OgrenciDetayModel Log, string Telefon, string Mesaj, string GecisTipi, int OncekiSayi)>();
+
         foreach (var log in bekleyenler)
         {
             ct.ThrowIfCancellationRequested();
@@ -85,26 +104,68 @@ public sealed class BekleyenSmsRetryService : BackgroundService
             if (!ogrenciBilgileri.TryGetValue(log.OgrenciId, out var bilgi)) continue;
             if (string.IsNullOrWhiteSpace(bilgi.VeliTelefon)) continue;
 
+            var oncekiSayi = oncekiDenemeler.GetValueOrDefault(log.OgrenciId, 0);
+
+            // Emniyet: çok fazla denenmişse vazgeç (kategori yanlış belirlenmiş olma ihtimali)
+            if (oncekiSayi >= MAX_DENEME)
+            {
+                log.OgrenciSmsGonderildi = true;
+                _logger.LogWarning("[SMS RETRY GIVEUP][AnaKapi] OgrId:{OgrId} {Sayi} deneme sonrası vazgeçildi.",
+                    log.OgrenciId, oncekiSayi);
+                continue;
+            }
+
             var zaman = log.OgrenciGTarih ?? log.OgrenciCTarih ?? DateTime.Now;
             var gecisTipi = log.OgrenciGTarih.HasValue ? "Giriş" : "Çıkış";
             var mesaj = SmsMesajSablonlari.AnaKapiGecis(bilgi.OgrenciAdSoyad, zaman, gecisTipi);
+            gonderilecekler.Add((log, bilgi.VeliTelefon!, mesaj, gecisTipi, oncekiSayi));
+        }
 
-            try
+        if (gonderilecekler.Count > 0)
+        {
+            // Paralel SMS gönder (SemaphoreSlim ile sınırlı)
+            var sonuclar = await SmsParalelGonderici.GonderHerBiri(
+                smsService,
+                gonderilecekler,
+                g => (g.Telefon, g.Mesaj),
+                smsAyar.MaxParalelGonderim,
+                ct);
+
+            // Sıralı işle: log yaz + bayrak güncelle (DbContext thread-safe değil)
+            foreach (var (g, sonuc) in sonuclar)
             {
-                var sonuc = await smsService.Gonder(bilgi.VeliTelefon!, mesaj, ct);
+                db.SmsGonderimGecmisleri.Add(new SmsGonderimGecmisiModel
+                {
+                    OgrenciId = g.Log.OgrenciId,
+                    Telefon = g.Telefon,
+                    Mesaj = g.Mesaj,
+                    Tip = TIP,
+                    GonderimZamani = DateTime.Now,
+                    Basarili = sonuc.Basarili,
+                    HataKategorisi = (int)sonuc.HataKategorisi,
+                    Hata = sonuc.Hata,
+                    HamCevap = sonuc.HamCevap,
+                    HttpDurumKodu = sonuc.HttpDurumKodu,
+                    DenemeNumarasi = g.OncekiSayi + 1
+                });
+
                 if (sonuc.Basarili)
                 {
-                    log.OgrenciSmsGonderildi = true;
-                    _logger.LogInformation("[SMS RETRY OK][AnaKapi] OgrId:{OgrId} Tip:{Tip}", log.OgrenciId, gecisTipi);
+                    g.Log.OgrenciSmsGonderildi = true;
+                    _logger.LogInformation("[SMS RETRY OK][AnaKapi] OgrId:{OgrId} Tip:{Tip} Deneme:{D}",
+                        g.Log.OgrenciId, g.GecisTipi, g.OncekiSayi + 1);
+                }
+                else if (sonuc.HataKategorisi == SmsHataKategorisi.Kalici)
+                {
+                    g.Log.OgrenciSmsGonderildi = true;
+                    _logger.LogWarning("[SMS RETRY KALICI][AnaKapi] OgrId:{OgrId} Hata:{Hata}",
+                        g.Log.OgrenciId, sonuc.Hata);
                 }
                 else
                 {
-                    _logger.LogWarning("[SMS RETRY FAIL][AnaKapi] OgrId:{OgrId} Hata:{Hata}", log.OgrenciId, sonuc.Hata);
+                    _logger.LogWarning("[SMS RETRY FAIL][AnaKapi] OgrId:{OgrId} Hata:{Hata} Deneme:{D}",
+                        g.Log.OgrenciId, sonuc.Hata, g.OncekiSayi + 1);
                 }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "[SMS RETRY EX][AnaKapi] OgrId:{OgrId}", log.OgrenciId);
             }
         }
 

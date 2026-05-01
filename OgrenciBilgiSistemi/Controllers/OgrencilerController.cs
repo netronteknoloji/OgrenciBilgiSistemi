@@ -5,6 +5,7 @@ using OgrenciBilgiSistemi.Data;
 using OgrenciBilgiSistemi.Dtos;
 using OgrenciBilgiSistemi.Models;
 using OgrenciBilgiSistemi.Services.Interfaces;
+using OgrenciBilgiSistemi.Shared.Enums;
 using OgrenciBilgiSistemi.ViewModels;
 
 namespace OgrenciBilgiSistemi.Controllers
@@ -74,7 +75,7 @@ namespace OgrenciBilgiSistemi.Controllers
             string searchString,
             int? pageNumber,
             int? birimId,
-            bool includePasif = false,
+            OgrenciFiltre durum = OgrenciFiltre.Aktif,
             CancellationToken ct = default)
         {
             var page = await _ogrenciService.SearchPagedAsync(
@@ -82,7 +83,7 @@ namespace OgrenciBilgiSistemi.Controllers
                 searchString: searchString,
                 pageNumber: pageNumber.GetValueOrDefault(1),
                 birimId: birimId,
-                includePasif: includePasif,
+                filtre: durum,
                 pageSize: 50,
                 ct: ct);
 
@@ -101,7 +102,8 @@ namespace OgrenciBilgiSistemi.Controllers
                 Birimler = birimler,
                 CurrentSort = sortOrder,
                 CurrentFilter = searchString,
-                BirimId = birimId
+                BirimId = birimId,
+                Durum = durum
             };
 
             ViewData["YemekDurumMap"] = map;

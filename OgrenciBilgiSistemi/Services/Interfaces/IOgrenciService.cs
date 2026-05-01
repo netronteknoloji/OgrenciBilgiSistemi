@@ -1,4 +1,5 @@
 ﻿using OgrenciBilgiSistemi.Models;
+using OgrenciBilgiSistemi.Shared.Enums;
 using Microsoft.AspNetCore.Http;
 
 public interface IOgrenciService
@@ -13,7 +14,7 @@ public interface IOgrenciService
     string? searchString,
     int pageNumber,
     int? birimId,
-    bool includePasif,
+    OgrenciFiltre filtre = OgrenciFiltre.Aktif,
     int pageSize = 50,
     CancellationToken ct = default);
 

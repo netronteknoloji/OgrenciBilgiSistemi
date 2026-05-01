@@ -1,4 +1,5 @@
 using OgrenciBilgiSistemi.Models;
+using OgrenciBilgiSistemi.Shared.Enums;
 using OgrenciBilgiSistemi.ViewModels;
 
 namespace OgrenciBilgiSistemi.Services.Interfaces
@@ -6,7 +7,8 @@ namespace OgrenciBilgiSistemi.Services.Interfaces
     public interface IOgretmenProfilService
     {
         Task<SayfalanmisListeModel<OgretmenProfilModel>> SearchPagedAsync(
-            string? searchString, int page, int pageSize = 20, CancellationToken ct = default);
+            string? searchString, int page, int pageSize = 20,
+            OgretmenFiltre filtre = OgretmenFiltre.Aktif, CancellationToken ct = default);
 
         Task<int> EkleKullaniciVeProfilAsync(OgretmenEkleVm vm, CancellationToken ct = default);
         Task GuncelleAsync(OgretmenProfilModel model, string? kullaniciAdi, string? telefon, string? sifre, CancellationToken ct = default);

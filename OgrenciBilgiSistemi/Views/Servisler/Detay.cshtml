@@ -1,7 +1,9 @@
 @model OgrenciBilgiSistemi.ViewModels.ServisDetayVm
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
 
 @{
     ViewData["Title"] = "Servis Detay";
+    var token = Antiforgery.GetAndStoreTokens(Context).RequestToken;
 }
 
 <div class="viewport-scroller">
@@ -18,7 +20,40 @@
             </div>
 
             <div class="card-body p-4">
-                <!-- Öğrenci Tablosu -->
+
+                <!-- Öğrenci Ekleme -->
+                <div class="bg-body-tertiary border rounded-3 p-3 mb-3">
+                    <div class="d-flex align-items-end gap-3 flex-nowrap no-wrap-scroll position-relative">
+                        <div class="flex-grow-1" style="max-width:400px;">
+                            <label for="ogrenciAraInput" class="form-label fw-semibold mb-1">Öğrenci Ekle</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                                <input type="text" id="ogrenciAraInput" class="form-control"
+                                       placeholder="Ad/soyad veya numara ile ara…" autocomplete="off" />
+                            </div>
+                        </div>
+                        <button type="button" id="ogrenciAraBtn" class="btn btn-primary px-3 text-nowrap">
+                            <i class="bi bi-search me-1"></i> Ara
+                        </button>
+                    </div>
+
+                    <!-- Arama sonuçları -->
+                    <div id="aramaSonuclari" class="mt-2" style="display:none;">
+                        <table class="table table-hover table-sm text-center align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="text-start">Ad Soyad</th>
+                                    <th>Öğrenci No</th>
+                                    <th>Birim</th>
+                                    <th>İşlem</th>
+                                </tr>
+                            </thead>
+                            <tbody id="aramaSonuclariBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Mevcut Öğrenci Tablosu -->
                 <div class="table-scroll">
                     <table class="table table-hover table-sm text-center align-middle">
                         <thead class="bg-dark text-white">
@@ -28,13 +63,14 @@
                                 <th>Öğrenci No</th>
                                 <th>Birim</th>
                                 <th>Kart No</th>
+                                <th>İşlem</th>
                             </tr>
                         </thead>
                         <tbody class="bg-white">
                             @if (!Model.Ogrenciler.Any())
                             {
                                 <tr>
-                                    <td colspan="5" class="p-4">
+                                    <td colspan="6" class="p-4">
                                         <div class="alert alert-warning text-center m-0">
                                             <i class="bi bi-exclamation-triangle-fill"></i> Bu servise kayıtlı öğrenci bulunmamaktadır.
                                         </div>
@@ -52,6 +88,14 @@
                                         <td>@o.OgrenciNo</td>
                                         <td>@(o.Birim?.BirimAd ?? "-")</td>
                                         <td>@(o.OgrenciKartNo ?? "-")</td>
+                                        <td>
+                                            <button type="button" class="btn btn-outline-danger btn-sm cikarBtn"
+                                                    data-id="@o.OgrenciId"
+                                                    data-ad="@o.OgrenciAdSoyad"
+                                                    data-bs-toggle="modal" data-bs-target="#cikarModal">
+                                                <i class="bi bi-x-lg"></i> Çıkar
+                                            </button>
+                                        </td>
                                     </tr>
                                 }
                             }
@@ -69,3 +113,90 @@
         </div>
     </div>
 </div>
+
+<!-- Çıkarma Modal -->
+<div class="modal fade" id="cikarModal" tabindex="-1" aria-labelledby="cikarModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="cikarModalLabel">Öğrenci Çıkar</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p><span id="cikarOgrenciAd" class="fw-bold"></span> adlı öğrenciyi bu servisten çıkarmak istediğinize emin misiniz?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <form method="post" asp-action="OgrenciCikar">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="servisId" value="@Model.Servis.KullaniciId" />
+                    <input type="hidden" id="cikarOgrenciId" name="ogrenciId" />
+                    <button type="submit" class="btn btn-danger">Evet, Çıkar!</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            var servisId = @Model.Servis.KullaniciId;
+            var araInput = document.getElementById('ogrenciAraInput');
+            var araBtn = document.getElementById('ogrenciAraBtn');
+            var sonuclarDiv = document.getElementById('aramaSonuclari');
+            var sonuclarBody = document.getElementById('aramaSonuclariBody');
+            var token = '@token';
+
+            function ara() {
+                var q = araInput.value.trim();
+                if (q.length < 2) return;
+
+                fetch('@Url.Action("OgrenciAra", "Servisler")?servisId=' + servisId + '&q=' + encodeURIComponent(q))
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        sonuclarBody.innerHTML = '';
+                        if (data.length === 0) {
+                            sonuclarBody.innerHTML = '<tr><td colspan="4" class="text-muted p-3">Sonuç bulunamadı.</td></tr>';
+                        } else {
+                            data.forEach(function (o) {
+                                var tr = document.createElement('tr');
+                                tr.innerHTML =
+                                    '<td class="text-start fw-semibold">' + htmlEncode(o.ogrenciAdSoyad) + '</td>' +
+                                    '<td>' + o.ogrenciNo + '</td>' +
+                                    '<td>' + htmlEncode(o.birimAd) + '</td>' +
+                                    '<td>' +
+                                        '<form method="post" action="@Url.Action("OgrenciAta", "Servisler")" style="display:inline">' +
+                                            '<input type="hidden" name="__RequestVerificationToken" value="' + token + '" />' +
+                                            '<input type="hidden" name="servisId" value="' + servisId + '" />' +
+                                            '<input type="hidden" name="ogrenciId" value="' + o.ogrenciId + '" />' +
+                                            '<button type="submit" class="btn btn-success btn-sm"><i class="bi bi-plus-lg"></i> Ekle</button>' +
+                                        '</form>' +
+                                    '</td>';
+                                sonuclarBody.appendChild(tr);
+                            });
+                        }
+                        sonuclarDiv.style.display = '';
+                    });
+            }
+
+            araBtn.addEventListener('click', ara);
+            araInput.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') { e.preventDefault(); ara(); }
+            });
+
+            document.querySelectorAll('.cikarBtn').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    document.getElementById('cikarOgrenciId').value = this.getAttribute('data-id');
+                    document.getElementById('cikarOgrenciAd').textContent = this.getAttribute('data-ad');
+                });
+            });
+
+            function htmlEncode(str) {
+                var div = document.createElement('div');
+                div.appendChild(document.createTextNode(str || ''));
+                return div.innerHTML;
+            }
+        })();
+    </script>
+}

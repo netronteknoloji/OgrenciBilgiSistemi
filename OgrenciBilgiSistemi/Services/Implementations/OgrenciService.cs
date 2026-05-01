@@ -6,6 +6,7 @@ using OgrenciBilgiSistemi.Abstractions;
 using OgrenciBilgiSistemi.Data;
 using OgrenciBilgiSistemi.Models;
 using OgrenciBilgiSistemi.Services.Interfaces;
+using OgrenciBilgiSistemi.Shared.Enums;
 using System.Globalization;
 
 
@@ -210,15 +211,21 @@ namespace OgrenciBilgiSistemi.Services.Implementations
         string? searchString,
         int pageNumber,
         int? birimId,
-        bool includePasif,
+        OgrenciFiltre filtre = OgrenciFiltre.Aktif,
         int pageSize = 50,
         CancellationToken ct = default)
         {
             var q = _db.Ogrenciler
                 .AsNoTracking()
                 .Include(o => o.Birim)
-                .Where(o => includePasif || o.OgrenciDurum)
                 .AsQueryable();
+
+            q = filtre switch
+            {
+                OgrenciFiltre.Aktif => q.Where(o => o.OgrenciDurum),
+                OgrenciFiltre.Pasif => q.Where(o => !o.OgrenciDurum),
+                _ => q
+            };
 
             // Arama (AdSoyad + Numara + KartNo)
             if (!string.IsNullOrWhiteSpace(searchString))

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OgrenciBilgiSistemi.Models;
 using OgrenciBilgiSistemi.Services.Interfaces;
+using OgrenciBilgiSistemi.Shared.Enums;
 using OgrenciBilgiSistemi.ViewModels;
 
 namespace OgrenciBilgiSistemi.Controllers
@@ -27,10 +28,12 @@ namespace OgrenciBilgiSistemi.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Index(string searchString, int page = 1, CancellationToken ct = default)
+        public async Task<IActionResult> Index(string searchString, int page = 1,
+            OgretmenFiltre durum = OgretmenFiltre.Aktif, CancellationToken ct = default)
         {
             ViewData["CurrentFilter"] = searchString;
-            var paged = await _ogretmenProfilService.SearchPagedAsync(searchString, page, 50, ct);
+            ViewData["Durum"] = durum;
+            var paged = await _ogretmenProfilService.SearchPagedAsync(searchString, page, 50, durum, ct);
             return View(paged);
         }
 

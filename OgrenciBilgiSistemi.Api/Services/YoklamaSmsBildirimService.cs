@@ -47,16 +47,34 @@ public sealed class YoklamaSmsBildirimService
 
         var ogrenciBilgileri = await VeliTelefonlariGetir(claimedIdler, ct);
 
-        foreach (var (ogrenciId, adSoyad, veliTelefon) in ogrenciBilgileri)
+        // Mesajları hazırla
+        var paketler = ogrenciBilgileri.Select(o => new
         {
-            var durum = durumMap.GetValueOrDefault(ogrenciId, 0);
-            var mesaj = SmsMesajSablonlari.ServisYoklamasi(adSoyad, periyot, durum);
+            o.OgrenciId,
+            o.VeliTelefon,
+            Mesaj = SmsMesajSablonlari.ServisYoklamasi(o.AdSoyad, periyot, durumMap.GetValueOrDefault(o.OgrenciId, 0)),
+            Durum = durumMap.GetValueOrDefault(o.OgrenciId, 0)
+        }).ToList();
 
-            var sonuc = await _smsService.Gonder(veliTelefon, mesaj, ct);
+        // Paralel gönder
+        var sonuclar = await SmsParalelGonderici.GonderHerBiri(
+            _smsService,
+            paketler,
+            p => (p.VeliTelefon, p.Mesaj),
+            _ayar.MaxParalelGonderim,
+            ct);
+
+        // Sıralı log yaz (ADO.NET LogYaz her seferinde yeni connection açar)
+        foreach (var (p, sonuc) in sonuclar)
+        {
+            await LogYaz(p.OgrenciId, p.VeliTelefon, p.Mesaj, "ServisYoklamasi", sonuc, denemeNumarasi: 1, ct);
+
             if (sonuc.Basarili)
-                _logger.LogInformation("[SMS OK][ServisYoklama] OgrId:{OgrId}, Periyot:{Periyot}, Durum:{Durum}", ogrenciId, periyot, durum);
+                _logger.LogInformation("[SMS OK][ServisYoklama] OgrId:{OgrId}, Periyot:{Periyot}, Durum:{Durum}", p.OgrenciId, periyot, p.Durum);
+            else if (sonuc.HataKategorisi == SmsHataKategorisi.Kalici)
+                _logger.LogWarning("[SMS KALICI][ServisYoklama] OgrId:{OgrId}, Hata:{Hata}", p.OgrenciId, sonuc.Hata);
             else
-                _logger.LogWarning("[SMS FAIL][ServisYoklama] OgrId:{OgrId}, Hata:{Hata}", ogrenciId, sonuc.Hata);
+                _logger.LogWarning("[SMS FAIL][ServisYoklama] OgrId:{OgrId}, Hata:{Hata}", p.OgrenciId, sonuc.Hata);
         }
     }
 
@@ -80,15 +98,73 @@ public sealed class YoklamaSmsBildirimService
 
         var ogrenciBilgileri = await VeliTelefonlariGetir(claimedIdler, ct);
 
-        foreach (var (ogrenciId, adSoyad, veliTelefon) in ogrenciBilgileri)
+        // Mesajları hazırla
+        var paketler = ogrenciBilgileri.Select(o => new
         {
-            var mesaj = SmsMesajSablonlari.SinifYoklamasiDevamsiz(adSoyad, dersNumarasi);
+            o.OgrenciId,
+            o.VeliTelefon,
+            Mesaj = SmsMesajSablonlari.SinifYoklamasiDevamsiz(o.AdSoyad, dersNumarasi)
+        }).ToList();
 
-            var sonuc = await _smsService.Gonder(veliTelefon, mesaj, ct);
+        // Paralel gönder
+        var sonuclar = await SmsParalelGonderici.GonderHerBiri(
+            _smsService,
+            paketler,
+            p => (p.VeliTelefon, p.Mesaj),
+            _ayar.MaxParalelGonderim,
+            ct);
+
+        // Sıralı log yaz
+        foreach (var (p, sonuc) in sonuclar)
+        {
+            await LogYaz(p.OgrenciId, p.VeliTelefon, p.Mesaj, "SinifYoklamasi", sonuc, denemeNumarasi: 1, ct);
+
             if (sonuc.Basarili)
-                _logger.LogInformation("[SMS OK][SinifYoklama] OgrId:{OgrId}, Ders:{Ders}", ogrenciId, dersNumarasi);
+                _logger.LogInformation("[SMS OK][SinifYoklama] OgrId:{OgrId}, Ders:{Ders}", p.OgrenciId, dersNumarasi);
+            else if (sonuc.HataKategorisi == SmsHataKategorisi.Kalici)
+                _logger.LogWarning("[SMS KALICI][SinifYoklama] OgrId:{OgrId}, Hata:{Hata}", p.OgrenciId, sonuc.Hata);
             else
-                _logger.LogWarning("[SMS FAIL][SinifYoklama] OgrId:{OgrId}, Hata:{Hata}", ogrenciId, sonuc.Hata);
+                _logger.LogWarning("[SMS FAIL][SinifYoklama] OgrId:{OgrId}, Hata:{Hata}", p.OgrenciId, sonuc.Hata);
+        }
+    }
+
+    /// <summary>
+    /// SmsGonderimGecmisi tablosuna gönderim sonucunu kaydeder.
+    /// </summary>
+    private async Task LogYaz(
+        int ogrenciId, string telefon, string mesaj, string tip,
+        SmsGonderimSonucu sonuc, int denemeNumarasi, CancellationToken ct)
+    {
+        const string sql = @"
+            INSERT INTO SmsGonderimGecmisleri
+            (OgrenciId, Telefon, Mesaj, Tip, GonderimZamani, Basarili,
+             HataKategorisi, Hata, HamCevap, HttpDurumKodu, DenemeNumarasi)
+            VALUES
+            (@ogrId, @tel, @msj, @tip, @zaman, @basarili,
+             @kategori, @hata, @ham, @http, @deneme)";
+
+        try
+        {
+            await using var conn = new SqlConnection(ConnectionString);
+            await conn.OpenAsync(ct);
+            await using var cmd = new SqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("@ogrId", ogrenciId);
+            cmd.Parameters.AddWithValue("@tel", telefon);
+            cmd.Parameters.AddWithValue("@msj", mesaj);
+            cmd.Parameters.AddWithValue("@tip", tip);
+            cmd.Parameters.AddWithValue("@zaman", DateTime.Now);
+            cmd.Parameters.AddWithValue("@basarili", sonuc.Basarili);
+            cmd.Parameters.AddWithValue("@kategori", (int)sonuc.HataKategorisi);
+            cmd.Parameters.AddWithValue("@hata", (object?)sonuc.Hata ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@ham", (object?)sonuc.HamCevap ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@http", (object?)sonuc.HttpDurumKodu ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@deneme", denemeNumarasi);
+            await cmd.ExecuteNonQueryAsync(ct);
+        }
+        catch (Exception ex)
+        {
+            // Log yazımı başarısız olsa bile SMS akışını bozmamalı
+            _logger.LogError(ex, "SMS gönderim geçmişi yazılamadı. OgrId:{OgrId}, Tip:{Tip}", ogrenciId, tip);
         }
     }
 

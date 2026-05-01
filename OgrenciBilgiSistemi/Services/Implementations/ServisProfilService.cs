@@ -113,5 +113,43 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 .OrderBy(o => o.OgrenciAdSoyad)
                 .AsNoTracking()
                 .ToListAsync(ct);
+
+        public async Task<List<OgrenciModel>> AtanmamisOgrenciAraAsync(int servisId, string searchString, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(searchString))
+                return new();
+
+            var s = searchString.Trim();
+
+            return await _db.Ogrenciler
+                .Include(o => o.Birim)
+                .Where(o => o.OgrenciDurum && (o.ServisId == null || o.ServisId != servisId))
+                .Where(o =>
+                    (o.OgrenciAdSoyad != null && o.OgrenciAdSoyad.Contains(s)) ||
+                    o.OgrenciNo.ToString().Contains(s))
+                .OrderBy(o => o.OgrenciAdSoyad)
+                .Take(20)
+                .AsNoTracking()
+                .ToListAsync(ct);
+        }
+
+        public async Task OgrenciAtaAsync(int servisId, int ogrenciId, CancellationToken ct = default)
+        {
+            var ogrenci = await _db.Ogrenciler.FindAsync([ogrenciId], ct)
+                ?? throw new KeyNotFoundException("Öğrenci bulunamadı.");
+
+            ogrenci.ServisId = servisId;
+            await _db.SaveChangesAsync(ct);
+        }
+
+        public async Task OgrenciCikarAsync(int servisId, int ogrenciId, CancellationToken ct = default)
+        {
+            var ogrenci = await _db.Ogrenciler
+                .FirstOrDefaultAsync(o => o.OgrenciId == ogrenciId && o.ServisId == servisId, ct)
+                ?? throw new KeyNotFoundException("Öğrenci bulunamadı.");
+
+            ogrenci.ServisId = null;
+            await _db.SaveChangesAsync(ct);
+        }
     }
 }
