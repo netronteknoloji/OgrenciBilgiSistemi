@@ -99,7 +99,10 @@ namespace OgrenciBilgiSistemi.Api.Services
                 const string query = @"
                     SELECT t.Tarih, t.BaslangicSaati, t.BitisSaati, t.OgretmenKullaniciId
                     FROM OgretmenRandevular t
+                    INNER JOIN Kullanicilar      k  ON k.KullaniciId  = t.OgretmenKullaniciId
+                    INNER JOIN OgretmenProfiller op ON op.KullaniciId = k.KullaniciId
                     WHERE t.OgretmenKullaniciId = @ogretmenId AND t.IsDeleted = 0
+                      AND k.KullaniciDurum = 1 AND op.OgretmenDurum = 1
                       AND t.Tarih BETWEEN @baslangic AND @bitis
                       AND NOT EXISTS (
                           SELECT 1 FROM Randevular r

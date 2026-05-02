@@ -35,10 +35,14 @@ namespace OgrenciBilgiSistemi.Api.Services
                        v.KullaniciAdi AS VeliAd,
                        o.OgrenciAdSoyad
                 FROM Randevular r
-                INNER JOIN Kullanicilar og ON r.OgretmenKullaniciId = og.KullaniciId
-                INNER JOIN Kullanicilar v  ON r.VeliKullaniciId = v.KullaniciId
-                LEFT  JOIN Ogrenciler o    ON r.OgrenciId = o.OgrenciId
+                INNER JOIN Kullanicilar      og ON r.OgretmenKullaniciId = og.KullaniciId
+                INNER JOIN OgretmenProfiller op ON op.KullaniciId = og.KullaniciId
+                INNER JOIN Kullanicilar      v  ON r.VeliKullaniciId = v.KullaniciId
+                INNER JOIN VeliProfiller     vp ON vp.KullaniciId = v.KullaniciId
+                LEFT  JOIN Ogrenciler        o  ON r.OgrenciId = o.OgrenciId
                 WHERE r.IsDeleted = 0
+                  AND og.KullaniciDurum = 1 AND op.OgretmenDurum = 1
+                  AND v.KullaniciDurum  = 1 AND vp.VeliDurum     = 1
                   AND ((@rol = 'Ogretmen' AND r.OgretmenKullaniciId = @kullaniciId)
                     OR (@rol = 'Veli'      AND r.VeliKullaniciId = @kullaniciId))
                 ORDER BY r.RandevuTarihi DESC
@@ -87,10 +91,14 @@ namespace OgrenciBilgiSistemi.Api.Services
                        v.KullaniciAdi AS VeliAd,
                        o.OgrenciAdSoyad
                 FROM Randevular r
-                INNER JOIN Kullanicilar og ON r.OgretmenKullaniciId = og.KullaniciId
-                INNER JOIN Kullanicilar v  ON r.VeliKullaniciId = v.KullaniciId
-                LEFT  JOIN Ogrenciler o    ON r.OgrenciId = o.OgrenciId
-                WHERE r.RandevuId = @id AND r.IsDeleted = 0";
+                INNER JOIN Kullanicilar      og ON r.OgretmenKullaniciId = og.KullaniciId
+                INNER JOIN OgretmenProfiller op ON op.KullaniciId = og.KullaniciId
+                INNER JOIN Kullanicilar      v  ON r.VeliKullaniciId = v.KullaniciId
+                INNER JOIN VeliProfiller     vp ON vp.KullaniciId = v.KullaniciId
+                LEFT  JOIN Ogrenciler        o  ON r.OgrenciId = o.OgrenciId
+                WHERE r.RandevuId = @id AND r.IsDeleted = 0
+                  AND og.KullaniciDurum = 1 AND op.OgretmenDurum = 1
+                  AND v.KullaniciDurum  = 1 AND vp.VeliDurum     = 1";
 
             await using var conn = new SqlConnection(ConnectionString);
             await using var cmd = new SqlCommand(query, conn);
@@ -122,6 +130,9 @@ namespace OgrenciBilgiSistemi.Api.Services
 
         public async Task<int> OgretmenRandevuOlustur(int ogretmenId, int veliId, int? ogrenciId, DateTime tarih, int sureDakika, string? not)
         {
+            var aktifMesaj = await AktiflikKontrolu(ogretmenId, veliId);
+            if (aktifMesaj is not null) throw new InvalidOperationException(aktifMesaj);
+
             var cakisma = await CakismaMesaji(ogretmenId, veliId, tarih, sureDakika);
             if (cakisma is not null) throw new InvalidOperationException(cakisma);
 
@@ -131,11 +142,46 @@ namespace OgrenciBilgiSistemi.Api.Services
 
         public async Task<int> VeliRandevuOlustur(int veliId, int ogretmenId, int? ogrenciId, DateTime tarih, int sureDakika, string? not)
         {
+            var aktifMesaj = await AktiflikKontrolu(ogretmenId, veliId);
+            if (aktifMesaj is not null) throw new InvalidOperationException(aktifMesaj);
+
             var cakisma = await CakismaMesaji(ogretmenId, veliId, tarih, sureDakika);
             if (cakisma is not null) throw new InvalidOperationException(cakisma);
 
             return await RandevuEkle(ogretmenId, veliId, ogrenciId, tarih, sureDakika, not,
                 ogretmenTarafindanOlusturuldu: false, durum: (int)RandevuDurumu.Beklemede);
+        }
+
+        // Hem öğretmen hem veli (KullaniciDurum + rol bazlı OgretmenDurum/VeliDurum) aktif mi?
+        // Aktif değilse Türkçe açıklama döner; her ikisi de aktifse null.
+        private async Task<string?> AktiflikKontrolu(int ogretmenId, int veliId)
+        {
+            const string query = @"
+                SELECT
+                  (SELECT COUNT(*) FROM Kullanicilar k
+                    INNER JOIN OgretmenProfiller op ON op.KullaniciId = k.KullaniciId
+                    WHERE k.KullaniciId = @ogretmenId
+                      AND k.Rol = 2 AND k.KullaniciDurum = 1 AND op.OgretmenDurum = 1) AS OgretmenAktif,
+                  (SELECT COUNT(*) FROM Kullanicilar k
+                    INNER JOIN VeliProfiller vp ON vp.KullaniciId = k.KullaniciId
+                    WHERE k.KullaniciId = @veliId
+                      AND k.Rol = 4 AND k.KullaniciDurum = 1 AND vp.VeliDurum = 1)     AS VeliAktif";
+
+            await using var conn = new SqlConnection(ConnectionString);
+            await using var cmd = new SqlCommand(query, conn);
+            cmd.Parameters.AddWithValue("@ogretmenId", ogretmenId);
+            cmd.Parameters.AddWithValue("@veliId", veliId);
+            await conn.OpenAsync();
+
+            await using var reader = await cmd.ExecuteReaderAsync();
+            if (!await reader.ReadAsync()) return "Kullanıcı durumu doğrulanamadı.";
+
+            var ogretmenAktif = reader.GetInt32(0) > 0;
+            var veliAktif = reader.GetInt32(1) > 0;
+
+            if (!ogretmenAktif) return "Seçilen öğretmen şu anda aktif değil.";
+            if (!veliAktif)     return "Seçilen veli şu anda aktif değil.";
+            return null;
         }
 
         // Hem öğretmen hem veli takviminde aynı zaman aralığında onaylanmış/bekleyen randevu varsa
@@ -178,6 +224,8 @@ namespace OgrenciBilgiSistemi.Api.Services
         // veli yalnızca öğretmenin oluşturduğu (OgretmenTarafindanOlusturuldu = 1) randevuya işlem yapabilir.
         public async Task<bool> DurumGuncelle(int randevuId, int kullaniciId, string rol, RandevuDurumu yeniDurum)
         {
+            await TaraflarAktifMiKontrolEt(randevuId);
+
             const string query = @"
                 UPDATE Randevular SET Durum = @durum, GuncellenmeTarihi = GETDATE()
                 WHERE RandevuId = @id AND IsDeleted = 0
@@ -196,6 +244,8 @@ namespace OgrenciBilgiSistemi.Api.Services
 
         public async Task<bool> IptalEt(int randevuId, int kullaniciId)
         {
+            await TaraflarAktifMiKontrolEt(randevuId);
+
             const string query = @"
                 UPDATE Randevular SET Durum = @durum, GuncellenmeTarihi = GETDATE()
                 WHERE RandevuId = @id AND IsDeleted = 0
@@ -208,6 +258,31 @@ namespace OgrenciBilgiSistemi.Api.Services
             cmd.Parameters.AddWithValue("@durum", (int)RandevuDurumu.IptalEdildi);
             await conn.OpenAsync();
             return await cmd.ExecuteNonQueryAsync() > 0;
+        }
+
+        // Mevcut bir randevudaki öğretmen veya veli pasifleştirilmişse InvalidOperationException fırlatır.
+        // Randevu bulunamazsa sessiz geçer (çağıran metot zaten 404 dönecektir).
+        private async Task TaraflarAktifMiKontrolEt(int randevuId)
+        {
+            const string query = @"
+                SELECT r.OgretmenKullaniciId, r.VeliKullaniciId
+                FROM Randevular r
+                WHERE r.RandevuId = @id AND r.IsDeleted = 0";
+
+            int ogretmenId, veliId;
+            await using (var conn = new SqlConnection(ConnectionString))
+            await using (var cmd = new SqlCommand(query, conn))
+            {
+                cmd.Parameters.AddWithValue("@id", randevuId);
+                await conn.OpenAsync();
+                await using var reader = await cmd.ExecuteReaderAsync();
+                if (!await reader.ReadAsync()) return;
+                ogretmenId = reader.GetInt32(0);
+                veliId = reader.GetInt32(1);
+            }
+
+            var aktifMesaj = await AktiflikKontrolu(ogretmenId, veliId);
+            if (aktifMesaj is not null) throw new InvalidOperationException(aktifMesaj);
         }
 
         private async Task<int> RandevuEkle(int ogretmenId, int veliId, int? ogrenciId, DateTime tarih, int sureDakika, string? not, bool ogretmenTarafindanOlusturuldu, int durum)

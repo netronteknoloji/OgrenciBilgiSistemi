@@ -106,7 +106,15 @@ namespace OgrenciBilgiSistemi.Api.Controllers
             if (rol != "Ogretmen" && rol != "Veli") return Forbid();
 
             var kullaniciId = KullaniciId;
-            var basarili = await _randevuService.DurumGuncelle(id, kullaniciId, rol, RandevuDurumu.Onaylandi);
+            bool basarili;
+            try
+            {
+                basarili = await _randevuService.DurumGuncelle(id, kullaniciId, rol, RandevuDurumu.Onaylandi);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new { mesaj = ex.Message });
+            }
             if (!basarili) return NotFound();
 
             var randevu = await _randevuService.RandevuGetir(id);
@@ -132,7 +140,15 @@ namespace OgrenciBilgiSistemi.Api.Controllers
             if (rol != "Ogretmen" && rol != "Veli") return Forbid();
 
             var kullaniciId = KullaniciId;
-            var basarili = await _randevuService.DurumGuncelle(id, kullaniciId, rol, RandevuDurumu.Reddedildi);
+            bool basarili;
+            try
+            {
+                basarili = await _randevuService.DurumGuncelle(id, kullaniciId, rol, RandevuDurumu.Reddedildi);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new { mesaj = ex.Message });
+            }
             if (!basarili) return NotFound();
 
             var randevu = await _randevuService.RandevuGetir(id);
@@ -184,7 +200,15 @@ namespace OgrenciBilgiSistemi.Api.Controllers
         public async Task<IActionResult> IptalEt(int id)
         {
             var kullaniciId = KullaniciId;
-            var basarili = await _randevuService.IptalEt(id, kullaniciId);
+            bool basarili;
+            try
+            {
+                basarili = await _randevuService.IptalEt(id, kullaniciId);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new { mesaj = ex.Message });
+            }
             if (!basarili) return NotFound();
 
             var randevu = await _randevuService.RandevuGetir(id);
