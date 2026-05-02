@@ -66,10 +66,59 @@ namespace OgrenciBilgiSistemi.Controllers
                 await _ogretmenRandevuService.Ekle(model, ct);
                 return RedirectToAction(nameof(Index), new { ogretmenId = model.OgretmenKullaniciId });
             }
+            catch (InvalidOperationException ex)
+            {
+                ModelState.AddModelError("", ex.Message);
+                ViewData["Ogretmenler"] = await OgretmenListesi(ct);
+                return View(model);
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Randevu takvimi eklenemedi.");
                 ModelState.AddModelError("", "Randevu takvimi eklenirken bir hata oluştu.");
+                ViewData["Ogretmenler"] = await OgretmenListesi(ct);
+                return View(model);
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Guncelle(int id, CancellationToken ct = default)
+        {
+            var model = await _ogretmenRandevuService.Getir(id, ct);
+            if (model is null) return NotFound();
+
+            ViewData["Ogretmenler"] = await OgretmenListesi(ct);
+            return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Guncelle(OgretmenRandevuModel model, CancellationToken ct = default)
+        {
+            if (model.BitisSaati <= model.BaslangicSaati)
+                ModelState.AddModelError("", "Bitiş saati başlangıçtan büyük olmalıdır.");
+
+            if (!ModelState.IsValid)
+            {
+                ViewData["Ogretmenler"] = await OgretmenListesi(ct);
+                return View(model);
+            }
+
+            try
+            {
+                await _ogretmenRandevuService.Guncelle(model, ct);
+                return RedirectToAction(nameof(Index), new { ogretmenId = model.OgretmenKullaniciId });
+            }
+            catch (InvalidOperationException ex)
+            {
+                ModelState.AddModelError("", ex.Message);
+                ViewData["Ogretmenler"] = await OgretmenListesi(ct);
+                return View(model);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Randevu takvimi güncellenemedi. Id={Id}", model.OgretmenRandevuId);
+                ModelState.AddModelError("", "Randevu takvimi güncellenirken bir hata oluştu.");
                 ViewData["Ogretmenler"] = await OgretmenListesi(ct);
                 return View(model);
             }

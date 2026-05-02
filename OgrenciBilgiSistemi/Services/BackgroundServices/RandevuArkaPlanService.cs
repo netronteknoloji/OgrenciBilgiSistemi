@@ -70,13 +70,13 @@ public sealed class RandevuArkaPlanService : BackgroundService
         var bildirimService = scope.ServiceProvider.GetRequiredService<IBildirimService>();
 
         var simdi = DateTime.Now;
-        var yarin = simdi.AddHours(24);
+        var birSaatSonra = simdi.AddHours(1);
 
         var yaklasanRandevular = await db.Randevular
             .Include(r => r.Ogretmen)
             .Include(r => r.Veli)
             .Where(r => r.Durum == RandevuDurumu.Onaylandi)
-            .Where(r => r.RandevuTarihi > simdi && r.RandevuTarihi <= yarin)
+            .Where(r => r.RandevuTarihi > simdi && r.RandevuTarihi <= birSaatSonra)
             .ToListAsync(ct);
 
         foreach (var randevu in yaklasanRandevular)

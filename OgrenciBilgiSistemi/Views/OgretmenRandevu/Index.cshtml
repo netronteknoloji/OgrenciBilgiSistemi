@@ -63,11 +63,15 @@
                                     <td>@m.BaslangicSaati.ToString(@"hh\:mm")</td>
                                     <td>@m.BitisSaati.ToString(@"hh\:mm")</td>
                                     <td>
+                                        <a class="btn btn-sm btn-outline-primary me-1"
+                                           asp-action="Guncelle" asp-route-id="@m.OgretmenRandevuId">
+                                            <i class="bi bi-pencil"></i> Güncelle
+                                        </a>
                                         <form method="post" asp-action="Sil" asp-route-id="@m.OgretmenRandevuId" asp-route-ogretmenId="@ogretmenId" class="d-inline">
                                             @Html.AntiForgeryToken()
                                             <button type="submit" class="btn btn-sm btn-outline-danger"
                                                     onclick="return confirm('Silmek istediğinize emin misiniz?')">
-                                                <i class="bi bi-trash"></i>
+                                                <i class="bi bi-trash"></i> Sil
                                             </button>
                                         </form>
                                     </td>
