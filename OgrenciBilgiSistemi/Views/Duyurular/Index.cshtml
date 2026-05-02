@@ -1,0 +1,91 @@
+@model SayfalanmisListeModel<OgrenciBilgiSistemi.Models.DuyuruModel>
+
+@{
+    ViewData["Title"] = "Duyurular";
+}
+
+<div class="viewport-scroller">
+    <div class="fixed-canvas">
+        <div class="card border rounded-4 p-4 mt-4">
+
+            <div class="d-flex gap-2 justify-content-between align-items-center mb-3 flex-nowrap no-wrap-scroll">
+                <h3 class="text-primary fw-bold mb-0">@ViewData["Title"]</h3>
+
+                <a class="btn btn-primary fw-semibold" asp-action="Olustur">
+                    <i class="bi bi-megaphone"></i> Yeni Duyuru
+                </a>
+            </div>
+
+            @if (TempData["Mesaj"] is string mesaj)
+            {
+                <div class="alert alert-success">@mesaj</div>
+            }
+            @if (TempData["Hata"] is string hata)
+            {
+                <div class="alert alert-danger">@hata</div>
+            }
+
+            @if (Model == null || !Model.Any())
+            {
+                <div class="alert alert-warning mb-0">
+                    <i class="bi bi-exclamation-triangle-fill"></i> Henüz duyuru yayınlanmamış.
+                </div>
+            }
+            else
+            {
+                <div class="table-scroll">
+                    <table class="table table-hover table-sm align-middle">
+                        <thead class="bg-dark text-white">
+                            <tr class="text-center">
+                                <th class="text-start">Tarih</th>
+                                <th class="text-start">Başlık</th>
+                                <th>Yayınlayan</th>
+                                <th>Hedef</th>
+                                <th>İşlem</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var d in Model)
+                            {
+                                <tr class="text-center">
+                                    <td class="text-start fw-semibold text-primary">@d.OlusturulmaTarihi.ToString("dd.MM.yyyy HH:mm")</td>
+                                    <td class="text-start">@d.Baslik</td>
+                                    <td>@d.Olusturan?.KullaniciAdi</td>
+                                    <td>
+                                        @if (d.Hedef == OgrenciBilgiSistemi.Shared.Enums.DuyuruHedefi.TumVeliler)
+                                        {
+                                            <span class="badge bg-primary">Tüm Veliler</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-info">Öğretmen Velileri</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-gap" role="group">
+                                            <a asp-action="Detay" asp-route-id="@d.DuyuruId"
+                                               class="btn btn-outline-secondary btn-sm">
+                                                <i class="bi bi-eye"></i> Detay
+                                            </a>
+                                            <form asp-action="Sil" asp-route-id="@d.DuyuruId" method="post" class="d-inline"
+                                                  onsubmit="return confirm('Duyuruyu silmek istediğinize emin misiniz?');">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-outline-danger btn-sm">
+                                                    <i class="bi bi-trash"></i> Sil
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                @await Html.PartialAsync("_SayfalamaFormPartial", OgrenciBilgiSistemi.ViewModels.SayfalamaVm.Olustur(Model,
+                    sayfaParametreAdi: "sayfaNo",
+                    routeValues: new Dictionary<string, string?>()))
+            }
+        </div>
+    </div>
+</div>

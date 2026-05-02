@@ -90,6 +90,16 @@
                     </Border>
                 </Grid>
             </Grid>
+
+            <!-- Duyuru Yap butonu -->
+            <Border Margin="15,5,15,5" StrokeShape="RoundRectangle 12" StrokeThickness="0"
+                    BackgroundColor="#16A085" Padding="8,6" HeightRequest="36">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnDuyuruYapTapped" />
+                </Border.GestureRecognizers>
+                <Label Text="Duyuru Yap" FontSize="12" TextColor="White" FontFamily="OpenSansSemibold"
+                       HorizontalOptions="Center" VerticalOptions="Center" />
+            </Border>
         </VerticalStackLayout>
 
         <CollectionView x:Name="ClassCollection" Grid.Row="2" Margin="15,0" SelectionMode="None">

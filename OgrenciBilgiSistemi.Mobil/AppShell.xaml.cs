@@ -13,6 +13,8 @@ namespace OgrenciBilgiSistemi.Mobil
             Routing.RegisterRoute(nameof(RandevuOlusturView), typeof(RandevuOlusturView));
             Routing.RegisterRoute(nameof(OgretmenRandevuYonetimView), typeof(OgretmenRandevuYonetimView));
             Routing.RegisterRoute(nameof(BildirimListeView), typeof(BildirimListeView));
+            Routing.RegisterRoute(nameof(OgretmenDuyuruOlusturView), typeof(OgretmenDuyuruOlusturView));
+            Routing.RegisterRoute(nameof(VeliDuyurularView), typeof(VeliDuyurularView));
         }
     }
 }

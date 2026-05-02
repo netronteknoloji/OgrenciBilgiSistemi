@@ -104,6 +104,7 @@ builder.Services.AddScoped<IKitapService, KitapService>();
 builder.Services.AddScoped<IRandevuService, RandevuService>();
 builder.Services.AddScoped<IOgretmenRandevuService, OgretmenRandevuService>();
 builder.Services.AddScoped<IBildirimService, BildirimService>();
+builder.Services.AddScoped<IDuyuruService, DuyuruService>();
 builder.Services.AddScoped<IKitapDetayService, KitapDetayService>();
 builder.Services.AddScoped<IKullaniciService, KullaniciService>();
 

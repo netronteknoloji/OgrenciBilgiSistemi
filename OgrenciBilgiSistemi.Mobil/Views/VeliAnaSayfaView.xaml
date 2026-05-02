@@ -7,7 +7,7 @@
              Shell.NavBarIsVisible="False"
              BackgroundColor="#F2F2F2">
 
-    <Grid RowDefinitions="125, Auto, *">
+    <Grid RowDefinitions="125, Auto, Auto, *">
 
         <Border Grid.Row="0"
                 StrokeThickness="0"
@@ -85,8 +85,22 @@
             </Grid>
         </Border>
 
+        <!-- Duyurular butonu -->
+        <Border Grid.Row="2" Margin="15,0,15,10" StrokeShape="RoundRectangle 14" StrokeThickness="0"
+                BackgroundColor="#16A085" Padding="12,10" HeightRequest="42">
+            <Border.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnDuyurularTapped" />
+            </Border.GestureRecognizers>
+            <Grid ColumnDefinitions="Auto, *, Auto" VerticalOptions="Center">
+                <Label Grid.Column="0" Text="&#x1F4E2;" FontSize="18" VerticalOptions="Center" />
+                <Label Grid.Column="1" Text="Duyurular" FontSize="14" TextColor="White"
+                       FontFamily="OpenSansSemibold" Margin="10,0,0,0" VerticalOptions="Center" />
+                <Label Grid.Column="2" Text="&#x2192;" FontSize="18" TextColor="White" VerticalOptions="Center" />
+            </Grid>
+        </Border>
+
         <!-- Çocuk listesi -->
-        <CollectionView x:Name="CocukCollection" Grid.Row="2" Margin="15,0" SelectionMode="None">
+        <CollectionView x:Name="CocukCollection" Grid.Row="3" Margin="15,0" SelectionMode="None">
             <CollectionView.ItemsLayout>
                 <LinearItemsLayout Orientation="Vertical" ItemSpacing="10" />
             </CollectionView.ItemsLayout>

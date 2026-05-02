@@ -35,6 +35,7 @@ namespace OgrenciBilgiSistemi.Data
         public DbSet<RandevuModel> Randevular { get; set; }
         public DbSet<OgretmenRandevuModel> OgretmenRandevular { get; set; }
         public DbSet<BildirimModel> Bildirimler { get; set; }
+        public DbSet<DuyuruModel> Duyurular { get; set; }
         public DbSet<SmsGonderimGecmisiModel> SmsGonderimGecmisleri { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -423,6 +424,27 @@ namespace OgrenciBilgiSistemi.Data
                 .HasDatabaseName("IX_Bildirimler_Alici_Okundu");
 
             // =========================
+            // DUYURU
+            // =========================
+
+            modelBuilder.Entity<DuyuruModel>()
+                .HasOne(d => d.Olusturan)
+                .WithMany()
+                .HasForeignKey(d => d.OlusturanKullaniciId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<DuyuruModel>()
+                .HasQueryFilter(d => !d.IsDeleted);
+
+            modelBuilder.Entity<DuyuruModel>()
+                .HasIndex(d => d.OlusturulmaTarihi)
+                .HasDatabaseName("IX_Duyurular_Tarih");
+
+            modelBuilder.Entity<DuyuruModel>()
+                .HasIndex(d => d.OlusturanKullaniciId)
+                .HasDatabaseName("IX_Duyurular_Olusturan");
+
+            // =========================
             // SMS GONDERIM GECMISI
             // =========================
             modelBuilder.Entity<SmsGonderimGecmisiModel>(e =>
@@ -521,7 +543,9 @@ namespace OgrenciBilgiSistemi.Data
                 new MenuOgeModel { Id = 29, Baslik = "Veli İşlemleri", Controller = "Veliler", Action = "Index", AnaMenuId = 28, Sirala = 1 },
                 new MenuOgeModel { Id = 30, Baslik = "Randevular", Controller = null, Action = null, AnaMenuId = null, Sirala = 12 },
                 new MenuOgeModel { Id = 31, Baslik = "Randevu Listesi", Controller = "Randevular", Action = "Index", AnaMenuId = 30, Sirala = 1 },
-                new MenuOgeModel { Id = 32, Baslik = "Öğretmen Randevu Takvimi", Controller = "OgretmenRandevu", Action = "Index", AnaMenuId = 30, Sirala = 2 }
+                new MenuOgeModel { Id = 32, Baslik = "Öğretmen Randevu Takvimi", Controller = "OgretmenRandevu", Action = "Index", AnaMenuId = 30, Sirala = 2 },
+                new MenuOgeModel { Id = 33, Baslik = "Duyurular", Controller = null, Action = null, AnaMenuId = null, Sirala = 13 },
+                new MenuOgeModel { Id = 34, Baslik = "Duyuru İşlemleri", Controller = "Duyurular", Action = "Index", AnaMenuId = 33, Sirala = 1 }
             );
         }
     }

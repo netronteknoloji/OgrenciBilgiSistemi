@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:views="clr-namespace:OgrenciBilgiSistemi.Mobil.Views"
+             x:Class="OgrenciBilgiSistemi.Mobil.Views.VeliDuyurularView"
+             Title="Duyurular"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="#F0F2F5">
+
+    <Grid RowDefinitions="125, *">
+
+        <Border Grid.Row="0" StrokeThickness="0" BackgroundColor="#16A085" VerticalOptions="FillAndExpand">
+            <Border.Shadow>
+                <Shadow Brush="#16A085" Offset="0,4" Radius="15" Opacity="0.4" />
+            </Border.Shadow>
+            <Grid>
+                <views:AnaBaslikView x:Name="MyHeader" ShowBack="True" ShowProfile="False" />
+                <VerticalStackLayout Spacing="2" VerticalOptions="End" HorizontalOptions="Center" Margin="20,0,20,15">
+                    <Label Text="Duyurular" FontSize="18" FontFamily="OpenSansSemibold" TextColor="White" HorizontalTextAlignment="Center" />
+                    <Label Text="Öğretmen ve okul duyuruları" FontSize="14" TextColor="White" Opacity="0.8" HorizontalTextAlignment="Center" />
+                </VerticalStackLayout>
+            </Grid>
+        </Border>
+
+        <CollectionView Grid.Row="1" x:Name="DuyuruCollection" Margin="15,10" SelectionMode="None">
+            <CollectionView.ItemsLayout>
+                <LinearItemsLayout Orientation="Vertical" ItemSpacing="10" />
+            </CollectionView.ItemsLayout>
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Border StrokeShape="RoundRectangle 16" StrokeThickness="0" BackgroundColor="White" Padding="16">
+                        <Border.Shadow>
+                            <Shadow Brush="Black" Offset="0,2" Radius="8" Opacity="0.06" />
+                        </Border.Shadow>
+                        <VerticalStackLayout Spacing="8">
+                            <Label Text="{Binding Baslik}" FontSize="16" FontFamily="OpenSansSemibold" TextColor="#2C3E50" />
+                            <Grid ColumnDefinitions="Auto, *, Auto">
+                                <Label Grid.Column="0" Text="{Binding OlusturanAdSoyad}" FontSize="12" TextColor="#16A085" />
+                                <Label Grid.Column="2" Text="{Binding TarihMetni}" FontSize="12" TextColor="#95A5A6" />
+                            </Grid>
+                            <Label Text="{Binding Icerik}" FontSize="13" TextColor="#34495E" LineBreakMode="WordWrap" />
+                        </VerticalStackLayout>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+            <CollectionView.EmptyView>
+                <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="10" Padding="20">
+                    <Label Text="Henüz duyuru bulunmuyor." FontSize="16" TextColor="#95A5A6" HorizontalOptions="Center" />
+                </VerticalStackLayout>
+            </CollectionView.EmptyView>
+        </CollectionView>
+    </Grid>
+</ContentPage>

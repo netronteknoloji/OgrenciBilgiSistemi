@@ -1,0 +1,46 @@
+@model OgrenciBilgiSistemi.Models.DuyuruModel
+
+@{
+    ViewData["Title"] = "Duyuru Detayı";
+}
+
+<div class="viewport-scroller">
+    <div class="fixed-canvas">
+        <div class="card border rounded-4 p-4 mt-4">
+
+            <div class="d-flex gap-2 justify-content-between align-items-center mb-3">
+                <h3 class="text-primary fw-bold mb-0">@ViewData["Title"]</h3>
+
+                <a class="btn btn-outline-secondary fw-semibold" asp-action="Index">
+                    <i class="bi bi-arrow-left"></i> Listeye Dön
+                </a>
+            </div>
+
+            <dl class="row">
+                <dt class="col-sm-3">Başlık</dt>
+                <dd class="col-sm-9 fw-semibold">@Model.Baslik</dd>
+
+                <dt class="col-sm-3">Yayın Tarihi</dt>
+                <dd class="col-sm-9">@Model.OlusturulmaTarihi.ToString("dd.MM.yyyy HH:mm")</dd>
+
+                <dt class="col-sm-3">Yayınlayan</dt>
+                <dd class="col-sm-9">@Model.Olusturan?.KullaniciAdi</dd>
+
+                <dt class="col-sm-3">Hedef</dt>
+                <dd class="col-sm-9">
+                    @if (Model.Hedef == OgrenciBilgiSistemi.Shared.Enums.DuyuruHedefi.TumVeliler)
+                    {
+                        <span class="badge bg-primary">Tüm Veliler</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-info">Öğretmen Velileri</span>
+                    }
+                </dd>
+
+                <dt class="col-sm-3">İçerik</dt>
+                <dd class="col-sm-9" style="white-space: pre-wrap;">@Model.Icerik</dd>
+            </dl>
+        </div>
+    </div>
+</div>

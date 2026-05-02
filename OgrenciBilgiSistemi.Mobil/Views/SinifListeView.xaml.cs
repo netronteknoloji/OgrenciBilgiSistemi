@@ -207,6 +207,12 @@ namespace OgrenciBilgiSistemi.Mobil.Views
             var bildirimService = Application.Current.MainPage.Handler.MauiContext.Services.GetService<BildirimService>();
             await Navigation.PushAsync(new BildirimListeView(bildirimService));
         }
+
+        private async void OnDuyuruYapTapped(object sender, TappedEventArgs e)
+        {
+            var duyuruService = Application.Current.MainPage.Handler.MauiContext.Services.GetService<DuyuruService>();
+            await Navigation.PushAsync(new OgretmenDuyuruOlusturView(duyuruService));
+        }
         #endregion
     }
     #endregion

@@ -1,0 +1,55 @@
+@model OgrenciBilgiSistemi.Models.DuyuruModel
+
+@{
+    ViewData["Title"] = "Yeni Duyuru";
+}
+
+<div class="viewport-scroller">
+    <div class="fixed-canvas">
+        <div class="card border rounded-4 p-4 mt-4">
+
+            <div class="d-flex gap-2 justify-content-between align-items-center mb-3">
+                <h3 class="text-primary fw-bold mb-0">@ViewData["Title"]</h3>
+
+                <a class="btn btn-outline-secondary fw-semibold" asp-action="Index">
+                    <i class="bi bi-arrow-left"></i> Listeye Dön
+                </a>
+            </div>
+
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle"></i>
+                Bu duyuru sistemdeki tüm aktif velilere gönderilecek ve bildirim olarak düşecektir.
+            </div>
+
+            <form asp-action="Olustur" method="post">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                <div class="mb-3">
+                    <label asp-for="Baslik" class="form-label fw-semibold">Başlık</label>
+                    <input asp-for="Baslik" class="form-control" maxlength="200" placeholder="Duyuru başlığı" />
+                    <span asp-validation-for="Baslik" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Icerik" class="form-label fw-semibold">İçerik</label>
+                    <textarea asp-for="Icerik" class="form-control" rows="6" maxlength="2000"
+                              placeholder="Duyuru içeriğini yazınız..."></textarea>
+                    <span asp-validation-for="Icerik" class="text-danger"></span>
+                </div>
+
+                <input type="hidden" asp-for="Hedef" />
+
+                <button type="submit" class="btn btn-primary fw-semibold">
+                    <i class="bi bi-megaphone"></i> Yayınla
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

@@ -93,6 +93,7 @@ builder.Services.AddScoped<RandevuService>();
 builder.Services.AddScoped<OgretmenRandevuService>();
 builder.Services.AddScoped<BildirimService>();
 builder.Services.AddScoped<OgretmenListeService>();
+builder.Services.AddScoped<DuyuruService>();
 
 // Rate Limiting — anonim arama endpointleri için IP bazlı sınırlama
 builder.Services.AddRateLimiter(options =>

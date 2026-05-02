@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:views="clr-namespace:OgrenciBilgiSistemi.Mobil.Views"
+             x:Class="OgrenciBilgiSistemi.Mobil.Views.OgretmenDuyuruOlusturView"
+             Title="Duyuru Yayınla"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="#F0F2F5">
+
+    <Grid RowDefinitions="125, *">
+
+        <Border Grid.Row="0" StrokeThickness="0" BackgroundColor="#16A085" VerticalOptions="FillAndExpand">
+            <Border.Shadow>
+                <Shadow Brush="#16A085" Offset="0,4" Radius="15" Opacity="0.4" />
+            </Border.Shadow>
+            <Grid>
+                <views:AnaBaslikView x:Name="MyHeader" ShowBack="True" ShowProfile="False" />
+                <VerticalStackLayout Spacing="2" VerticalOptions="End" HorizontalOptions="Center" Margin="20,0,20,15">
+                    <Label Text="Duyuru Yayınla" FontSize="18" FontFamily="OpenSansSemibold" TextColor="White" HorizontalTextAlignment="Center" />
+                    <Label Text="Velilere yeni bir duyuru gönderin" FontSize="14" TextColor="White" Opacity="0.8" HorizontalTextAlignment="Center" />
+                </VerticalStackLayout>
+            </Grid>
+        </Border>
+
+        <ScrollView Grid.Row="1">
+            <Border Margin="15,-15,15,15" StrokeShape="RoundRectangle 20" StrokeThickness="0" BackgroundColor="White">
+                <Border.Shadow>
+                    <Shadow Brush="Black" Offset="0,10" Radius="20" Opacity="0.08" />
+                </Border.Shadow>
+                <VerticalStackLayout Padding="18" Spacing="14">
+
+                    <Label Text="Başlık" FontSize="13" FontAttributes="Bold" TextColor="#7F8C8D" />
+                    <Border StrokeShape="RoundRectangle 10" Stroke="#E0E0E0" StrokeThickness="1" BackgroundColor="#FAFAFA">
+                        <Entry x:Name="BaslikEntry" Placeholder="Duyuru başlığı"
+                               FontSize="14" TextColor="#2C3E50" MaxLength="200"
+                               BackgroundColor="Transparent" Margin="10,0" />
+                    </Border>
+
+                    <Label Text="İçerik" FontSize="13" FontAttributes="Bold" TextColor="#7F8C8D" />
+                    <Border StrokeShape="RoundRectangle 10" Stroke="#E0E0E0" StrokeThickness="1" BackgroundColor="#FAFAFA">
+                        <Editor x:Name="IcerikEditor" Placeholder="Duyuru içeriğini buraya yazınız..."
+                                FontSize="14" TextColor="#2C3E50" MaxLength="2000"
+                                AutoSize="TextChanges" HeightRequest="180"
+                                BackgroundColor="Transparent" Margin="10,5" />
+                    </Border>
+
+                    <Label x:Name="HataLabel" Text="" TextColor="#E74C3C" FontSize="13" IsVisible="False" />
+
+                    <Button x:Name="YayinlaButonu" Text="Yayınla"
+                            BackgroundColor="#16A085" TextColor="White" FontFamily="OpenSansSemibold"
+                            FontSize="15" CornerRadius="10" HeightRequest="46" Clicked="OnYayinlaClicked" />
+
+                </VerticalStackLayout>
+            </Border>
+        </ScrollView>
+    </Grid>
+</ContentPage>

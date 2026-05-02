@@ -90,5 +90,11 @@ namespace OgrenciBilgiSistemi.Mobil.Views
             await Navigation.PushAsync(new BildirimListeView(
                 Application.Current.MainPage.Handler.MauiContext.Services.GetService<BildirimService>()));
         }
+
+        private async void OnDuyurularTapped(object sender, TappedEventArgs e)
+        {
+            await Navigation.PushAsync(new VeliDuyurularView(
+                Application.Current.MainPage.Handler.MauiContext.Services.GetService<DuyuruService>()));
+        }
     }
 }

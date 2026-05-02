@@ -17,6 +17,9 @@ namespace OgrenciBilgiSistemi.Shared.Enums
         RandevuIptalEdildi = 4,
 
         [Display(Name = "Randevu Hatırlatma")]
-        RandevuHatirlatma = 5
+        RandevuHatirlatma = 5,
+
+        [Display(Name = "Duyuru Yayınlandı")]
+        DuyuruYayinlandi = 6
     }
 }
