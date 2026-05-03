@@ -41,8 +41,8 @@
                                 </BoxView.Clip>
                             </BoxView>
                             <VerticalStackLayout Grid.Column="1" Spacing="4" VerticalOptions="Center" Margin="8,0,0,0">
-                                <Label Text="{Binding GorunenAd}" FontSize="15" FontFamily="OpenSansSemibold" TextColor="#2C3E50" />
-                                <Label Text="{Binding VeliTelefon}" FontSize="12" TextColor="#7F8C8D" />
+                                <Label Text="{Binding KullaniciAdi}" FontSize="15" FontFamily="OpenSansSemibold" TextColor="#2C3E50" />
+                                <Label Text="{Binding Telefon}" FontSize="12" TextColor="#7F8C8D" />
                             </VerticalStackLayout>
                         </Grid>
                     </Border>

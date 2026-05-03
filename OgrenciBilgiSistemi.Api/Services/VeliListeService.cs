@@ -24,13 +24,13 @@ namespace OgrenciBilgiSistemi.Api.Services
             var liste = new List<VeliListeModel>();
 
             const string query = @"
-                SELECT k.KullaniciId, k.KullaniciAdi, vp.VeliAdSoyad, vp.VeliTelefon
+                SELECT k.KullaniciId, k.KullaniciAdi, k.Telefon
                 FROM Kullanicilar k
                 INNER JOIN VeliProfiller vp ON k.KullaniciId = vp.KullaniciId
                 WHERE k.KullaniciDurum = 1
                   AND k.Rol = @veliRol
                   AND vp.VeliDurum = 1
-                ORDER BY vp.VeliAdSoyad";
+                ORDER BY k.KullaniciAdi";
 
             try
             {
@@ -47,8 +47,7 @@ namespace OgrenciBilgiSistemi.Api.Services
                     {
                         KullaniciId = (int)reader["KullaniciId"],
                         KullaniciAdi = reader["KullaniciAdi"]?.ToString() ?? string.Empty,
-                        VeliAdSoyad = reader["VeliAdSoyad"] == DBNull.Value ? null : reader["VeliAdSoyad"].ToString(),
-                        VeliTelefon = reader["VeliTelefon"] == DBNull.Value ? null : reader["VeliTelefon"].ToString()
+                        Telefon = reader["Telefon"] == DBNull.Value ? null : reader["Telefon"].ToString()
                     });
                 }
             }
