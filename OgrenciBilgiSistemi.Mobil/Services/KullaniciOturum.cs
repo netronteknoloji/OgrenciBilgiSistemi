@@ -258,6 +258,7 @@ namespace OgrenciBilgiSistemi.Mobil.Services
         public static bool ServisMi => _rol == KullaniciRolu.Servis;
         public static bool VeliMi => _rol == KullaniciRolu.Veli;
         public static bool OgretmenMi => _rol == KullaniciRolu.Ogretmen;
+        public static bool AdminMi => _rol == KullaniciRolu.Admin || _rol == KullaniciRolu.GenelAdmin;
 
         public static string OkulKodu
         {

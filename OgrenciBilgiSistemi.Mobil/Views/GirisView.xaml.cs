@@ -108,19 +108,13 @@ namespace OgrenciBilgiSistemi.Mobil.Views
 
                 if (isSuccess)
                 {
-                    // Mobilde admin girişi desteklenmez
-                    if (KullaniciOturum.Rol == OgrenciBilgiSistemi.Shared.Enums.KullaniciRolu.Admin)
-                    {
-                        await KullaniciOturum.OturumTemizleAsync();
-                        await DisplayAlert("Uyarı", "Bu uygulama yönetici girişi desteklememektedir.", "Tamam");
-                        return;
-                    }
-
                     // "Beni Hatırla" bilgilerini SecureStorage'a kaydet
                     await ManageRememberMeAsync(username, password, secilenOkul.OkulKodu);
 
                     // Role göre yönlendirme
-                    if (KullaniciOturum.VeliMi)
+                    if (KullaniciOturum.AdminMi)
+                        await Shell.Current.GoToAsync("///AdminAnaSayfaView");
+                    else if (KullaniciOturum.VeliMi)
                         await Shell.Current.GoToAsync("///VeliAnaSayfaView");
                     else if (KullaniciOturum.ServisMi)
                         await Shell.Current.GoToAsync("///ServisEkraniView");

@@ -82,15 +82,55 @@ namespace OgrenciBilgiSistemi.Api.Controllers
             if (okul is null)
                 return BadRequest("Geçersiz okul kodu.");
 
+            // GenelAdmin (multi-tenant): kullanıcı adı/şifre appsettings'te tanımlıdır,
+            // DB'de aranmaz. Seçilen okulun bağlamında token üretilir.
+            var genelAdminKullaniciAdi = _configuration["GenelAdmin:KullaniciAdi"];
+            var genelAdminSifreHash = _configuration["GenelAdmin:SifreHash"];
+            if (!string.IsNullOrWhiteSpace(genelAdminKullaniciAdi) &&
+                !string.IsNullOrWhiteSpace(genelAdminSifreHash) &&
+                istek.KullaniciAdi == genelAdminKullaniciAdi)
+            {
+                var genelHasher = new Microsoft.AspNetCore.Identity.PasswordHasher<object>();
+                var dogrulama = genelHasher.VerifyHashedPassword(null!, genelAdminSifreHash, istek.Sifre);
+                if (dogrulama == Microsoft.AspNetCore.Identity.PasswordVerificationResult.Failed)
+                    return Unauthorized("Kullanıcı adı veya şifre hatalı.");
+
+                var genelAdminKullanici = new KullaniciModel
+                {
+                    KullaniciId = 0,
+                    KullaniciAdi = genelAdminKullaniciAdi,
+                    AdSoyad = "Genel Yönetici",
+                    Rol = KullaniciRolu.GenelAdmin,
+                    KullaniciDurum = true
+                };
+
+                var genelToken = GenerateJwtToken(genelAdminKullanici, okul.OkulKodu);
+                var genelRefresh = _refreshTokenService.TokenOlustur(genelAdminKullanici.KullaniciId, okul.OkulKodu);
+
+                return Ok(new
+                {
+                    token = genelToken,
+                    refreshToken = genelRefresh,
+                    expiresIn = AccessTokenDakika * 60,
+                    kullanici = new
+                    {
+                        genelAdminKullanici.KullaniciId,
+                        genelAdminKullanici.KullaniciAdi,
+                        genelAdminKullanici.AdSoyad,
+                        genelAdminKullanici.KullaniciDurum,
+                        genelAdminKullanici.Rol,
+                        genelAdminKullanici.BirimId,
+                        genelAdminKullanici.VeliProfilVar,
+                        genelAdminKullanici.ServisProfilVar
+                    }
+                });
+            }
+
             var kullanici = await _girisService.KimlikDogrulaAsync(
                 istek.KullaniciAdi, istek.Sifre, okul.ConnectionString);
 
             if (kullanici is null)
                 return Unauthorized("Kullanıcı adı veya şifre hatalı.");
-
-            // Mobil uygulamada admin girişi desteklenmez
-            if (kullanici.Rol == KullaniciRolu.Admin)
-                return Forbid("Bu uygulama yönetici girişi desteklememektedir.");
 
             // JWT access token üret (kısa süreli)
             var accessToken = GenerateJwtToken(kullanici, okul.OkulKodu);
@@ -231,9 +271,11 @@ namespace OgrenciBilgiSistemi.Api.Controllers
 
             var rolAdi = kullanici.Rol switch
             {
-                KullaniciRolu.Ogretmen => "Ogretmen",
+                KullaniciRolu.Admin     => "Admin",
+                KullaniciRolu.Ogretmen  => "Ogretmen",
                 KullaniciRolu.Servis    => "Servis",
-                KullaniciRolu.Veli     => "Veli",
+                KullaniciRolu.Veli      => "Veli",
+                KullaniciRolu.GenelAdmin => "GenelAdmin",
                 _ => throw new InvalidOperationException($"Desteklenmeyen rol: {kullanici.Rol}")
             };
 

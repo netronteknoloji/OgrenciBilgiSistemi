@@ -38,6 +38,7 @@ namespace OgrenciBilgiSistemi.Mobil
             builder.Services.AddSingleton<BildirimService>();
             builder.Services.AddSingleton<OgretmenListeService>();
             builder.Services.AddSingleton<DuyuruService>();
+            builder.Services.AddSingleton<AdminService>();
 
             // Sayfa kayıtları
             // GirisView ve SinifListeView Shell tarafından DI ile çözümleniyor
@@ -52,6 +53,7 @@ namespace OgrenciBilgiSistemi.Mobil
             builder.Services.AddTransient<BildirimListeView>();
             builder.Services.AddTransient<OgretmenDuyuruOlusturView>();
             builder.Services.AddTransient<VeliDuyurularView>();
+            builder.Services.AddTransient<AdminAnaSayfaView>();
 
 #if DEBUG
             builder.Logging.AddDebug();

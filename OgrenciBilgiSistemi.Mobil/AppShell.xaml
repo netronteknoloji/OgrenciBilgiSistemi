@@ -24,4 +24,8 @@
     <ShellContent
         ContentTemplate="{DataTemplate views:VeliAnaSayfaView}"
         Route="VeliAnaSayfaView" />
+
+    <ShellContent
+        ContentTemplate="{DataTemplate views:AdminAnaSayfaView}"
+        Route="AdminAnaSayfaView" />
 </Shell>
