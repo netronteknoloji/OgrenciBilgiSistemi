@@ -40,7 +40,7 @@ namespace OgrenciBilgiSistemi.Mobil.Views
                     AnakapiSayisiLabel.Text   = ozet.BugunAnakapiCikis.ToString();
                 }
 
-                ServisSayisiLabel.Text = servisler.Count.ToString();
+                ServisSayisiLabel.Text = servisler is null ? "!" : servisler.Count.ToString();
             }
             catch (Exception ex)
             {
@@ -84,7 +84,18 @@ namespace OgrenciBilgiSistemi.Mobil.Views
             => await Navigation.PushAsync(new AdminAnakapiCikisBugunView(_adminService));
 
         private async void OnServisOzetTapped(object sender, TappedEventArgs e)
-            => await Navigation.PushAsync(new AdminServisListeView(_adminService));
+        {
+            System.Diagnostics.Debug.WriteLine("[AdminAnaSayfa] OnServisOzetTapped invoked");
+            try
+            {
+                await Navigation.PushAsync(new AdminServisListeView(_adminService));
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[AdminAnaSayfa] Servis listesi açılamadı: {ex}");
+                await DisplayAlert("Hata", $"Servis listesi açılamadı: {ex.Message}", "Tamam");
+            }
+        }
 
         private static T? Servis<T>() where T : class
             => Application.Current?.MainPage?.Handler?.MauiContext?.Services.GetService<T>();

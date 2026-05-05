@@ -30,8 +30,10 @@ namespace OgrenciBilgiSistemi.Mobil.Services
 
         /// <summary>
         /// Yönetici ana sayfası için tüm servis kullanıcılarını öğrenci sayılarıyla birlikte getirir.
+        /// Başarısızlık (HTTP hata, deserialize hatası) durumunda <c>null</c> döner;
+        /// boş liste döndüğünde gerçekten kayıt yoktur.
         /// </summary>
-        public async Task<List<ServisListeOgesi>> ServisListesiGetir()
+        public async Task<List<ServisListeOgesi>?> ServisListesiGetir()
         {
             try
             {
@@ -42,13 +44,15 @@ namespace OgrenciBilgiSistemi.Mobil.Services
                     var json = await response.Content.ReadAsStringAsync();
                     return JsonSerializer.Deserialize<List<ServisListeOgesi>>(json, _jsonOptions) ?? new();
                 }
+
+                System.Diagnostics.Debug.WriteLine($"[AdminService.ServisListesiGetir] HTTP {(int)response.StatusCode} {response.StatusCode}");
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[AdminService.ServisListesiGetir HATASI]: {ex.Message}");
             }
 
-            return new();
+            return null;
         }
 
         /// <summary>

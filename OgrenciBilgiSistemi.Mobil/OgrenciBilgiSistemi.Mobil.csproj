@@ -11,8 +11,8 @@
 
 		<ApplicationTitle>OgrenciBilgiSistemi</ApplicationTitle>
 
-		<ApplicationDisplayVersion>2.8</ApplicationDisplayVersion>
-		<ApplicationVersion>53</ApplicationVersion>
+		<ApplicationDisplayVersion>2.9</ApplicationDisplayVersion>
+		<ApplicationVersion>54</ApplicationVersion>
 	</PropertyGroup>
 
 	<!-- Platform versiyonları -->

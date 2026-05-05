@@ -24,6 +24,15 @@ namespace OgrenciBilgiSistemi.Mobil.Views
             try
             {
                 var liste = await _adminService.ServisListesiGetir();
+
+                if (liste is null)
+                {
+                    ServisCollection.ItemsSource = null;
+                    AltBaslikLabel.Text = "";
+                    BosDurumLabel.Text = "Liste alınamadı. Sunucuya ulaşılamıyor olabilir.";
+                    return;
+                }
+
                 ServisCollection.ItemsSource = liste;
                 AltBaslikLabel.Text = $"{liste.Count} servis";
 
