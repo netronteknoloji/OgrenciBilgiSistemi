@@ -2,346 +2,230 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:views="clr-namespace:OgrenciBilgiSistemi.Mobil.Views"
-             xmlns:models="clr-namespace:OgrenciBilgiSistemi.Mobil.Models"
              x:Class="OgrenciBilgiSistemi.Mobil.Views.AdminAnaSayfaView"
              Title="Yönetici"
              Shell.NavBarIsVisible="False"
              BackgroundColor="#F2F2F2">
 
-    <RefreshView x:Name="AnaRefreshView" Refreshing="OnYenile">
-        <ScrollView>
-            <VerticalStackLayout>
+    <ScrollView>
+        <Grid RowDefinitions="125, Auto, Auto">
 
-                <!-- Header -->
-                <Border StrokeThickness="0"
-                        BackgroundColor="#1F4E79"
-                        HeightRequest="125">
+            <Border Grid.Row="0"
+                    StrokeThickness="0"
+                    BackgroundColor="#1F4E79"
+                    VerticalOptions="FillAndExpand">
+                <Border.Shadow>
+                    <Shadow Brush="#1F4E79" Offset="0,4" Radius="15" Opacity="0.4" />
+                </Border.Shadow>
+
+                <Grid>
+                    <views:AnaBaslikView x:Name="MyHeader"
+                                          ShowBack="False"
+                                          ShowProfile="True" />
+
+                    <VerticalStackLayout Spacing="2"
+                                         VerticalOptions="End"
+                                         Margin="20,0,20,35">
+                        <Label x:Name="WelcomeLabel"
+                               Text="Merhaba"
+                               FontSize="18"
+                               FontFamily="OpenSansSemibold"
+                               TextColor="White" />
+                        <Label Text="Yönetici Paneli"
+                               FontSize="14"
+                               FontFamily="OpenSansSemibold"
+                               TextColor="White"
+                               Opacity="0.8" />
+                    </VerticalStackLayout>
+                </Grid>
+            </Border>
+
+            <!-- Okul adı bilgisi -->
+            <Border Grid.Row="1"
+                    Margin="15,-28,15,10"
+                    HeightRequest="55"
+                    StrokeShape="RoundRectangle 28"
+                    StrokeThickness="0"
+                    BackgroundColor="White">
+                <Border.Shadow>
+                    <Shadow Brush="Black" Offset="0,10" Radius="20" Opacity="0.08" />
+                </Border.Shadow>
+                <Grid ColumnDefinitions="55, *">
+                    <Label Grid.Column="0" Text="&#x1F3EB;"
+                           VerticalOptions="Center" HorizontalOptions="Center" FontSize="22" />
+                    <Label Grid.Column="1" x:Name="OkulAdiLabel"
+                           Text="Yükleniyor..."
+                           VerticalOptions="Center"
+                           FontSize="15"
+                           FontFamily="OpenSansSemibold"
+                           TextColor="#2C3E50" />
+                </Grid>
+            </Border>
+
+            <!-- KPI kartları -->
+            <Grid Grid.Row="2"
+                  Margin="15,5,15,20"
+                  ColumnDefinitions="*,*"
+                  RowDefinitions="Auto,Auto,Auto"
+                  ColumnSpacing="10"
+                  RowSpacing="10">
+
+                <!-- Toplam öğrenci -->
+                <Border Grid.Row="0" Grid.Column="0"
+                        StrokeShape="RoundRectangle 16"
+                        StrokeThickness="0"
+                        BackgroundColor="White"
+                        HeightRequest="120">
                     <Border.Shadow>
-                        <Shadow Brush="#1F4E79" Offset="0,4" Radius="15" Opacity="0.4" />
+                        <Shadow Brush="Black" Offset="0,2" Radius="8" Opacity="0.06" />
                     </Border.Shadow>
-
-                    <Grid>
-                        <views:AnaBaslikView x:Name="MyHeader"
-                                              ShowBack="False"
-                                              ShowProfile="True" />
-
-                        <VerticalStackLayout Spacing="2"
-                                             VerticalOptions="End"
-                                             Margin="20,0,20,35">
-                            <Label x:Name="WelcomeLabel"
-                                   Text="Merhaba"
-                                   FontSize="18"
-                                   FontFamily="OpenSansSemibold"
-                                   TextColor="White" />
-                            <Label Text="Yönetici Paneli"
-                                   FontSize="14"
-                                   FontFamily="OpenSansSemibold"
-                                   TextColor="White"
-                                   Opacity="0.8" />
-                        </VerticalStackLayout>
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnOgrencilerTapped" />
+                    </Border.GestureRecognizers>
+                    <Grid Padding="14" RowDefinitions="Auto,*,Auto">
+                        <Label Grid.Row="0" Text="&#x1F468;&#x200D;&#x1F393;" FontSize="22" />
+                        <Label Grid.Row="1" x:Name="OgrenciSayisiLabel"
+                               Text="-"
+                               FontSize="28"
+                               FontFamily="OpenSansSemibold"
+                               TextColor="#1F4E79"
+                               VerticalOptions="End" />
+                        <Label Grid.Row="2" Text="Toplam Öğrenci"
+                               FontSize="12" TextColor="#7F8C8D"
+                               FontFamily="OpenSansSemibold" />
                     </Grid>
                 </Border>
 
-                <!-- KPI Kartları (Toplam Servis + Bugün Yemekhane + Bugün Çıkış) -->
-                <Grid Margin="15,-28,15,10"
-                      ColumnDefinitions="*,*,*"
-                      ColumnSpacing="8">
+                <!-- Toplam öğretmen -->
+                <Border Grid.Row="0" Grid.Column="1"
+                        StrokeShape="RoundRectangle 16"
+                        StrokeThickness="0"
+                        BackgroundColor="White"
+                        HeightRequest="120">
+                    <Border.Shadow>
+                        <Shadow Brush="Black" Offset="0,2" Radius="8" Opacity="0.06" />
+                    </Border.Shadow>
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnOgretmenlerTapped" />
+                    </Border.GestureRecognizers>
+                    <Grid Padding="14" RowDefinitions="Auto,*,Auto">
+                        <Label Grid.Row="0" Text="&#x1F468;&#x200D;&#x1F3EB;" FontSize="22" />
+                        <Label Grid.Row="1" x:Name="OgretmenSayisiLabel"
+                               Text="-"
+                               FontSize="28"
+                               FontFamily="OpenSansSemibold"
+                               TextColor="#16A085"
+                               VerticalOptions="End" />
+                        <Label Grid.Row="2" Text="Toplam Öğretmen"
+                               FontSize="12" TextColor="#7F8C8D"
+                               FontFamily="OpenSansSemibold" />
+                    </Grid>
+                </Border>
 
-                    <Border Grid.Column="0"
-                            StrokeShape="RoundRectangle 16"
-                            StrokeThickness="0"
-                            BackgroundColor="White"
-                            HeightRequest="100">
-                        <Border.Shadow>
-                            <Shadow Brush="Black" Offset="0,4" Radius="12" Opacity="0.10" />
-                        </Border.Shadow>
-                        <Grid Padding="10,10" RowDefinitions="Auto,*,Auto">
-                            <Label Grid.Row="0" Text="&#x1F68C;" FontSize="20" />
-                            <Label Grid.Row="1"
-                                   x:Name="ToplamServisLabel"
-                                   Text="-"
-                                   FontSize="22"
-                                   FontFamily="OpenSansSemibold"
-                                   TextColor="#1F4E79"
-                                   VerticalOptions="End" />
-                            <Label Grid.Row="2"
-                                   Text="Toplam Servis"
-                                   FontSize="11"
-                                   TextColor="#7F8C8D"
-                                   FontFamily="OpenSansSemibold" />
-                        </Grid>
-                    </Border>
+                <!-- Toplam sınıf -->
+                <Border Grid.Row="1" Grid.Column="0"
+                        StrokeShape="RoundRectangle 16"
+                        StrokeThickness="0"
+                        BackgroundColor="White"
+                        HeightRequest="120">
+                    <Border.Shadow>
+                        <Shadow Brush="Black" Offset="0,2" Radius="8" Opacity="0.06" />
+                    </Border.Shadow>
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnSiniflarTapped" />
+                    </Border.GestureRecognizers>
+                    <Grid Padding="14" RowDefinitions="Auto,*,Auto">
+                        <Label Grid.Row="0" Text="&#x1F3EB;" FontSize="22" />
+                        <Label Grid.Row="1" x:Name="SinifSayisiLabel"
+                               Text="-"
+                               FontSize="28"
+                               FontFamily="OpenSansSemibold"
+                               TextColor="#8E44AD"
+                               VerticalOptions="End" />
+                        <Label Grid.Row="2" Text="Toplam Sınıf"
+                               FontSize="12" TextColor="#7F8C8D"
+                               FontFamily="OpenSansSemibold" />
+                    </Grid>
+                </Border>
 
-                    <Border Grid.Column="1"
-                            StrokeShape="RoundRectangle 16"
-                            StrokeThickness="0"
-                            BackgroundColor="White"
-                            HeightRequest="100">
-                        <Border.Shadow>
-                            <Shadow Brush="Black" Offset="0,4" Radius="12" Opacity="0.10" />
-                        </Border.Shadow>
-                        <Border.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnYemekhaneTapped" />
-                        </Border.GestureRecognizers>
-                        <Grid Padding="10,10" RowDefinitions="Auto,*,Auto">
-                            <Label Grid.Row="0" Text="&#x1F37D;" FontSize="20" />
-                            <Label Grid.Row="1"
-                                   x:Name="YemekhaneSayisiLabel"
-                                   Text="-"
-                                   FontSize="22"
-                                   FontFamily="OpenSansSemibold"
-                                   TextColor="#C0392B"
-                                   VerticalOptions="End" />
-                            <Label Grid.Row="2"
-                                   Text="Bugün Yemekhane"
-                                   FontSize="11"
-                                   TextColor="#7F8C8D"
-                                   FontFamily="OpenSansSemibold" />
-                        </Grid>
-                    </Border>
+                <!-- Toplam veli -->
+                <Border Grid.Row="1" Grid.Column="1"
+                        StrokeShape="RoundRectangle 16"
+                        StrokeThickness="0"
+                        BackgroundColor="White"
+                        HeightRequest="120">
+                    <Border.Shadow>
+                        <Shadow Brush="Black" Offset="0,2" Radius="8" Opacity="0.06" />
+                    </Border.Shadow>
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnVelilerTapped" />
+                    </Border.GestureRecognizers>
+                    <Grid Padding="14" RowDefinitions="Auto,*,Auto">
+                        <Label Grid.Row="0" Text="&#x1F468;&#x200D;&#x1F467;&#x200D;&#x1F466;" FontSize="22" />
+                        <Label Grid.Row="1" x:Name="VeliSayisiLabel"
+                               Text="-"
+                               FontSize="28"
+                               FontFamily="OpenSansSemibold"
+                               TextColor="#E67E22"
+                               VerticalOptions="End" />
+                        <Label Grid.Row="2" Text="Toplam Veli"
+                               FontSize="12" TextColor="#7F8C8D"
+                               FontFamily="OpenSansSemibold" />
+                    </Grid>
+                </Border>
 
-                    <Border Grid.Column="2"
-                            StrokeShape="RoundRectangle 16"
-                            StrokeThickness="0"
-                            BackgroundColor="White"
-                            HeightRequest="100">
-                        <Border.Shadow>
-                            <Shadow Brush="Black" Offset="0,4" Radius="12" Opacity="0.10" />
-                        </Border.Shadow>
-                        <Border.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnAnakapiCikisTapped" />
-                        </Border.GestureRecognizers>
-                        <Grid Padding="10,10" RowDefinitions="Auto,*,Auto">
-                            <Label Grid.Row="0" Text="&#x1F6AA;" FontSize="20" />
-                            <Label Grid.Row="1"
-                                   x:Name="AnakapiCikisSayisiLabel"
-                                   Text="-"
-                                   FontSize="22"
-                                   FontFamily="OpenSansSemibold"
-                                   TextColor="#2980B9"
-                                   VerticalOptions="End" />
-                            <Label Grid.Row="2"
-                                   Text="Bugün Çıkış"
-                                   FontSize="11"
-                                   TextColor="#7F8C8D"
-                                   FontFamily="OpenSansSemibold" />
-                        </Grid>
-                    </Border>
-                </Grid>
+                <!-- Bugün yemekhane giriş -->
+                <Border Grid.Row="2" Grid.Column="0"
+                        StrokeShape="RoundRectangle 16"
+                        StrokeThickness="0"
+                        BackgroundColor="White"
+                        HeightRequest="120">
+                    <Border.Shadow>
+                        <Shadow Brush="Black" Offset="0,2" Radius="8" Opacity="0.06" />
+                    </Border.Shadow>
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnYemekhaneTapped" />
+                    </Border.GestureRecognizers>
+                    <Grid Padding="14" RowDefinitions="Auto,*,Auto">
+                        <Label Grid.Row="0" Text="&#x1F37D;" FontSize="22" />
+                        <Label Grid.Row="1" x:Name="YemekhaneSayisiLabel"
+                               Text="-"
+                               FontSize="28"
+                               FontFamily="OpenSansSemibold"
+                               TextColor="#C0392B"
+                               VerticalOptions="End" />
+                        <Label Grid.Row="2" Text="Bugün Yemekhane"
+                               FontSize="12" TextColor="#7F8C8D"
+                               FontFamily="OpenSansSemibold" />
+                    </Grid>
+                </Border>
 
-                <!-- Yönetim Kısayolları -->
-                <Grid Margin="15,10,15,5"
-                      ColumnDefinitions="*,*,*"
-                      ColumnSpacing="10">
-                    <Border Grid.Column="0"
-                            StrokeShape="RoundRectangle 12"
-                            StrokeThickness="0"
-                            BackgroundColor="White"
-                            HeightRequest="76">
-                        <Border.Shadow>
-                            <Shadow Brush="Black" Offset="0,2" Radius="6" Opacity="0.05" />
-                        </Border.Shadow>
-                        <Border.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnVelilerTapped" />
-                        </Border.GestureRecognizers>
-                        <VerticalStackLayout VerticalOptions="Center" Spacing="4">
-                            <Label Text="&#x1F468;&#x200D;&#x1F467;&#x200D;&#x1F466;" FontSize="22" HorizontalOptions="Center" />
-                            <Label Text="Veliler" FontSize="13" TextColor="#2C3E50" FontFamily="OpenSansSemibold" HorizontalOptions="Center" />
-                        </VerticalStackLayout>
-                    </Border>
-                    <Border Grid.Column="1"
-                            StrokeShape="RoundRectangle 12"
-                            StrokeThickness="0"
-                            BackgroundColor="White"
-                            HeightRequest="76">
-                        <Border.Shadow>
-                            <Shadow Brush="Black" Offset="0,2" Radius="6" Opacity="0.05" />
-                        </Border.Shadow>
-                        <Border.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnOgretmenlerTapped" />
-                        </Border.GestureRecognizers>
-                        <VerticalStackLayout VerticalOptions="Center" Spacing="4">
-                            <Label Text="&#x1F468;&#x200D;&#x1F3EB;" FontSize="22" HorizontalOptions="Center" />
-                            <Label Text="Öğretmenler" FontSize="13" TextColor="#2C3E50" FontFamily="OpenSansSemibold" HorizontalOptions="Center" />
-                        </VerticalStackLayout>
-                    </Border>
-                    <Border Grid.Column="2"
-                            StrokeShape="RoundRectangle 12"
-                            StrokeThickness="0"
-                            BackgroundColor="White"
-                            HeightRequest="76">
-                        <Border.Shadow>
-                            <Shadow Brush="Black" Offset="0,2" Radius="6" Opacity="0.05" />
-                        </Border.Shadow>
-                        <Border.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnSiniflarTapped" />
-                        </Border.GestureRecognizers>
-                        <VerticalStackLayout VerticalOptions="Center" Spacing="4">
-                            <Label Text="&#x1F3EB;" FontSize="22" HorizontalOptions="Center" />
-                            <Label Text="Sınıflar" FontSize="13" TextColor="#2C3E50" FontFamily="OpenSansSemibold" HorizontalOptions="Center" />
-                        </VerticalStackLayout>
-                    </Border>
-                </Grid>
-
-                <!-- Servisler başlığı -->
-                <Grid Margin="20,10,20,5" ColumnDefinitions="*,Auto">
-                    <Label Grid.Column="0"
-                           Text="Servisler"
-                           FontSize="18"
-                           FontFamily="OpenSansSemibold"
-                           TextColor="#2C3E50"
-                           VerticalOptions="Center" />
-                    <Label Grid.Column="1"
-                           x:Name="ServisSayisiAltLabel"
-                           Text=""
-                           FontSize="13"
-                           TextColor="#7F8C8D"
-                           VerticalOptions="Center" />
-                </Grid>
-
-                <!-- Servis Listesi -->
-                <VerticalStackLayout x:Name="ServislerStack"
-                                     Margin="15,0,15,10"
-                                     Spacing="8"
-                                     BindableLayout.ItemsSource="{Binding Servisler}">
-                    <BindableLayout.ItemTemplate>
-                        <DataTemplate x:DataType="models:ServisListeOgesi">
-                            <Border StrokeShape="RoundRectangle 12"
-                                    StrokeThickness="0"
-                                    BackgroundColor="White"
-                                    Padding="14,12">
-                                <Border.Shadow>
-                                    <Shadow Brush="Black" Offset="0,2" Radius="6" Opacity="0.05" />
-                                </Border.Shadow>
-                                <Border.GestureRecognizers>
-                                    <TapGestureRecognizer Tapped="OnServisSecildi" />
-                                </Border.GestureRecognizers>
-                                <Grid ColumnDefinitions="44,*,Auto" RowDefinitions="Auto,Auto" RowSpacing="2">
-                                    <Border Grid.RowSpan="2"
-                                            StrokeShape="RoundRectangle 22"
-                                            StrokeThickness="0"
-                                            BackgroundColor="#E8F0FA"
-                                            HeightRequest="44"
-                                            WidthRequest="44"
-                                            VerticalOptions="Center">
-                                        <Label Text="&#x1F68C;"
-                                               FontSize="20"
-                                               HorizontalOptions="Center"
-                                               VerticalOptions="Center" />
-                                    </Border>
-                                    <Label Grid.Column="1" Grid.Row="0"
-                                           Text="{Binding KullaniciAdi}"
-                                           FontSize="15"
-                                           FontFamily="OpenSansSemibold"
-                                           TextColor="#2C3E50"
-                                           Margin="12,0,0,0" />
-                                    <Label Grid.Column="1" Grid.Row="1"
-                                           Text="{Binding PlakaGosterim, StringFormat='Plaka: {0}'}"
-                                           FontSize="12"
-                                           TextColor="#7F8C8D"
-                                           Margin="12,0,0,0" />
-                                    <VerticalStackLayout Grid.Column="2" Grid.RowSpan="2" VerticalOptions="Center" Spacing="2">
-                                        <Label Text="{Binding OgrenciSayisi, StringFormat='{0} öğrenci'}"
-                                               FontSize="12"
-                                               TextColor="#1F4E79"
-                                               FontFamily="OpenSansSemibold"
-                                               HorizontalOptions="End" />
-                                        <Label Text="{Binding DurumMetni}"
-                                               FontSize="11"
-                                               TextColor="#16A085"
-                                               HorizontalOptions="End" />
-                                    </VerticalStackLayout>
-                                </Grid>
-                            </Border>
-                        </DataTemplate>
-                    </BindableLayout.ItemTemplate>
-                </VerticalStackLayout>
-
-                <Label x:Name="ServisBosLabel"
-                       Text="Henüz servis tanımlı değil."
-                       FontSize="13"
-                       TextColor="#95A5A6"
-                       Margin="20,5,20,15"
-                       IsVisible="False" />
-
-                <!-- Öğrenciler başlığı -->
-                <Grid Margin="20,10,20,5" ColumnDefinitions="*,Auto">
-                    <Label Grid.Column="0"
-                           Text="Öğrenciler"
-                           FontSize="18"
-                           FontFamily="OpenSansSemibold"
-                           TextColor="#2C3E50"
-                           VerticalOptions="Center" />
-                    <Label Grid.Column="1"
-                           Text="Tümünü Gör ›"
-                           FontSize="13"
-                           TextColor="#1F4E79"
-                           FontFamily="OpenSansSemibold"
-                           VerticalOptions="Center">
-                        <Label.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnTumOgrencileriGorTapped" />
-                        </Label.GestureRecognizers>
-                    </Label>
-                </Grid>
-
-                <!-- Öğrenci Listesi (önizleme: ilk 20) -->
-                <VerticalStackLayout x:Name="OgrencilerStack"
-                                     Margin="15,0,15,20"
-                                     Spacing="8"
-                                     BindableLayout.ItemsSource="{Binding OgrencilerOnizleme}">
-                    <BindableLayout.ItemTemplate>
-                        <DataTemplate x:DataType="models:Ogrenci">
-                            <Border StrokeShape="RoundRectangle 12"
-                                    StrokeThickness="0"
-                                    BackgroundColor="White"
-                                    Padding="14,10">
-                                <Border.Shadow>
-                                    <Shadow Brush="Black" Offset="0,2" Radius="6" Opacity="0.05" />
-                                </Border.Shadow>
-                                <Grid ColumnDefinitions="44,*,Auto" RowDefinitions="Auto,Auto" RowSpacing="2">
-                                    <Border Grid.RowSpan="2"
-                                            StrokeShape="RoundRectangle 22"
-                                            StrokeThickness="0"
-                                            BackgroundColor="#FEF3E0"
-                                            HeightRequest="44"
-                                            WidthRequest="44"
-                                            VerticalOptions="Center">
-                                        <Label Text="&#x1F468;&#x200D;&#x1F393;"
-                                               FontSize="18"
-                                               HorizontalOptions="Center"
-                                               VerticalOptions="Center" />
-                                    </Border>
-                                    <Label Grid.Column="1" Grid.Row="0"
-                                           Text="{Binding OgrenciAdSoyad}"
-                                           FontSize="15"
-                                           FontFamily="OpenSansSemibold"
-                                           TextColor="#2C3E50"
-                                           Margin="12,0,0,0" />
-                                    <Label Grid.Column="1" Grid.Row="1"
-                                           Text="{Binding OgrenciNo, StringFormat='Öğrenci No: {0}'}"
-                                           FontSize="12"
-                                           TextColor="#7F8C8D"
-                                           Margin="12,0,0,0" />
-                                    <Label Grid.Column="2" Grid.RowSpan="2"
-                                           Text="{Binding SinifAdi}"
-                                           FontSize="12"
-                                           TextColor="#1F4E79"
-                                           FontFamily="OpenSansSemibold"
-                                           VerticalOptions="Center" />
-                                </Grid>
-                            </Border>
-                        </DataTemplate>
-                    </BindableLayout.ItemTemplate>
-                </VerticalStackLayout>
-
-                <Label x:Name="OgrenciBosLabel"
-                       Text="Henüz öğrenci tanımlı değil."
-                       FontSize="13"
-                       TextColor="#95A5A6"
-                       Margin="20,5,20,15"
-                       IsVisible="False" />
-
-            </VerticalStackLayout>
-        </ScrollView>
-    </RefreshView>
+                <!-- Bugün anakapı çıkış -->
+                <Border Grid.Row="2" Grid.Column="1"
+                        StrokeShape="RoundRectangle 16"
+                        StrokeThickness="0"
+                        BackgroundColor="White"
+                        HeightRequest="120">
+                    <Border.Shadow>
+                        <Shadow Brush="Black" Offset="0,2" Radius="8" Opacity="0.06" />
+                    </Border.Shadow>
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnAnakapiTapped" />
+                    </Border.GestureRecognizers>
+                    <Grid Padding="14" RowDefinitions="Auto,*,Auto">
+                        <Label Grid.Row="0" Text="&#x1F6AA;" FontSize="22" />
+                        <Label Grid.Row="1" x:Name="AnakapiSayisiLabel"
+                               Text="-"
+                               FontSize="28"
+                               FontFamily="OpenSansSemibold"
+                               TextColor="#2980B9"
+                               VerticalOptions="End" />
+                        <Label Grid.Row="2" Text="Bugün Anakapı Çıkış"
+                               FontSize="12" TextColor="#7F8C8D"
+                               FontFamily="OpenSansSemibold" />
+                    </Grid>
+                </Border>
+            </Grid>
+        </Grid>
+    </ScrollView>
 </ContentPage>
