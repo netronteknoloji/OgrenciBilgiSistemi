@@ -24,6 +24,15 @@ namespace OgrenciBilgiSistemi.Mobil.Views
             try
             {
                 var liste = await _adminService.YemekhaneBugunGetir();
+
+                if (liste is null)
+                {
+                    ListeCollection.ItemsSource = null;
+                    AltBaslikLabel.Text = "";
+                    BosDurumLabel.Text = "Liste alınamadı. Sunucuya ulaşılamıyor olabilir.";
+                    return;
+                }
+
                 ListeCollection.ItemsSource = liste;
                 AltBaslikLabel.Text = $"Bugün {liste.Count} öğrenci";
 

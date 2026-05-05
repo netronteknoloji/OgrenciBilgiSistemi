@@ -23,20 +23,26 @@
         </Border>
 
         <Border Grid.Row="1"
-                Margin="15,10,15,0"
-                StrokeShape="RoundRectangle 12"
+                Margin="15,-28,15,0"
+                HeightRequest="55"
+                StrokeShape="RoundRectangle 28"
                 StrokeThickness="0"
                 BackgroundColor="White">
             <Border.Shadow>
-                <Shadow Brush="Black" Offset="0,2" Radius="6" Opacity="0.06" />
+                <Shadow Brush="Black" Offset="0,10" Radius="20" Opacity="0.08" />
             </Border.Shadow>
-            <SearchBar x:Name="AramaCubugu"
+            <Grid ColumnDefinitions="55, *">
+                <Label Grid.Column="0" Text="🔍"
+                       VerticalOptions="Center" HorizontalOptions="Center"
+                       FontSize="18" TextColor="#95A5A6" />
+                <Entry Grid.Column="1" x:Name="AramaCubugu"
                        Placeholder="İsim ile ara..."
-                       BackgroundColor="Transparent"
-                       TextColor="#2C3E50"
                        PlaceholderColor="#95A5A6"
-                       CancelButtonColor="#E67E22"
+                       TextColor="#2C3E50"
+                       FontSize="15"
+                       VerticalOptions="Center"
                        TextChanged="OnAramaMetniDegisti" />
+            </Grid>
         </Border>
 
         <CollectionView Grid.Row="2" x:Name="VeliCollection" Margin="15,10" SelectionMode="None">

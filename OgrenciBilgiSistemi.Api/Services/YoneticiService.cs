@@ -43,19 +43,21 @@ namespace OgrenciBilgiSistemi.Api.Services
                     (SELECT COUNT(*) FROM VeliProfiller
                         WHERE VeliDurum = 1) AS ToplamVeli,
 
-                    (SELECT COUNT(*) FROM OgrenciDetaylar
-                        WHERE IstasyonTipi = @yemekhaneTipi
-                          AND OgrenciGecisTipi = N'GİRİŞ'
-                          AND OgrenciGTarih IS NOT NULL
-                          AND OgrenciGTarih >= @bugun
-                          AND OgrenciGTarih < @yarin) AS BugunYemekhaneGiris,
+                    (SELECT COUNT(*) FROM OgrenciDetaylar d
+                        INNER JOIN Ogrenciler o ON o.OgrenciId = d.OgrenciId
+                        WHERE d.IstasyonTipi = @yemekhaneTipi
+                          AND d.OgrenciGecisTipi = N'GİRİŞ'
+                          AND d.OgrenciGTarih >= @bugun
+                          AND d.OgrenciGTarih < @yarin
+                          AND o.OgrenciDurum = 1) AS BugunYemekhaneGiris,
 
-                    (SELECT COUNT(*) FROM OgrenciDetaylar
-                        WHERE IstasyonTipi = @anaKapiTipi
-                          AND OgrenciGecisTipi = N'ÇIKIŞ'
-                          AND OgrenciCTarih IS NOT NULL
-                          AND OgrenciCTarih >= @bugun
-                          AND OgrenciCTarih < @yarin) AS BugunAnakapiCikis;";
+                    (SELECT COUNT(*) FROM OgrenciDetaylar d
+                        INNER JOIN Ogrenciler o ON o.OgrenciId = d.OgrenciId
+                        WHERE d.IstasyonTipi = @anaKapiTipi
+                          AND d.OgrenciGecisTipi = N'ÇIKIŞ'
+                          AND d.OgrenciCTarih >= @bugun
+                          AND d.OgrenciCTarih < @yarin
+                          AND o.OgrenciDurum = 1) AS BugunAnakapiCikis;";
 
             var ozet = new OkulOzetModel();
 

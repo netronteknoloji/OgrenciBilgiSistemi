@@ -53,8 +53,10 @@ namespace OgrenciBilgiSistemi.Mobil.Services
 
         /// <summary>
         /// Bugün yemekhaneye giriş yapan öğrencilerin listesini getirir.
+        /// Başarısızlık (HTTP hata, deserialize hatası) durumunda <c>null</c> döner;
+        /// boş liste döndüğünde gerçekten kayıt yoktur.
         /// </summary>
-        public async Task<List<YemekhaneBugunOgesi>> YemekhaneBugunGetir()
+        public async Task<List<YemekhaneBugunOgesi>?> YemekhaneBugunGetir()
         {
             try
             {
@@ -65,19 +67,23 @@ namespace OgrenciBilgiSistemi.Mobil.Services
                     var json = await response.Content.ReadAsStringAsync();
                     return JsonSerializer.Deserialize<List<YemekhaneBugunOgesi>>(json, _jsonOptions) ?? new();
                 }
+
+                System.Diagnostics.Debug.WriteLine($"[AdminService.YemekhaneBugunGetir] HTTP {(int)response.StatusCode} {response.StatusCode}");
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[AdminService.YemekhaneBugunGetir HATASI]: {ex.Message}");
             }
 
-            return new();
+            return null;
         }
 
         /// <summary>
         /// Bugün ana kapıdan çıkış yapan öğrencilerin listesini getirir.
+        /// Başarısızlık (HTTP hata, deserialize hatası) durumunda <c>null</c> döner;
+        /// boş liste döndüğünde gerçekten kayıt yoktur.
         /// </summary>
-        public async Task<List<AnakapiCikisBugunOgesi>> AnakapiCikisBugunGetir()
+        public async Task<List<AnakapiCikisBugunOgesi>?> AnakapiCikisBugunGetir()
         {
             try
             {
@@ -88,13 +94,15 @@ namespace OgrenciBilgiSistemi.Mobil.Services
                     var json = await response.Content.ReadAsStringAsync();
                     return JsonSerializer.Deserialize<List<AnakapiCikisBugunOgesi>>(json, _jsonOptions) ?? new();
                 }
+
+                System.Diagnostics.Debug.WriteLine($"[AdminService.AnakapiCikisBugunGetir] HTTP {(int)response.StatusCode} {response.StatusCode}");
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[AdminService.AnakapiCikisBugunGetir HATASI]: {ex.Message}");
             }
 
-            return new();
+            return null;
         }
     }
 }

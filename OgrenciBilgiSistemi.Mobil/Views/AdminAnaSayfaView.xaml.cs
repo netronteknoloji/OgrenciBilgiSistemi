@@ -18,20 +18,29 @@ namespace OgrenciBilgiSistemi.Mobil.Views
             WelcomeLabel.Text = $"Merhaba, {KullaniciOturum.AdSoyad}";
             try
             {
-                var ozet = await _adminService.OkulOzetGetir();
+                var ozetGorevi = _adminService.OkulOzetGetir();
+                var servisGorevi = _adminService.ServisListesiGetir();
+                await Task.WhenAll(ozetGorevi, servisGorevi);
+
+                var ozet = await ozetGorevi;
+                var servisler = await servisGorevi;
+
                 if (ozet is null)
                 {
                     OkulAdiLabel.Text = "Veriler yüklenemedi";
-                    return;
+                }
+                else
+                {
+                    OkulAdiLabel.Text = string.IsNullOrWhiteSpace(ozet.OkulAdi) ? "Okul Özeti" : ozet.OkulAdi;
+                    OgrenciSayisiLabel.Text   = ozet.ToplamOgrenci.ToString();
+                    OgretmenSayisiLabel.Text  = ozet.ToplamOgretmen.ToString();
+                    SinifSayisiLabel.Text     = ozet.ToplamSinif.ToString();
+                    VeliSayisiLabel.Text      = ozet.ToplamVeli.ToString();
+                    YemekhaneSayisiLabel.Text = ozet.BugunYemekhaneGiris.ToString();
+                    AnakapiSayisiLabel.Text   = ozet.BugunAnakapiCikis.ToString();
                 }
 
-                OkulAdiLabel.Text = string.IsNullOrWhiteSpace(ozet.OkulAdi) ? "Okul Özeti" : ozet.OkulAdi;
-                OgrenciSayisiLabel.Text   = ozet.ToplamOgrenci.ToString();
-                OgretmenSayisiLabel.Text  = ozet.ToplamOgretmen.ToString();
-                SinifSayisiLabel.Text     = ozet.ToplamSinif.ToString();
-                VeliSayisiLabel.Text      = ozet.ToplamVeli.ToString();
-                YemekhaneSayisiLabel.Text = ozet.BugunYemekhaneGiris.ToString();
-                AnakapiSayisiLabel.Text   = ozet.BugunAnakapiCikis.ToString();
+                ServisSayisiLabel.Text = servisler.Count.ToString();
             }
             catch (Exception ex)
             {
@@ -73,6 +82,9 @@ namespace OgrenciBilgiSistemi.Mobil.Views
 
         private async void OnAnakapiTapped(object sender, TappedEventArgs e)
             => await Navigation.PushAsync(new AdminAnakapiCikisBugunView(_adminService));
+
+        private async void OnServisOzetTapped(object sender, TappedEventArgs e)
+            => await Navigation.PushAsync(new AdminServisListeView(_adminService));
 
         private static T? Servis<T>() where T : class
             => Application.Current?.MainPage?.Handler?.MauiContext?.Services.GetService<T>();

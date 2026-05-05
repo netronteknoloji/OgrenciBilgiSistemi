@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:views="clr-namespace:OgrenciBilgiSistemi.Mobil.Views"
+             xmlns:models="clr-namespace:OgrenciBilgiSistemi.Mobil.Models"
+             x:Class="OgrenciBilgiSistemi.Mobil.Views.AdminServisListeView"
+             Title="Servisler"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="#F0F2F5">
+
+    <Grid RowDefinitions="125, *">
+
+        <Border Grid.Row="0" StrokeThickness="0" BackgroundColor="#34495E" VerticalOptions="FillAndExpand">
+            <Border.Shadow>
+                <Shadow Brush="#34495E" Offset="0,4" Radius="15" Opacity="0.4" />
+            </Border.Shadow>
+            <Grid>
+                <views:AnaBaslikView x:Name="MyHeader" ShowBack="True" ShowProfile="False" />
+                <VerticalStackLayout Spacing="2" VerticalOptions="End" HorizontalOptions="Center" Margin="20,0,20,15">
+                    <Label Text="Servisler" FontSize="18" FontFamily="OpenSansSemibold" TextColor="White" HorizontalTextAlignment="Center" />
+                    <Label x:Name="AltBaslikLabel" Text="" FontSize="14" TextColor="White" Opacity="0.8" HorizontalTextAlignment="Center" />
+                </VerticalStackLayout>
+            </Grid>
+        </Border>
+
+        <CollectionView Grid.Row="1" x:Name="ServisCollection" Margin="15,10" SelectionMode="None">
+            <CollectionView.ItemsLayout>
+                <LinearItemsLayout Orientation="Vertical" ItemSpacing="8" />
+            </CollectionView.ItemsLayout>
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="models:ServisListeOgesi">
+                    <Border StrokeShape="RoundRectangle 14" StrokeThickness="0" Padding="14" BackgroundColor="White">
+                        <Border.Shadow>
+                            <Shadow Brush="Black" Offset="0,2" Radius="6" Opacity="0.05" />
+                        </Border.Shadow>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnServisSecildi" />
+                        </Border.GestureRecognizers>
+                        <Grid ColumnDefinitions="4,*,Auto" ColumnSpacing="12">
+                            <BoxView Grid.Column="0" BackgroundColor="#34495E" WidthRequest="4"
+                                     VerticalOptions="Fill" HorizontalOptions="Center">
+                                <BoxView.Clip>
+                                    <RoundRectangleGeometry CornerRadius="2" Rect="0,0,4,60" />
+                                </BoxView.Clip>
+                            </BoxView>
+                            <VerticalStackLayout Grid.Column="1" Spacing="3" VerticalOptions="Center">
+                                <Label Text="{Binding KullaniciAdi}"
+                                       FontSize="15"
+                                       FontFamily="OpenSansSemibold"
+                                       TextColor="#2C3E50" />
+                                <Label FontSize="12" TextColor="#7F8C8D">
+                                    <Label.FormattedText>
+                                        <FormattedString>
+                                            <Span Text="Plaka: " />
+                                            <Span Text="{Binding PlakaGosterim}" />
+                                            <Span Text="  •  " />
+                                            <Span Text="{Binding TelefonGosterim}" />
+                                        </FormattedString>
+                                    </Label.FormattedText>
+                                </Label>
+                            </VerticalStackLayout>
+                            <VerticalStackLayout Grid.Column="2" VerticalOptions="Center" Spacing="2">
+                                <Label Text="{Binding OgrenciSayisi}"
+                                       FontSize="15"
+                                       FontFamily="OpenSansSemibold"
+                                       TextColor="#34495E"
+                                       HorizontalOptions="End" />
+                                <Label Text="öğrenci"
+                                       FontSize="11"
+                                       TextColor="#95A5A6"
+                                       HorizontalOptions="End" />
+                            </VerticalStackLayout>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+            <CollectionView.EmptyView>
+                <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="10" Padding="20">
+                    <Label x:Name="BosDurumLabel" Text="Yükleniyor..." FontSize="16" TextColor="#95A5A6" HorizontalOptions="Center" HorizontalTextAlignment="Center" />
+                </VerticalStackLayout>
+            </CollectionView.EmptyView>
+        </CollectionView>
+    </Grid>
+</ContentPage>

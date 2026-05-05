@@ -66,7 +66,7 @@
             <Grid Grid.Row="2"
                   Margin="15,5,15,20"
                   ColumnDefinitions="*,*"
-                  RowDefinitions="Auto,Auto,Auto"
+                  RowDefinitions="Auto,Auto,Auto,Auto"
                   ColumnSpacing="10"
                   RowSpacing="10">
 
@@ -224,6 +224,43 @@
                                FontSize="12" TextColor="#7F8C8D"
                                FontFamily="OpenSansSemibold" />
                     </Grid>
+                </Border>
+
+                <!-- Toplam servis -->
+                <Border Grid.Row="3" Grid.Column="0"
+                        StrokeShape="RoundRectangle 16"
+                        StrokeThickness="0"
+                        BackgroundColor="White"
+                        HeightRequest="120">
+                    <Border.Shadow>
+                        <Shadow Brush="Black" Offset="0,2" Radius="8" Opacity="0.06" />
+                    </Border.Shadow>
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnServisOzetTapped" />
+                    </Border.GestureRecognizers>
+                    <Grid Padding="14" RowDefinitions="Auto,*,Auto">
+                        <Label Grid.Row="0" Text="&#x1F68C;" FontSize="22" />
+                        <Label Grid.Row="1" x:Name="ServisSayisiLabel"
+                               Text="-"
+                               FontSize="28"
+                               FontFamily="OpenSansSemibold"
+                               TextColor="#34495E"
+                               VerticalOptions="End" />
+                        <Label Grid.Row="2" Text="Toplam Servis"
+                               FontSize="12" TextColor="#7F8C8D"
+                               FontFamily="OpenSansSemibold" />
+                    </Grid>
+                </Border>
+
+                <!-- Boş kart (yer tutucu) -->
+                <Border Grid.Row="3" Grid.Column="1"
+                        StrokeShape="RoundRectangle 16"
+                        StrokeThickness="0"
+                        BackgroundColor="White"
+                        HeightRequest="120">
+                    <Border.Shadow>
+                        <Shadow Brush="Black" Offset="0,2" Radius="8" Opacity="0.06" />
+                    </Border.Shadow>
                 </Border>
             </Grid>
         </Grid>

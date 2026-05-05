@@ -61,6 +61,7 @@ namespace OgrenciBilgiSistemi.Mobil
             builder.Services.AddTransient<AdminVeliListeView>();
             builder.Services.AddTransient<AdminYemekhaneBugunView>();
             builder.Services.AddTransient<AdminAnakapiCikisBugunView>();
+            builder.Services.AddTransient<AdminServisListeView>();
             // AdminServisDetayView constructor'da runtime parametre (ServisListeOgesi) aldığı için DI'a kaydedilmedi.
 
 #if DEBUG
