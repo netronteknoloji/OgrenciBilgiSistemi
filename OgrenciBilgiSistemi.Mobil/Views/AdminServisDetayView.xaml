@@ -1,13 +1,29 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:views="clr-namespace:OgrenciBilgiSistemi.Mobil.Views"
              xmlns:models="clr-namespace:OgrenciBilgiSistemi.Mobil.Models"
              x:Class="OgrenciBilgiSistemi.Mobil.Views.AdminServisDetayView"
              Title="Servis Detayı"
+             Shell.NavBarIsVisible="False"
              BackgroundColor="#F2F2F2">
 
-    <ScrollView>
-        <VerticalStackLayout Spacing="0" Padding="0,0,0,20">
+    <Grid RowDefinitions="125, *">
+
+        <Border Grid.Row="0" StrokeThickness="0" BackgroundColor="#34495E" VerticalOptions="FillAndExpand">
+            <Border.Shadow>
+                <Shadow Brush="#34495E" Offset="0,4" Radius="15" Opacity="0.4" />
+            </Border.Shadow>
+            <Grid>
+                <views:AnaBaslikView x:Name="MyHeader" ShowBack="True" ShowProfile="False" />
+                <VerticalStackLayout Spacing="2" VerticalOptions="End" HorizontalOptions="Center" Margin="20,0,20,15">
+                    <Label Text="Servis Detayı" FontSize="18" FontFamily="OpenSansSemibold" TextColor="White" HorizontalTextAlignment="Center" />
+                </VerticalStackLayout>
+            </Grid>
+        </Border>
+
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Spacing="0" Padding="0,0,0,20">
 
             <!-- Servis Bilgi Kartı -->
             <Border Margin="15,15,15,10"
@@ -128,6 +144,7 @@
                    IsVisible="False"
                    HorizontalOptions="Center" />
 
-        </VerticalStackLayout>
-    </ScrollView>
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
 </ContentPage>
