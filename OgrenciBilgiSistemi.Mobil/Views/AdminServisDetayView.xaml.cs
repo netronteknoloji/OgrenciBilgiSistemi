@@ -15,10 +15,6 @@ namespace OgrenciBilgiSistemi.Mobil.Views
             _adminService = adminService;
 
             AdSoyadLabel.Text = servis.KullaniciAdi;
-            DurumLabel.Text = servis.DurumMetni;
-            DurumLabel.TextColor = servis.ServisDurum
-                ? Color.FromArgb("#16A085")
-                : Color.FromArgb("#C0392B");
             PlakaLabel.Text = servis.PlakaGosterim;
             TelefonLabel.Text = servis.TelefonGosterim;
             OgrenciSayisiLabel.Text = $"{servis.OgrenciSayisi} öğrenci";

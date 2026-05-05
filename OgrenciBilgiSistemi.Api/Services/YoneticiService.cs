@@ -102,19 +102,23 @@ namespace OgrenciBilgiSistemi.Api.Services
         /// </summary>
         public async Task<List<ServisListeOgesiModel>> TumServisleriGetirAsync()
         {
+            // MVC Servisler/Index ile uyumlu: ServisDurum filtresi yok (pasifler de listelenir),
+            // Plaka'ya göre sıralı.
+            // MVC Servisler/Index ile uyumlu: ServisDurum filtresi yok (pasifler de listelenir),
+            // Plaka'ya göre sıralı. Telefon Kullanicilar.Telefon'dan alınır
+            // (ServisProfiller'da telefon kolonu yoktur).
             const string query = @"
                 SELECT k.KullaniciId,
                        k.KullaniciAdi,
+                       k.Telefon AS ServisTelefon,
                        sp.Plaka,
-                       sp.ServisTelefon,
                        sp.ServisDurum,
                        (SELECT COUNT(*) FROM Ogrenciler o
                           WHERE o.ServisId = k.KullaniciId
                             AND o.OgrenciDurum = 1) AS OgrenciSayisi
-                FROM Kullanicilar k
-                INNER JOIN ServisProfiller sp ON sp.KullaniciId = k.KullaniciId
-                WHERE sp.ServisDurum = 1
-                ORDER BY k.KullaniciAdi;";
+                FROM ServisProfiller sp
+                INNER JOIN Kullanicilar k ON k.KullaniciId = sp.KullaniciId
+                ORDER BY sp.Plaka;";
 
             var liste = new List<ServisListeOgesiModel>();
 

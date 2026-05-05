@@ -37,39 +37,44 @@
                             <TapGestureRecognizer Tapped="OnServisSecildi" />
                         </Border.GestureRecognizers>
                         <Grid ColumnDefinitions="4,*,Auto" ColumnSpacing="12">
-                            <BoxView Grid.Column="0" BackgroundColor="#34495E" WidthRequest="4"
+                            <BoxView Grid.Column="0"
+                                     BackgroundColor="#34495E"
+                                     WidthRequest="4"
                                      VerticalOptions="Fill" HorizontalOptions="Center">
                                 <BoxView.Clip>
                                     <RoundRectangleGeometry CornerRadius="2" Rect="0,0,4,60" />
                                 </BoxView.Clip>
                             </BoxView>
                             <VerticalStackLayout Grid.Column="1" Spacing="3" VerticalOptions="Center">
-                                <Label Text="{Binding KullaniciAdi}"
-                                       FontSize="15"
+                                <Label Text="{Binding PlakaGosterim}"
+                                       FontSize="16"
                                        FontFamily="OpenSansSemibold"
-                                       TextColor="#2C3E50" />
+                                       TextColor="#1F6FB0" />
                                 <Label FontSize="12" TextColor="#7F8C8D">
                                     <Label.FormattedText>
                                         <FormattedString>
-                                            <Span Text="Plaka: " />
-                                            <Span Text="{Binding PlakaGosterim}" />
-                                            <Span Text="  •  " />
-                                            <Span Text="{Binding TelefonGosterim}" />
+                                            <Span Text="Şoför: " />
+                                            <Span Text="{Binding KullaniciAdi}" />
                                         </FormattedString>
                                     </Label.FormattedText>
                                 </Label>
                             </VerticalStackLayout>
-                            <VerticalStackLayout Grid.Column="2" VerticalOptions="Center" Spacing="2">
-                                <Label Text="{Binding OgrenciSayisi}"
-                                       FontSize="15"
-                                       FontFamily="OpenSansSemibold"
-                                       TextColor="#34495E"
-                                       HorizontalOptions="End" />
-                                <Label Text="öğrenci"
-                                       FontSize="11"
-                                       TextColor="#95A5A6"
-                                       HorizontalOptions="End" />
-                            </VerticalStackLayout>
+                            <Border Grid.Column="2"
+                                    StrokeThickness="0"
+                                    BackgroundColor="#E8F4FB"
+                                    StrokeShape="RoundRectangle 10"
+                                    Padding="8,2"
+                                    VerticalOptions="Center"
+                                    HorizontalOptions="End">
+                                <Label FontSize="12" TextColor="#1F6FB0">
+                                    <Label.FormattedText>
+                                        <FormattedString>
+                                            <Span Text="{Binding OgrenciSayisi}" FontFamily="OpenSansSemibold" />
+                                            <Span Text=" öğrenci" />
+                                        </FormattedString>
+                                    </Label.FormattedText>
+                                </Label>
+                            </Border>
                         </Grid>
                     </Border>
                 </DataTemplate>

@@ -39,11 +39,6 @@
                                    FontSize="18"
                                    FontFamily="OpenSansSemibold"
                                    TextColor="#2C3E50" />
-                            <Label x:Name="DurumLabel"
-                                   Text="-"
-                                   FontSize="13"
-                                   TextColor="#16A085"
-                                   FontFamily="OpenSansSemibold" />
                         </VerticalStackLayout>
                     </Grid>
 
