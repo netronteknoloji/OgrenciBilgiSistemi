@@ -11,13 +11,16 @@ namespace OgrenciBilgiSistemi.Api.Controllers
     public class YoneticiController : ControllerBase
     {
         private readonly YoneticiService _yoneticiService;
+        private readonly VeliListeService _veliListeService;
         private readonly OkulYapilandirmaServisi _okulServisi;
 
         public YoneticiController(
             YoneticiService yoneticiService,
+            VeliListeService veliListeService,
             OkulYapilandirmaServisi okulServisi)
         {
             _yoneticiService = yoneticiService;
+            _veliListeService = veliListeService;
             _okulServisi = okulServisi;
         }
 
@@ -47,6 +50,32 @@ namespace OgrenciBilgiSistemi.Api.Controllers
         [HttpGet("servisler")]
         public async Task<IActionResult> Servisler()
             => Ok(await _yoneticiService.TumServisleriGetirAsync());
+
+        /// <summary>
+        /// Belirtilen servise atanmış aktif öğrencileri döner.
+        /// </summary>
+        [HttpGet("servisler/{id:int}/ogrenciler")]
+        public async Task<IActionResult> ServisOgrencileri(int id)
+            => Ok(await _yoneticiService.ServisOgrencileriGetirAsync(id));
+
+        /// <summary>
+        /// Aktif velileri (VeliProfiller.VeliDurum=1) döner.
+        /// </summary>
+        [HttpGet("veliler")]
+        public async Task<IActionResult> Veliler()
+            => Ok(await _veliListeService.AktifVelileriGetirAsync());
+
+        /// <summary>
+        /// Belirtilen velinin profil + çocuk listesini döner.
+        /// </summary>
+        [HttpGet("veliler/{id:int}")]
+        public async Task<IActionResult> VeliDetay(int id)
+        {
+            var detay = await _veliListeService.VeliDetayGetirAsync(id);
+            if (detay is null)
+                return NotFound(new { message = $"{id} numaralı veli bulunamadı." });
+            return Ok(detay);
+        }
 
         /// <summary>
         /// Bugün yemekhaneye giriş yapan öğrencilerin listesini döner.

@@ -43,6 +43,9 @@ namespace OgrenciBilgiSistemi.Api.Services
                     (SELECT COUNT(*) FROM VeliProfiller
                         WHERE VeliDurum = 1) AS ToplamVeli,
 
+                    (SELECT COUNT(*) FROM ServisProfiller
+                        WHERE ServisDurum = 1) AS ToplamServis,
+
                     (SELECT COUNT(*) FROM OgrenciDetaylar d
                         INNER JOIN Ogrenciler o ON o.OgrenciId = d.OgrenciId
                         WHERE d.IstasyonTipi = @yemekhaneTipi
@@ -80,6 +83,7 @@ namespace OgrenciBilgiSistemi.Api.Services
                     ozet.ToplamOgretmen = Convert.ToInt32(reader["ToplamOgretmen"]);
                     ozet.ToplamSinif = Convert.ToInt32(reader["ToplamSinif"]);
                     ozet.ToplamVeli = Convert.ToInt32(reader["ToplamVeli"]);
+                    ozet.ToplamServis = Convert.ToInt32(reader["ToplamServis"]);
                     ozet.BugunYemekhaneGiris = Convert.ToInt32(reader["BugunYemekhaneGiris"]);
                     ozet.BugunAnakapiCikis = Convert.ToInt32(reader["BugunAnakapiCikis"]);
                 }
@@ -109,7 +113,7 @@ namespace OgrenciBilgiSistemi.Api.Services
                             AND o.OgrenciDurum = 1) AS OgrenciSayisi
                 FROM Kullanicilar k
                 INNER JOIN ServisProfiller sp ON sp.KullaniciId = k.KullaniciId
-                WHERE k.Rol = @servisRol
+                WHERE sp.ServisDurum = 1
                 ORDER BY k.KullaniciAdi;";
 
             var liste = new List<ServisListeOgesiModel>();
@@ -118,8 +122,6 @@ namespace OgrenciBilgiSistemi.Api.Services
             {
                 await using var conn = new SqlConnection(ConnectionString);
                 await using var cmd = new SqlCommand(query, conn);
-
-                cmd.Parameters.AddWithValue("@servisRol", (int)KullaniciRolu.Servis);
 
                 await conn.OpenAsync();
                 await using var reader = await cmd.ExecuteReaderAsync();
@@ -143,6 +145,53 @@ namespace OgrenciBilgiSistemi.Api.Services
             }
 
             return liste;
+        }
+
+        /// <summary>
+        /// Belirtilen servise atanmış aktif öğrencileri döner.
+        /// Admin ana ekranı → servis detayı için kullanılır.
+        /// </summary>
+        public async Task<List<OgrenciModel>> ServisOgrencileriGetirAsync(int servisKullaniciId)
+        {
+            const string query = @"
+                SELECT O.OgrenciId, O.OgrenciAdSoyad, O.OgrenciNo, O.OgrenciGorsel, O.BirimId,
+                       B.BirimAd AS SinifAdi
+                FROM Ogrenciler O
+                LEFT JOIN Birimler B ON O.BirimId = B.BirimId
+                WHERE O.ServisId = @servisId AND O.OgrenciDurum = 1
+                ORDER BY O.OgrenciAdSoyad";
+
+            var ogrenciler = new List<OgrenciModel>();
+
+            try
+            {
+                await using var conn = new SqlConnection(ConnectionString);
+                await using var cmd = new SqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@servisId", servisKullaniciId);
+
+                await conn.OpenAsync();
+                await using var reader = await cmd.ExecuteReaderAsync();
+
+                while (await reader.ReadAsync())
+                {
+                    var rawFileName = reader["OgrenciGorsel"]?.ToString() ?? string.Empty;
+                    ogrenciler.Add(new OgrenciModel
+                    {
+                        OgrenciId      = (int)reader["OgrenciId"],
+                        OgrenciAdSoyad = reader["OgrenciAdSoyad"]?.ToString() ?? string.Empty,
+                        OgrenciNo      = reader["OgrenciNo"] is DBNull ? 0 : Convert.ToInt32(reader["OgrenciNo"]),
+                        OgrenciGorsel  = string.IsNullOrEmpty(rawFileName) ? "user_icon.png" : rawFileName,
+                        BirimId        = reader["BirimId"] as int?,
+                        SinifAdi       = reader["SinifAdi"]?.ToString()
+                    });
+                }
+            }
+            catch (SqlException ex)
+            {
+                throw new InvalidOperationException("Servis öğrenci listesi alınamadı.", ex);
+            }
+
+            return ogrenciler;
         }
 
         /// <summary>

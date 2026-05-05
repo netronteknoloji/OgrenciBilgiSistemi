@@ -56,6 +56,35 @@ namespace OgrenciBilgiSistemi.Mobil.Services
         }
 
         /// <summary>
+        /// Belirtilen servise atanmış aktif öğrencileri admin akışı için getirir.
+        /// Başarısızlık durumunda boş liste döner; görsel URL'leri tam adrese çevrilir.
+        /// </summary>
+        public async Task<List<Ogrenci>> ServisOgrencileriGetir(int servisId)
+        {
+            try
+            {
+                var response = await GetAsync($"{BaseUrl}yonetici/servisler/{servisId}/ogrenciler");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var json = await response.Content.ReadAsStringAsync();
+                    var list = JsonSerializer.Deserialize<List<Ogrenci>>(json, _jsonOptions) ?? new List<Ogrenci>();
+                    foreach (var o in list)
+                        o.OgrenciGorsel = Constants.GorselUrl(o.OgrenciGorsel);
+                    return list;
+                }
+
+                System.Diagnostics.Debug.WriteLine($"[AdminService.ServisOgrencileriGetir] HTTP {(int)response.StatusCode} {response.StatusCode}");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[AdminService.ServisOgrencileriGetir HATASI]: {ex.Message}");
+            }
+
+            return new List<Ogrenci>();
+        }
+
+        /// <summary>
         /// Bugün yemekhaneye giriş yapan öğrencilerin listesini getirir.
         /// Başarısızlık (HTTP hata, deserialize hatası) durumunda <c>null</c> döner;
         /// boş liste döndüğünde gerçekten kayıt yoktur.

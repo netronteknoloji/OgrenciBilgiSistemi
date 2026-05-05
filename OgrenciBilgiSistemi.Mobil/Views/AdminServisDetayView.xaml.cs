@@ -5,14 +5,14 @@ namespace OgrenciBilgiSistemi.Mobil.Views
 {
     public partial class AdminServisDetayView : ContentPage
     {
-        private readonly ServisService _servisService;
+        private readonly AdminService _adminService;
         private readonly ServisListeOgesi _servis;
 
-        public AdminServisDetayView(ServisListeOgesi servis, ServisService servisService)
+        public AdminServisDetayView(ServisListeOgesi servis, AdminService adminService)
         {
             InitializeComponent();
             _servis = servis;
-            _servisService = servisService;
+            _adminService = adminService;
 
             AdSoyadLabel.Text = servis.KullaniciAdi;
             DurumLabel.Text = servis.DurumMetni;
@@ -35,7 +35,7 @@ namespace OgrenciBilgiSistemi.Mobil.Views
         {
             try
             {
-                var ogrenciler = await _servisService.ServisOgrencileriGetir(_servis.KullaniciId);
+                var ogrenciler = await _adminService.ServisOgrencileriGetir(_servis.KullaniciId);
 
                 BindableLayout.SetItemsSource(OgrencilerStack, ogrenciler);
                 OgrencilerBaslik.Text = ogrenciler.Count > 0

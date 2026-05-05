@@ -18,16 +18,12 @@ namespace OgrenciBilgiSistemi.Mobil.Views
             WelcomeLabel.Text = $"Merhaba, {KullaniciOturum.AdSoyad}";
             try
             {
-                var ozetGorevi = _adminService.OkulOzetGetir();
-                var servisGorevi = _adminService.ServisListesiGetir();
-                await Task.WhenAll(ozetGorevi, servisGorevi);
-
-                var ozet = await ozetGorevi;
-                var servisler = await servisGorevi;
+                var ozet = await _adminService.OkulOzetGetir();
 
                 if (ozet is null)
                 {
                     OkulAdiLabel.Text = "Veriler yüklenemedi";
+                    ServisSayisiLabel.Text = "!";
                 }
                 else
                 {
@@ -36,11 +32,10 @@ namespace OgrenciBilgiSistemi.Mobil.Views
                     OgretmenSayisiLabel.Text  = ozet.ToplamOgretmen.ToString();
                     SinifSayisiLabel.Text     = ozet.ToplamSinif.ToString();
                     VeliSayisiLabel.Text      = ozet.ToplamVeli.ToString();
+                    ServisSayisiLabel.Text    = ozet.ToplamServis.ToString();
                     YemekhaneSayisiLabel.Text = ozet.BugunYemekhaneGiris.ToString();
                     AnakapiSayisiLabel.Text   = ozet.BugunAnakapiCikis.ToString();
                 }
-
-                ServisSayisiLabel.Text = servisler is null ? "!" : servisler.Count.ToString();
             }
             catch (Exception ex)
             {

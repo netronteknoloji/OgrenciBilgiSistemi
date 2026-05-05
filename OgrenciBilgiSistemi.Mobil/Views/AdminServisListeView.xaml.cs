@@ -49,14 +49,7 @@ namespace OgrenciBilgiSistemi.Mobil.Views
         private async void OnServisSecildi(object sender, TappedEventArgs e)
         {
             if ((sender as Border)?.BindingContext is ServisListeOgesi servis)
-            {
-                var servisService = Servis<ServisService>();
-                if (servisService is null) return;
-                await Navigation.PushAsync(new AdminServisDetayView(servis, servisService));
-            }
+                await Navigation.PushAsync(new AdminServisDetayView(servis, _adminService));
         }
-
-        private static T? Servis<T>() where T : class
-            => Application.Current?.MainPage?.Handler?.MauiContext?.Services.GetService<T>();
     }
 }

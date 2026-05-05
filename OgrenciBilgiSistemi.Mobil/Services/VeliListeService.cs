@@ -9,7 +9,7 @@ namespace OgrenciBilgiSistemi.Mobil.Services
         {
             try
             {
-                var response = await GetAsync($"{BaseUrl}veliler/aktif");
+                var response = await GetAsync($"{BaseUrl}yonetici/veliler");
                 if (response.IsSuccessStatusCode)
                 {
                     var json = await response.Content.ReadAsStringAsync();
@@ -27,7 +27,7 @@ namespace OgrenciBilgiSistemi.Mobil.Services
         {
             try
             {
-                var response = await GetAsync($"{BaseUrl}veliler/{kullaniciId}");
+                var response = await GetAsync($"{BaseUrl}yonetici/veliler/{kullaniciId}");
                 if (response.IsSuccessStatusCode)
                 {
                     var json = await response.Content.ReadAsStringAsync();
