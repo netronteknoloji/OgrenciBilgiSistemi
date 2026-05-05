@@ -1,0 +1,53 @@
+using OgrenciBilgiSistemi.Mobil.Models;
+using OgrenciBilgiSistemi.Mobil.Services;
+
+namespace OgrenciBilgiSistemi.Mobil.Views
+{
+    public partial class AdminYemekhaneBugunView : ContentPage
+    {
+        private readonly AdminService _adminService;
+
+        public AdminYemekhaneBugunView(AdminService adminService)
+        {
+            InitializeComponent();
+            _adminService = adminService;
+        }
+
+        protected override async void OnAppearing()
+        {
+            base.OnAppearing();
+            await ListeyiYukle();
+        }
+
+        private async Task ListeyiYukle()
+        {
+            try
+            {
+                var liste = await _adminService.YemekhaneBugunGetir();
+                ListeCollection.ItemsSource = liste;
+                AltBaslikLabel.Text = $"Bugün {liste.Count} öğrenci";
+
+                if (liste.Count == 0)
+                    BosDurumLabel.Text = "Bugün yemekhaneye giriş yapan öğrenci yok.";
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"AdminYemekhaneBugun Yükleme Hatası: {ex.Message}");
+                BosDurumLabel.Text = "Veriler yüklenemedi.";
+            }
+        }
+
+        private async void OnOgrenciSecildi(object sender, TappedEventArgs e)
+        {
+            if ((sender as Border)?.BindingContext is YemekhaneBugunOgesi ogesi)
+            {
+                var ogrenciService = Servis<OgrenciService>();
+                if (ogrenciService is null) return;
+                await Navigation.PushAsync(new OgrenciDetayView(ogesi.OgrenciId, ogrenciService));
+            }
+        }
+
+        private static T? Servis<T>() where T : class
+            => Application.Current?.MainPage?.Handler?.MauiContext?.Services.GetService<T>();
+    }
+}

@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:models="clr-namespace:OgrenciBilgiSistemi.Mobil.Models"
+             x:Class="OgrenciBilgiSistemi.Mobil.Views.AdminServisDetayView"
+             Title="Servis Detayı"
+             BackgroundColor="#F2F2F2">
+
+    <ScrollView>
+        <VerticalStackLayout Spacing="0" Padding="0,0,0,20">
+
+            <!-- Servis Bilgi Kartı -->
+            <Border Margin="15,15,15,10"
+                    StrokeShape="RoundRectangle 16"
+                    StrokeThickness="0"
+                    BackgroundColor="White"
+                    Padding="18">
+                <Border.Shadow>
+                    <Shadow Brush="Black" Offset="0,4" Radius="12" Opacity="0.10" />
+                </Border.Shadow>
+                <VerticalStackLayout Spacing="14">
+
+                    <Grid ColumnDefinitions="60,*">
+                        <Border Grid.Column="0"
+                                StrokeShape="RoundRectangle 14"
+                                StrokeThickness="0"
+                                BackgroundColor="#E8F0FA"
+                                HeightRequest="50"
+                                WidthRequest="50"
+                                VerticalOptions="Center">
+                            <Label Text="&#x1F68C;"
+                                   FontSize="26"
+                                   HorizontalOptions="Center"
+                                   VerticalOptions="Center" />
+                        </Border>
+                        <VerticalStackLayout Grid.Column="1" Margin="14,0,0,0" VerticalOptions="Center" Spacing="2">
+                            <Label x:Name="AdSoyadLabel"
+                                   Text="-"
+                                   FontSize="18"
+                                   FontFamily="OpenSansSemibold"
+                                   TextColor="#2C3E50" />
+                            <Label x:Name="DurumLabel"
+                                   Text="-"
+                                   FontSize="13"
+                                   TextColor="#16A085"
+                                   FontFamily="OpenSansSemibold" />
+                        </VerticalStackLayout>
+                    </Grid>
+
+                    <BoxView HeightRequest="1" BackgroundColor="#ECEFF1" />
+
+                    <Grid ColumnDefinitions="100,*" RowDefinitions="Auto,Auto,Auto" RowSpacing="10">
+                        <Label Grid.Row="0" Grid.Column="0" Text="Plaka" FontSize="13" TextColor="#7F8C8D" FontFamily="OpenSansSemibold" />
+                        <Label Grid.Row="0" Grid.Column="1" x:Name="PlakaLabel" Text="-" FontSize="14" TextColor="#2C3E50" />
+
+                        <Label Grid.Row="1" Grid.Column="0" Text="Telefon" FontSize="13" TextColor="#7F8C8D" FontFamily="OpenSansSemibold" />
+                        <Label Grid.Row="1" Grid.Column="1" x:Name="TelefonLabel" Text="-" FontSize="14" TextColor="#1F4E79" FontFamily="OpenSansSemibold">
+                            <Label.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnTelefonTapped" />
+                            </Label.GestureRecognizers>
+                        </Label>
+
+                        <Label Grid.Row="2" Grid.Column="0" Text="Öğrenci" FontSize="13" TextColor="#7F8C8D" FontFamily="OpenSansSemibold" />
+                        <Label Grid.Row="2" Grid.Column="1" x:Name="OgrenciSayisiLabel" Text="-" FontSize="14" TextColor="#2C3E50" />
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Öğrenciler Başlığı -->
+            <Label x:Name="OgrencilerBaslik"
+                   Text="Öğrenciler"
+                   FontSize="17"
+                   FontFamily="OpenSansSemibold"
+                   TextColor="#2C3E50"
+                   Margin="20,15,20,8" />
+
+            <!-- Öğrenci Listesi -->
+            <VerticalStackLayout x:Name="OgrencilerStack"
+                                 Margin="15,0,15,0"
+                                 Spacing="8">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="models:Ogrenci">
+                        <Border StrokeShape="RoundRectangle 12"
+                                StrokeThickness="0"
+                                BackgroundColor="White"
+                                Padding="14,10">
+                            <Border.Shadow>
+                                <Shadow Brush="Black" Offset="0,2" Radius="6" Opacity="0.05" />
+                            </Border.Shadow>
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnOgrenciSecildi" />
+                            </Border.GestureRecognizers>
+                            <Grid ColumnDefinitions="44,*,Auto" RowDefinitions="Auto,Auto" RowSpacing="2">
+                                <Border Grid.RowSpan="2"
+                                        StrokeShape="RoundRectangle 22"
+                                        StrokeThickness="0"
+                                        BackgroundColor="#FEF3E0"
+                                        HeightRequest="44"
+                                        WidthRequest="44"
+                                        VerticalOptions="Center">
+                                    <Label Text="&#x1F468;&#x200D;&#x1F393;"
+                                           FontSize="18"
+                                           HorizontalOptions="Center"
+                                           VerticalOptions="Center" />
+                                </Border>
+                                <Label Grid.Column="1" Grid.Row="0"
+                                       Text="{Binding OgrenciAdSoyad}"
+                                       FontSize="15"
+                                       FontFamily="OpenSansSemibold"
+                                       TextColor="#2C3E50"
+                                       Margin="12,0,0,0" />
+                                <Label Grid.Column="1" Grid.Row="1"
+                                       Text="{Binding OgrenciNo, StringFormat='Öğrenci No: {0}'}"
+                                       FontSize="12"
+                                       TextColor="#7F8C8D"
+                                       Margin="12,0,0,0" />
+                                <Label Grid.Column="2" Grid.RowSpan="2"
+                                       Text="›"
+                                       FontSize="22"
+                                       TextColor="#BDC3C7"
+                                       VerticalOptions="Center" />
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
+
+            <Label x:Name="DurumYazisi"
+                   Text=""
+                   FontSize="13"
+                   TextColor="#95A5A6"
+                   Margin="20,10,20,0"
+                   IsVisible="False"
+                   HorizontalOptions="Center" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

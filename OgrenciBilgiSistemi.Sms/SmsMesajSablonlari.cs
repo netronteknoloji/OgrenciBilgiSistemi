@@ -14,8 +14,14 @@ public static class SmsMesajSablonlari
     /// <summary>
     /// Ana kapı kart geçişi (Giriş/Çıkış) bildirimi.
     /// </summary>
-    public static string AnaKapiGecis(string adSoyad, DateTime zaman, string gecisTipi) =>
-        $"Sayın Veli, {adSoyad} {zaman:HH:mm} saatinde okula {gecisTipi.ToLower(Tr)} yapmıştır.";
+    public static string AnaKapiGecis(string adSoyad, DateTime zaman, string gecisTipi)
+    {
+        var tip = gecisTipi.ToLower(Tr);
+        var yon = string.Equals(gecisTipi, "Giriş", StringComparison.OrdinalIgnoreCase)
+            ? "okula"
+            : "okuldan";
+        return $"Sayın Veli, {adSoyad} {zaman:HH:mm} saatinde {yon} {tip} yapmıştır.";
+    }
 
     /// <summary>
     /// Yemekhane günlük tek giriş bildirimi.

@@ -6,6 +6,7 @@ namespace OgrenciBilgiSistemi.Mobil.Views
     public partial class AdminOgrenciListeView : ContentPage
     {
         private readonly OgrenciService _ogrenciService;
+        private List<Ogrenci> _tumOgrenciler = new();
 
         public AdminOgrenciListeView(OgrenciService ogrenciService)
         {
@@ -19,11 +20,10 @@ namespace OgrenciBilgiSistemi.Mobil.Views
 
             try
             {
-                var liste = await _ogrenciService.TumOgrencileriGetirAsync();
-                OgrenciCollection.ItemsSource = liste;
-                AltBaslikLabel.Text = $"Toplam {liste.Count} öğrenci";
+                _tumOgrenciler = await _ogrenciService.TumOgrencileriGetirAsync();
+                Filtrele(AramaCubugu.Text);
 
-                if (liste.Count == 0)
+                if (_tumOgrenciler.Count == 0)
                     BosDurumLabel.Text = "Kayıtlı öğrenci bulunamadı.";
             }
             catch (Exception ex)
@@ -31,6 +31,43 @@ namespace OgrenciBilgiSistemi.Mobil.Views
                 System.Diagnostics.Debug.WriteLine($"AdminOgrenciListe Yükleme Hatası: {ex.Message}");
                 BosDurumLabel.Text = "Veriler yüklenemedi.";
             }
+        }
+
+        private void OnAramaMetniDegisti(object sender, TextChangedEventArgs e)
+            => Filtrele(e.NewTextValue);
+
+        private void Filtrele(string? arama)
+        {
+            var temiz = arama?.Trim() ?? string.Empty;
+
+            IReadOnlyList<Ogrenci> sonuc = string.IsNullOrEmpty(temiz)
+                ? _tumOgrenciler
+                : _tumOgrenciler
+                    .Where(o => Eslesir(o, temiz))
+                    .ToList();
+
+            OgrenciCollection.ItemsSource = sonuc;
+            AltBaslikLabel.Text = string.IsNullOrEmpty(temiz)
+                ? $"Toplam {_tumOgrenciler.Count} öğrenci"
+                : $"{sonuc.Count} / {_tumOgrenciler.Count} öğrenci";
+
+            BosDurumLabel.Text = _tumOgrenciler.Count == 0
+                ? "Kayıtlı öğrenci bulunamadı."
+                : sonuc.Count == 0
+                    ? "Aramanızla eşleşen öğrenci yok."
+                    : "";
+        }
+
+        private static bool Eslesir(Ogrenci o, string arama)
+        {
+            if (!string.IsNullOrEmpty(o.OgrenciAdSoyad) &&
+                o.OgrenciAdSoyad.Contains(arama, StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            if (o.OgrenciNo.ToString().Contains(arama, StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            return false;
         }
 
         private async void OnOgrenciSecildi(object sender, TappedEventArgs e)

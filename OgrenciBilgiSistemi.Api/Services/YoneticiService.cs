@@ -89,5 +89,180 @@ namespace OgrenciBilgiSistemi.Api.Services
 
             return ozet;
         }
+
+        /// <summary>
+        /// Tüm servis kullanıcılarını ve her birinin aktif öğrenci sayısını döner.
+        /// Admin ana ekranındaki servis listesi için kullanılır.
+        /// </summary>
+        public async Task<List<ServisListeOgesiModel>> TumServisleriGetirAsync()
+        {
+            const string query = @"
+                SELECT k.KullaniciId,
+                       k.KullaniciAdi,
+                       sp.Plaka,
+                       sp.ServisTelefon,
+                       sp.ServisDurum,
+                       (SELECT COUNT(*) FROM Ogrenciler o
+                          WHERE o.ServisId = k.KullaniciId
+                            AND o.OgrenciDurum = 1) AS OgrenciSayisi
+                FROM Kullanicilar k
+                INNER JOIN ServisProfiller sp ON sp.KullaniciId = k.KullaniciId
+                WHERE k.Rol = @servisRol
+                ORDER BY k.KullaniciAdi;";
+
+            var liste = new List<ServisListeOgesiModel>();
+
+            try
+            {
+                await using var conn = new SqlConnection(ConnectionString);
+                await using var cmd = new SqlCommand(query, conn);
+
+                cmd.Parameters.AddWithValue("@servisRol", (int)KullaniciRolu.Servis);
+
+                await conn.OpenAsync();
+                await using var reader = await cmd.ExecuteReaderAsync();
+
+                while (await reader.ReadAsync())
+                {
+                    liste.Add(new ServisListeOgesiModel
+                    {
+                        KullaniciId = Convert.ToInt32(reader["KullaniciId"]),
+                        KullaniciAdi = reader["KullaniciAdi"]?.ToString() ?? "",
+                        Plaka = reader["Plaka"] is DBNull ? null : reader["Plaka"]?.ToString(),
+                        ServisTelefon = reader["ServisTelefon"] is DBNull ? null : reader["ServisTelefon"]?.ToString(),
+                        ServisDurum = reader["ServisDurum"] is not DBNull && Convert.ToBoolean(reader["ServisDurum"]),
+                        OgrenciSayisi = Convert.ToInt32(reader["OgrenciSayisi"])
+                    });
+                }
+            }
+            catch (SqlException ex)
+            {
+                throw new InvalidOperationException("Servis listesi alınamadı.", ex);
+            }
+
+            return liste;
+        }
+
+        /// <summary>
+        /// Bugün yemekhaneye giriş yapan aktif öğrencileri (en yenisi en üstte) döner.
+        /// Saat alanı 'HH:mm' formatlanmış string olarak gelir.
+        /// </summary>
+        public async Task<List<YemekhaneBugunOgesiModel>> BugunYemekhaneGirislerinAsync()
+        {
+            var bugun = DateTime.Today;
+            var yarin = bugun.AddDays(1);
+
+            const string query = @"
+                SELECT o.OgrenciId,
+                       o.OgrenciAdSoyad,
+                       o.OgrenciNo,
+                       b.BirimAd AS SinifAdi,
+                       d.OgrenciGTarih
+                FROM OgrenciDetaylar d
+                INNER JOIN Ogrenciler o ON o.OgrenciId = d.OgrenciId
+                LEFT  JOIN Birimler  b ON b.BirimId   = o.BirimId
+                WHERE d.IstasyonTipi      = @yemekhaneTipi
+                  AND d.OgrenciGecisTipi  = N'GİRİŞ'
+                  AND d.OgrenciGTarih    >= @bugun
+                  AND d.OgrenciGTarih    <  @yarin
+                  AND o.OgrenciDurum      = 1
+                ORDER BY d.OgrenciGTarih DESC;";
+
+            var liste = new List<YemekhaneBugunOgesiModel>();
+
+            try
+            {
+                await using var conn = new SqlConnection(ConnectionString);
+                await using var cmd = new SqlCommand(query, conn);
+
+                cmd.Parameters.AddWithValue("@yemekhaneTipi", (short)IstasyonTipi.Yemekhane);
+                cmd.Parameters.AddWithValue("@bugun", bugun);
+                cmd.Parameters.AddWithValue("@yarin", yarin);
+
+                await conn.OpenAsync();
+                await using var reader = await cmd.ExecuteReaderAsync();
+
+                while (await reader.ReadAsync())
+                {
+                    var girisTarihi = reader["OgrenciGTarih"] is DateTime dt ? dt : DateTime.MinValue;
+
+                    liste.Add(new YemekhaneBugunOgesiModel
+                    {
+                        OgrenciId = Convert.ToInt32(reader["OgrenciId"]),
+                        OgrenciAdSoyad = reader["OgrenciAdSoyad"]?.ToString() ?? "",
+                        OgrenciNo = Convert.ToInt32(reader["OgrenciNo"]),
+                        SinifAdi = reader["SinifAdi"] is DBNull ? null : reader["SinifAdi"]?.ToString(),
+                        GirisSaati = girisTarihi == DateTime.MinValue ? "" : girisTarihi.ToString("HH:mm")
+                    });
+                }
+            }
+            catch (SqlException ex)
+            {
+                throw new InvalidOperationException("Bugünkü yemekhane girişleri alınamadı.", ex);
+            }
+
+            return liste;
+        }
+
+        /// <summary>
+        /// Bugün ana kapıdan çıkış yapan aktif öğrencileri (en yenisi en üstte) döner.
+        /// Saat alanı 'HH:mm' formatlanmış string olarak gelir.
+        /// </summary>
+        public async Task<List<AnakapiCikisBugunOgesiModel>> BugunAnakapiCikislariAsync()
+        {
+            var bugun = DateTime.Today;
+            var yarin = bugun.AddDays(1);
+
+            const string query = @"
+                SELECT o.OgrenciId,
+                       o.OgrenciAdSoyad,
+                       o.OgrenciNo,
+                       b.BirimAd AS SinifAdi,
+                       d.OgrenciCTarih
+                FROM OgrenciDetaylar d
+                INNER JOIN Ogrenciler o ON o.OgrenciId = d.OgrenciId
+                LEFT  JOIN Birimler  b ON b.BirimId   = o.BirimId
+                WHERE d.IstasyonTipi      = @anaKapiTipi
+                  AND d.OgrenciGecisTipi  = N'ÇIKIŞ'
+                  AND d.OgrenciCTarih    >= @bugun
+                  AND d.OgrenciCTarih    <  @yarin
+                  AND o.OgrenciDurum      = 1
+                ORDER BY d.OgrenciCTarih DESC;";
+
+            var liste = new List<AnakapiCikisBugunOgesiModel>();
+
+            try
+            {
+                await using var conn = new SqlConnection(ConnectionString);
+                await using var cmd = new SqlCommand(query, conn);
+
+                cmd.Parameters.AddWithValue("@anaKapiTipi", (short)IstasyonTipi.AnaKapi);
+                cmd.Parameters.AddWithValue("@bugun", bugun);
+                cmd.Parameters.AddWithValue("@yarin", yarin);
+
+                await conn.OpenAsync();
+                await using var reader = await cmd.ExecuteReaderAsync();
+
+                while (await reader.ReadAsync())
+                {
+                    var cikisTarihi = reader["OgrenciCTarih"] is DateTime dt ? dt : DateTime.MinValue;
+
+                    liste.Add(new AnakapiCikisBugunOgesiModel
+                    {
+                        OgrenciId = Convert.ToInt32(reader["OgrenciId"]),
+                        OgrenciAdSoyad = reader["OgrenciAdSoyad"]?.ToString() ?? "",
+                        OgrenciNo = Convert.ToInt32(reader["OgrenciNo"]),
+                        SinifAdi = reader["SinifAdi"] is DBNull ? null : reader["SinifAdi"]?.ToString(),
+                        CikisSaati = cikisTarihi == DateTime.MinValue ? "" : cikisTarihi.ToString("HH:mm")
+                    });
+                }
+            }
+            catch (SqlException ex)
+            {
+                throw new InvalidOperationException("Bugünkü ana kapı çıkışları alınamadı.", ex);
+            }
+
+            return liste;
+        }
     }
 }

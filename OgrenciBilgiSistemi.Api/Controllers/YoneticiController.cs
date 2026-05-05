@@ -40,5 +40,26 @@ namespace OgrenciBilgiSistemi.Api.Controllers
 
             return Ok(ozet);
         }
+
+        /// <summary>
+        /// Yönetici ana sayfası için tüm servis kullanıcılarını öğrenci sayılarıyla birlikte döner.
+        /// </summary>
+        [HttpGet("servisler")]
+        public async Task<IActionResult> Servisler()
+            => Ok(await _yoneticiService.TumServisleriGetirAsync());
+
+        /// <summary>
+        /// Bugün yemekhaneye giriş yapan öğrencilerin listesini döner.
+        /// </summary>
+        [HttpGet("yemekhane-bugun")]
+        public async Task<IActionResult> YemekhaneBugun()
+            => Ok(await _yoneticiService.BugunYemekhaneGirislerinAsync());
+
+        /// <summary>
+        /// Bugün ana kapıdan çıkış yapan öğrencilerin listesini döner.
+        /// </summary>
+        [HttpGet("anakapi-cikis-bugun")]
+        public async Task<IActionResult> AnakapiCikisBugun()
+            => Ok(await _yoneticiService.BugunAnakapiCikislariAsync());
     }
 }

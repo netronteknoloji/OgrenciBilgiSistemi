@@ -6,6 +6,7 @@ namespace OgrenciBilgiSistemi.Mobil.Views
     public partial class AdminVeliListeView : ContentPage
     {
         private readonly VeliListeService _veliListeService;
+        private List<Veli> _tumVeliler = new();
 
         public AdminVeliListeView(VeliListeService veliListeService)
         {
@@ -19,11 +20,10 @@ namespace OgrenciBilgiSistemi.Mobil.Views
 
             try
             {
-                var liste = await _veliListeService.AktifVelileriGetir();
-                VeliCollection.ItemsSource = liste;
-                AltBaslikLabel.Text = $"Toplam {liste.Count} veli";
+                _tumVeliler = await _veliListeService.AktifVelileriGetir();
+                Filtrele(AramaCubugu.Text);
 
-                if (liste.Count == 0)
+                if (_tumVeliler.Count == 0)
                     BosDurumLabel.Text = "Kayıtlı veli bulunamadı.";
             }
             catch (Exception ex)
@@ -31,6 +31,32 @@ namespace OgrenciBilgiSistemi.Mobil.Views
                 System.Diagnostics.Debug.WriteLine($"AdminVeliListe Yükleme Hatası: {ex.Message}");
                 BosDurumLabel.Text = "Veriler yüklenemedi.";
             }
+        }
+
+        private void OnAramaMetniDegisti(object sender, TextChangedEventArgs e)
+            => Filtrele(e.NewTextValue);
+
+        private void Filtrele(string? arama)
+        {
+            var temiz = arama?.Trim() ?? string.Empty;
+
+            IReadOnlyList<Veli> sonuc = string.IsNullOrEmpty(temiz)
+                ? _tumVeliler
+                : _tumVeliler
+                    .Where(v => !string.IsNullOrEmpty(v.KullaniciAdi)
+                                && v.KullaniciAdi.Contains(temiz, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+
+            VeliCollection.ItemsSource = sonuc;
+            AltBaslikLabel.Text = string.IsNullOrEmpty(temiz)
+                ? $"Toplam {_tumVeliler.Count} veli"
+                : $"{sonuc.Count} / {_tumVeliler.Count} veli";
+
+            BosDurumLabel.Text = _tumVeliler.Count == 0
+                ? "Kayıtlı veli bulunamadı."
+                : sonuc.Count == 0
+                    ? "Aramanızla eşleşen veli yok."
+                    : "";
         }
 
         private async void OnVeliSecildi(object sender, TappedEventArgs e)

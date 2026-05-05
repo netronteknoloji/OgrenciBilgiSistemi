@@ -7,7 +7,7 @@
              Shell.NavBarIsVisible="False"
              BackgroundColor="#F0F2F5">
 
-    <Grid RowDefinitions="125, *">
+    <Grid RowDefinitions="125, Auto, *">
 
         <Border Grid.Row="0" StrokeThickness="0" BackgroundColor="#1F4E79" VerticalOptions="FillAndExpand">
             <Border.Shadow>
@@ -22,7 +22,24 @@
             </Grid>
         </Border>
 
-        <CollectionView Grid.Row="1" x:Name="OgrenciCollection" Margin="15,10" SelectionMode="None">
+        <Border Grid.Row="1"
+                Margin="15,10,15,0"
+                StrokeShape="RoundRectangle 12"
+                StrokeThickness="0"
+                BackgroundColor="White">
+            <Border.Shadow>
+                <Shadow Brush="Black" Offset="0,2" Radius="6" Opacity="0.06" />
+            </Border.Shadow>
+            <SearchBar x:Name="AramaCubugu"
+                       Placeholder="İsim veya öğrenci no ile ara..."
+                       BackgroundColor="Transparent"
+                       TextColor="#2C3E50"
+                       PlaceholderColor="#95A5A6"
+                       CancelButtonColor="#1F4E79"
+                       TextChanged="OnAramaMetniDegisti" />
+        </Border>
+
+        <CollectionView Grid.Row="2" x:Name="OgrenciCollection" Margin="15,10" SelectionMode="None">
             <CollectionView.ItemsLayout>
                 <LinearItemsLayout Orientation="Vertical" ItemSpacing="8" />
             </CollectionView.ItemsLayout>
