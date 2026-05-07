@@ -76,7 +76,7 @@ public partial class AnaBaslikView : ContentView
 
         string yeniSifre = await page.DisplayPromptAsync(
             "Şifre Değiştir",
-            "Yeni şifrenizi giriniz (en az 3 karakter):",
+            "Yeni şifrenizi giriniz (4-50 karakter):",
             "Değiştir",
             "Vazgeç",
             maxLength: 50);
@@ -84,9 +84,9 @@ public partial class AnaBaslikView : ContentView
         if (string.IsNullOrWhiteSpace(yeniSifre))
             return;
 
-        if (yeniSifre.Length < 3)
+        if (yeniSifre.Length < 4 || yeniSifre.Length > 50)
         {
-            await page.DisplayAlert("Uyarı", "Şifre en az 3 karakter olmalıdır.", "Tamam");
+            await page.DisplayAlert("Uyarı", "Şifre 4-50 karakter olmalıdır.", "Tamam");
             return;
         }
 

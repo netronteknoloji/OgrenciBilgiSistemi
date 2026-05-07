@@ -5,7 +5,7 @@ namespace OgrenciBilgiSistemi.Api.Dtos
     public class SifreDegistirIstegiDto
     {
         [Required(ErrorMessage = "Yeni şifre zorunludur.")]
-        [MinLength(6, ErrorMessage = "Şifre en az 6 karakter olmalıdır.")]
+        [StringLength(50, MinimumLength = 4, ErrorMessage = "Şifre 4-50 karakter olmalıdır.")]
         public string YeniSifre { get; set; } = string.Empty;
     }
 }
