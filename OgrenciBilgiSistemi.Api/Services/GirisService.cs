@@ -179,7 +179,6 @@ namespace OgrenciBilgiSistemi.Api.Services
                 SELECT TOP 10 KullaniciAdi
                 FROM Kullanicilar
                 WHERE KullaniciDurum = 1
-                  AND Rol <> @adminRol
                   AND KullaniciAdi COLLATE Turkish_CI_AI LIKE @aranan + '%'
                 ORDER BY KullaniciAdi";
 
@@ -190,7 +189,6 @@ namespace OgrenciBilgiSistemi.Api.Services
                 await using var conn = new SqlConnection(connectionString);
                 await using var cmd = new SqlCommand(query, conn);
                 cmd.Parameters.AddWithValue("@aranan", aranan);
-                cmd.Parameters.AddWithValue("@adminRol", (int)KullaniciRolu.Admin);
 
                 await conn.OpenAsync();
                 await using var reader = await cmd.ExecuteReaderAsync();
