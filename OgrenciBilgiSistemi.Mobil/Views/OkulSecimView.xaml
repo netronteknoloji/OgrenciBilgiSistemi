@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="OgrenciBilgiSistemi.Mobil.Views.OkulSecimView"
+             Title="Okul Seçimi"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="White">
+
+    <Grid RowDefinitions="220, *">
+
+        <BoxView Grid.Row="0">
+            <BoxView.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                    <GradientStop Color="#1ABC9C" Offset="0.1" />
+                    <GradientStop Color="#2C3E50" Offset="1.0" />
+                </LinearGradientBrush>
+            </BoxView.Background>
+        </BoxView>
+
+        <VerticalStackLayout Grid.Row="0" Spacing="6" VerticalOptions="Center" HorizontalOptions="Center" Padding="20">
+            <Label Text="Genel Yönetici"
+                   FontSize="14"
+                   TextColor="#BDC3C7"
+                   HorizontalOptions="Center" />
+            <Label Text="Okul Seçin"
+                   FontSize="24"
+                   FontAttributes="Bold"
+                   TextColor="White"
+                   HorizontalOptions="Center" />
+            <Label Text="Yönetmek istediğiniz okulu seçiniz"
+                   FontSize="13"
+                   TextColor="#BDC3C7"
+                   HorizontalOptions="Center" />
+        </VerticalStackLayout>
+
+        <CollectionView Grid.Row="1" x:Name="OkulCollection" Margin="15,15" SelectionMode="None">
+            <CollectionView.ItemsLayout>
+                <LinearItemsLayout Orientation="Vertical" ItemSpacing="10" />
+            </CollectionView.ItemsLayout>
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Border StrokeShape="RoundRectangle 14"
+                            StrokeThickness="0"
+                            Padding="16"
+                            BackgroundColor="White">
+                        <Border.Shadow>
+                            <Shadow Brush="Black" Offset="0,3" Radius="8" Opacity="0.08" />
+                        </Border.Shadow>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnOkulSecildi" />
+                        </Border.GestureRecognizers>
+                        <Grid ColumnDefinitions="4, *, Auto">
+                            <BoxView Grid.Column="0" BackgroundColor="#1ABC9C" WidthRequest="4"
+                                     VerticalOptions="Fill" HorizontalOptions="Center">
+                                <BoxView.Clip>
+                                    <RoundRectangleGeometry CornerRadius="2" Rect="0,0,4,60" />
+                                </BoxView.Clip>
+                            </BoxView>
+                            <VerticalStackLayout Grid.Column="1" Spacing="4" VerticalOptions="Center" Margin="10,0,0,0">
+                                <Label Text="{Binding OkulAdi}" FontSize="16" FontFamily="OpenSansSemibold" TextColor="#2C3E50" />
+                                <Label Text="{Binding OkulKodu}" FontSize="12" TextColor="#7F8C8D" />
+                            </VerticalStackLayout>
+                            <Label Grid.Column="2" Text="›" FontSize="24" TextColor="#95A5A6" VerticalOptions="Center" Margin="0,0,5,0" />
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+            <CollectionView.EmptyView>
+                <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="10" Padding="20">
+                    <Label x:Name="BosDurumLabel" Text="Yükleniyor..." FontSize="16" TextColor="#95A5A6" HorizontalOptions="Center" />
+                </VerticalStackLayout>
+            </CollectionView.EmptyView>
+        </CollectionView>
+
+        <ActivityIndicator Grid.Row="1" x:Name="GirisYukleniyor" IsVisible="False" IsRunning="False"
+                          Color="#1ABC9C" VerticalOptions="Center" HorizontalOptions="Center" />
+    </Grid>
+</ContentPage>

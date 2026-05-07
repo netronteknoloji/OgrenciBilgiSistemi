@@ -11,17 +11,22 @@ namespace OgrenciBilgiSistemi.Mobil.Views
     {
         private readonly GirisService _girisService;
         private readonly OkulKayitServisi _okulKayitServisi;
+        private readonly GenelAdminGirisGecisService _genelAdminGecis;
         private CancellationTokenSource _aramaIptalToken;
         private bool _oneridenSecildi;
         private List<OkulBilgi> _okullar = new();
 
-        public GirisView(GirisService girisService, OkulKayitServisi okulKayitServisi)
+        public GirisView(
+            GirisService girisService,
+            OkulKayitServisi okulKayitServisi,
+            GenelAdminGirisGecisService genelAdminGecis)
         {
             try
             {
                 InitializeComponent();
                 _girisService = girisService;
                 _okulKayitServisi = okulKayitServisi;
+                _genelAdminGecis = genelAdminGecis;
                 _ = IlkYuklemeAsync();
             }
             catch (Exception ex)
@@ -81,18 +86,32 @@ namespace OgrenciBilgiSistemi.Mobil.Views
         {
             try
             {
-                if (PckOkul.SelectedIndex < 0)
-                {
-                    await DisplayAlert("Uyarı", "Lütfen okul seçiniz.", "Tamam");
-                    return;
-                }
-
                 string username = TxtUsername.Text?.Trim();
                 string password = TxtPassword.Text?.Trim();
 
                 if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
                 {
                     await DisplayAlert("Uyarı", "Lütfen kullanıcı adı ve şifre giriniz.", "Tamam");
+                    return;
+                }
+
+                if (password.Length < 4 || password.Length > 50)
+                {
+                    await DisplayAlert("Uyarı", "Şifre 4-50 karakter olmalıdır.", "Tamam");
+                    return;
+                }
+
+                // GenelAdmin akışı: okul seçimi gerekmez, OkulSecimView'a yönlendir.
+                if (string.Equals(username, Constants.GenelAdminKullaniciAdi, StringComparison.OrdinalIgnoreCase))
+                {
+                    _genelAdminGecis.Ayarla(password);
+                    await Shell.Current.GoToAsync("///OkulSecimView");
+                    return;
+                }
+
+                if (PckOkul.SelectedIndex < 0)
+                {
+                    await DisplayAlert("Uyarı", "Lütfen okul seçiniz.", "Tamam");
                     return;
                 }
 

@@ -12,6 +12,9 @@ public static class Constants
     // Aktif okulun API URL'i (Preferences'dan dinamik olarak okunur)
     public static string AktifApiUrl => Preferences.Default.Get("AktifOkulApiUrl", VarsayilanApiUrl);
 
+    // Genel Yönetici kullanıcı adı (appsettings.json'daki GenelAdmin:KullaniciAdi ile aynı olmalı)
+    public const string GenelAdminKullaniciAdi = "GenelAdmin";
+
     /// <summary>
     /// Sunucu kök URL'i (API prefix'i olmadan). Resim URL'leri için kullanılır.
     /// </summary>

@@ -40,10 +40,12 @@ namespace OgrenciBilgiSistemi.Mobil
             builder.Services.AddSingleton<DuyuruService>();
             builder.Services.AddSingleton<AdminService>();
             builder.Services.AddSingleton<VeliListeService>();
+            builder.Services.AddSingleton<GenelAdminGirisGecisService>();
 
             // Sayfa kayıtları
             // GirisView ve SinifListeView Shell tarafından DI ile çözümleniyor
             builder.Services.AddTransient<GirisView>();
+            builder.Services.AddTransient<OkulSecimView>();
             builder.Services.AddTransient<SinifListeView>();
             builder.Services.AddTransient<ServisEkraniView>();
             builder.Services.AddTransient<VeliAnaSayfaView>();
