@@ -45,11 +45,15 @@ workflows:
           set -e
           python3 -m pip install --upgrade codemagic-cli-tools
           keychain initialize
+          # App Store Connect API üzerinden profile fetch + (yoksa) create.
+          # --create flag App ID'nin güncel capability'lerini (Push Notifications
+          # dahil) içeren taze profil üretir. Eski capability'siz profiller Apple
+          # Developer Portal'da silinmiş olmalı.
+          app-store-connect fetch-signing-files com.netronyazilim.ogrencibilgisistemi \
+              --type IOS_APP_STORE \
+              --create
           keychain add-certificates
-          # --create: profile yoksa App Store Connect API ile üret. App ID'nin güncel
-          # capability'leri (Push Notifications dahil) içerir. Eski profile silindiyse
-          # taze bir tane oluşur.
-          xcode-project use-profiles --create
+          xcode-project use-profiles
 
       - name: Build IPA (Release)
         script: |
