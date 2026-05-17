@@ -2,6 +2,7 @@
 using ClosedXML.Excel;
 using Microsoft.EntityFrameworkCore;
 using OgrenciBilgiSistemi.Data;
+using OgrenciBilgiSistemi.Dtos;
 using OgrenciBilgiSistemi.Models;
 using OgrenciBilgiSistemi.Services.Interfaces;
 using OgrenciBilgiSistemi.ViewModels;
@@ -290,6 +291,170 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             vm.ToplamBorc = toplamBorc;
             vm.ToplamOdenen = odemeler.Sum(x => x.Tutar);
             return vm;
+        }
+
+        // ─────────────────────────────────────────────────────────────────────────────
+        // Yemekhane Index — akademik yıl bazlı öğrenci listesi (tarife × aktif ay = borç)
+        // ─────────────────────────────────────────────────────────────────────────────
+        public async Task<YemekhaneIndexRaporSonucDto> GetIndexRaporAsync(
+            int? yil,
+            string? query,
+            int? birimId,
+            RaporDurumFiltresiDto durum = RaporDurumFiltresiDto.Hepsi,
+            int page = 1,
+            int pageSize = 50,
+            bool includePasif = false,
+            CancellationToken ct = default)
+        {
+            page = Math.Max(1, page);
+            pageSize = Math.Clamp(pageSize, 5, 200);
+
+            var akYil = yil ?? (DateTime.Now.Month >= 9 ? DateTime.Now.Year : DateTime.Now.Year - 1);
+            var y1 = akYil;
+            var y2 = akYil + 1;
+
+            var oncekiPasifFlag = _ctx.IncludePasifOgrenciler;
+            if (includePasif)
+                _ctx.IncludePasifOgrenciler = true;
+
+            try
+            {
+                // 1) Öğrenci listesi (filtreli)
+                var ogrenciQ = _ctx.Ogrenciler.AsNoTracking();
+
+                if (birimId.HasValue)
+                    ogrenciQ = ogrenciQ.Where(o => o.BirimId == birimId.Value);
+
+                if (!string.IsNullOrWhiteSpace(query))
+                {
+                    var qLike = $"%{query.Trim()}%";
+                    ogrenciQ = ogrenciQ.Where(o =>
+                        EF.Functions.Like(o.OgrenciAdSoyad, qLike) ||
+                        EF.Functions.Like(o.OgrenciNo.ToString(), qLike));
+                }
+
+                var ogrenciler = await ogrenciQ
+                    .Select(o => new
+                    {
+                        o.OgrenciId,
+                        o.OgrenciAdSoyad,
+                        o.OgrenciNo,
+                        SinifAd = o.Birim != null ? o.Birim.BirimAd : null
+                    })
+                    .ToListAsync(ct);
+
+                var ogrenciIds = ogrenciler.Select(x => x.OgrenciId).ToList();
+
+                if (ogrenciIds.Count == 0)
+                {
+                    return new YemekhaneIndexRaporSonucDto
+                    {
+                        Satirlar = SayfalanmisListeModel<YemekhaneIndexSatirDto>.FromList(
+                            new List<YemekhaneIndexSatirDto>(), page, pageSize),
+                        KullanilabilirYillar = await GetKullanilabilirYillarAsync(ct)
+                    };
+                }
+
+                // 2) Batch: tarifeler
+                var tarifeDict = await _ctx.OgrenciYemekTarifeler.AsNoTracking()
+                    .Where(t => ogrenciIds.Contains(t.OgrenciId) && t.Yil == akYil)
+                    .ToDictionaryAsync(t => t.OgrenciId, t => t.AylikTutar, ct);
+
+                // 3) Batch: aktif ay sayıları (Eyl..Ara + Oca..Ağu)
+                var ayKayitlari = await _ctx.OgrenciYemekler.AsNoTracking()
+                    .Where(a => ogrenciIds.Contains(a.OgrenciId) && a.Aktif &&
+                                ((a.Yil == y1 && a.Ay >= 9 && a.Ay <= 12) ||
+                                 (a.Yil == y2 && a.Ay >= 1 && a.Ay <= 8)))
+                    .Select(a => a.OgrenciId)
+                    .ToListAsync(ct);
+                var aktifAyDict = ayKayitlari.GroupBy(id => id).ToDictionary(g => g.Key, g => g.Count());
+
+                // 4) Batch: ödemeler
+                var odemeler = await _ctx.OgrenciYemekOdemeler.AsNoTracking()
+                    .Where(o => ogrenciIds.Contains(o.OgrenciId) && o.AktifMi &&
+                                ((o.Yil == y1 && o.Ay >= 9 && o.Ay <= 12) ||
+                                 (o.Yil == y2 && o.Ay >= 1 && o.Ay <= 8)))
+                    .Select(o => new { o.OgrenciId, o.Tutar })
+                    .ToListAsync(ct);
+                var odemeDict = odemeler.GroupBy(o => o.OgrenciId)
+                                        .ToDictionary(g => g.Key, g => g.Sum(o => o.Tutar));
+
+                // 5) Batch: bu ay durumu
+                var (curYil, curAy) = GetCurrentYearMonth();
+                var buAyDict = await _ctx.OgrenciYemekler.AsNoTracking()
+                    .Where(a => ogrenciIds.Contains(a.OgrenciId) && a.Yil == curYil && a.Ay == curAy)
+                    .ToDictionaryAsync(a => a.OgrenciId, a => a.Aktif, ct);
+
+                // 6) Satırları derle
+                var tumSatirlar = ogrenciler.Select(o =>
+                {
+                    var aylik = tarifeDict.TryGetValue(o.OgrenciId, out var t) ? t : 0m;
+                    var aktifAy = aktifAyDict.TryGetValue(o.OgrenciId, out var c) ? c : 0;
+                    var borc = aylik * aktifAy;
+                    var odenen = odemeDict.TryGetValue(o.OgrenciId, out var od) ? od : 0m;
+                    var kalan = Math.Max(0m, borc - odenen);
+
+                    return new YemekhaneIndexSatirDto
+                    {
+                        OgrenciId = o.OgrenciId,
+                        Yil = akYil,
+                        OgrenciAdSoyad = o.OgrenciAdSoyad ?? "",
+                        OgrenciNo = o.OgrenciNo.ToString(),
+                        OgrenciSinif = o.SinifAd,
+                        AylikTarife = aylik,
+                        AktifAySayisi = aktifAy,
+                        Borc = borc,
+                        Odenen = odenen,
+                        Kalan = kalan,
+                        TarifeVarMi = tarifeDict.ContainsKey(o.OgrenciId),
+                        BuAyAktif = buAyDict.TryGetValue(o.OgrenciId, out var ba) && ba
+                    };
+                }).ToList();
+
+                // 7) Durum filtresi
+                tumSatirlar = durum switch
+                {
+                    RaporDurumFiltresiDto.Borclu => tumSatirlar.Where(s => s.Kalan > 0).ToList(),
+                    RaporDurumFiltresiDto.Borcsuz => tumSatirlar.Where(s => s.Kalan == 0).ToList(),
+                    _ => tumSatirlar
+                };
+
+                // 8) Toplamlar
+                var toplamBorc = tumSatirlar.Sum(s => s.Borc);
+                var toplamOdenen = tumSatirlar.Sum(s => s.Odenen);
+                var toplamKalan = tumSatirlar.Sum(s => s.Kalan);
+
+                // 9) Sıralama + sayfalama (memory)
+                var ordered = tumSatirlar
+                    .OrderBy(s => s.OgrenciSinif)
+                    .ThenBy(s => s.OgrenciAdSoyad)
+                    .ToList();
+
+                var paged = SayfalanmisListeModel<YemekhaneIndexSatirDto>.FromList(
+                    ordered, page, pageSize);
+
+                return new YemekhaneIndexRaporSonucDto
+                {
+                    Satirlar = paged,
+                    ToplamBorc = toplamBorc,
+                    ToplamOdenen = toplamOdenen,
+                    ToplamKalan = toplamKalan,
+                    KullanilabilirYillar = await GetKullanilabilirYillarAsync(ct)
+                };
+            }
+            finally
+            {
+                _ctx.IncludePasifOgrenciler = oncekiPasifFlag;
+            }
+        }
+
+        private async Task<List<int>> GetKullanilabilirYillarAsync(CancellationToken ct)
+        {
+            return await _ctx.OgrenciYemekTarifeler.AsNoTracking()
+                .Select(t => t.Yil)
+                .Distinct()
+                .OrderByDescending(y => y)
+                .ToListAsync(ct);
         }
 
         // ─────────────────────────────────────────────────────────────────────────────

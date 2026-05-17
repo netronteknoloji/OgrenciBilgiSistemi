@@ -37,6 +37,9 @@ namespace OgrenciBilgiSistemi.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Ekle(KullaniciModel model)
         {
+            if (!string.IsNullOrEmpty(model.Sifre) && (model.Sifre.Length < 4 || model.Sifre.Length > 50))
+                ModelState.AddModelError(nameof(model.Sifre), "Şifre 4-50 karakter olmalıdır.");
+
             if (!ModelState.IsValid)
             {
                 await DropdownDoldur(model);
@@ -90,6 +93,10 @@ namespace OgrenciBilgiSistemi.Controllers
         public async Task<IActionResult> Guncelle(KullaniciModel model, int? returnPage, string? returnFilter)
         {
             ModelState.Remove(nameof(model.Sifre));
+
+            // Şifre alanı boşsa değiştirilmiyor; doluysa 4-50 karakter olmalı.
+            if (!string.IsNullOrWhiteSpace(model.Sifre) && (model.Sifre.Length < 4 || model.Sifre.Length > 50))
+                ModelState.AddModelError(nameof(model.Sifre), "Şifre 4-50 karakter olmalıdır.");
 
             if (!ModelState.IsValid)
             {

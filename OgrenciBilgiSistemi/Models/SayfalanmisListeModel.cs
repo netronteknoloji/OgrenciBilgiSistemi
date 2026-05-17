@@ -26,6 +26,31 @@ public class SayfalanmisListeModel<T> : List<T>
         AddRange(items);
     }
 
+    /// <summary>
+    /// Bellekteki List&lt;T&gt;'den (memory'de zaten hesaplanmış veriden) sayfalanmış liste üretir.
+    /// CreateAsync IQueryable + EF provider gerektirir; in-memory data için bu metodu kullan.
+    /// </summary>
+    public static SayfalanmisListeModel<T> FromList(IList<T> source, int pageIndex, int pageSize)
+    {
+        pageIndex = Math.Max(1, pageIndex);
+        pageSize = Math.Max(1, pageSize);
+
+        var count = source.Count;
+        var totalPages = count > 0
+            ? (int)Math.Ceiling(count / (double)pageSize)
+            : 1;
+
+        if (pageIndex > totalPages)
+            pageIndex = totalPages;
+
+        var items = source
+            .Skip((pageIndex - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+
+        return new SayfalanmisListeModel<T>(items, count, pageIndex, pageSize);
+    }
+
     public static async Task<SayfalanmisListeModel<T>> CreateAsync(
         IQueryable<T> source,
         int pageIndex,

@@ -1,4 +1,5 @@
-﻿using OgrenciBilgiSistemi.Models;
+﻿using OgrenciBilgiSistemi.Dtos;
+using OgrenciBilgiSistemi.Models;
 using OgrenciBilgiSistemi.ViewModels;
 
 namespace OgrenciBilgiSistemi.Services.Interfaces
@@ -7,6 +8,17 @@ namespace OgrenciBilgiSistemi.Services.Interfaces
     {
         // -------- Özet / Rapor / Excel --------
         Task<YemekhaneOzetVm> GetOzetAsync(int ogrenciId, int akademikYil, CancellationToken ct = default);
+
+        // Yemekhane Index sayfası — akademik yıl bazlı öğrenci listesi (tarife × aktif ay = borç)
+        Task<YemekhaneIndexRaporSonucDto> GetIndexRaporAsync(
+            int? yil,
+            string? query,
+            int? birimId,
+            RaporDurumFiltresiDto durum = RaporDurumFiltresiDto.Hepsi,
+            int page = 1,
+            int pageSize = 50,
+            bool includePasif = false,
+            CancellationToken ct = default);
 
         Task<YemekhaneRaporVm> GetTopluRaporAsync(
             DateTime? bas,

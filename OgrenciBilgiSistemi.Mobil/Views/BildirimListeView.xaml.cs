@@ -1,3 +1,4 @@
+using CommunityToolkit.Mvvm.Messaging;
 using OgrenciBilgiSistemi.Mobil.Models;
 using OgrenciBilgiSistemi.Mobil.Services;
 
@@ -24,10 +25,29 @@ namespace OgrenciBilgiSistemi.Mobil.Views
         protected override async void OnAppearing()
         {
             base.OnAppearing();
+
+            // Foreground'da yeni push geldiğinde listeyi yenile
+            WeakReferenceMessenger.Default.Register<BildirimGeldiMesaji>(this, async (r, m) =>
+            {
+                await MainThread.InvokeOnMainThreadAsync(async () =>
+                {
+                    _bildirimler.Clear();
+                    _sayfaNo = 1;
+                    _dahaFazlaVar = true;
+                    await BildirimleriYukle();
+                });
+            });
+
             _bildirimler.Clear();
             _sayfaNo = 1;
             _dahaFazlaVar = true;
             await BildirimleriYukle();
+        }
+
+        protected override void OnDisappearing()
+        {
+            base.OnDisappearing();
+            WeakReferenceMessenger.Default.Unregister<BildirimGeldiMesaji>(this);
         }
 
         private async Task BildirimleriYukle()

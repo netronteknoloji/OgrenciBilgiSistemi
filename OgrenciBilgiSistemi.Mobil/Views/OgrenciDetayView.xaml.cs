@@ -17,17 +17,19 @@ namespace OgrenciBilgiSistemi.Mobil.Views
     {
         private readonly int _studentId;
         private readonly OgrenciService _ogrenciService;
+        private readonly ServisService _servisService;
         private DateTime currentWeekStart;
         private CancellationTokenSource _haftaCts;
 
         // Geçerli yoklama durum aralığı (1-7); Shared/YoklamaDurumu enum ile aynı.
         private static bool GecerliDurum(int statusId) => statusId is >= 1 and <= 7;
 
-        public OgrenciDetayView(int studentId, OgrenciService? ogrenciService = null)
+        public OgrenciDetayView(int studentId, OgrenciService? ogrenciService = null, ServisService? servisService = null)
         {
             InitializeComponent();
             _studentId = studentId;
             _ogrenciService = ogrenciService ?? IPlatformApplication.Current.Services.GetRequiredService<OgrenciService>();
+            _servisService = servisService ?? IPlatformApplication.Current.Services.GetRequiredService<ServisService>();
         }
 
         protected override async void OnAppearing()
@@ -47,6 +49,7 @@ namespace OgrenciBilgiSistemi.Mobil.Views
 
             _ = LoadWeeklyAttendanceMatrix();
             _ = LoadHaftalikGecisKayitlari();
+            _ = LoadHaftalikServisYoklama();
         }
 
         private void OnPreviousWeekClicked(object sender, EventArgs e) => SetCurrentWeek(currentWeekStart.AddDays(-7));
@@ -280,6 +283,95 @@ namespace OgrenciBilgiSistemi.Mobil.Views
             {
                 System.Diagnostics.Debug.WriteLine($"[HATA] Geçiş kayıtları: {ex.Message}");
             }
+        }
+
+        private async Task LoadHaftalikServisYoklama()
+        {
+            _haftaCts?.Token.ThrowIfCancellationRequested();
+            var ct = _haftaCts?.Token ?? CancellationToken.None;
+
+            try
+            {
+                ct.ThrowIfCancellationRequested();
+                var kayitlar = await _servisService.OgrenciYoklamaGecmisiGetirAsync(_studentId, currentWeekStart, currentWeekStart.AddDays(6));
+                ct.ThrowIfCancellationRequested();
+
+                // Aynı (gün, periyot) için en son kaydı tut (sorgu zaten Tarih DESC döndürüyor)
+                var enSon = new Dictionary<(DateTime Gun, int Periyot), int>();
+                foreach (var k in kayitlar)
+                {
+                    var key = (k.Tarih.Date, k.Periyot);
+                    if (!enSon.ContainsKey(key))
+                        enSon[key] = k.DurumId;
+                }
+
+                LayoutServisYoklama.Children.Clear();
+                if (enSon.Count == 0)
+                {
+                    LayoutServisYoklama.Children.Add(new Label
+                    {
+                        Text = "Bu hafta servis yoklama kaydı bulunmuyor.",
+                        FontSize = 12, TextColor = Color.FromArgb("#BDC3C7"), HorizontalOptions = LayoutOptions.Center
+                    });
+                    return;
+                }
+
+                for (int i = 0; i < 7; i++)
+                {
+                    DateTime gun = currentWeekStart.AddDays(i);
+                    bool sabahVar = enSon.TryGetValue((gun, 1), out var sabahDurum);
+                    bool aksamVar = enSon.TryGetValue((gun, 2), out var aksamDurum);
+                    if (!sabahVar && !aksamVar) continue;
+
+                    int gunIndex = ((int)gun.DayOfWeek + 6) % 7;
+                    string gunAdi = gunIndex < GunAdlari.Length ? GunAdlari[gunIndex] : "";
+
+                    LayoutServisYoklama.Children.Add(new Label
+                    {
+                        Text = $"{gunAdi}, {gun:dd.MM.yyyy}",
+                        FontSize = 12, FontAttributes = FontAttributes.Bold, TextColor = Color.FromArgb("#2C3E50")
+                    });
+
+                    var satir = new HorizontalStackLayout { Spacing = 12, Margin = new Thickness(10, 2, 0, 0) };
+                    satir.Children.Add(YoklamaEtiketi("Sabah", sabahVar, sabahDurum));
+                    satir.Children.Add(YoklamaEtiketi("Akşam", aksamVar, aksamDurum));
+                    LayoutServisYoklama.Children.Add(satir);
+                }
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[HATA] Servis yoklama: {ex.Message}");
+            }
+        }
+
+        private static Label YoklamaEtiketi(string periyotAdi, bool kayitVar, int durumId)
+        {
+            string isaret;
+            string renk;
+            if (!kayitVar)
+            {
+                isaret = "—";
+                renk = "#BDC3C7";
+            }
+            else if (durumId == 1) // Bindi
+            {
+                isaret = "✓";
+                renk = YoklamaRenkleri.GirisHex;
+            }
+            else // Binmedi (2) veya bilinmeyen
+            {
+                isaret = "✗";
+                renk = YoklamaRenkleri.CikisHex;
+            }
+
+            return new Label
+            {
+                Text = $"{periyotAdi} {isaret}",
+                FontSize = 13,
+                TextColor = Color.FromArgb(renk),
+                FontAttributes = FontAttributes.Bold
+            };
         }
 
         private void OnPhoneTapped(object sender, EventArgs e)

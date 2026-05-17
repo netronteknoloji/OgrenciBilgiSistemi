@@ -1,4 +1,5 @@
 using Microsoft.Data.SqlClient;
+using OgrenciBilgiSistemi.Api.Dtos;
 using OgrenciBilgiSistemi.Api.Models;
 using OgrenciBilgiSistemi.Shared.Services;
 
@@ -127,6 +128,49 @@ namespace OgrenciBilgiSistemi.Api.Services
                 throw new InvalidOperationException("Servis yoklama bilgisi alınamadı.", ex);
             }
             return yoklamaDict;
+        }
+
+        /// <summary>
+        /// Bir öğrencinin tarih aralığındaki servis yoklama geçmişini getirir.
+        /// </summary>
+        public async Task<List<ServisYoklamaGecmisDto>> OgrenciYoklamaGecmisiGetir(
+            int ogrenciId, DateTime? baslangic, DateTime? bitis)
+        {
+            var sonuc = new List<ServisYoklamaGecmisDto>();
+            try
+            {
+                await using var conn = new SqlConnection(ConnectionString);
+                const string query = @"
+                    SELECT OgrenciId, Periyot, DurumId, OlusturulmaTarihi
+                    FROM ServisYoklamalar
+                    WHERE OgrenciId = @ogrenciId
+                      AND (@baslangic IS NULL OR OlusturulmaTarihi >= @baslangic)
+                      AND (@bitis IS NULL OR OlusturulmaTarihi < DATEADD(DAY, 1, @bitis))
+                    ORDER BY OlusturulmaTarihi DESC";
+
+                await using var cmd = new SqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@ogrenciId", ogrenciId);
+                cmd.Parameters.AddWithValue("@baslangic", (object?)baslangic ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@bitis", (object?)bitis ?? DBNull.Value);
+                await conn.OpenAsync();
+
+                await using var reader = await cmd.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    sonuc.Add(new ServisYoklamaGecmisDto
+                    {
+                        OgrenciId = (int)reader["OgrenciId"],
+                        Periyot   = (int)reader["Periyot"],
+                        DurumId   = (int)reader["DurumId"],
+                        Tarih     = (DateTime)reader["OlusturulmaTarihi"]
+                    });
+                }
+            }
+            catch (SqlException ex)
+            {
+                throw new InvalidOperationException("Öğrenci servis yoklama geçmişi alınamadı.", ex);
+            }
+            return sonuc;
         }
 
         /// <summary>

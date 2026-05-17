@@ -9,6 +9,7 @@ using OgrenciBilgiSistemi.Hubs;
 using OgrenciBilgiSistemi.Shared.Models;
 using OgrenciBilgiSistemi.Shared.Services;
 using OgrenciBilgiSistemi.Sms;
+using OgrenciBilgiSistemi.Push;
 using OgrenciBilgiSistemi.Services;
 using OgrenciBilgiSistemi.Services.BackgroundServices;
 using OgrenciBilgiSistemi.Services.Implementations;
@@ -112,6 +113,10 @@ builder.Services.AddScoped<IKullaniciService, KullaniciService>();
 builder.Services.AddSmsAltyapisi(builder.Configuration);
 builder.Services.AddScoped<ISmsGonderimService, SmsGonderimService>();
 
+// Push (FCM)
+builder.Services.AddPushAltyapisi(builder.Configuration);
+builder.Services.AddScoped<IBildirimTokenDeposu, EfBildirimTokenDeposu>();
+
 // Hosted services
 builder.Services.AddHostedService<KartOkumaOlayIsleyiciService>();
 builder.Services.AddHostedService<ZkBaglantiIzleyiciHostedService>();
@@ -143,6 +148,11 @@ builder.Services.AddAuthorization(o =>
 });
 
 var app = builder.Build();
+
+// FirebaseApp.DefaultInstance'ı bir kez başlat (uygulama başlangıcı)
+PushAltyapiExtensions.FirebaseUygulamasiniBaslat(
+    app.Configuration,
+    app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("PushAltyapi"));
 
 // --------------------
 // Middleware

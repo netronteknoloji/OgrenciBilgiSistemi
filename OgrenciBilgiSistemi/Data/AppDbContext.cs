@@ -38,6 +38,7 @@ namespace OgrenciBilgiSistemi.Data
         public DbSet<DuyuruModel> Duyurular { get; set; }
         public DbSet<DuyuruOkumaModel> DuyuruOkumalari { get; set; }
         public DbSet<SmsGonderimGecmisiModel> SmsGonderimGecmisleri { get; set; }
+        public DbSet<BildirimCihaziModel> BildirimCihazlari { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -342,8 +343,7 @@ namespace OgrenciBilgiSistemi.Data
             // Öğrenci numarası — her numara yalnızca bir öğrenciye ait olabilir
             modelBuilder.Entity<OgrenciModel>()
                 .HasIndex(o => o.OgrenciNo)
-                .IsUnique()
-                .HasDatabaseName("UX_Ogrenciler_OgrenciNo");
+                .HasDatabaseName("IX_Ogrenciler_OgrenciNo");
 
             // Kart numarası — bir kart birden fazla öğrenciye atanamaz
             // Boş/null değerler benzersizlik kapsamı dışında tutulur
@@ -356,8 +356,7 @@ namespace OgrenciBilgiSistemi.Data
             // Kullanıcı adı — tüm kayıtlar arasında benzersiz olmalı
             modelBuilder.Entity<KullaniciModel>()
                 .HasIndex(k => k.KullaniciAdi)
-                .IsUnique()
-                .HasDatabaseName("UX_Kullanicilar_KullaniciAdi");
+                .HasDatabaseName("IX_Kullanicilar_KullaniciAdi");
 
             // =========================
             // RANDEVU
@@ -461,6 +460,11 @@ namespace OgrenciBilgiSistemi.Data
                 .HasForeignKey(o => o.KullaniciId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            // DuyuruModel soft-delete filter'ı ile eşleşmeli; aksi halde silinmiş duyurunun
+            // okuma kayıtları orphan kalır ve EF beklenmedik sonuç üretebilir (uyarı 10622).
+            modelBuilder.Entity<DuyuruOkumaModel>()
+                .HasQueryFilter(o => !o.Duyuru.IsDeleted);
+
             // Aynı (DuyuruId, KullaniciId) için tek satır — idempotent okundu işareti
             modelBuilder.Entity<DuyuruOkumaModel>()
                 .HasIndex(o => new { o.DuyuruId, o.KullaniciId })
@@ -489,6 +493,25 @@ namespace OgrenciBilgiSistemi.Data
                 // Tip + tarih bazlı raporlama
                 e.HasIndex(g => new { g.Tip, g.GonderimZamani })
                  .HasDatabaseName("IX_SmsGonderimGecmisi_Tip_Zaman");
+            });
+
+            // =========================
+            // BILDIRIM CIHAZI
+            // =========================
+            modelBuilder.Entity<BildirimCihaziModel>(e =>
+            {
+                e.HasOne(p => p.Kullanici)
+                 .WithMany()
+                 .HasForeignKey(p => p.KullaniciId)
+                 .OnDelete(DeleteBehavior.Cascade);
+
+                e.HasIndex(p => p.FcmToken)
+                 .IsUnique()
+                 .HasFilter("[IsDeleted] = 0")
+                 .HasDatabaseName("UX_BildirimCihazlari_FcmToken_Aktif");
+
+                e.HasIndex(p => new { p.KullaniciId, p.IsDeleted })
+                 .HasDatabaseName("IX_BildirimCihazlari_Kullanici_Aktif");
             });
 
             // =========================

@@ -156,6 +156,15 @@ namespace OgrenciBilgiSistemi.Mobil.Services
         /// </summary>
         public static async Task OturumTemizleAsync()
         {
+            // Push cihaz kaydını sunucudan sil + FCM token'ı temizle (oturum hâlâ varken)
+            try
+            {
+                var pushKayit = IPlatformApplication.Current?.Services.GetService<PushKayitServisi>();
+                if (pushKayit != null)
+                    await pushKayit.LogoutOncesiAsync();
+            }
+            catch { /* sessizce yut */ }
+
             // Sunucudaki refresh token'ı geçersiz kıl
             await LogoutApiCagirAsync();
 

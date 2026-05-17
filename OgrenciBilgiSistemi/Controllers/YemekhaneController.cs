@@ -1,5 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using OgrenciBilgiSistemi.Dtos;
+using OgrenciBilgiSistemi.Helpers;
 using OgrenciBilgiSistemi.Services.Interfaces;
+using OgrenciBilgiSistemi.ViewModels;
 
 namespace OgrenciBilgiSistemi.Controllers
 {
@@ -7,10 +11,99 @@ namespace OgrenciBilgiSistemi.Controllers
     public class YemekhaneController : Controller
     {
         private readonly IYemekhaneService _svc;
+        private readonly IBirimService _birimService;
 
-        public YemekhaneController(IYemekhaneService svc)
+        public YemekhaneController(IYemekhaneService svc, IBirimService birimService)
         {
             _svc = svc;
+            _birimService = birimService;
+        }
+
+        [HttpGet("Index")]
+        public async Task<IActionResult> Index(
+            string? query,
+            int? yil,
+            int? birimId,
+            RaporDurumFiltresiDto durum = RaporDurumFiltresiDto.Hepsi,
+            int page = 1,
+            int pageSize = 50,
+            bool includePasif = false,
+            CancellationToken ct = default)
+        {
+            int defaultYil = AkademikDonemHelper.Current();
+
+            if (pageSize <= 0) pageSize = 50;
+            pageSize = Math.Min(pageSize, 200);
+
+            var rapor = await _svc.GetIndexRaporAsync(
+                yil: yil,
+                query: query,
+                birimId: birimId,
+                durum: durum,
+                page: page,
+                pageSize: pageSize,
+                includePasif: includePasif,
+                ct: ct);
+
+            // Yıl dropdown
+            var yillar = rapor.KullanilabilirYillar
+                .OrderByDescending(x => x)
+                .Select(y => new SelectListItem
+                {
+                    Value = y.ToString(),
+                    Text = $"{y}-{y + 1}",
+                    Selected = (yil ?? defaultYil) == y
+                })
+                .ToList();
+            yillar.Insert(0, new SelectListItem
+            {
+                Value = "",
+                Text = "Tüm Yıllar",
+                Selected = !yil.HasValue
+            });
+
+            // Birim dropdown
+            var birimler = await _birimService.GetSelectListAsync(
+                selectedId: birimId,
+                sinifMi: true,
+                ct: ct);
+
+            // Durum dropdown — Yemekhane'de Muaf yok, sadece Hepsi/Borçlu/Borçsuz
+            var durumlar = new[] { RaporDurumFiltresiDto.Hepsi, RaporDurumFiltresiDto.Borclu, RaporDurumFiltresiDto.Borcsuz }
+                .Select(e => new SelectListItem
+                {
+                    Value = ((int)e).ToString(),
+                    Text = e switch
+                    {
+                        RaporDurumFiltresiDto.Hepsi => "Hepsi",
+                        RaporDurumFiltresiDto.Borclu => "Borçlu",
+                        RaporDurumFiltresiDto.Borcsuz => "Borçsuz",
+                        _ => e.ToString()
+                    },
+                    Selected = e == durum
+                })
+                .ToList();
+
+            var vm = new YemekhaneIndexVm
+            {
+                query = query,
+                yil = yil ?? defaultYil,
+                birimId = birimId,
+                durum = durum,
+                includePasif = includePasif,
+
+                Yillar = yillar,
+                Birimler = birimler,
+                Durumlar = durumlar,
+
+                Satirlar = rapor.Satirlar,
+                ToplamBorc = rapor.ToplamBorc,
+                ToplamOdenen = rapor.ToplamOdenen,
+                ToplamKalan = rapor.ToplamKalan,
+                KullanilabilirYillar = rapor.KullanilabilirYillar
+            };
+
+            return View(vm);
         }
 
         [HttpGet("Ozet")]

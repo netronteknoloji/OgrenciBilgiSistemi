@@ -12,13 +12,15 @@ namespace OgrenciBilgiSistemi.Api.Controllers
     public class ServisController : ControllerBase
     {
         private readonly ServisService _servisService;
+        private readonly OgrenciService _ogrenciService;
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly TenantBaglami _tenantBaglami;
         private readonly ILogger<ServisController> _logger;
 
-        public ServisController(ServisService servisService, IServiceScopeFactory scopeFactory, TenantBaglami tenantBaglami, ILogger<ServisController> logger)
+        public ServisController(ServisService servisService, OgrenciService ogrenciService, IServiceScopeFactory scopeFactory, TenantBaglami tenantBaglami, ILogger<ServisController> logger)
         {
             _servisService = servisService;
+            _ogrenciService = ogrenciService;
             _scopeFactory = scopeFactory;
             _tenantBaglami = tenantBaglami;
             _logger = logger;
@@ -137,6 +139,47 @@ namespace OgrenciBilgiSistemi.Api.Controllers
             catch (Exception)
             {
                 return StatusCode(500, new { error = "Servis yoklaması kaydedilirken bir hata oluştu." });
+            }
+        }
+
+        /// <summary>
+        /// Bir öğrencinin servis yoklama geçmişini tarih aralığına göre getirir.
+        /// Veli sadece kendi çocuğunu, Servis sadece kendi servis öğrencisini görebilir;
+        /// Admin/GenelAdmin/Öğretmen tüm öğrencileri görebilir.
+        /// </summary>
+        [HttpGet("ogrenci/{ogrenciId}/yoklama-gecmisi")]
+        public async Task<IActionResult> OgrenciYoklamaGecmisi(
+            int ogrenciId,
+            [FromQuery] DateTime? baslangic,
+            [FromQuery] DateTime? bitis)
+        {
+            if (baslangic.HasValue && bitis.HasValue && baslangic > bitis)
+                return BadRequest(new { error = "Başlangıç tarihi bitiş tarihinden sonra olamaz." });
+
+            try
+            {
+                var ogrenci = await _ogrenciService.OgrenciGetirAsync(ogrenciId);
+                if (ogrenci is null)
+                    return NotFound(new { message = $"{ogrenciId} numaralı öğrenci bulunamadı." });
+
+                var rol = User.FindFirst("rol")?.Value;
+                if (rol == "Veli")
+                {
+                    if (!int.TryParse(User.FindFirst("veliId")?.Value, out var veliId) || ogrenci.VeliId != veliId)
+                        return Forbid();
+                }
+                else if (rol == "Servis")
+                {
+                    if (!int.TryParse(User.FindFirst("servisId")?.Value, out var servisId) || ogrenci.ServisId != servisId)
+                        return Forbid();
+                }
+
+                var kayitlar = await _servisService.OgrenciYoklamaGecmisiGetir(ogrenciId, baslangic, bitis);
+                return Ok(kayitlar);
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new { error = "Servis yoklama geçmişi alınırken bir hata oluştu." });
             }
         }
 

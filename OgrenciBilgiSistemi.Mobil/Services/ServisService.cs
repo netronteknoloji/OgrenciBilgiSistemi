@@ -77,6 +77,30 @@ namespace OgrenciBilgiSistemi.Mobil.Services
         }
 
         /// <summary>
+        /// Bir öğrencinin tarih aralığındaki servis yoklama geçmişini API'den getirir.
+        /// </summary>
+        public async Task<List<ServisYoklamaGecmis>> OgrenciYoklamaGecmisiGetirAsync(
+            int ogrenciId, DateTime baslangic, DateTime bitis)
+        {
+            try
+            {
+                var url = $"{BaseUrl}servisler/ogrenci/{ogrenciId}/yoklama-gecmisi" +
+                          $"?baslangic={baslangic:yyyy-MM-dd}&bitis={bitis:yyyy-MM-dd}";
+                var response = await GetAsync(url);
+                if (!response.IsSuccessStatusCode)
+                    return new List<ServisYoklamaGecmis>();
+
+                return await response.Content.ReadFromJsonAsync<List<ServisYoklamaGecmis>>(_jsonOptions)
+                       ?? new List<ServisYoklamaGecmis>();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[API HATASI]: {ex.Message}");
+                return new List<ServisYoklamaGecmis>();
+            }
+        }
+
+        /// <summary>
         /// Servis yoklamasını toplu olarak API'ye göndererek kaydeder.
         /// </summary>
         public async Task ServisYoklamaKaydet(IEnumerable<(int OgrenciId, int DurumId)> yoklamaVerisi, int periyot)

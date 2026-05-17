@@ -14,8 +14,9 @@ namespace OgrenciBilgiSistemi.Models
         [Required(ErrorMessage = "Kullanıcı adı gereklidir.")]
         public string KullaniciAdi { get; set; } = string.Empty;
 
+        // Sifre alanı hash olarak saklanır (PasswordHasher V3 ~84 karakter).
+        // Kullanıcının yazdığı düz metin için 4-50 karakter validasyonu controller'da yapılır.
         [Required(ErrorMessage = "Şifre gereklidir.")]
-        [StringLength(50, MinimumLength = 4, ErrorMessage = "Şifre 4-50 karakter olmalıdır.")]
         [DataType(DataType.Password)]
         public string Sifre { get; set; } = string.Empty;
 

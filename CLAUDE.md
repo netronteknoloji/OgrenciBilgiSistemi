@@ -54,11 +54,10 @@ Mobil     → Shared (HTTP üzerinden Api'ye)
 
 ## Konfigürasyon
 
-`Okullar[]` ve `SmsAyarlari` MVC + API'de aynı.
+`Okullar[]`, `SmsAyarlari` ve `GenelAdmin` MVC + API'de aynı (üçü de duplicated, her iki backend de okur).
 
 | Sadece | Anahtar |
 |---|---|
-| MVC | `GenelAdmin` (hash'li, DB'de değil) |
 | API | `Jwt`, `Cors:AllowedOrigins`, `MvcWwwRootPath` |
 | Mobil | `KayitSunucuUrl` (embedded resource) |
 

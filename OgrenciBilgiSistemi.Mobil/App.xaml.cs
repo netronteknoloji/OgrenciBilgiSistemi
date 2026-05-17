@@ -80,5 +80,23 @@ public partial class App : Application                                          
             }
             catch { /* sessizce yut */ }
         });
+
+        // Push notification dinleyicilerini bağla
+        _ = MainThread.InvokeOnMainThreadAsync(async () =>
+        {
+            try
+            {
+                var pushKayit = IPlatformApplication.Current?.Services.GetService<PushKayitServisi>();
+                var yonlendirme = IPlatformApplication.Current?.Services.GetService<BildirimYonlendirmeServisi>();
+
+                if (pushKayit != null) await pushKayit.DinleyicileriBaslatAsync();
+                yonlendirme?.DinleyiciyiBaglat();
+
+                // Önceden giriş yapılmış oturumda token zaten kayıtlı; sessiz refresh
+                if (KullaniciOturum.GirisYapildiMi && pushKayit != null)
+                    await pushKayit.LoginSonrasiKaydetAsync();
+            }
+            catch { /* sessizce yut */ }
+        });
     }
 }                                                                                   // Sınıf sonu.

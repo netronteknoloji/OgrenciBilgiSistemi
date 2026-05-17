@@ -1,12 +1,28 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 	<application
         android:allowBackup="true"
         android:icon="@mipmap/appicon"
         android:supportsRtl="true"
         android:usesCleartextTraffic="true">
+
+		<!-- FCM varsayılan bildirim kanalı (uygulama açık değilken sistem bildirim göstermek için) -->
+		<meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="obs_default" />
+		<!-- FCM bildirim status bar ikonu (Android 8+: launcher icon yerine bu kullanılır; yoksa siyah kare gözükür) -->
+		<meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_notification" />
+		<meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/notification_color" />
 	</application>
 
 	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 	<uses-permission android:name="android.permission.INTERNET" />
-</manifest> 
+	<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+	<uses-permission android:name="android.permission.WAKE_LOCK" />
+	<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+	<uses-permission android:name="android.permission.VIBRATE" />
+</manifest>

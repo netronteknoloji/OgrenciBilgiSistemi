@@ -17,7 +17,13 @@ namespace OgrenciBilgiSistemi.Mobil.Services
 
                 var response = await _httpClient.PostAsync($"{BaseUrl}kimlik-dogrulama/login", content);
 
-                if (response.IsSuccessStatusCode)
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorBody = await response.Content.ReadAsStringAsync();
+                    System.Diagnostics.Debug.WriteLine($"[LOGIN HATASI] {(int)response.StatusCode}: {errorBody}");
+                    return false;
+                }
+
                 {
                     var responseString = await response.Content.ReadAsStringAsync();
 
@@ -60,6 +66,15 @@ namespace OgrenciBilgiSistemi.Mobil.Services
                         );
 
                         YetkiBasliginiYenile();
+
+                        // Push token kaydını fire-and-forget olarak tetikle (login akışını bloke etme)
+                        try
+                        {
+                            var pushKayit = IPlatformApplication.Current?.Services.GetService<PushKayitServisi>();
+                            if (pushKayit != null)
+                                _ = pushKayit.LoginSonrasiKaydetAsync();
+                        }
+                        catch { /* sessizce yut */ }
 
                         return true;
                     }

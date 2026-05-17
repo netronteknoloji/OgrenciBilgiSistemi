@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<TargetFrameworks>net9.0-android;net9.0-ios</TargetFrameworks>
+		<TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('OSX'))">net9.0-android;net9.0-ios</TargetFrameworks>
+		<TargetFrameworks Condition="!$([MSBuild]::IsOSPlatform('OSX'))">net9.0-android</TargetFrameworks>
 
 		<UseMaui>true</UseMaui>
 		<SingleProject>true</SingleProject>
@@ -11,8 +12,8 @@
 
 		<ApplicationTitle>OgrenciBilgiSistemi</ApplicationTitle>
 
-		<ApplicationDisplayVersion>3.3</ApplicationDisplayVersion>
-		<ApplicationVersion>58</ApplicationVersion>
+		<ApplicationDisplayVersion>3.4</ApplicationDisplayVersion>
+		<ApplicationVersion>59</ApplicationVersion>
 	</PropertyGroup>
 
 	<!-- Platform versiyonları -->
@@ -43,7 +44,27 @@
 		<PackageReference Include="Microsoft.Maui.Controls" Version="9.0.0" />
 		<PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="9.0.0" />
 		<PackageReference Include="CommunityToolkit.Maui" Version="9.0.0" />
+		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="9.0.0" />
+		<PackageReference Include="Plugin.Firebase.CloudMessaging" Version="3.1.1" />
+		<PackageReference Include="Plugin.LocalNotification" Version="11.1.4" />
 	</ItemGroup>
-	
+
+	<!-- Android için Firebase config dosyası -->
+	<ItemGroup Condition="'$(TargetFramework)' == 'net9.0-android'">
+		<GoogleServicesJson Include="Platforms\Android\google-services.json" Condition="Exists('Platforms\Android\google-services.json')" />
+	</ItemGroup>
+
+	<!-- iOS için Firebase config + entitlements -->
+	<ItemGroup Condition="'$(TargetFramework)' == 'net9.0-ios'">
+		<BundleResource Include="Platforms\iOS\GoogleService-Info.plist" Condition="Exists('Platforms\iOS\GoogleService-Info.plist')" />
+	</ItemGroup>
+	<!-- iOS APNs entitlement: Debug → development (sandbox), Release → production (TestFlight/App Store) -->
+	<PropertyGroup Condition="'$(TargetFramework)' == 'net9.0-ios' And '$(Configuration)' == 'Release'">
+		<CodesignEntitlements>Platforms\iOS\Entitlements.Release.plist</CodesignEntitlements>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(TargetFramework)' == 'net9.0-ios' And '$(Configuration)' != 'Release'">
+		<CodesignEntitlements>Platforms\iOS\Entitlements.plist</CodesignEntitlements>
+	</PropertyGroup>
+
 </Project>

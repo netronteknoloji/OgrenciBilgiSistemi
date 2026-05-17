@@ -33,4 +33,10 @@ Thumbs.db
 # Publish profiles (often environment-specific / sensitive)
 **/Properties/PublishProfiles/
 
+# Firebase / FCM kimlik bilgileri (commit edilmez)
+**/google-services.json
+**/GoogleService-Info.plist
+**/*firebase-adminsdk*.json
+**/firebase-credentials.json
+
 CLAUDE.md

@@ -22,6 +22,55 @@ namespace OgrenciBilgiSistemi.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("OgrenciBilgiSistemi.Models.BildirimCihaziModel", b =>
+                {
+                    b.Property<int>("BildirimCihaziId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("BildirimCihaziId"));
+
+                    b.Property<string>("CihazModeli")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("FcmToken")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("KullaniciId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("OlusturulmaTarihi")
+                        .HasColumnType("datetime2");
+
+                    b.Property<byte>("Platform")
+                        .HasColumnType("tinyint");
+
+                    b.Property<DateTime>("SonGuncelleme")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UygulamaSurumu")
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.HasKey("BildirimCihaziId");
+
+                    b.HasIndex("FcmToken")
+                        .IsUnique()
+                        .HasDatabaseName("UX_BildirimCihazlari_FcmToken_Aktif")
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.HasIndex("KullaniciId", "IsDeleted")
+                        .HasDatabaseName("IX_BildirimCihazlari_Kullanici_Aktif");
+
+                    b.ToTable("BildirimCihazlari");
+                });
+
             modelBuilder.Entity("OgrenciBilgiSistemi.Models.BildirimModel", b =>
                 {
                     b.Property<int>("BildirimId")
@@ -312,8 +361,7 @@ namespace OgrenciBilgiSistemi.Migrations
                     b.HasKey("KullaniciId");
 
                     b.HasIndex("KullaniciAdi")
-                        .IsUnique()
-                        .HasDatabaseName("UX_Kullanicilar_KullaniciAdi");
+                        .HasDatabaseName("IX_Kullanicilar_KullaniciAdi");
 
                     b.HasIndex("Rol")
                         .HasDatabaseName("IX_Kullanicilar_Rol");
@@ -833,8 +881,7 @@ namespace OgrenciBilgiSistemi.Migrations
                         .HasFilter("[OgrenciKartNo] IS NOT NULL AND [OgrenciKartNo] != ''");
 
                     b.HasIndex("OgrenciNo")
-                        .IsUnique()
-                        .HasDatabaseName("UX_Ogrenciler_OgrenciNo");
+                        .HasDatabaseName("IX_Ogrenciler_OgrenciNo");
 
                     b.HasIndex("OgretmenId");
 
@@ -1317,6 +1364,17 @@ namespace OgrenciBilgiSistemi.Migrations
                     b.HasIndex("KullaniciId");
 
                     b.ToTable("Ziyaretciler");
+                });
+
+            modelBuilder.Entity("OgrenciBilgiSistemi.Models.BildirimCihaziModel", b =>
+                {
+                    b.HasOne("OgrenciBilgiSistemi.Models.KullaniciModel", "Kullanici")
+                        .WithMany()
+                        .HasForeignKey("KullaniciId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Kullanici");
                 });
 
             modelBuilder.Entity("OgrenciBilgiSistemi.Models.BildirimModel", b =>

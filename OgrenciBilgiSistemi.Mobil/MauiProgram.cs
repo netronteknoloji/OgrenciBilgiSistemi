@@ -1,9 +1,14 @@
 using Microsoft.Extensions.Logging;
+using Microsoft.Maui.LifecycleEvents;
 using CommunityToolkit.Maui;
 using OgrenciBilgiSistemi.Mobil.Services;
 using OgrenciBilgiSistemi.Mobil.Views;
+using Plugin.LocalNotification;
 using System.Reflection;
 using System.Text.Json;
+#if IOS
+using Plugin.Firebase.Core.Platforms.iOS;
+#endif
 
 namespace OgrenciBilgiSistemi.Mobil
 {
@@ -19,6 +24,8 @@ namespace OgrenciBilgiSistemi.Mobil
             builder
                 .UseMauiApp<App>()
                 .UseMauiCommunityToolkit()
+                .UseLocalNotification()
+                .RegisterFirebaseServices()
                 .ConfigureFonts(fonts =>
                 {
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
@@ -41,6 +48,8 @@ namespace OgrenciBilgiSistemi.Mobil
             builder.Services.AddSingleton<AdminService>();
             builder.Services.AddSingleton<VeliListeService>();
             builder.Services.AddSingleton<GenelAdminGirisGecisService>();
+            builder.Services.AddSingleton<PushKayitServisi>();
+            builder.Services.AddSingleton<BildirimYonlendirmeServisi>();
 
             // Sayfa kayıtları
             // GirisView ve SinifListeView Shell tarafından DI ile çözümleniyor
@@ -71,6 +80,34 @@ namespace OgrenciBilgiSistemi.Mobil
 #endif
 
             return builder.Build();
+        }
+
+        /// <summary>
+        /// Plugin.Firebase platform-spesifik başlatıcılarını çağırır.
+        /// iOS: Firebase.Core.App.Configure() + UNUserNotificationCenter delegate'i AppDelegate'te bağlanır.
+        /// Android: CrossFirebase.Initialize MainApplication'da çağrılır.
+        /// </summary>
+        private static MauiAppBuilder RegisterFirebaseServices(this MauiAppBuilder builder)
+        {
+            builder.ConfigureLifecycleEvents(events =>
+            {
+#if IOS
+                events.AddiOS(iOS => iOS.FinishedLaunching((app, launchOptions) =>
+                {
+                    try
+                    {
+                        CrossFirebase.Initialize();
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[Firebase init] {ex.Message}");
+                    }
+                    return false;
+                }));
+#endif
+            });
+
+            return builder;
         }
 
         /// <summary>

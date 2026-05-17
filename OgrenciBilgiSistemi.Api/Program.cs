@@ -8,6 +8,7 @@ using OgrenciBilgiSistemi.Api.Services;
 using OgrenciBilgiSistemi.Shared.Models;
 using OgrenciBilgiSistemi.Shared.Services;
 using OgrenciBilgiSistemi.Sms;
+using OgrenciBilgiSistemi.Push;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -113,10 +114,19 @@ builder.Services.AddRateLimiter(options =>
 builder.Services.AddSmsAltyapisi(builder.Configuration);
 builder.Services.AddScoped<YoklamaSmsBildirimService>();
 builder.Services.AddHostedService<BekleyenYoklamaSmsRetryService>();
+
+// Push (FCM)
+builder.Services.AddPushAltyapisi(builder.Configuration);
+builder.Services.AddScoped<IBildirimTokenDeposu, RawSqlBildirimTokenDeposu>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+
+// FirebaseApp.DefaultInstance'ı bir kez başlat (uygulama başlangıcı)
+PushAltyapiExtensions.FirebaseUygulamasiniBaslat(
+    app.Configuration,
+    app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("PushAltyapi"));
 
 // --------------------
 // Middleware sırası

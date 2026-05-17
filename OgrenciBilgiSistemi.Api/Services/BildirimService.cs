@@ -1,5 +1,7 @@
 using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Logging;
 using OgrenciBilgiSistemi.Api.Models;
+using OgrenciBilgiSistemi.Push;
 using OgrenciBilgiSistemi.Shared.Services;
 
 namespace OgrenciBilgiSistemi.Api.Services
@@ -7,17 +9,25 @@ namespace OgrenciBilgiSistemi.Api.Services
     public class BildirimService
     {
         private readonly TenantBaglami _tenantBaglami;
+        private readonly IPushBildirimGonderici _pushGonderici;
+        private readonly ILogger<BildirimService> _logger;
         private string ConnectionString => _tenantBaglami.ConnectionString;
 
-        public BildirimService(TenantBaglami tenantBaglami)
+        public BildirimService(
+            TenantBaglami tenantBaglami,
+            IPushBildirimGonderici pushGonderici,
+            ILogger<BildirimService> logger)
         {
             _tenantBaglami = tenantBaglami;
+            _pushGonderici = pushGonderici;
+            _logger = logger;
         }
 
         public async Task Olustur(int aliciKullaniciId, int tur, string mesaj, int? randevuId)
         {
             const string query = @"
                 INSERT INTO Bildirimler (AliciKullaniciId, Tur, Mesaj, RandevuId, Okundu, OlusturulmaTarihi, IsDeleted)
+                OUTPUT INSERTED.BildirimId
                 VALUES (@aliciId, @tur, @mesaj, @randevuId, 0, GETDATE(), 0)";
 
             await using var conn = new SqlConnection(ConnectionString);
@@ -27,7 +37,28 @@ namespace OgrenciBilgiSistemi.Api.Services
             cmd.Parameters.AddWithValue("@mesaj", mesaj);
             cmd.Parameters.AddWithValue("@randevuId", (object?)randevuId ?? DBNull.Value);
             await conn.OpenAsync();
-            await cmd.ExecuteNonQueryAsync();
+            var bildirimIdObj = await cmd.ExecuteScalarAsync();
+            var bildirimId = bildirimIdObj is null ? 0 : Convert.ToInt32(bildirimIdObj);
+
+            try
+            {
+                var yuk = new PushBildirimYuku(
+                    BildirimTuruBaslikHelper.BasligaCevir(tur),
+                    mesaj,
+                    new Dictionary<string, string>
+                    {
+                        ["bildirimId"] = bildirimId.ToString(),
+                        ["tur"] = tur.ToString(),
+                        ["randevuId"] = randevuId?.ToString() ?? string.Empty,
+                        ["okulKodu"] = _tenantBaglami.OkulKodu
+                    });
+
+                await _pushGonderici.GonderAsync(aliciKullaniciId, yuk);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Push gönderimi başarısız. BildirimId: {id}", bildirimId);
+            }
         }
 
         public async Task<List<BildirimModel>> KullanicininBildirimleriniGetir(int kullaniciId, int sayfaNo = 1, int sayfaBoyutu = 20)
