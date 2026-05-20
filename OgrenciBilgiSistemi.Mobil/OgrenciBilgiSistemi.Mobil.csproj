@@ -2,21 +2,17 @@
 	<PropertyGroup>
 		<TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('OSX'))">net9.0-android;net9.0-ios</TargetFrameworks>
 		<TargetFrameworks Condition="!$([MSBuild]::IsOSPlatform('OSX'))">net9.0-android</TargetFrameworks>
-
 		<UseMaui>true</UseMaui>
 		<SingleProject>true</SingleProject>
 		<OutputType>Exe</OutputType>
-
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
-
 		<ApplicationTitle>OgrenciBilgiSistemi</ApplicationTitle>
-
 		<ApplicationDisplayVersion>3.4</ApplicationDisplayVersion>
 		<ApplicationVersion>59</ApplicationVersion>
 	</PropertyGroup>
 
-	<!-- Platform versiyonları -->
+	<!-- Platform versiyonlari -->
 	<PropertyGroup Condition="'$(TargetFramework)' == 'net9.0-ios'">
 		<SupportedOSPlatformVersion>14.2</SupportedOSPlatformVersion>
 		<ApplicationId>com.netronyazilim.ogrencibilgisistemi</ApplicationId>
@@ -40,26 +36,30 @@
 		<ProjectReference Include="..\OgrenciBilgiSistemi.Shared\OgrenciBilgiSistemi.Shared.csproj" />
 	</ItemGroup>
 
+	<!-- NuGet paketleri -->
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Maui.Controls" Version="9.0.0" />
 		<PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="9.0.0" />
 		<PackageReference Include="CommunityToolkit.Maui" Version="9.0.0" />
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="9.0.0" />
-		<PackageReference Include="Plugin.Firebase.CloudMessaging" Version="3.1.1" />
+		<PackageReference Include="Plugin.Firebase" Version="4.2.1" />
+		<PackageReference Include="Plugin.Firebase.CloudMessaging" Version="4.0.1" />
 		<PackageReference Include="Plugin.LocalNotification" Version="11.1.4" />
+		<PackageReference Include="Xamarin.AndroidX.Lifecycle.LiveData.Core" Version="2.8.7.4" />
 	</ItemGroup>
 
-	<!-- Android için Firebase config dosyası -->
+	<!-- Android icin Firebase config dosyasi -->
 	<ItemGroup Condition="'$(TargetFramework)' == 'net9.0-android'">
 		<GoogleServicesJson Include="Platforms\Android\google-services.json" Condition="Exists('Platforms\Android\google-services.json')" />
 	</ItemGroup>
 
-	<!-- iOS için Firebase config + entitlements -->
+	<!-- iOS icin Firebase config -->
 	<ItemGroup Condition="'$(TargetFramework)' == 'net9.0-ios'">
 		<BundleResource Include="Platforms\iOS\GoogleService-Info.plist" Condition="Exists('Platforms\iOS\GoogleService-Info.plist')" />
 	</ItemGroup>
-	<!-- iOS APNs entitlement: Debug → development (sandbox), Release → production (TestFlight/App Store) -->
+
+	<!-- iOS APNs entitlement: Debug -> development (sandbox), Release -> production (TestFlight/App Store) -->
 	<PropertyGroup Condition="'$(TargetFramework)' == 'net9.0-ios' And '$(Configuration)' == 'Release'">
 		<CodesignEntitlements>Platforms\iOS\Entitlements.Release.plist</CodesignEntitlements>
 	</PropertyGroup>

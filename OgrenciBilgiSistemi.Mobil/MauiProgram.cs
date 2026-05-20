@@ -4,10 +4,11 @@ using CommunityToolkit.Maui;
 using OgrenciBilgiSistemi.Mobil.Services;
 using OgrenciBilgiSistemi.Mobil.Views;
 using Plugin.LocalNotification;
+using Plugin.Firebase.CloudMessaging;
 using System.Reflection;
 using System.Text.Json;
 #if IOS
-using Plugin.Firebase.Core.Platforms.iOS;
+using Plugin.Firebase.Bundled.Platforms.iOS;
 #endif
 
 namespace OgrenciBilgiSistemi.Mobil
@@ -32,7 +33,7 @@ namespace OgrenciBilgiSistemi.Mobil
                     fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
                 });
 
-            // Servis kayıtları (Dependency Injection)
+            // Servis kayitlari (Dependency Injection)
             builder.Services.AddSingleton<GirisService>();
             builder.Services.AddSingleton<SinifService>();
             builder.Services.AddSingleton<OgrenciService>();
@@ -51,8 +52,8 @@ namespace OgrenciBilgiSistemi.Mobil
             builder.Services.AddSingleton<PushKayitServisi>();
             builder.Services.AddSingleton<BildirimYonlendirmeServisi>();
 
-            // Sayfa kayıtları
-            // GirisView ve SinifListeView Shell tarafından DI ile çözümleniyor
+            // Sayfa kayitlari
+            // GirisView ve SinifListeView Shell tarafindan DI ile cozumleniyor
             builder.Services.AddTransient<GirisView>();
             builder.Services.AddTransient<OkulSecimView>();
             builder.Services.AddTransient<SinifListeView>();
@@ -73,7 +74,7 @@ namespace OgrenciBilgiSistemi.Mobil
             builder.Services.AddTransient<AdminYemekhaneBugunView>();
             builder.Services.AddTransient<AdminAnakapiCikisBugunView>();
             builder.Services.AddTransient<AdminServisListeView>();
-            // AdminServisDetayView constructor'da runtime parametre (ServisListeOgesi) aldığı için DI'a kaydedilmedi.
+            // AdminServisDetayView constructor'da runtime parametre (ServisListeOgesi) aldigi icin DI'a kaydedilmedi.
 
 #if DEBUG
             builder.Logging.AddDebug();
@@ -83,9 +84,10 @@ namespace OgrenciBilgiSistemi.Mobil
         }
 
         /// <summary>
-        /// Plugin.Firebase platform-spesifik başlatıcılarını çağırır.
-        /// iOS: Firebase.Core.App.Configure() + UNUserNotificationCenter delegate'i AppDelegate'te bağlanır.
-        /// Android: CrossFirebase.Initialize MainApplication'da çağrılır.
+        /// Plugin.Firebase platform-spesifik baslaticilarini cagirir.
+        /// iOS: CrossFirebase.Initialize() + FirebaseCloudMessagingImplementation.Initialize().
+        /// UNUserNotificationCenter delegate'i AppDelegate'te baglanir.
+        /// Android: CrossFirebase.Initialize MainApplication / MainActivity'de cagrilir.
         /// </summary>
         private static MauiAppBuilder RegisterFirebaseServices(this MauiAppBuilder builder)
         {
@@ -97,6 +99,7 @@ namespace OgrenciBilgiSistemi.Mobil
                     try
                     {
                         CrossFirebase.Initialize();
+                        FirebaseCloudMessagingImplementation.Initialize();
                     }
                     catch (Exception ex)
                     {
@@ -111,8 +114,8 @@ namespace OgrenciBilgiSistemi.Mobil
         }
 
         /// <summary>
-        /// Gömülü appsettings.json dosyasını okur ve KayitSunucuUrl değerini Preferences'a yazar.
-        /// Merkezi okul kayıt sunucusu URL'ini yapılandırır.
+        /// Gomulu appsettings.json dosyasini okur ve KayitSunucuUrl degerini Preferences'a yazar.
+        /// Merkezi okul kayit sunucusu URL'ini yapilandirir.
         /// </summary>
         private static void YukleApiAyarlari()
         {
@@ -138,7 +141,7 @@ namespace OgrenciBilgiSistemi.Mobil
             }
             catch
             {
-                // Okuma başarısız olursa Constants.KayitSunucuUrl varsayılan olarak kullanılır
+                // Okuma basarisiz olursa Constants.KayitSunucuUrl varsayilan olarak kullanilir
             }
         }
     }

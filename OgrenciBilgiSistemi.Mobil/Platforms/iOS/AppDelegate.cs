@@ -12,12 +12,14 @@ namespace OgrenciBilgiSistemi.Mobil
 
         public override bool FinishedLaunching(UIApplication application, NSDictionary launchOptions)
         {
+            // Delegate'i en başta set et — Firebase init lifecycle event'i base.FinishedLaunching içinde çalışıyor
+            UNUserNotificationCenter.Current.Delegate = new BildirimMerkeziDelegesi();
+
             var sonuc = base.FinishedLaunching(application, launchOptions);
 
             // Push notification kayıt akışı (UNUserNotificationCenter)
             try
             {
-                UNUserNotificationCenter.Current.Delegate = new BildirimMerkeziDelegesi();
                 UNUserNotificationCenter.Current.RequestAuthorization(
                     UNAuthorizationOptions.Alert | UNAuthorizationOptions.Sound | UNAuthorizationOptions.Badge,
                     (granted, error) =>
