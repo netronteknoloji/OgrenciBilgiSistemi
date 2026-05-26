@@ -3,35 +3,29 @@ workflows:
     name: iOS MAUI Release
     instance_type: mac_mini_m2
     max_build_duration: 120
-
     integrations:
       app_store_connect: "Codemagic API Key"
-
     environment:
       xcode: latest
       vars:
         PROJECT_PATH: OgrenciBilgiSistemi.Mobil/OgrenciBilgiSistemi.Mobil.csproj
-        IOS_TFM: net9.0-ios
+        IOS_TFM: net10.0-ios
         DOTNET_PATH: $CM_BUILD_DIR/dotnet
         DOTNET: $CM_BUILD_DIR/dotnet/dotnet
-
       ios_signing:
         distribution_type: app_store
         bundle_identifier: com.netronyazilim.ogrencibilgisistemi
-
     scripts:
-      - name: Install .NET SDK 9.0
+      - name: Install .NET SDK 10.0
         script: |
           set -e
           curl -fsSL https://dot.net/v1/dotnet-install.sh -o dotnet-install.sh
           chmod +x dotnet-install.sh
-          ./dotnet-install.sh --install-dir "$DOTNET_PATH" --channel 9.0
-
+          ./dotnet-install.sh --install-dir "$DOTNET_PATH" --channel 10.0
       - name: Install MAUI iOS workload
         script: |
           set -e
           "$DOTNET" workload install maui-ios --skip-manifest-update
-
       - name: Restore NuGet packages
         script: |
           set -e
@@ -39,7 +33,6 @@ workflows:
             /p:TargetFramework=$IOS_TFM \
             -r ios-arm64
           "$DOTNET" restore OgrenciBilgiSistemi.Shared/OgrenciBilgiSistemi.Shared.csproj
-
       - name: Setup iOS code signing
         script: |
           set -e
@@ -47,12 +40,10 @@ workflows:
           keychain initialize
           keychain add-certificates
           xcode-project use-profiles
-
       - name: Build IPA (Release)
         script: |
           set -e
           SIGNING_IDENTITY=$(security find-identity -v -p codesigning | grep "Apple Distribution" | head -1 | awk -F'"' '{print $2}')
-
           "$DOTNET" publish "$PROJECT_PATH" \
           -c Release \
           -f "$IOS_TFM" \
@@ -61,61 +52,50 @@ workflows:
           /p:ArchiveOnBuild=true \
           /p:BuildIpa=true \
           /p:CodesignKey="$SIGNING_IDENTITY"
-
     artifacts:
       - "**/*.ipa"
-
     publishing:
       app_store_connect:
         auth: integration
         submit_to_testflight: true
         submit_to_app_store: false
 
-
   android-maui-release:
     name: Android MAUI Release
     instance_type: mac_mini_m2
     max_build_duration: 120
-
     environment:
       vars:
         PROJECT_PATH: OgrenciBilgiSistemi.Mobil/OgrenciBilgiSistemi.Mobil.csproj
-        ANDROID_TFM: net9.0-android
+        ANDROID_TFM: net10.0-android
         DOTNET_PATH: $CM_BUILD_DIR/dotnet
         DOTNET: $CM_BUILD_DIR/dotnet/dotnet
-
       android_signing:
         - android_keystore
-
     scripts:
-      - name: Install .NET SDK 9.0
+      - name: Install .NET SDK 10.0
         script: |
           set -e
           curl -fsSL https://dot.net/v1/dotnet-install.sh -o dotnet-install.sh
           chmod +x dotnet-install.sh
-          ./dotnet-install.sh --install-dir "$DOTNET_PATH" --channel 9.0
-
+          ./dotnet-install.sh --install-dir "$DOTNET_PATH" --channel 10.0
       - name: Install MAUI Android workload
         script: |
           set -e
           "$DOTNET" workload install maui-android --skip-manifest-update
-
       - name: Restore NuGet packages
         script: |
           set -e
           "$DOTNET" restore "$PROJECT_PATH" \
             /p:TargetFramework=$ANDROID_TFM
           "$DOTNET" restore OgrenciBilgiSistemi.Shared/OgrenciBilgiSistemi.Shared.csproj
-
       - name: Build AAB (Release)
         script: |
           set -e
-
           if [ -z "$CM_KEYSTORE_PATH" ]; then
             echo "ERROR: Android keystore bulunamadi!"
             exit 1
           fi
-
           "$DOTNET" publish "$PROJECT_PATH" \
             -c Release \
             -f "$ANDROID_TFM" \
@@ -127,10 +107,8 @@ workflows:
             /p:AndroidSigningKeyAlias="$CM_KEY_ALIAS" \
             /p:AndroidSigningKeyPass="$CM_KEY_PASSWORD" \
             /p:AndroidSigningStorePass="$CM_KEYSTORE_PASSWORD"
-
     artifacts:
       - "**/*.aab"
-
     publishing:
       google_play:
         credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS

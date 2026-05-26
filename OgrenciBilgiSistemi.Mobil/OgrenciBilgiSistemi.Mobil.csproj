@@ -1,7 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('OSX'))">net9.0-android;net9.0-ios</TargetFrameworks>
-		<TargetFrameworks Condition="!$([MSBuild]::IsOSPlatform('OSX'))">net9.0-android</TargetFrameworks>
+		<!-- OSX'te iOS+Android, diger platformlarda yalniz Android. Kosullu satir
+		     kosulsuzdan SONRA gelmeli ki OSX'te onu ezsin. -->
+		<TargetFrameworks>net10.0-android</TargetFrameworks>
+		<TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('OSX'))">net10.0-android;net10.0-ios</TargetFrameworks>
+
 		<UseMaui>true</UseMaui>
 		<SingleProject>true</SingleProject>
 		<OutputType>Exe</OutputType>
@@ -13,12 +16,12 @@
 	</PropertyGroup>
 
 	<!-- Platform versiyonlari -->
-	<PropertyGroup Condition="'$(TargetFramework)' == 'net9.0-ios'">
+	<PropertyGroup Condition="$(TargetFramework.Contains('-ios'))">
 		<SupportedOSPlatformVersion>14.2</SupportedOSPlatformVersion>
 		<ApplicationId>com.netronyazilim.ogrencibilgisistemi</ApplicationId>
 	</PropertyGroup>
 
-	<PropertyGroup Condition="'$(TargetFramework)' == 'net9.0-android'">
+	<PropertyGroup Condition="$(TargetFramework.Contains('-android'))">
 		<SupportedOSPlatformVersion>23.0</SupportedOSPlatformVersion>
 		<RuntimeIdentifier>android-arm64</RuntimeIdentifier>
 		<ApplicationId>com.netronyazilimvebilisimteknolojileri.ogrencibilgisistemi</ApplicationId>
@@ -38,32 +41,31 @@
 
 	<!-- NuGet paketleri -->
 	<ItemGroup>
-		<PackageReference Include="Microsoft.Maui.Controls" Version="9.0.0" />
-		<PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="9.0.0" />
-		<PackageReference Include="CommunityToolkit.Maui" Version="9.0.0" />
-		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="9.0.0" />
+		<PackageReference Include="Microsoft.Maui.Controls" Version="10.0.70" />
+		<PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="10.0.70" />
+		<PackageReference Include="CommunityToolkit.Maui" Version="14.1.1" />
+		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.8" />
 		<PackageReference Include="Plugin.Firebase" Version="4.2.1" />
 		<PackageReference Include="Plugin.Firebase.CloudMessaging" Version="4.0.1" />
-		<PackageReference Include="Plugin.LocalNotification" Version="11.1.4" />
-		<PackageReference Include="Xamarin.AndroidX.Lifecycle.LiveData.Core" Version="2.8.7.4" />
+		<PackageReference Include="Plugin.LocalNotification" Version="14.1.0" />
 	</ItemGroup>
 
 	<!-- Android icin Firebase config dosyasi -->
-	<ItemGroup Condition="'$(TargetFramework)' == 'net9.0-android'">
+	<ItemGroup Condition="$(TargetFramework.Contains('-android'))">
 		<GoogleServicesJson Include="Platforms\Android\google-services.json" Condition="Exists('Platforms\Android\google-services.json')" />
 	</ItemGroup>
 
 	<!-- iOS icin Firebase config -->
-	<ItemGroup Condition="'$(TargetFramework)' == 'net9.0-ios'">
+	<ItemGroup Condition="$(TargetFramework.Contains('-ios'))">
 		<BundleResource Include="Platforms\iOS\GoogleService-Info.plist" Condition="Exists('Platforms\iOS\GoogleService-Info.plist')" />
 	</ItemGroup>
 
 	<!-- iOS APNs entitlement: Debug -> development (sandbox), Release -> production (TestFlight/App Store) -->
-	<PropertyGroup Condition="'$(TargetFramework)' == 'net9.0-ios' And '$(Configuration)' == 'Release'">
+	<PropertyGroup Condition="$(TargetFramework.Contains('-ios')) And '$(Configuration)' == 'Release'">
 		<CodesignEntitlements>Platforms\iOS\Entitlements.Release.plist</CodesignEntitlements>
 	</PropertyGroup>
-	<PropertyGroup Condition="'$(TargetFramework)' == 'net9.0-ios' And '$(Configuration)' != 'Release'">
+	<PropertyGroup Condition="$(TargetFramework.Contains('-ios')) And '$(Configuration)' != 'Release'">
 		<CodesignEntitlements>Platforms\iOS\Entitlements.plist</CodesignEntitlements>
 	</PropertyGroup>
 
