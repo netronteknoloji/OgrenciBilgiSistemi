@@ -23,13 +23,13 @@ namespace OgrenciBilgiSistemi.Mobil.Views
             base.OnAppearing();
             if (_yuklendi) return;
             _yuklendi = true;
-            await YoklamaYukle(TarihSecici.Date);
+            await YoklamaYukle(TarihSecici.Date.Value);
         }
 
         private async void OnTarihSecildi(object sender, DateChangedEventArgs e)
         {
             if (!_yuklendi) return;
-            await YoklamaYukle(e.NewDate);
+            await YoklamaYukle(e.NewDate.Value);
         }
 
         private async Task YoklamaYukle(DateTime tarih)

@@ -303,7 +303,7 @@ namespace OgrenciBilgiSistemi.Mobil.Views
                         return;
                     }
 
-                    if (BitisSaati.Time <= BaslangicSaati.Time)
+                    if (BitisSaati.Time.Value <= BaslangicSaati.Time.Value)
                     {
                         await DisplayAlert("Uyarı", "Bitiş saati başlangıç saatinden sonra olmalı.", "Tamam");
                         return;
@@ -311,8 +311,8 @@ namespace OgrenciBilgiSistemi.Mobil.Views
 
                     _karsiTarafId = _seciliOgrenci.VeliId;
                     ogrenciId = _seciliOgrenci.OgrenciId;
-                    randevuTarihi = TarihSecici.Date + BaslangicSaati.Time;
-                    sureDakika = (int)(BitisSaati.Time - BaslangicSaati.Time).TotalMinutes;
+                    randevuTarihi = TarihSecici.Date.Value + BaslangicSaati.Time.Value;
+                    sureDakika = (int)(BitisSaati.Time.Value - BaslangicSaati.Time.Value).TotalMinutes;
 
                     // POST öncesi client-side çakışma kontrolü — sunucu hatasından önce uyarı verir
                     var (cakismaVar, cakismaMesaji) = await _randevuService.CakismaKontrolu(

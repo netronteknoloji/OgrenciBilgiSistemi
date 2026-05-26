@@ -35,22 +35,22 @@ namespace OgrenciBilgiSistemi.Mobil.Views
 
         private async void OnEkleClicked(object sender, EventArgs e)
         {
-            if (TarihSecici.Date < DateTime.Today)
+            if (TarihSecici.Date.Value < DateTime.Today)
             {
                 await DisplayAlert("Uyarı", "Geçmiş tarih seçilemez.", "Tamam");
                 return;
             }
 
-            var baslangic = BaslangicSaati.Time.ToString(@"hh\:mm");
-            var bitis = BitisSaati.Time.ToString(@"hh\:mm");
+            var baslangic = BaslangicSaati.Time.Value.ToString(@"hh\:mm");
+            var bitis = BitisSaati.Time.Value.ToString(@"hh\:mm");
 
-            if (BaslangicSaati.Time >= BitisSaati.Time)
+            if (BaslangicSaati.Time.Value >= BitisSaati.Time.Value)
             {
                 await DisplayAlert("Uyarı", "Başlangıç saati bitiş saatinden önce olmalıdır.", "Tamam");
                 return;
             }
 
-            var sonuc = await _ogretmenRandevuService.OgretmenRandevuEkle(TarihSecici.Date, baslangic, bitis);
+            var sonuc = await _ogretmenRandevuService.OgretmenRandevuEkle(TarihSecici.Date.Value, baslangic, bitis);
             if (sonuc)
             {
                 await OgretmenRandevulariYukle();

@@ -2,6 +2,7 @@ using System.Net.Http.Json;
 using System.Text;
 using Plugin.Firebase.CloudMessaging;
 using Plugin.LocalNotification;
+using Plugin.LocalNotification.Core.Models;
 
 namespace OgrenciBilgiSistemi.Mobil.Services
 {
@@ -133,10 +134,10 @@ namespace OgrenciBilgiSistemi.Mobil.Services
                     NotificationId = Random.Shared.Next(1, int.MaxValue),
                     Title = baslik,
                     Description = govde,
-                    Android = new Plugin.LocalNotification.AndroidOption.AndroidOptions
+                    Android = new Plugin.LocalNotification.Core.Models.AndroidOption.AndroidOptions
                     {
                         ChannelId = "obs_default",
-                        Priority = Plugin.LocalNotification.AndroidOption.AndroidPriority.High
+                        Priority = Plugin.LocalNotification.Core.Models.AndroidOption.AndroidPriority.High
                     }
                 });
 
