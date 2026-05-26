@@ -6,7 +6,7 @@ workflows:
     integrations:
       app_store_connect: "Codemagic API Key"
     environment:
-      xcode: latest
+      xcode: 26.0
       vars:
         PROJECT_PATH: OgrenciBilgiSistemi.Mobil/OgrenciBilgiSistemi.Mobil.csproj
         IOS_TFM: net10.0-ios
