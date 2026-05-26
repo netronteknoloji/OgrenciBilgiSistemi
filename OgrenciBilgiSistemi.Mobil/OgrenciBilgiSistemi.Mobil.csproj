@@ -8,8 +8,8 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<ApplicationTitle>OgrenciBilgiSistemi</ApplicationTitle>
-		<ApplicationDisplayVersion>3.4</ApplicationDisplayVersion>
-		<ApplicationVersion>59</ApplicationVersion>
+		<ApplicationDisplayVersion>3.5</ApplicationDisplayVersion>
+		<ApplicationVersion>60</ApplicationVersion>
 	</PropertyGroup>
 
 	<!-- Platform versiyonlari -->
@@ -19,7 +19,7 @@
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(TargetFramework)' == 'net9.0-android'">
-		<SupportedOSPlatformVersion>21.0</SupportedOSPlatformVersion>
+		<SupportedOSPlatformVersion>23.0</SupportedOSPlatformVersion>
 		<RuntimeIdentifier>android-arm64</RuntimeIdentifier>
 		<ApplicationId>com.netronyazilimvebilisimteknolojileri.ogrencibilgisistemi</ApplicationId>
 	</PropertyGroup>

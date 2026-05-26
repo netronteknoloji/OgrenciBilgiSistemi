@@ -25,7 +25,11 @@ namespace OgrenciBilgiSistemi.Mobil
             // Plugin.Firebase Android başlatma — google-services.json'ı okur, FCM'i hazırlar
             try
             {
-                Plugin.Firebase.Core.Platforms.Android.CrossFirebase.Initialize(this);
+                Plugin.Firebase.Core.Platforms.Android.CrossFirebase.Initialize(
+                    this,
+                    () => Microsoft.Maui.ApplicationModel.Platform.CurrentActivity ?? this,
+                    null,
+                    null);
             }
             catch (Exception ex)
             {
