@@ -17,7 +17,7 @@
 
 	<!-- Platform versiyonlari -->
 	<PropertyGroup Condition="$(TargetFramework.Contains('-ios'))">
-		<SupportedOSPlatformVersion>14.2</SupportedOSPlatformVersion>
+		<SupportedOSPlatformVersion>15.0</SupportedOSPlatformVersion>
 		<ApplicationId>com.netronyazilim.ogrencibilgisistemi</ApplicationId>
 	</PropertyGroup>
 
