@@ -17,21 +17,18 @@ namespace OgrenciBilgiSistemi.Api.Services
         public async Task UpsertAsync(BildirimCihazKaydi kayit, CancellationToken ct = default)
         {
             const string sql = @"
-                UPDATE BildirimCihazlari
-                SET KullaniciId = @kullaniciId,
-                    Platform = @platform,
-                    UygulamaSurumu = @uygulamaSurumu,
-                    CihazModeli = @cihazModeli,
-                    SonGuncelleme = GETDATE()
-                WHERE FcmToken = @fcmToken AND IsDeleted = 0;
-
-                IF @@ROWCOUNT = 0
-                BEGIN
-                    INSERT INTO BildirimCihazlari
-                        (KullaniciId, FcmToken, Platform, UygulamaSurumu, CihazModeli, OlusturulmaTarihi, SonGuncelleme, IsDeleted)
-                    VALUES
-                        (@kullaniciId, @fcmToken, @platform, @uygulamaSurumu, @cihazModeli, GETDATE(), GETDATE(), 0);
-                END";
+                MERGE BildirimCihazlari AS hedef
+                USING (SELECT @fcmToken AS FcmToken) AS kaynak
+                ON hedef.FcmToken = kaynak.FcmToken AND hedef.IsDeleted = 0
+                WHEN MATCHED THEN
+                    UPDATE SET KullaniciId = @kullaniciId,
+                               Platform = @platform,
+                               UygulamaSurumu = @uygulamaSurumu,
+                               CihazModeli = @cihazModeli,
+                               SonGuncelleme = GETDATE()
+                WHEN NOT MATCHED THEN
+                    INSERT (KullaniciId, FcmToken, Platform, UygulamaSurumu, CihazModeli, OlusturulmaTarihi, SonGuncelleme, IsDeleted)
+                    VALUES (@kullaniciId, @fcmToken, @platform, @uygulamaSurumu, @cihazModeli, GETDATE(), GETDATE(), 0);";
 
             await using var conn = new SqlConnection(ConnectionString);
             await using var cmd = new SqlCommand(sql, conn);

@@ -1,3 +1,4 @@
+using FirebaseAdmin;
 using FirebaseAdmin.Messaging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -36,6 +37,14 @@ public sealed class FirebasePushBildirimGonderici : IPushBildirimGonderici
     {
         if (!_ayarlar.Aktif || tokenlar.Count == 0)
             return new PushGonderimSonucu(0, 0, Array.Empty<string>());
+
+        if (FirebaseApp.DefaultInstance is null)
+        {
+            _logger.LogWarning(
+                "FirebaseApp başlatılmamış. Push gönderilemedi. " +
+                "FIREBASE_CREDENTIALS_PATH env variable veya Push:ServiceAccountJsonYolu yapılandırmasını kontrol edin.");
+            return new PushGonderimSonucu(0, tokenlar.Count, Array.Empty<string>());
+        }
 
         var gecersizTokenlar = new List<string>();
         var basariliToplam = 0;

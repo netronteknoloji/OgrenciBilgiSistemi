@@ -1,5 +1,7 @@
 ﻿using Microsoft.Maui.Handlers;                                                      // MAUI kontrol işleyicileri için gerekli kütüphane eklenir.
 using OgrenciBilgiSistemi.Mobil.Services;                                               // TemelApiService.OturumSuresiDoldu olayı için gerekli.
+using Plugin.LocalNotification;
+using Plugin.LocalNotification.EventArgs;
 
 namespace OgrenciBilgiSistemi.Mobil;                                                    // Uygulamanın ana isim uzayı tanımlanır.
 
@@ -91,6 +93,22 @@ public partial class App : Application                                          
 
                 if (pushKayit != null) await pushKayit.DinleyicileriBaslatAsync();
                 yonlendirme?.DinleyiciyiBaglat();
+
+                // Foreground local notification tıklaması → yönlendirme
+                LocalNotificationCenter.Current.NotificationActionTapped += e =>
+                {
+                    if (yonlendirme is null) return;
+                    var json = e.Request?.ReturningData;
+                    if (string.IsNullOrWhiteSpace(json)) return;
+
+                    try
+                    {
+                        var veri = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(json);
+                        if (veri != null)
+                            _ = yonlendirme.IsleAsync(veri);
+                    }
+                    catch { /* geçersiz JSON — sessizce yut */ }
+                };
 
                 // Önceden giriş yapılmış oturumda token zaten kayıtlı; sessiz refresh
                 if (KullaniciOturum.GirisYapildiMi && pushKayit != null)

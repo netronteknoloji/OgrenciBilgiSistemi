@@ -1,5 +1,4 @@
 using System.Net.Http.Json;
-using System.Text;
 using Plugin.Firebase.CloudMessaging;
 using Plugin.LocalNotification;
 using Plugin.LocalNotification.Core.Models;
@@ -134,6 +133,7 @@ namespace OgrenciBilgiSistemi.Mobil.Services
                     NotificationId = Random.Shared.Next(1, int.MaxValue),
                     Title = baslik,
                     Description = govde,
+                    ReturningData = System.Text.Json.JsonSerializer.Serialize(veri),
                     Android = new Plugin.LocalNotification.Core.Models.AndroidOption.AndroidOptions
                     {
                         ChannelId = "obs_default",
@@ -186,15 +186,7 @@ namespace OgrenciBilgiSistemi.Mobil.Services
         {
             try
             {
-                YetkiBasliginiYenile();
-                var govde = new { FcmToken = token };
-                var json = System.Text.Json.JsonSerializer.Serialize(govde);
-                using var content = new StringContent(json, Encoding.UTF8, "application/json");
-                using var istek = new HttpRequestMessage(HttpMethod.Delete, $"{BaseUrl}cihazlar/kaydi-sil")
-                {
-                    Content = content
-                };
-                using var response = await _httpClient.SendAsync(istek);
+                var response = await DeleteAsJsonAsync($"{BaseUrl}cihazlar/kaydi-sil", new { FcmToken = token });
                 if (!response.IsSuccessStatusCode)
                     System.Diagnostics.Debug.WriteLine($"[PUSH] Cihaz silme hatası: {response.StatusCode}");
             }

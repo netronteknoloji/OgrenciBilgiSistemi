@@ -23,7 +23,7 @@ namespace OgrenciBilgiSistemi.Api.Services
             _logger = logger;
         }
 
-        public async Task Olustur(int aliciKullaniciId, int tur, string mesaj, int? randevuId)
+        public async Task Olustur(int aliciKullaniciId, int tur, string mesaj, int? randevuId, CancellationToken ct = default)
         {
             const string query = @"
                 INSERT INTO Bildirimler (AliciKullaniciId, Tur, Mesaj, RandevuId, Okundu, OlusturulmaTarihi, IsDeleted)
@@ -36,8 +36,8 @@ namespace OgrenciBilgiSistemi.Api.Services
             cmd.Parameters.AddWithValue("@tur", tur);
             cmd.Parameters.AddWithValue("@mesaj", mesaj);
             cmd.Parameters.AddWithValue("@randevuId", (object?)randevuId ?? DBNull.Value);
-            await conn.OpenAsync();
-            var bildirimIdObj = await cmd.ExecuteScalarAsync();
+            await conn.OpenAsync(ct);
+            var bildirimIdObj = await cmd.ExecuteScalarAsync(ct);
             var bildirimId = bildirimIdObj is null ? 0 : Convert.ToInt32(bildirimIdObj);
 
             try
@@ -53,7 +53,7 @@ namespace OgrenciBilgiSistemi.Api.Services
                         ["okulKodu"] = _tenantBaglami.OkulKodu
                     });
 
-                await _pushGonderici.GonderAsync(aliciKullaniciId, yuk);
+                await _pushGonderici.GonderAsync(aliciKullaniciId, yuk, ct);
             }
             catch (Exception ex)
             {

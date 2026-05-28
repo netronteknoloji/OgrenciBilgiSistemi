@@ -122,10 +122,14 @@ namespace OgrenciBilgiSistemi.Mobil.Services
                     var json = await response.Content.ReadAsStringAsync();
                     return JsonSerializer.Deserialize<List<string>>(json, _jsonOptions) ?? new List<string>();
                 }
+
+                System.Diagnostics.Debug.WriteLine(
+                    $"[KullaniciAdiAra] başarısız status={(int)response.StatusCode} ({response.StatusCode})");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[KullaniciAdiAra HATASI]: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine(
+                    $"[KullaniciAdiAra HATASI] type={ex.GetType().Name} msg={ex.Message}");
             }
 
             return new List<string>();

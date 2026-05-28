@@ -270,6 +270,46 @@ namespace OgrenciBilgiSistemi.Mobil.Services
         }
 
         /// <summary>
+        /// DELETE isteği gönderir (JSON body ile). 401 alınırsa token yeniler ve tekrar dener.
+        /// </summary>
+        protected async Task<HttpResponseMessage> DeleteAsJsonAsync<T>(string url, T data)
+        {
+            YetkiBasliginiYenile();
+            using var istek = new HttpRequestMessage(HttpMethod.Delete, url)
+            {
+                Content = new StringContent(JsonSerializer.Serialize(data), Encoding.UTF8, "application/json")
+            };
+            var response = await _httpClient.SendAsync(istek);
+
+            if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+            {
+                var yenilendi = await TokenYenilemeAsync();
+                if (yenilendi)
+                {
+                    YetkiBasliginiYenile();
+                    using var yeniIstek = new HttpRequestMessage(HttpMethod.Delete, url)
+                    {
+                        Content = new StringContent(JsonSerializer.Serialize(data), Encoding.UTF8, "application/json")
+                    };
+                    response = await _httpClient.SendAsync(yeniIstek);
+                }
+                else
+                {
+                    await KullaniciOturum.OturumTemizleAsync();
+                    OturumSuresiDoldu?.Invoke();
+                }
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                System.Diagnostics.Debug.WriteLine($"[API HATASI] {response.StatusCode}: {errorContent}");
+            }
+
+            return response;
+        }
+
+        /// <summary>
         /// Refresh token kullanarak yeni access token alır.
         /// Eş zamanlı birden fazla refresh isteğini önler.
         /// </summary>

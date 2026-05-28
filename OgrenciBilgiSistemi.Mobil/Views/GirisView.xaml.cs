@@ -260,12 +260,19 @@ namespace OgrenciBilgiSistemi.Mobil.Views
 
                 if (sonuclar.Count > 0)
                 {
-                    OneriListesi.ItemsSource = sonuclar;
-                    OneriKutusu.IsVisible = true;
+                    await MainThread.InvokeOnMainThreadAsync(() =>
+                    {
+                        OneriListesi.ItemsSource = sonuclar;
+                        OneriKutusu.IsVisible = true;
+                    });
                 }
                 else
                 {
-                    OneriKutusu.IsVisible = false;
+                    await MainThread.InvokeOnMainThreadAsync(() =>
+                    {
+                        OneriKutusu.IsVisible = false;
+                        OneriListesi.ItemsSource = null;
+                    });
                 }
             }
             catch (TaskCanceledException)

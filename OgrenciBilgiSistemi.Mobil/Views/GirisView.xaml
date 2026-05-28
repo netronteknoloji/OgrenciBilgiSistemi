@@ -138,13 +138,18 @@
                                     StrokeThickness="1"
                                     StrokeShape="RoundRectangle 8"
                                     BackgroundColor="White"
-                                    MaximumHeightRequest="150"
+                                    HeightRequest="150"
                                     Margin="0,-5,0,0">
                                 <CollectionView x:Name="OneriListesi"
                                                 SelectionMode="Single"
-                                                SelectionChanged="OnOneriSecildi">
+                                                SelectionChanged="OnOneriSecildi"
+                                                HeightRequest="150"
+                                                VerticalScrollBarVisibility="Always">
+                                    <CollectionView.ItemsLayout>
+                                        <LinearItemsLayout Orientation="Vertical" ItemSpacing="0" />
+                                    </CollectionView.ItemsLayout>
                                     <CollectionView.ItemTemplate>
-                                        <DataTemplate>
+                                        <DataTemplate x:DataType="x:String">
                                             <Grid Padding="12,10">
                                                 <Label Text="{Binding .}"
                                                        TextColor="#2C3E50"
