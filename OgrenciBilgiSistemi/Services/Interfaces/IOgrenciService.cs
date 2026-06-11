@@ -1,4 +1,5 @@
-﻿using OgrenciBilgiSistemi.Models;
+﻿using OgrenciBilgiSistemi.Dtos;
+using OgrenciBilgiSistemi.Models;
 using OgrenciBilgiSistemi.Shared.Enums;
 using Microsoft.AspNetCore.Http;
 
@@ -20,4 +21,24 @@ public interface IOgrenciService
 
     Task<OgrenciModel?> GetByIdAsync(int id, bool includeVeli = true, CancellationToken ct = default);
 
+    // Liste ekranındaki filtrelerle (arama + birim + sıralama) Excel çıktısı üretir
+    Task<(byte[] Content, string FileName, string ContentType)> ExportOgrenciListesiExcelAsync(
+        string? sortOrder,
+        string? searchString,
+        int? birimId,
+        CancellationToken ct = default);
+
+    // Öğrenci-Veli raporu (sayfalanmış)
+    Task<SayfalanmisListeModel<OgrenciVeliRaporDto>> GetVeliRaporAsync(
+        string? query,
+        int? birimId,
+        int page,
+        int pageSize,
+        CancellationToken ct = default);
+
+    // Öğrenci-Veli raporu Excel çıktısı
+    Task<(byte[] Content, string FileName, string ContentType)> ExportVeliRaporExcelAsync(
+        string? query,
+        int? birimId,
+        CancellationToken ct = default);
 }

@@ -200,6 +200,18 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 })
                 .ToListAsync(ct);
 
+        public async Task<List<SelectListItem>> GetServislerPlakaliSelectListAsync(CancellationToken ct = default)
+            => await _db.Kullanicilar
+                .AsNoTracking()
+                .Where(k => k.Rol == KullaniciRolu.Servis && k.KullaniciDurum)
+                .OrderBy(k => k.KullaniciAdi)
+                .Select(k => new SelectListItem
+                {
+                    Value = k.KullaniciId.ToString(),
+                    Text = k.ServisProfil != null ? k.ServisProfil.Plaka + " - " + k.KullaniciAdi : k.KullaniciAdi
+                })
+                .ToListAsync(ct);
+
         public async Task<List<SelectListItem>> GetKullanicilarByRolSelectListAsync(KullaniciRolu rol, CancellationToken ct = default)
             => await _db.Kullanicilar
                 .AsNoTracking()
