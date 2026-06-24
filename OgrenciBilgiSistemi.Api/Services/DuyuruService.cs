@@ -1,11 +1,12 @@
 using Microsoft.Data.SqlClient;
 using OgrenciBilgiSistemi.Api.Models;
+using OgrenciBilgiSistemi.Api.Services.Interfaces;
 using OgrenciBilgiSistemi.Shared.Enums;
 using OgrenciBilgiSistemi.Shared.Services;
 
 namespace OgrenciBilgiSistemi.Api.Services
 {
-    public class DuyuruService
+    public class DuyuruService : IDuyuruService
     {
         private readonly TenantBaglami _tenantBaglami;
         private readonly BildirimService _bildirimService;

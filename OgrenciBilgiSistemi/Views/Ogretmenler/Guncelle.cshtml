@@ -1,14 +1,5 @@
-@model OgrenciBilgiSistemi.Models.OgretmenProfilModel
+@model OgrenciBilgiSistemi.ViewModels.OgretmenFormVm
 @{
     ViewData["Title"] = "Öğretmen Güncelle";
-    ViewData["Action"] = "Guncelle";
-    ViewData["SubmitText"] = "Güncelle";
-    ViewData["KullaniciId"] = Model.KullaniciId;
-    ViewData["GorselPath"] = Model.GorselPath;
-    ViewData["KullaniciAdi"] = Model.Kullanici?.KullaniciAdi;
-    ViewData["Telefon"] = Model.Kullanici?.Telefon;
-    ViewData["Email"] = Model.Email;
-    ViewData["BirimId"] = Model.BirimId;
-    ViewData["OgretmenDurum"] = Model.OgretmenDurum;
 }
-<partial name="~/Views/Shared/_OgretmenFormPartial.cshtml" />
+<partial name="~/Views/Shared/_OgretmenFormPartial.cshtml" model="Model" />

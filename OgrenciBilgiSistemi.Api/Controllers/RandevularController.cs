@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OgrenciBilgiSistemi.Api.Dtos;
-using OgrenciBilgiSistemi.Api.Services;
+using OgrenciBilgiSistemi.Api.Services.Interfaces;
 using OgrenciBilgiSistemi.Shared.Enums;
 
 namespace OgrenciBilgiSistemi.Api.Controllers
@@ -11,10 +11,10 @@ namespace OgrenciBilgiSistemi.Api.Controllers
     [Authorize]
     public class RandevularController : ControllerBase
     {
-        private readonly RandevuService _randevuService;
-        private readonly BildirimService _bildirimService;
+        private readonly IRandevuService _randevuService;
+        private readonly IBildirimService _bildirimService;
 
-        public RandevularController(RandevuService randevuService, BildirimService bildirimService)
+        public RandevularController(IRandevuService randevuService, IBildirimService bildirimService)
         {
             _randevuService = randevuService;
             _bildirimService = bildirimService;

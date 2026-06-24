@@ -3,10 +3,9 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using OgrenciBilgiSistemi.Data;
 using OgrenciBilgiSistemi.Dtos;
 using OgrenciBilgiSistemi.Models;
+using OgrenciBilgiSistemi.Services.Interfaces;
 using OgrenciBilgiSistemi.Shared.Services;
 using System.Security.Claims;
 
@@ -14,16 +13,16 @@ namespace OgrenciBilgiSistemi.Controllers
 {
     public class HesaplarController : Controller
     {
-        private readonly AppDbContext _context;
+        private readonly IKimlikDogrulamaService _kimlikServisi;
         private readonly OkulYapilandirmaServisi _okulServisi;
         private readonly IConfiguration _configuration;
 
         public HesaplarController(
-            AppDbContext context,
+            IKimlikDogrulamaService kimlikServisi,
             OkulYapilandirmaServisi okulServisi,
             IConfiguration configuration)
         {
-            _context = context;
+            _kimlikServisi = kimlikServisi;
             _okulServisi = okulServisi;
             _configuration = configuration;
         }
@@ -32,8 +31,7 @@ namespace OgrenciBilgiSistemi.Controllers
         [AllowAnonymous]
         public IActionResult Giris()
         {
-            ViewBag.Okullar = _okulServisi.TumOkullariGetir();
-            return View();
+            return View(new GirisIstegiDto { Okullar = _okulServisi.TumOkullariGetir() });
         }
 
         [HttpPost]
@@ -41,7 +39,7 @@ namespace OgrenciBilgiSistemi.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Giris(GirisIstegiDto model)
         {
-            // --- Genel Admin kontrolü (ModelState'den önce, okul seçimi gerekmez) ---
+            // --- Genel Admin kontrolü (okul seçimi gerekmez, DB erişimi yok) ---
             var genelAdminKullaniciAdi = _configuration["GenelAdmin:KullaniciAdi"];
             var genelAdminSifreHash = _configuration["GenelAdmin:SifreHash"];
 
@@ -53,7 +51,7 @@ namespace OgrenciBilgiSistemi.Controllers
                 if (string.IsNullOrEmpty(genelAdminSifreHash))
                 {
                     ModelState.AddModelError(string.Empty, "Genel admin yapılandırması eksik.");
-                    ViewBag.Okullar = _okulServisi.TumOkullariGetir();
+                    model.Okullar = _okulServisi.TumOkullariGetir();
                     return View(model);
                 }
 
@@ -62,7 +60,7 @@ namespace OgrenciBilgiSistemi.Controllers
                 if (genelResult == PasswordVerificationResult.Failed)
                 {
                     ModelState.AddModelError(string.Empty, "Geçersiz kullanıcı adı veya şifre.");
-                    ViewBag.Okullar = _okulServisi.TumOkullariGetir();
+                    model.Okullar = _okulServisi.TumOkullariGetir();
                     return View(model);
                 }
 
@@ -85,14 +83,14 @@ namespace OgrenciBilgiSistemi.Controllers
             // --- Normal kullanıcı (okul bazlı) login ---
             if (!ModelState.IsValid)
             {
-                ViewBag.Okullar = _okulServisi.TumOkullariGetir();
+                model.Okullar = _okulServisi.TumOkullariGetir();
                 return View(model);
             }
 
             if (string.IsNullOrWhiteSpace(model.OkulKodu))
             {
                 ModelState.AddModelError(string.Empty, "Okul seçimi gereklidir.");
-                ViewBag.Okullar = _okulServisi.TumOkullariGetir();
+                model.Okullar = _okulServisi.TumOkullariGetir();
                 return View(model);
             }
 
@@ -100,32 +98,16 @@ namespace OgrenciBilgiSistemi.Controllers
             if (okul is null)
             {
                 ModelState.AddModelError(string.Empty, "Geçersiz okul kodu.");
-                ViewBag.Okullar = _okulServisi.TumOkullariGetir();
+                model.Okullar = _okulServisi.TumOkullariGetir();
                 return View(model);
             }
 
-            // Seçilen okulun DB'sine bağlanarak kullanıcı doğrulama
-            var optionsBuilder = new DbContextOptionsBuilder<AppDbContext>();
-            optionsBuilder.UseSqlServer(okul.ConnectionString);
-            await using var tempContext = new AppDbContext(optionsBuilder.Options);
+            var user = await _kimlikServisi.DogrulaAsync(okul.ConnectionString, model.KullaniciAdi, model.Sifre);
 
-            var user = await tempContext.Kullanicilar
-                .Where(k => k.KullaniciDurum)
-                .SingleOrDefaultAsync(u => u.KullaniciAdi == model.KullaniciAdi);
-
-            if (user == null)
+            if (user is null)
             {
                 ModelState.AddModelError(string.Empty, "Geçersiz kullanıcı adı veya şifre.");
-                ViewBag.Okullar = _okulServisi.TumOkullariGetir();
-                return View(model);
-            }
-
-            var passwordHasher = new PasswordHasher<KullaniciModel>();
-            var result = passwordHasher.VerifyHashedPassword(user, user.Sifre, model.Sifre);
-            if (result != PasswordVerificationResult.Success)
-            {
-                ModelState.AddModelError(string.Empty, "Geçersiz kullanıcı adı veya şifre.");
-                ViewBag.Okullar = _okulServisi.TumOkullariGetir();
+                model.Okullar = _okulServisi.TumOkullariGetir();
                 return View(model);
             }
 
@@ -142,16 +124,10 @@ namespace OgrenciBilgiSistemi.Controllers
             };
 
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-
-            var authProperties = new AuthenticationProperties
-            {
-                IsPersistent = model.BeniHatirla
-            };
-
             await HttpContext.SignInAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme,
                 new ClaimsPrincipal(identity),
-                authProperties);
+                new AuthenticationProperties { IsPersistent = model.BeniHatirla });
 
             return RedirectToAction("Index", "Home");
         }

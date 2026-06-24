@@ -1,17 +1,13 @@
-﻿@model OgrenciBilgiSistemi.Models.KitapDetayModel
-@using Microsoft.AspNetCore.Mvc.Rendering
-@using System.Linq
+@model OgrenciBilgiSistemi.ViewModels.KitapDetayFormVm
+@using OgrenciBilgiSistemi.Models
 
 @{
-    var action = (ViewData["Action"] as string) ?? "Ekle";
-    var submitText = (ViewData["SubmitText"] as string) ?? "Kaydet";
-    var includeId = (bool?)ViewData["IncludeId"] ?? false;
+    var action = Model.FormAction;
+    var submitText = Model.SubmitText;
+    var includeId = Model.IncludeId;
 
     var formId = "kitapDetayForm";
     var submitBtnId = "submitBtn";
-
-    var kitaplar = Model?.Kitaplar ?? Enumerable.Empty<SelectListItem>();
-    var ogrenciler = Model?.Ogrenciler ?? Enumerable.Empty<SelectListItem>();
 }
 
 <div class="viewport-scroller">
@@ -27,7 +23,7 @@
                         </div>
 
                         <div class="card-body p-4">
-                            <form method="post" asp-action="@action" enctype="multipart/form-data" id="@formId" autocomplete="off">
+                            <form method="post" asp-action="@action" id="@formId" autocomplete="off">
                                 @Html.AntiForgeryToken()
 
                                 @if (includeId)
@@ -40,7 +36,7 @@
                                 <!-- Kitap -->
                                 <div class="mb-3">
                                     <label asp-for="KitapId" class="form-label fw-semibold">Kitap Adı</label>
-                                    <select asp-for="KitapId" class="form-select" asp-items="kitaplar">
+                                    <select asp-for="KitapId" class="form-select" asp-items="Model.Kitaplar">
                                         <option value="">-- Seçiniz --</option>
                                     </select>
                                     <span asp-validation-for="KitapId" class="text-danger"></span>
@@ -49,7 +45,7 @@
                                 <!-- Öğrenci -->
                                 <div class="mb-3">
                                     <label asp-for="OgrenciId" class="form-label fw-semibold">Öğrenci Adı</label>
-                                    <select asp-for="OgrenciId" class="form-select" asp-items="ogrenciler">
+                                    <select asp-for="OgrenciId" class="form-select" asp-items="Model.Ogrenciler">
                                         <option value="">-- Seçiniz --</option>
                                     </select>
                                     <span asp-validation-for="OgrenciId" class="text-danger"></span>
@@ -81,15 +77,11 @@
 
                                 <!-- Butonlar -->
                                 <div class="d-flex justify-content-between gap-2">
-                                    <a asp-controller="KitapDetaylar"
-                                       asp-action="Index"
+                                    <a asp-controller="KitapDetaylar" asp-action="Index"
                                        class="btn btn-outline-secondary">
                                         <i class="bi bi-arrow-left"></i> Geri
                                     </a>
-
-                                    <button type="submit"
-                                            class="btn btn-primary fw-bold"
-                                            id="@submitBtnId">
+                                    <button type="submit" class="btn btn-primary fw-bold" id="@submitBtnId">
                                         <i class="bi bi-save"></i> @submitText
                                     </button>
                                 </div>
@@ -104,21 +96,4 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-}
-
-@if (!ViewData.ModelState.IsValid)
-{
-    <div class="alert alert-danger mt-3">
-        <strong>ModelState Hataları (debug):</strong>
-        <ul class="mb-0">
-            @foreach (var entry in ViewData.ModelState)
-            {
-                var key = entry.Key;
-                foreach (var error in entry.Value.Errors)
-                {
-                    <li>@key : @error.ErrorMessage</li>
-                }
-            }
-        </ul>
-    </div>
 }

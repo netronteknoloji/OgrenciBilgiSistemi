@@ -1,9 +1,7 @@
-﻿@model SayfalanmisListeModel<OgrenciBilgiSistemi.Models.KitapModel>
+@model OgrenciBilgiSistemi.ViewModels.KitapIndexVm
 
 @{
     ViewData["Title"] = "Kitap Listesi";
-    var q = ViewData["CurrentFilter"]?.ToString();
-    var sort = ViewData["CurrentSort"]?.ToString();
 }
 
 <div class="viewport-scroller">
@@ -17,15 +15,15 @@
                         <i class="bi bi-plus-lg"></i> Kitap Ekle
                     </a>
                     <a asp-action="ExportToExcel"
-                       asp-route-searchString="@q"
-                       asp-route-sortOrder="@sort"
+                       asp-route-searchString="@Model.AramaMetni"
+                       asp-route-sortOrder="@Model.Siralama"
                        class="btn btn-outline-success fw-bold">
                         <i class="bi bi-file-earmark-excel"></i> Excel'e Aktar
                     </a>
                 </div>
             </div>
 
-            <!-- Arama (Aidat/Kullanıcı ile aynı yapı) -->
+            <!-- Arama -->
             <form method="get" asp-action="Index"
                   class="d-flex align-items-end gap-3 flex-nowrap no-wrap-scroll w-100 bg-body-tertiary border rounded-3 p-3 mb-3">
                 <div>
@@ -34,7 +32,7 @@
                         <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
                         <input type="text" id="searchString" name="searchString"
                                class="form-control" placeholder="Ad / Tür ara…"
-                               value="@q" style="width:280px;" />
+                               value="@Model.AramaMetni" style="width:280px;" />
                     </div>
                 </div>
 
@@ -42,7 +40,7 @@
                     <button type="submit" class="btn btn-primary px-3 text-nowrap">
                         <i class="bi bi-search me-1"></i> Ara
                     </button>
-                    @if (!string.IsNullOrWhiteSpace(q))
+                    @if (!string.IsNullOrWhiteSpace(Model.AramaMetni))
                     {
                         <a asp-action="Index" class="btn btn-outline-secondary ms-2">Temizle</a>
                     }
@@ -64,7 +62,7 @@
                         </tr>
                     </thead>
                     <tbody class="bg-white">
-                        @if (Model == null || !Model.Any())
+                        @if (!Model.Kitaplar.Any())
                         {
                             <tr>
                                 <td colspan="7" class="p-4">
@@ -76,7 +74,7 @@
                         }
                         else
                         {
-                            @foreach (var kitap in Model)
+                            @foreach (var kitap in Model.Kitaplar)
                             {
                                 <tr class="border-bottom">
                                     <td class="fw-bold text-secondary">@kitap.KitapId</td>
@@ -93,7 +91,7 @@
                                         </span>
                                     </td>
                                     <td>
-                                        <div class="btn-group btn-group-gap" role="group" aria-label="İşlemler" style="min-width: 180px;">
+                                        <div class="btn-group btn-group-gap" role="group" style="min-width: 180px;">
                                             <a asp-action="Guncelle" asp-route-id="@kitap.KitapId" class="btn btn-primary btn-sm">
                                                 <i class="bi bi-pencil"></i> Güncelle
                                             </a>
@@ -111,35 +109,28 @@
                 </table>
             </div>
 
-            <!-- Sayfalama (filtre/sort korunur) -->
+            <!-- Sayfalama -->
             <div class="d-flex justify-content-between align-items-center mt-3">
                 <div class="text-muted">
-                    Toplam <strong>@Model.ToplamSayi</strong> kayıt • Sayfa <strong>@Model.SayfaIndeks</strong>/<strong>@Model.ToplamSayfa</strong>
+                    Toplam <strong>@Model.Kitaplar.ToplamSayi</strong> kayıt •
+                    Sayfa <strong>@Model.Kitaplar.SayfaIndeks</strong>/<strong>@Model.Kitaplar.ToplamSayfa</strong>
                 </div>
                 <div class="btn-group btn-group-gap">
-                    <a class="btn btn-outline-secondary @(Model.OncekiSayfaVar ? "" : "disabled")"
+                    <a class="btn btn-outline-secondary @(Model.Kitaplar.OncekiSayfaVar ? "" : "disabled")"
                        asp-action="Index"
-                       asp-route-pageNumber="@(Model.SayfaIndeks - 1)"
-                       asp-route-searchString="@q"
-                       asp-route-sortOrder="@sort">‹ Önceki</a>
+                       asp-route-pageNumber="@(Model.Kitaplar.SayfaIndeks - 1)"
+                       asp-route-searchString="@Model.AramaMetni"
+                       asp-route-sortOrder="@Model.Siralama">‹ Önceki</a>
 
-                    <a class="btn btn-outline-secondary @(Model.SonrakiSayfaVar ? "" : "disabled")"
+                    <a class="btn btn-outline-secondary @(Model.Kitaplar.SonrakiSayfaVar ? "" : "disabled")"
                        asp-action="Index"
-                       asp-route-pageNumber="@(Model.SayfaIndeks + 1)"
-                       asp-route-searchString="@q"
-                       asp-route-sortOrder="@sort">Sonraki ›</a>
+                       asp-route-pageNumber="@(Model.Kitaplar.SayfaIndeks + 1)"
+                       asp-route-searchString="@Model.AramaMetni"
+                       asp-route-sortOrder="@Model.Siralama">Sonraki ›</a>
                 </div>
             </div>
         </div>
 
-        <!-- Toplam Kitap Sayısı (opsiyonel, yukarıda total verildiği için kaldırabilirsin) -->
-        <!--
-        <div class="mt-3 text-end">
-          <span class="fw-bold text-muted">
-            Toplam <span class="text-primary">@Model.ToplamSayi</span> kitap listelenmiştir.
-          </span>
-        </div>
-        -->
         <!-- Silme Modal -->
         <div class="modal fade" id="silModal" tabindex="-1" aria-labelledby="silModalLabel" aria-hidden="true">
             <div class="modal-dialog">
@@ -162,14 +153,13 @@
                 </div>
             </div>
         </div>
-
     </div>
 </div>
 
 <script>
     document.querySelectorAll('.silButonu').forEach(btn => {
-      btn.addEventListener('click', function () {
-        document.getElementById('kitapId').value = this.getAttribute('data-id');
-      });
+        btn.addEventListener('click', function () {
+            document.getElementById('kitapId').value = this.getAttribute('data-id');
+        });
     });
 </script>

@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using OgrenciBilgiSistemi.Api.Services;
+using OgrenciBilgiSistemi.Api.Services.Interfaces;
 
 namespace OgrenciBilgiSistemi.Api.Controllers
 {
@@ -9,10 +9,10 @@ namespace OgrenciBilgiSistemi.Api.Controllers
     [Route("api/gecis-kayit")]
     public class GecisKayitController : ControllerBase
     {
-        private readonly GecisKayitService _gecisKayitService;
-        private readonly OgrenciService _ogrenciService;
+        private readonly IGecisKayitService _gecisKayitService;
+        private readonly IOgrenciService _ogrenciService;
 
-        public GecisKayitController(GecisKayitService gecisKayitService, OgrenciService ogrenciService)
+        public GecisKayitController(IGecisKayitService gecisKayitService, IOgrenciService ogrenciService)
         {
             _gecisKayitService = gecisKayitService;
             _ogrenciService = ogrenciService;

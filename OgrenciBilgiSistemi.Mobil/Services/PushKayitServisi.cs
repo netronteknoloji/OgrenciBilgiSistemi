@@ -40,19 +40,28 @@ namespace OgrenciBilgiSistemi.Mobil.Services
 
         public async Task LoginSonrasiKaydetAsync()
         {
+            System.Diagnostics.Debug.WriteLine(
+                $"[PUSH] LoginSonrasiKaydet başladı, GirisYapildiMi={KullaniciOturum.GirisYapildiMi}");
+
             if (!KullaniciOturum.GirisYapildiMi)
+            {
+                System.Diagnostics.Debug.WriteLine("[PUSH] GirisYapildiMi=false → skip");
                 return;
+            }
 
             try
             {
                 // Bildirim izni iste (iOS'ta AppDelegate.FinishedLaunching zaten UNUserNotificationCenter
                 // üzerinden istiyor; çift dialog'u önlemek için yalnız Android'de)
 #if ANDROID
-                await LocalNotificationCenter.Current.RequestNotificationPermission();
+                var izin = await LocalNotificationCenter.Current.RequestNotificationPermission();
+                System.Diagnostics.Debug.WriteLine($"[PUSH] Android bildirim izni={izin}");
 #endif
                 await CrossFirebaseCloudMessaging.Current.CheckIfValidAsync();
+                System.Diagnostics.Debug.WriteLine("[PUSH] CheckIfValidAsync OK");
 
                 var token = await CrossFirebaseCloudMessaging.Current.GetTokenAsync();
+                System.Diagnostics.Debug.WriteLine($"[PUSH] GetTokenAsync 1. deneme len={token?.Length ?? 0}");
 
                 // iOS'ta APNs registration tamamlanmadan FCM token null/empty dönebilir.
                 // Tek seferlik kısa retry ile race condition'ı tolere et.
@@ -60,17 +69,24 @@ namespace OgrenciBilgiSistemi.Mobil.Services
                 {
                     await Task.Delay(TimeSpan.FromSeconds(2));
                     token = await CrossFirebaseCloudMessaging.Current.GetTokenAsync();
+                    System.Diagnostics.Debug.WriteLine($"[PUSH] GetTokenAsync 2. deneme len={token?.Length ?? 0}");
                 }
 
                 if (string.IsNullOrWhiteSpace(token))
+                {
+                    System.Diagnostics.Debug.WriteLine("[PUSH] token null/empty → API çağrılmadı");
                     return;
+                }
 
                 await SecureStorage.Default.SetAsync(AnahtarFcmToken, token);
+                System.Diagnostics.Debug.WriteLine("[PUSH] ApiyeKaydet çağrılıyor");
                 await ApiyeKaydetAsync(token);
+                System.Diagnostics.Debug.WriteLine("[PUSH] ApiyeKaydet tamamlandı");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[PUSH] Login sonrası kayıt hatası: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine(
+                    $"[PUSH] LoginSonrasiKaydet exception type={ex.GetType().Name} msg={ex.Message}");
             }
         }
 

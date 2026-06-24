@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using OgrenciBilgiSistemi.Data;
 using OgrenciBilgiSistemi.Models;
 using OgrenciBilgiSistemi.Services.Interfaces;
@@ -8,10 +9,12 @@ namespace OgrenciBilgiSistemi.Services.Implementations
     public class OgretmenRandevuService : IOgretmenRandevuService
     {
         private readonly AppDbContext _db;
+        private readonly ILogger<OgretmenRandevuService> _logger;
 
-        public OgretmenRandevuService(AppDbContext db)
+        public OgretmenRandevuService(AppDbContext db, ILogger<OgretmenRandevuService> logger)
         {
             _db = db;
+            _logger = logger;
         }
 
         public async Task<List<OgretmenRandevuModel>> OgretmeneGoreListele(int ogretmenKullaniciId, CancellationToken ct = default)

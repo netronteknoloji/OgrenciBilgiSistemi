@@ -17,5 +17,7 @@ namespace OgrenciBilgiSistemi.ViewModels
         public int? BirimId { get; set; }
 
         public OgrenciFiltre Durum { get; set; } = OgrenciFiltre.Aktif;
+
+        public Dictionary<int, bool> YemekDurumMap { get; set; } = new();
     }
 }

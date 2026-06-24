@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using OgrenciBilgiSistemi.Models;
 using OgrenciBilgiSistemi.Services.Interfaces;
 using OgrenciBilgiSistemi.ViewModels;
 
@@ -10,43 +9,39 @@ namespace OgrenciBilgiSistemi.Controllers
     public class VelilerController : Controller
     {
         private readonly IVeliProfilService _veliProfilService;
-        private readonly IKullaniciService _kullaniciService;
         private readonly ILogger<VelilerController> _logger;
 
         public VelilerController(
             IVeliProfilService veliProfilService,
-            IKullaniciService kullaniciService,
             ILogger<VelilerController> logger)
         {
             _veliProfilService = veliProfilService;
-            _kullaniciService = kullaniciService;
             _logger = logger;
         }
 
         [HttpGet]
         public async Task<IActionResult> Index(string searchString, int page = 1, CancellationToken ct = default)
         {
-            ViewData["CurrentFilter"] = searchString;
             var paged = await _veliProfilService.SearchPagedAsync(searchString, page, 50, ct);
-            return View(paged);
+            return View(new VeliIndexVm { Veliler = paged, AramaMetni = searchString });
         }
 
         [HttpGet]
         public IActionResult Ekle()
         {
-            return View(new VeliEkleVm());
+            return View(new VeliFormVm());
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Ekle(VeliEkleVm vm, CancellationToken ct = default)
+        public async Task<IActionResult> Ekle(VeliFormVm vm, CancellationToken ct = default)
         {
             if (!ModelState.IsValid)
                 return View(vm);
 
             try
             {
-                await _veliProfilService.EkleKullaniciVeProfilAsync(vm, ct);
+                await _veliProfilService.EkleKullaniciVeProfilAsync(vm.ToEkleVm(), ct);
                 return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)
@@ -65,28 +60,29 @@ namespace OgrenciBilgiSistemi.Controllers
             var profil = await _veliProfilService.GetByIdAsync(id.Value, ct);
             if (profil == null) return NotFound();
 
-            return View(profil);
+            return View(VeliFormVm.FromModel(profil));
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Guncelle(VeliProfilModel model, string? kullaniciAdi, string? telefon, string? sifre, CancellationToken ct = default)
+        public async Task<IActionResult> Guncelle(VeliFormVm vm, CancellationToken ct = default)
         {
-            ModelState.Remove(nameof(sifre));
+            vm.FormAction = "Guncelle"; vm.SubmitText = "Güncelle";
+            ModelState.Remove(nameof(vm.Sifre));
 
             if (!ModelState.IsValid)
-                return View(model);
+                return View(vm);
 
             try
             {
-                await _veliProfilService.GuncelleAsync(model, kullaniciAdi, telefon, sifre, ct);
+                await _veliProfilService.GuncelleAsync(vm.ToProfilModel(), vm.KullaniciAdi, vm.Telefon, vm.Sifre, ct);
                 return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Veli profili güncellenirken hata oluştu.");
                 ModelState.AddModelError(string.Empty, "Güncelleme sırasında bir hata oluştu.");
-                return View(model);
+                return View(vm);
             }
         }
 
@@ -97,14 +93,7 @@ namespace OgrenciBilgiSistemi.Controllers
             if (veli == null) return NotFound();
 
             var ogrenciler = await _veliProfilService.GetOgrencilerAsync(id, ct);
-
-            var vm = new VeliDetayVm
-            {
-                Veli = veli,
-                Ogrenciler = ogrenciler
-            };
-
-            return View(vm);
+            return View(new VeliDetayVm { Veli = veli, Ogrenciler = ogrenciler });
         }
 
         [HttpPost]

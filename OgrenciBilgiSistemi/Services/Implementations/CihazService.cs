@@ -638,5 +638,52 @@ namespace OgrenciBilgiSistemi.Services.Implementations
         {
             try { int code = 0; zk.GetLastError(ref code); return code; } catch { return 0; }
         }
+
+        public async Task<SayfalanmisListeModel<CihazModel>> SearchPagedAsync(
+            string? search, int page, int pageSize, CancellationToken ct = default)
+        {
+            var query = _context.Cihazlar
+                .Where(c => c.Aktif)
+                .AsNoTracking()
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var s = search.Trim();
+                if (Guid.TryParse(s, out var g))
+                {
+                    query = query.Where(c => c.CihazKodu == g);
+                }
+                else
+                {
+                    query = query.Where(c =>
+                        EF.Functions.Like(c.CihazAdi, $"%{s}%") ||
+                        EF.Functions.Like(c.IpAdresi ?? "", $"%{s}%"));
+                }
+            }
+
+            query = query.OrderBy(c => c.CihazAdi).ThenBy(c => c.CihazId);
+            return await SayfalanmisListeModel<CihazModel>.CreateAsync(query, page, pageSize, ct);
+        }
+
+        public async Task<CihazModel?> CihazBulByKodAsync(Guid cihazKodu, CancellationToken ct = default)
+        {
+            return await _context.Cihazlar.AsNoTracking()
+                .FirstOrDefaultAsync(c => c.CihazKodu == cihazKodu, ct);
+        }
+
+        public async Task<CihazModel?> CihazBulAktifByKodAsync(Guid cihazKodu, CancellationToken ct = default)
+        {
+            return await _context.Cihazlar.AsNoTracking()
+                .FirstOrDefaultAsync(c => c.CihazKodu == cihazKodu && c.Aktif, ct);
+        }
+
+        public async Task<CihazModel?> CihazBulVarsayilanAsync(CancellationToken ct = default)
+        {
+            return await _context.Cihazlar.AsNoTracking()
+                .OrderByDescending(c => c.Aktif)
+                .ThenBy(c => c.CihazId)
+                .FirstOrDefaultAsync(ct);
+        }
     }
 }

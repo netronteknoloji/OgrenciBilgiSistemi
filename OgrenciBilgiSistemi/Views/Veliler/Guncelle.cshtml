@@ -1,16 +1,5 @@
-@model OgrenciBilgiSistemi.Models.VeliProfilModel
+@model OgrenciBilgiSistemi.ViewModels.VeliFormVm
 @{
     ViewData["Title"] = "Veli Güncelle";
-    ViewData["Action"] = "Guncelle";
-    ViewData["SubmitText"] = "Güncelle";
-    ViewData["KullaniciId"] = Model.KullaniciId;
-    ViewData["KullaniciAdi"] = Model.Kullanici?.KullaniciAdi;
-    ViewData["Telefon"] = Model.Kullanici?.Telefon;
-    ViewData["VeliAdres"] = Model.VeliAdres;
-    ViewData["VeliMeslek"] = Model.VeliMeslek;
-    ViewData["VeliIsYeri"] = Model.VeliIsYeri;
-    ViewData["VeliEmail"] = Model.VeliEmail;
-    ViewData["VeliYakinlik"] = Model.VeliYakinlik;
-    ViewData["VeliDurum"] = Model.VeliDurum;
 }
-<partial name="~/Views/Veliler/_VeliFormPartial.cshtml" />
+<partial name="~/Views/Veliler/_VeliFormPartial.cshtml" model="Model" />

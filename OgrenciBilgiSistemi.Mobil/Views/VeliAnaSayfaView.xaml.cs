@@ -1,121 +1,22 @@
-using OgrenciBilgiSistemi.Mobil.Models;
-using OgrenciBilgiSistemi.Mobil.Services;
+using OgrenciBilgiSistemi.Mobil.ViewModels;
 
 namespace OgrenciBilgiSistemi.Mobil.Views
 {
     public partial class VeliAnaSayfaView : ContentPage
     {
-        private readonly VeliService _veliService;
-        private readonly BildirimService _bildirimService;
-        private readonly DuyuruService _duyuruService;
+        private readonly VeliAnaSayfaGorunumModel _vm;
 
-        public VeliAnaSayfaView(VeliService veliService, BildirimService bildirimService, DuyuruService duyuruService)
+        public VeliAnaSayfaView(VeliAnaSayfaGorunumModel vm)
         {
-            try
-            {
-                InitializeComponent();
-                _veliService = veliService;
-                _bildirimService = bildirimService;
-                _duyuruService = duyuruService;
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"VeliAnaSayfaView Init Hatası: {ex.Message}");
-            }
+            InitializeComponent();
+            BindingContext = vm;
+            _vm = vm;
         }
 
-        protected override async void OnAppearing()
+        protected override void OnAppearing()
         {
             base.OnAppearing();
-
-            try
-            {
-                WelcomeLabel.Text = $"Merhaba, {KullaniciOturum.AdSoyad}";
-
-                var cocuklar = await _veliService.CocuklarimiGetir();
-                CocukCollection.ItemsSource = cocuklar;
-                CocukSayisiLabel.Text = cocuklar.Count > 0
-                    ? $"{cocuklar.Count} çocuk kayıtlı"
-                    : "Kayıtlı öğrenci bulunamadı";
-
-                // Okunmamış bildirim ve duyuru sayılarını güncelle
-                await BildirimBadgeGuncelle();
-                await DuyuruBadgeGuncelle();
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"VeliAnaSayfa Yükleme Hatası: {ex.Message}");
-                CocukSayisiLabel.Text = "Veriler yüklenemedi";
-            }
-        }
-
-        private async Task BildirimBadgeGuncelle()
-        {
-            try
-            {
-                var sayi = await _bildirimService.OkunmamisSayisiGetir();
-                if (sayi > 0)
-                {
-                    BildirimBadge.IsVisible = true;
-                    BildirimSayiLabel.Text = sayi > 9 ? "9+" : sayi.ToString();
-                }
-                else
-                {
-                    BildirimBadge.IsVisible = false;
-                }
-            }
-            catch { }
-        }
-
-        private async Task DuyuruBadgeGuncelle()
-        {
-            try
-            {
-                var sayi = await _duyuruService.OkunmamisSayisiGetir();
-                if (sayi > 0)
-                {
-                    DuyuruBadge.IsVisible = true;
-                    DuyuruSayiLabel.Text = sayi > 9 ? "9+" : sayi.ToString();
-                }
-                else
-                {
-                    DuyuruBadge.IsVisible = false;
-                }
-            }
-            catch { }
-        }
-
-        private async void OnCocukTapped(object sender, TappedEventArgs e)
-        {
-            try
-            {
-                if (e.Parameter is Ogrenci ogrenci)
-                {
-                    await Navigation.PushAsync(new OgrenciDetayView(ogrenci.OgrenciId));
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Öğrenci Detay Hatası: {ex.Message}");
-            }
-        }
-
-        private async void OnRandevularTapped(object sender, TappedEventArgs e)
-        {
-            await Navigation.PushAsync(new RandevuListeView(
-                Application.Current.MainPage.Handler.MauiContext.Services.GetService<RandevuService>()));
-        }
-
-        private async void OnBildirimlerTapped(object sender, TappedEventArgs e)
-        {
-            await Navigation.PushAsync(new BildirimListeView(
-                Application.Current.MainPage.Handler.MauiContext.Services.GetService<BildirimService>()));
-        }
-
-        private async void OnDuyurularTapped(object sender, TappedEventArgs e)
-        {
-            await Navigation.PushAsync(new VeliDuyurularView(
-                Application.Current.MainPage.Handler.MauiContext.Services.GetService<DuyuruService>()));
+            _vm.YukleCommand.Execute(null);
         }
     }
 }

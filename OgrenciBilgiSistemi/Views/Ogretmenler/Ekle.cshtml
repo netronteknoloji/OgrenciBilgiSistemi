@@ -1,7 +1,5 @@
-@model OgrenciBilgiSistemi.ViewModels.OgretmenEkleVm
+@model OgrenciBilgiSistemi.ViewModels.OgretmenFormVm
 @{
     ViewData["Title"] = "Yeni Öğretmen Ekle";
-    ViewData["Action"] = "Ekle";
-    ViewData["SubmitText"] = "Kaydet";
 }
-<partial name="~/Views/Shared/_OgretmenFormPartial.cshtml" />
+<partial name="~/Views/Shared/_OgretmenFormPartial.cshtml" model="Model" />

@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OgrenciBilgiSistemi.Api.Dtos;
-using OgrenciBilgiSistemi.Api.Services;
+using OgrenciBilgiSistemi.Api.Services.Interfaces;
 using OgrenciBilgiSistemi.Shared.Services;
 
 namespace OgrenciBilgiSistemi.Api.Controllers
@@ -11,13 +11,13 @@ namespace OgrenciBilgiSistemi.Api.Controllers
     [Authorize]
     public class ServisController : ControllerBase
     {
-        private readonly ServisService _servisService;
-        private readonly OgrenciService _ogrenciService;
+        private readonly IServisService _servisService;
+        private readonly IOgrenciService _ogrenciService;
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly TenantBaglami _tenantBaglami;
         private readonly ILogger<ServisController> _logger;
 
-        public ServisController(ServisService servisService, OgrenciService ogrenciService, IServiceScopeFactory scopeFactory, TenantBaglami tenantBaglami, ILogger<ServisController> logger)
+        public ServisController(IServisService servisService, IOgrenciService ogrenciService, IServiceScopeFactory scopeFactory, TenantBaglami tenantBaglami, ILogger<ServisController> logger)
         {
             _servisService = servisService;
             _ogrenciService = ogrenciService;
@@ -125,7 +125,7 @@ namespace OgrenciBilgiSistemi.Api.Controllers
                         tenant.ConnectionString = tenantSnapshot.ConnectionString;
                         tenant.OkulAdi = tenantSnapshot.OkulAdi;
 
-                        var smsBildirim = scope.ServiceProvider.GetRequiredService<YoklamaSmsBildirimService>();
+                        var smsBildirim = scope.ServiceProvider.GetRequiredService<IYoklamaSmsBildirimService>();
                         await smsBildirim.ServisYoklamaBildir(kayitlar, model.Periyot);
                     }
                     catch (Exception ex)

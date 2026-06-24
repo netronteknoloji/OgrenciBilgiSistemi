@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using OgrenciBilgiSistemi.Data;
 using OgrenciBilgiSistemi.Models;
 using OgrenciBilgiSistemi.Services.Interfaces;
@@ -12,12 +13,14 @@ namespace OgrenciBilgiSistemi.Services.Implementations
     {
         private readonly AppDbContext _db;
         private readonly IWebHostEnvironment _env;
+        private readonly ILogger<OgretmenProfilService> _logger;
         private readonly PasswordHasher<KullaniciModel> _passwordHasher = new();
 
-        public OgretmenProfilService(AppDbContext db, IWebHostEnvironment env)
+        public OgretmenProfilService(AppDbContext db, IWebHostEnvironment env, ILogger<OgretmenProfilService> logger)
         {
             _db = db;
             _env = env;
+            _logger = logger;
         }
 
         public async Task<SayfalanmisListeModel<OgretmenProfilModel>> SearchPagedAsync(
@@ -73,8 +76,16 @@ namespace OgrenciBilgiSistemi.Services.Implementations
 
             kullanici.Sifre = _passwordHasher.HashPassword(kullanici, vm.Sifre);
 
-            _db.Kullanicilar.Add(kullanici);
-            await _db.SaveChangesAsync(ct);
+            try
+            {
+                _db.Kullanicilar.Add(kullanici);
+                await _db.SaveChangesAsync(ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Öğretmen kullanıcısı eklenirken hata. KullaniciAdi: {Ad}", vm.KullaniciAdi);
+                throw;
+            }
             return kullanici.KullaniciId;
         }
 
@@ -101,7 +112,15 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                     kullanici.Sifre = _passwordHasher.HashPassword(kullanici, sifre);
             }
 
-            await _db.SaveChangesAsync(ct);
+            try
+            {
+                await _db.SaveChangesAsync(ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Öğretmen profili güncellenirken hata. Id: {Id}", model.KullaniciId);
+                throw;
+            }
         }
 
         public async Task SilAsync(int kullaniciId, CancellationToken ct = default)
@@ -110,7 +129,15 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             if (profil == null) return;
 
             profil.OgretmenDurum = false;
-            await _db.SaveChangesAsync(ct);
+            try
+            {
+                await _db.SaveChangesAsync(ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Öğretmen pasifleştirilirken hata. Id: {Id}", kullaniciId);
+                throw;
+            }
         }
 
         public async Task<OgretmenProfilModel?> GetByIdAsync(int kullaniciId, CancellationToken ct = default)

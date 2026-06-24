@@ -1,3 +1,4 @@
+using OgrenciBilgiSistemi.Shared.Models;
 using System.ComponentModel.DataAnnotations;
 
 namespace OgrenciBilgiSistemi.Dtos
@@ -16,5 +17,7 @@ namespace OgrenciBilgiSistemi.Dtos
         public bool BeniHatirla { get; set; }
 
         public string? OkulKodu { get; set; }
+
+        public List<OkulBilgiAyari> Okullar { get; set; } = new();
     }
 }

@@ -1,98 +1,20 @@
-using OgrenciBilgiSistemi.Mobil.Services;
+using OgrenciBilgiSistemi.Mobil.ViewModels;
 
 namespace OgrenciBilgiSistemi.Mobil.Views
 {
     public partial class AdminAnaSayfaView : ContentPage
     {
-        private readonly AdminService _adminService;
-
-        public AdminAnaSayfaView(AdminService adminService)
+        public AdminAnaSayfaView(AdminAnaSayfaGorunumModel gorunumModel)
         {
             InitializeComponent();
-            _adminService = adminService;
+            BindingContext = gorunumModel;
         }
 
-        protected override async void OnAppearing()
+        protected override void OnAppearing()
         {
             base.OnAppearing();
-            WelcomeLabel.Text = $"Merhaba, {KullaniciOturum.AdSoyad}";
-            try
-            {
-                var ozet = await _adminService.OkulOzetGetir();
-
-                if (ozet is null)
-                {
-                    OkulAdiLabel.Text = "Veriler yüklenemedi";
-                    ServisSayisiLabel.Text = "!";
-                }
-                else
-                {
-                    OkulAdiLabel.Text = string.IsNullOrWhiteSpace(ozet.OkulAdi) ? "Okul Özeti" : ozet.OkulAdi;
-                    OgrenciSayisiLabel.Text   = ozet.ToplamOgrenci.ToString();
-                    OgretmenSayisiLabel.Text  = ozet.ToplamOgretmen.ToString();
-                    SinifSayisiLabel.Text     = ozet.ToplamSinif.ToString();
-                    VeliSayisiLabel.Text      = ozet.ToplamVeli.ToString();
-                    ServisSayisiLabel.Text    = ozet.ToplamServis.ToString();
-                    YemekhaneSayisiLabel.Text = ozet.BugunYemekhaneGiris.ToString();
-                    AnakapiSayisiLabel.Text   = ozet.BugunAnakapiCikis.ToString();
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"AdminAnaSayfa Yükleme Hatası: {ex.Message}");
-                OkulAdiLabel.Text = "Veriler yüklenemedi";
-            }
+            if (BindingContext is AdminAnaSayfaGorunumModel vm)
+                vm.YukleCommand.Execute(null);
         }
-
-        private async void OnOgrencilerTapped(object sender, TappedEventArgs e)
-        {
-            var svc = Servis<OgrenciService>();
-            if (svc is null) return;
-            await Navigation.PushAsync(new AdminOgrenciListeView(svc));
-        }
-
-        private async void OnOgretmenlerTapped(object sender, TappedEventArgs e)
-        {
-            var svc = Servis<OgretmenListeService>();
-            if (svc is null) return;
-            await Navigation.PushAsync(new AdminOgretmenListeView(svc));
-        }
-
-        private async void OnSiniflarTapped(object sender, TappedEventArgs e)
-        {
-            var svc = Servis<SinifService>();
-            if (svc is null) return;
-            await Navigation.PushAsync(new AdminSinifListeView(svc));
-        }
-
-        private async void OnVelilerTapped(object sender, TappedEventArgs e)
-        {
-            var svc = Servis<VeliListeService>();
-            if (svc is null) return;
-            await Navigation.PushAsync(new AdminVeliListeView(svc));
-        }
-
-        private async void OnYemekhaneTapped(object sender, TappedEventArgs e)
-            => await Navigation.PushAsync(new AdminYemekhaneBugunView(_adminService));
-
-        private async void OnAnakapiTapped(object sender, TappedEventArgs e)
-            => await Navigation.PushAsync(new AdminAnakapiCikisBugunView(_adminService));
-
-        private async void OnServisOzetTapped(object sender, TappedEventArgs e)
-        {
-            System.Diagnostics.Debug.WriteLine("[AdminAnaSayfa] OnServisOzetTapped invoked");
-            try
-            {
-                await Navigation.PushAsync(new AdminServisListeView(_adminService));
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[AdminAnaSayfa] Servis listesi açılamadı: {ex}");
-                await DisplayAlert("Hata", $"Servis listesi açılamadı: {ex.Message}", "Tamam");
-            }
-        }
-
-        private static T? Servis<T>() where T : class
-            => Application.Current?.MainPage?.Handler?.MauiContext?.Services.GetService<T>();
     }
 }

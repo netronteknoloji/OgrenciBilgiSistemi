@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace OgrenciBilgiSistemi.Api.Dtos
 {
-    public class GirisIstegiDto
+    public class ApiGirisIstegiDto
     {
         [Required(ErrorMessage = "Kullanıcı adı gereklidir.")]
         public string KullaniciAdi { get; set; } = string.Empty;

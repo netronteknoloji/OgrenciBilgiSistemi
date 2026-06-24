@@ -64,13 +64,16 @@ namespace OgrenciBilgiSistemi.Controllers
                 kullaniciId,
                 ct);
 
-            ViewData["CurrentFilter"] = searchString;
-            ViewData["SadeceAktif"] = sadeceAktif;
-            ViewData["KullaniciId"] = kullaniciId;
+            var vm = new ZiyaretciIndexVm
+            {
+                Ziyaretciler = model,
+                AramaMetni = searchString,
+                KullaniciId = kullaniciId,
+                SadeceAktif = sadeceAktif,
+                Kullanicilar = await GetKullaniciSelectListAsync(kullaniciId, ct),
+            };
 
-            ViewBag.Kullanicilar = await GetKullaniciSelectListAsync(kullaniciId, ct);
-
-            return View(model);
+            return View(vm);
         }
 
         [HttpGet]
@@ -79,12 +82,11 @@ namespace OgrenciBilgiSistemi.Controllers
             var vm = new ZiyaretciFormViewModel
             {
                 KartVerildiMi = false,
-                Kullanicilar = await GetKullaniciSelectListAsync(null, ct)
+                Kullanicilar = await GetKullaniciSelectListAsync(null, ct),
+                FormAction = "Ekle",
+                SubmitText = "Kaydet",
+                IncludeId = false,
             };
-
-            ViewData["Action"] = "Ekle";
-            ViewData["SubmitText"] = "Kaydet";
-            ViewData["IncludeId"] = false;
 
             return View(vm);
         }
@@ -96,8 +98,8 @@ namespace OgrenciBilgiSistemi.Controllers
             if (!ModelState.IsValid)
             {
                 vm.Kullanicilar = await GetKullaniciSelectListAsync(vm.KullaniciId, ct);
-                ViewData["Action"] = "Ekle";
-                ViewData["SubmitText"] = "Kaydet";
+                vm.FormAction = "Ekle";
+                vm.SubmitText = "Kaydet";
                 return View(vm);
             }
 
@@ -142,12 +144,11 @@ namespace OgrenciBilgiSistemi.Controllers
                 GirisZamani = z.GirisZamani,
                 CikisZamani = z.CikisZamani,
                 CihazId = z.CihazId,
-                Kullanicilar = await GetKullaniciSelectListAsync(z.KullaniciId, ct)
+                Kullanicilar = await GetKullaniciSelectListAsync(z.KullaniciId, ct),
+                FormAction = "Guncelle",
+                SubmitText = "Güncelle",
+                IncludeId = true,
             };
-
-            ViewData["Action"] = "Guncelle";
-            ViewData["SubmitText"] = "Güncelle";
-            ViewData["IncludeId"] = true;
 
             return View("Ekle", vm);
         }
@@ -160,9 +161,9 @@ namespace OgrenciBilgiSistemi.Controllers
             if (!ModelState.IsValid)
             {
                 vm.Kullanicilar = await GetKullaniciSelectListAsync(vm.KullaniciId, ct);
-                ViewData["Action"] = "Guncelle";
-                ViewData["SubmitText"] = "Güncelle";
-                ViewData["IncludeId"] = true;
+                vm.FormAction = "Guncelle";
+                vm.SubmitText = "Güncelle";
+                vm.IncludeId = true;
 
                 return View("Ekle", vm);
             }

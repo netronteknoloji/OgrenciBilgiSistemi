@@ -13,5 +13,9 @@ namespace OgrenciBilgiSistemi.Services.Interfaces
         Task<RandevuModel?> IdIleGetir(int randevuId, CancellationToken ct = default);
 
         Task IptalEt(int randevuId, CancellationToken ct = default);
+
+        Task<List<RandevuModel>> ExcelListeleAsync(
+            string? arama, int? ogretmenId, RandevuDurumu? durum,
+            DateTime? baslangic, DateTime? bitis, CancellationToken ct = default);
     }
 }

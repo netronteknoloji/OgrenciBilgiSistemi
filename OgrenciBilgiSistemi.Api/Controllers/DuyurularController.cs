@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OgrenciBilgiSistemi.Api.Dtos;
-using OgrenciBilgiSistemi.Api.Services;
+using OgrenciBilgiSistemi.Api.Services.Interfaces;
 
 namespace OgrenciBilgiSistemi.Api.Controllers
 {
@@ -10,9 +10,9 @@ namespace OgrenciBilgiSistemi.Api.Controllers
     [Authorize]
     public class DuyurularController : ControllerBase
     {
-        private readonly DuyuruService _duyuruService;
+        private readonly IDuyuruService _duyuruService;
 
-        public DuyurularController(DuyuruService duyuruService)
+        public DuyurularController(IDuyuruService duyuruService)
         {
             _duyuruService = duyuruService;
         }

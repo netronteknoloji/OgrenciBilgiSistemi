@@ -6,6 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 using OgrenciBilgiSistemi.Api.Dtos;
 using OgrenciBilgiSistemi.Api.Models;
 using OgrenciBilgiSistemi.Api.Services;
+using OgrenciBilgiSistemi.Api.Services.Interfaces;
 using OgrenciBilgiSistemi.Shared.Enums;
 using OgrenciBilgiSistemi.Shared.Services;
 using System.IdentityModel.Tokens.Jwt;
@@ -18,24 +19,30 @@ namespace OgrenciBilgiSistemi.Api.Controllers
     [Route("api/kimlik-dogrulama")]
     public class KimlikDogrulamaController : ControllerBase
     {
-        private readonly GirisService _girisService;
+        private readonly IGirisService _girisService;
         private readonly RefreshTokenService _refreshTokenService;
         private readonly IConfiguration _configuration;
         private readonly OkulYapilandirmaServisi _okulServisi;
+        private readonly ILogger<KimlikDogrulamaController> _logger;
+        private readonly TimeProvider _timeProvider;
 
         // Access token süresi (dakika)
         private const int AccessTokenDakika = 30;
 
         public KimlikDogrulamaController(
-            GirisService girisService,
+            IGirisService girisService,
             RefreshTokenService refreshTokenService,
             IConfiguration configuration,
-            OkulYapilandirmaServisi okulServisi)
+            OkulYapilandirmaServisi okulServisi,
+            ILogger<KimlikDogrulamaController> logger,
+            TimeProvider timeProvider)
         {
             _girisService = girisService;
             _refreshTokenService = refreshTokenService;
             _configuration = configuration;
             _okulServisi = okulServisi;
+            _logger = logger;
+            _timeProvider = timeProvider;
         }
 
         /// <summary>
@@ -69,7 +76,7 @@ namespace OgrenciBilgiSistemi.Api.Controllers
 
         [AllowAnonymous]
         [HttpPost("login")]
-        public async Task<IActionResult> GirisYap([FromBody] GirisIstegiDto istek)
+        public async Task<IActionResult> GirisYap([FromBody] ApiGirisIstegiDto istek)
         {
             if (string.IsNullOrWhiteSpace(istek.KullaniciAdi) ||
                 string.IsNullOrWhiteSpace(istek.Sifre))
@@ -239,8 +246,9 @@ namespace OgrenciBilgiSistemi.Api.Controllers
 
                 return Ok(new { mesaj = "Şifre başarıyla değiştirildi." });
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Şifre değiştirilirken hata. KullaniciId: {Id}", kullaniciId);
                 return StatusCode(500, new { error = "Şifre değiştirilirken bir hata oluştu." });
             }
         }
@@ -299,7 +307,7 @@ namespace OgrenciBilgiSistemi.Api.Controllers
                 issuer:             _configuration["Jwt:Issuer"],
                 audience:           _configuration["Jwt:Audience"],
                 claims:             claims,
-                expires:            DateTime.UtcNow.AddMinutes(AccessTokenDakika),
+                expires:            _timeProvider.GetUtcNow().UtcDateTime.AddMinutes(AccessTokenDakika),
                 signingCredentials: credentials
             );
 

@@ -358,6 +358,11 @@ namespace OgrenciBilgiSistemi.Data
                 .HasIndex(k => k.KullaniciAdi)
                 .HasDatabaseName("IX_Kullanicilar_KullaniciAdi");
 
+            modelBuilder.Entity<KullaniciModel>()
+                .HasIndex(k => k.Telefon)
+                .HasFilter("[Telefon] IS NOT NULL AND [Telefon] != ''")
+                .HasDatabaseName("IX_Kullanicilar_Telefon");
+
             // =========================
             // RANDEVU
             // =========================
@@ -387,6 +392,11 @@ namespace OgrenciBilgiSistemi.Data
                 .HasIndex(r => r.RandevuTarihi)
                 .HasDatabaseName("IX_Randevular_Tarih");
 
+            modelBuilder.Entity<RandevuModel>()
+                .HasIndex(r => new { r.OgretmenKullaniciId, r.RandevuTarihi })
+                .HasFilter("[IsDeleted] = 0")
+                .HasDatabaseName("IX_Randevular_OgretmenTarih");
+
             // =========================
             // OGRETMEN RANDEVU TAKVIM
             // =========================
@@ -399,6 +409,12 @@ namespace OgrenciBilgiSistemi.Data
 
             modelBuilder.Entity<OgretmenRandevuModel>()
                 .HasQueryFilter(m => !m.IsDeleted);
+
+            modelBuilder.Entity<OgretmenRandevuModel>()
+                .HasIndex(m => new { m.OgretmenKullaniciId, m.Tarih, m.BaslangicSaati })
+                .IsUnique()
+                .HasFilter("[IsDeleted] = 0")
+                .HasDatabaseName("UX_OgretmenRandevular_Slot");
 
             // =========================
             // BILDIRIM
@@ -460,10 +476,10 @@ namespace OgrenciBilgiSistemi.Data
                 .HasForeignKey(o => o.KullaniciId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // DuyuruModel soft-delete filter'ı ile eşleşmeli; aksi halde silinmiş duyurunun
-            // okuma kayıtları orphan kalır ve EF beklenmedik sonuç üretebilir (uyarı 10622).
+            // DuyuruOkuma kayıtları duyuru soft-delete'inden bağımsız olarak korunur.
+            // o => true: EF Core'un navigation-filter tutarsızlık uyarısını (10622) bastırır.
             modelBuilder.Entity<DuyuruOkumaModel>()
-                .HasQueryFilter(o => !o.Duyuru.IsDeleted);
+                .HasQueryFilter(o => true);
 
             // Aynı (DuyuruId, KullaniciId) için tek satır — idempotent okundu işareti
             modelBuilder.Entity<DuyuruOkumaModel>()
@@ -544,7 +560,7 @@ namespace OgrenciBilgiSistemi.Data
                 .HasOne(x => x.MenuOge)
                 .WithMany(m => m.KullaniciMenuler)
                 .HasForeignKey(x => x.MenuOgeId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Restrict);
 
             // *** KÖPRÜYE SEED YOK *** (FK hatası yaşamamak için)
             // Kullanıcı-menü atamalarını UI veya Program.cs'de runtime olarak ekleyebilirsin.

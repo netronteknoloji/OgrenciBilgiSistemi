@@ -4,9 +4,8 @@
     var r = Model.Rapor;
     var query = Model.Query;
 
-    // Tarih alanlarını ViewData ya da QueryString'den güvenli al
-    var vBas = ViewData["Bas"]?.ToString();
-    var vBit = ViewData["Bit"]?.ToString();
+    var vBas = Model.Bas;
+    var vBit = Model.Bit;
 
     var pageIndex = r.SayfaIndeks;
     var totalPages = r.ToplamSayfa;

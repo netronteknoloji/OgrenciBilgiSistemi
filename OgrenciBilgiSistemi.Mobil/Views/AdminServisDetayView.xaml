@@ -4,6 +4,7 @@
              xmlns:views="clr-namespace:OgrenciBilgiSistemi.Mobil.Views"
              xmlns:models="clr-namespace:OgrenciBilgiSistemi.Mobil.Models"
              x:Class="OgrenciBilgiSistemi.Mobil.Views.AdminServisDetayView"
+             x:Name="SayfaKoku"
              Title="Servis Detayı"
              Shell.NavBarIsVisible="False"
              BackgroundColor="#F2F2F2">
@@ -15,7 +16,7 @@
                 <Shadow Brush="#34495E" Offset="0,4" Radius="15" Opacity="0.4" />
             </Border.Shadow>
             <Grid>
-                <views:AnaBaslikView x:Name="MyHeader" ShowBack="True" ShowProfile="False" />
+                <views:AnaBaslikView ShowBack="True" ShowProfile="False" />
                 <VerticalStackLayout Spacing="2" VerticalOptions="End" HorizontalOptions="Center" Margin="20,0,20,15">
                     <Label Text="Servis Detayı" FontSize="18" FontFamily="OpenSansSemibold" TextColor="White" HorizontalTextAlignment="Center" />
                 </VerticalStackLayout>
@@ -50,8 +51,7 @@
                                    VerticalOptions="Center" />
                         </Border>
                         <VerticalStackLayout Grid.Column="1" Margin="14,0,0,0" VerticalOptions="Center" Spacing="2">
-                            <Label x:Name="AdSoyadLabel"
-                                   Text="-"
+                            <Label Text="{Binding AdSoyad}"
                                    FontSize="18"
                                    FontFamily="OpenSansSemibold"
                                    TextColor="#2C3E50" />
@@ -62,33 +62,33 @@
 
                     <Grid ColumnDefinitions="100,*" RowDefinitions="Auto,Auto,Auto" RowSpacing="10">
                         <Label Grid.Row="0" Grid.Column="0" Text="Plaka" FontSize="13" TextColor="#7F8C8D" FontFamily="OpenSansSemibold" />
-                        <Label Grid.Row="0" Grid.Column="1" x:Name="PlakaLabel" Text="-" FontSize="14" TextColor="#2C3E50" />
+                        <Label Grid.Row="0" Grid.Column="1" Text="{Binding Plaka}" FontSize="14" TextColor="#2C3E50" />
 
                         <Label Grid.Row="1" Grid.Column="0" Text="Telefon" FontSize="13" TextColor="#7F8C8D" FontFamily="OpenSansSemibold" />
-                        <Label Grid.Row="1" Grid.Column="1" x:Name="TelefonLabel" Text="-" FontSize="14" TextColor="#1F4E79" FontFamily="OpenSansSemibold">
+                        <Label Grid.Row="1" Grid.Column="1" Text="{Binding Telefon}" FontSize="14" TextColor="#1F4E79" FontFamily="OpenSansSemibold">
                             <Label.GestureRecognizers>
-                                <TapGestureRecognizer Tapped="OnTelefonTapped" />
+                                <TapGestureRecognizer Command="{Binding TelefonAraCommand}" />
                             </Label.GestureRecognizers>
                         </Label>
 
                         <Label Grid.Row="2" Grid.Column="0" Text="Öğrenci" FontSize="13" TextColor="#7F8C8D" FontFamily="OpenSansSemibold" />
-                        <Label Grid.Row="2" Grid.Column="1" x:Name="OgrenciSayisiLabel" Text="-" FontSize="14" TextColor="#2C3E50" />
+                        <Label Grid.Row="2" Grid.Column="1" Text="{Binding OgrenciSayisiMetni}" FontSize="14" TextColor="#2C3E50" />
                     </Grid>
                 </VerticalStackLayout>
             </Border>
 
             <!-- Öğrenciler Başlığı -->
-            <Label x:Name="OgrencilerBaslik"
-                   Text="Öğrenciler"
+            <Label Text="{Binding OgrencilerBaslik}"
                    FontSize="17"
                    FontFamily="OpenSansSemibold"
                    TextColor="#2C3E50"
                    Margin="20,15,20,8" />
 
             <!-- Öğrenci Listesi -->
-            <VerticalStackLayout x:Name="OgrencilerStack"
-                                 Margin="15,0,15,0"
-                                 Spacing="8">
+            <VerticalStackLayout Margin="15,0,15,0" Spacing="8">
+                <BindableLayout.ItemsSource>
+                    <Binding Path="Ogrenciler" />
+                </BindableLayout.ItemsSource>
                 <BindableLayout.ItemTemplate>
                     <DataTemplate x:DataType="models:Ogrenci">
                         <Border StrokeShape="RoundRectangle 12"
@@ -99,7 +99,9 @@
                                 <Shadow Brush="Black" Offset="0,2" Radius="6" Opacity="0.05" />
                             </Border.Shadow>
                             <Border.GestureRecognizers>
-                                <TapGestureRecognizer Tapped="OnOgrenciSecildi" />
+                                <TapGestureRecognizer
+                                    Command="{Binding BindingContext.OgrenciSecCommand, Source={x:Reference SayfaKoku}}"
+                                    CommandParameter="{Binding .}" />
                             </Border.GestureRecognizers>
                             <Grid ColumnDefinitions="44,*,Auto" RowDefinitions="Auto,Auto" RowSpacing="2">
                                 <Border Grid.RowSpan="2"
@@ -136,12 +138,11 @@
                 </BindableLayout.ItemTemplate>
             </VerticalStackLayout>
 
-            <Label x:Name="DurumYazisi"
-                   Text=""
+            <Label Text="{Binding DurumYazisi}"
                    FontSize="13"
                    TextColor="#95A5A6"
                    Margin="20,10,20,0"
-                   IsVisible="False"
+                   IsVisible="{Binding DurumYazisiGorulur}"
                    HorizontalOptions="Center" />
 
             </VerticalStackLayout>

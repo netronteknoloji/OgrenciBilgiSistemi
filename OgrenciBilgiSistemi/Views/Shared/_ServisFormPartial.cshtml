@@ -1,11 +1,9 @@
-@{
-    var action = (ViewData["Action"] as string) ?? "Ekle";
-    var submitText = (ViewData["SubmitText"] as string) ?? "Kaydet";
-    var isEkle = action == "Ekle";
-    var durumDeger = ViewData["ServisDurum"] as bool? ?? true;
+@model OgrenciBilgiSistemi.ViewModels.ServisFormVm
 
-    var formId = "servisForm";
-    var submitBtnId = "submitBtn";
+@{
+    var action = Model.FormAction;
+    var submitText = Model.SubmitText;
+    var isEkle = action == "Ekle";
 }
 
 <div class="viewport-scroller">
@@ -21,76 +19,67 @@
                         </div>
 
                         <div class="card-body p-4">
-                            <form method="post" asp-action="@action" id="@formId" autocomplete="off">
+                            <form method="post" asp-action="@action" autocomplete="off">
                                 @Html.AntiForgeryToken()
 
                                 @if (!isEkle)
                                 {
-                                    <input type="hidden" name="KullaniciId" value="@ViewData["KullaniciId"]" />
+                                    <input type="hidden" asp-for="KullaniciId" />
                                 }
 
                                 <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
                                 <!-- Kullanıcı Adı -->
                                 <div class="mb-3">
-                                    <label for="KullaniciAdi" class="form-label fw-semibold">Kullanıcı Adı</label>
-                                    <input name="KullaniciAdi" id="KullaniciAdi"
-                                           class="form-control" required minlength="3"
-                                           placeholder="Kullanıcı adı giriniz"
-                                           value="@ViewData["KullaniciAdi"]" />
-                                    <span class="text-danger field-validation-valid" data-valmsg-for="KullaniciAdi" data-valmsg-replace="true"></span>
+                                    <label asp-for="KullaniciAdi" class="form-label fw-semibold"></label>
+                                    <input asp-for="KullaniciAdi" class="form-control" required minlength="3"
+                                           placeholder="Kullanıcı adı giriniz" />
+                                    <span asp-validation-for="KullaniciAdi" class="text-danger"></span>
                                 </div>
 
                                 <!-- Şifre -->
                                 <div class="mb-3">
-                                    <label for="Sifre" class="form-label fw-semibold">Şifre</label>
+                                    <label asp-for="Sifre" class="form-label fw-semibold"></label>
                                     @if (isEkle)
                                     {
-                                        <input name="Sifre" id="Sifre" type="password"
-                                               class="form-control" required minlength="3"
-                                               placeholder="Şifre giriniz" />
+                                        <input asp-for="Sifre" type="password" class="form-control"
+                                               required minlength="3" placeholder="Şifre giriniz" />
                                     }
                                     else
                                     {
-                                        <input name="Sifre" id="Sifre" type="password"
-                                               class="form-control" data-val="false"
-                                               placeholder="Değiştirmek istemiyorsanız boş bırakın" />
+                                        <input asp-for="Sifre" type="password" class="form-control"
+                                               data-val="false" placeholder="Değiştirmek istemiyorsanız boş bırakın" />
                                         <small class="text-muted">Boş bırakırsanız mevcut şifre korunur.</small>
                                     }
-                                    <span class="text-danger field-validation-valid" data-valmsg-for="Sifre" data-valmsg-replace="true"></span>
+                                    <span asp-validation-for="Sifre" class="text-danger"></span>
                                 </div>
 
                                 <!-- Telefon -->
                                 <div class="mb-3">
-                                    <label for="Telefon" class="form-label fw-semibold">Telefon</label>
-                                    <input name="Telefon" id="Telefon"
-                                           class="form-control" placeholder="5XXXXXXXXX"
-                                           value="@ViewData["Telefon"]" />
-                                    <span class="text-danger field-validation-valid" data-valmsg-for="Telefon" data-valmsg-replace="true"></span>
+                                    <label asp-for="Telefon" class="form-label fw-semibold"></label>
+                                    <input asp-for="Telefon" class="form-control" placeholder="5XXXXXXXXX" />
+                                    <span asp-validation-for="Telefon" class="text-danger"></span>
                                 </div>
 
                                 <hr class="my-3" />
 
                                 <!-- Plaka -->
                                 <div class="mb-3">
-                                    <label for="Plaka" class="form-label fw-semibold">Plaka</label>
-                                    <input name="Plaka" id="Plaka"
-                                           class="form-control" required
-                                           placeholder="34 ABC 123"
-                                           value="@ViewData["Plaka"]" />
-                                    <span class="text-danger field-validation-valid" data-valmsg-for="Plaka" data-valmsg-replace="true"></span>
+                                    <label asp-for="Plaka" class="form-label fw-semibold"></label>
+                                    <input asp-for="Plaka" class="form-control" required placeholder="34 ABC 123" />
+                                    <span asp-validation-for="Plaka" class="text-danger"></span>
                                 </div>
 
                                 @if (!isEkle)
                                 {
                                     <!-- Durum -->
                                     <div class="mb-3">
-                                        <label for="ServisDurum" class="form-label fw-semibold">Durum</label>
-                                        <select name="ServisDurum" id="ServisDurum" class="form-select">
-                                            <option value="true" selected="@(durumDeger ? "selected" : null)">Aktif</option>
-                                            <option value="false" selected="@(!durumDeger ? "selected" : null)">Pasif</option>
+                                        <label asp-for="ServisDurum" class="form-label fw-semibold"></label>
+                                        <select asp-for="ServisDurum" class="form-select">
+                                            <option value="true">Aktif</option>
+                                            <option value="false">Pasif</option>
                                         </select>
-                                        <span class="text-danger field-validation-valid" data-valmsg-for="ServisDurum" data-valmsg-replace="true"></span>
+                                        <span asp-validation-for="ServisDurum" class="text-danger"></span>
                                     </div>
                                 }
 
@@ -99,7 +88,7 @@
                                     <a asp-action="Index" class="btn btn-outline-secondary">
                                         <i class="bi bi-arrow-left"></i> Geri Dön
                                     </a>
-                                    <button type="submit" class="btn btn-primary fw-bold" id="@submitBtnId">
+                                    <button type="submit" class="btn btn-primary fw-bold">
                                         <i class="bi bi-save"></i> @submitText
                                     </button>
                                 </div>

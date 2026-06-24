@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OgrenciBilgiSistemi.Api.Dtos;
-using OgrenciBilgiSistemi.Api.Services;
+using OgrenciBilgiSistemi.Api.Services.Interfaces;
 using OgrenciBilgiSistemi.Shared.Services;
 
 namespace OgrenciBilgiSistemi.Api.Controllers
@@ -11,15 +11,15 @@ namespace OgrenciBilgiSistemi.Api.Controllers
     [Authorize]
     public class OgrencilerController : ControllerBase
     {
-        private readonly OgrenciService _ogrenciService;
-        private readonly ServisService _servisService;
+        private readonly IOgrenciService _ogrenciService;
+        private readonly IServisService _servisService;
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly TenantBaglami _tenantBaglami;
         private readonly ILogger<OgrencilerController> _logger;
 
         public OgrencilerController(
-            OgrenciService ogrenciService,
-            ServisService servisService,
+            IOgrenciService ogrenciService,
+            IServisService servisService,
             IServiceScopeFactory scopeFactory,
             TenantBaglami tenantBaglami,
             ILogger<OgrencilerController> logger)
@@ -67,8 +67,9 @@ namespace OgrenciBilgiSistemi.Api.Controllers
                         return Ok(new { mesaj = "Öğretmenler sınıf listesinden öğrenci görüntüler.", rol });
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Öğrenci listesi alınırken hata.");
                 return StatusCode(500, new { error = "Öğrenci listesi alınırken bir hata oluştu." });
             }
         }
@@ -89,8 +90,9 @@ namespace OgrenciBilgiSistemi.Api.Controllers
                 var ogrenciler = await _ogrenciService.TumAktifOgrencileriGetirAsync();
                 return Ok(ogrenciler);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Öğrenci listesi alınırken hata.");
                 return StatusCode(500, new { error = "Öğrenci listesi alınırken bir hata oluştu." });
             }
         }
@@ -112,8 +114,9 @@ namespace OgrenciBilgiSistemi.Api.Controllers
                 var ozet = await _ogrenciService.SinifYoklamaOzetiGetirAsync(sinifId, seciliTarih);
                 return Ok(ozet);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Sınıf yoklama özeti alınırken hata. SinifId: {SinifId}", sinifId);
                 return StatusCode(500, new { error = "Sınıf yoklama özeti alınırken bir hata oluştu." });
             }
         }
@@ -131,8 +134,9 @@ namespace OgrenciBilgiSistemi.Api.Controllers
                 var ogrenciler = await _ogrenciService.SinifaGoreOgrencileriGetirAsync(sinifId);
                 return Ok(ogrenciler);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Öğrenci listesi alınırken hata.");
                 return StatusCode(500, new { error = "Öğrenci listesi alınırken bir hata oluştu." });
             }
         }
@@ -152,8 +156,9 @@ namespace OgrenciBilgiSistemi.Api.Controllers
 
                 return Ok(ogrenci);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Öğrenci bilgisi alınırken hata. Id: {Id}", id);
                 return StatusCode(500, new { error = "Öğrenci bilgisi alınırken bir hata oluştu." });
             }
         }
@@ -164,21 +169,18 @@ namespace OgrenciBilgiSistemi.Api.Controllers
         {
             try
             {
-                // Önce öğrenciyi getirip yetki kontrolü yap
-                var ogrenci = await _ogrenciService.OgrenciGetirAsync(id);
-                if (ogrenci is null)
-                    return NotFound(new { message = $"{id} numaralı öğrenci bulunamadı." });
-
-                var yetkiSonucu = OgrenciyeErisimKontrol(ogrenci.VeliId, ogrenci.ServisId);
-                if (yetkiSonucu != null) return yetkiSonucu;
-
                 var detaylar = await _ogrenciService.OgrenciDetayGetirAsync(id);
                 if (detaylar is null)
                     return NotFound(new { message = $"{id} numaralı öğrenci bulunamadı." });
+
+                var yetkiSonucu = OgrenciyeErisimKontrol(detaylar.VeliId, detaylar.ServisId);
+                if (yetkiSonucu != null) return yetkiSonucu;
+
                 return Ok(detaylar);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Öğrenci detayları alınırken hata. Id: {Id}", id);
                 return StatusCode(500, new { error = "Öğrenci detayları alınırken bir hata oluştu." });
             }
         }
@@ -203,8 +205,9 @@ namespace OgrenciBilgiSistemi.Api.Controllers
                 int yeniId = await _ogrenciService.EkleAsync(dto);
                 return CreatedAtAction(nameof(IdIleGetir), new { id = yeniId }, new { ogrenciId = yeniId });
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Öğrenci eklenirken hata.");
                 return StatusCode(500, new { error = "Öğrenci eklenirken bir hata oluştu." });
             }
         }
@@ -227,8 +230,9 @@ namespace OgrenciBilgiSistemi.Api.Controllers
                     return NotFound(new { message = $"{id} numaralı öğrenci bulunamadı." });
                 return Ok(new { message = "Öğrenci başarıyla güncellendi." });
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Öğrenci güncellenirken hata. Id: {Id}", id);
                 return StatusCode(500, new { error = "Öğrenci güncellenirken bir hata oluştu." });
             }
         }
@@ -245,8 +249,9 @@ namespace OgrenciBilgiSistemi.Api.Controllers
                     return NotFound(new { message = $"{id} numaralı öğrenci bulunamadı." });
                 return Ok(new { message = "Öğrenci pasife alındı." });
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Öğrenci silinirken hata. Id: {Id}", id);
                 return StatusCode(500, new { error = "Öğrenci silinirken bir hata oluştu." });
             }
         }
@@ -271,8 +276,9 @@ namespace OgrenciBilgiSistemi.Api.Controllers
                 var yoklamalar = await _ogrenciService.HaftalikYoklamaGetirAsync(id, baslangic, bitis);
                 return Ok(yoklamalar);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Haftalık yoklama alınırken hata. Id: {Id}", id);
                 return StatusCode(500, new { error = "Haftalık yoklama bilgisi alınırken bir hata oluştu." });
             }
         }
@@ -294,8 +300,9 @@ namespace OgrenciBilgiSistemi.Api.Controllers
             {
                 return BadRequest(new { error = ex.Message });
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Yoklama bilgisi alınırken hata. SinifId: {SinifId}, Ders: {Ders}", sinifId, dersNumarasi);
                 return StatusCode(500, new { error = "Yoklama bilgisi alınırken bir hata oluştu." });
             }
         }
@@ -345,7 +352,7 @@ namespace OgrenciBilgiSistemi.Api.Controllers
                         tenant.ConnectionString = tenantSnapshot.ConnectionString;
                         tenant.OkulAdi = tenantSnapshot.OkulAdi;
 
-                        var smsBildirim = scope.ServiceProvider.GetRequiredService<YoklamaSmsBildirimService>();
+                        var smsBildirim = scope.ServiceProvider.GetRequiredService<IYoklamaSmsBildirimService>();
                         await smsBildirim.SinifYoklamaBildir(kayitlar, model.DersNumarasi);
                     }
                     catch (Exception ex)
@@ -360,8 +367,9 @@ namespace OgrenciBilgiSistemi.Api.Controllers
             {
                 return BadRequest(new { error = ex.Message });
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Toplu yoklama kaydedilirken hata. SinifId: {SinifId}", model.SinifId);
                 return StatusCode(500, new { error = "Yoklama kaydedilirken bir hata oluştu." });
             }
         }

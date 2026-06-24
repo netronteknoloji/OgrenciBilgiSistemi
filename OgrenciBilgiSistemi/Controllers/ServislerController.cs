@@ -1,9 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using OgrenciBilgiSistemi.Models;
 using OgrenciBilgiSistemi.Services.Interfaces;
 using OgrenciBilgiSistemi.ViewModels;
-using OgrenciBilgiSistemi.Shared.Enums;
 
 namespace OgrenciBilgiSistemi.Controllers
 {
@@ -11,43 +9,39 @@ namespace OgrenciBilgiSistemi.Controllers
     public class ServislerController : Controller
     {
         private readonly IServisProfilService _servisProfilService;
-        private readonly IKullaniciService _kullaniciService;
         private readonly ILogger<ServislerController> _logger;
 
         public ServislerController(
             IServisProfilService servisProfilService,
-            IKullaniciService kullaniciService,
             ILogger<ServislerController> logger)
         {
             _servisProfilService = servisProfilService;
-            _kullaniciService = kullaniciService;
             _logger = logger;
         }
 
         [HttpGet]
         public async Task<IActionResult> Index(string searchString, int page = 1, CancellationToken ct = default)
         {
-            ViewData["CurrentFilter"] = searchString;
             var paged = await _servisProfilService.SearchPagedAsync(searchString, page, 50, ct);
-            return View(paged);
+            return View(new ServisIndexVm { Servisler = paged, AramaMetni = searchString });
         }
 
         [HttpGet]
         public IActionResult Ekle()
         {
-            return View(new ServisEkleVm());
+            return View(new ServisFormVm());
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Ekle(ServisEkleVm vm, CancellationToken ct = default)
+        public async Task<IActionResult> Ekle(ServisFormVm vm, CancellationToken ct = default)
         {
             if (!ModelState.IsValid)
                 return View(vm);
 
             try
             {
-                await _servisProfilService.EkleKullaniciVeProfilAsync(vm, ct);
+                await _servisProfilService.EkleKullaniciVeProfilAsync(vm.ToEkleVm(), ct);
                 return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)
@@ -66,28 +60,29 @@ namespace OgrenciBilgiSistemi.Controllers
             var profil = await _servisProfilService.GetByIdAsync(id.Value, ct);
             if (profil == null) return NotFound();
 
-            return View(profil);
+            return View(ServisFormVm.FromModel(profil));
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Guncelle(ServisProfilModel model, string? kullaniciAdi, string? telefon, string? sifre, CancellationToken ct = default)
+        public async Task<IActionResult> Guncelle(ServisFormVm vm, CancellationToken ct = default)
         {
-            ModelState.Remove(nameof(sifre));
+            vm.FormAction = "Guncelle"; vm.SubmitText = "Güncelle";
+            ModelState.Remove(nameof(vm.Sifre));
 
             if (!ModelState.IsValid)
-                return View(model);
+                return View(vm);
 
             try
             {
-                await _servisProfilService.GuncelleAsync(model, kullaniciAdi, telefon, sifre, ct);
+                await _servisProfilService.GuncelleAsync(vm.ToProfilModel(), vm.KullaniciAdi, vm.Telefon, vm.Sifre, ct);
                 return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Servis profili güncellenirken hata oluştu.");
                 ModelState.AddModelError(string.Empty, "Güncelleme sırasında bir hata oluştu.");
-                return View(model);
+                return View(vm);
             }
         }
 
@@ -99,13 +94,7 @@ namespace OgrenciBilgiSistemi.Controllers
 
             var ogrenciler = await _servisProfilService.GetOgrencilerAsync(id, ct);
 
-            var vm = new ServisDetayVm
-            {
-                Servis = servis,
-                Ogrenciler = ogrenciler
-            };
-
-            return View(vm);
+            return View(new ServisDetayVm { Servis = servis, Ogrenciler = ogrenciler });
         }
 
         [HttpPost]

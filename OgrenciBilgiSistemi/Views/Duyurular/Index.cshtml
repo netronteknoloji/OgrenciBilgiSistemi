@@ -1,4 +1,6 @@
-@model SayfalanmisListeModel<OgrenciBilgiSistemi.Models.DuyuruModel>
+@model OgrenciBilgiSistemi.ViewModels.DuyuruIndexVm
+@using OgrenciBilgiSistemi.Shared.Enums
+@using OgrenciBilgiSistemi.ViewModels
 
 @{
     ViewData["Title"] = "Duyurular";
@@ -25,7 +27,7 @@
                 <div class="alert alert-danger">@hata</div>
             }
 
-            @if (Model == null || !Model.Any())
+            @if (!Model.Duyurular.Any())
             {
                 <div class="alert alert-warning mb-0">
                     <i class="bi bi-exclamation-triangle-fill"></i> Henüz duyuru yayınlanmamış.
@@ -45,14 +47,14 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var d in Model)
+                            @foreach (var d in Model.Duyurular)
                             {
                                 <tr class="text-center">
                                     <td class="text-start fw-semibold text-primary">@d.OlusturulmaTarihi.ToString("dd.MM.yyyy HH:mm")</td>
                                     <td class="text-start">@d.Baslik</td>
                                     <td>@d.Olusturan?.KullaniciAdi</td>
                                     <td>
-                                        @if (d.Hedef == OgrenciBilgiSistemi.Shared.Enums.DuyuruHedefi.TumVeliler)
+                                        @if (d.Hedef == DuyuruHedefi.TumVeliler)
                                         {
                                             <span class="badge bg-primary">Tüm Veliler</span>
                                         }
@@ -82,7 +84,7 @@
                     </table>
                 </div>
 
-                @await Html.PartialAsync("_SayfalamaFormPartial", OgrenciBilgiSistemi.ViewModels.SayfalamaVm.Olustur(Model,
+                @await Html.PartialAsync("_SayfalamaFormPartial", SayfalamaVm.Olustur(Model.Duyurular,
                     sayfaParametreAdi: "sayfaNo",
                     routeValues: new Dictionary<string, string?>()))
             }

@@ -36,13 +36,11 @@
                 <VerticalStackLayout Spacing="2"
                                      VerticalOptions="End"
                                      Margin="20,0,20,35">
-                    <Label x:Name="WelcomeLabel"
-                           Text="Merhaba"
+                    <Label Text="{Binding KarsilamaMetni}"
                            FontSize="18"
                            FontFamily="OpenSansSemibold"
                            TextColor="White" />
-                    <Label x:Name="PlakaLabel"
-                           Text="Servis Öğrencileri"
+                    <Label Text="{Binding PlakaMetni}"
                            FontSize="14"
                            FontFamily="OpenSansSemibold"
                            TextColor="White" />
@@ -62,8 +60,8 @@
             </Border.Shadow>
             <Grid ColumnDefinitions="55, *">
                 <Label Grid.Column="0" Text="🚌" VerticalOptions="Center" HorizontalOptions="Center" FontSize="22" />
-                <Picker x:Name="PeriyotPicker" Grid.Column="1" Title="Periyot Seçiniz" TitleColor="#95A5A6"
-                        TextColor="#2C3E50" VerticalOptions="Center" SelectedIndexChanged="OnPeriyotChanged">
+                <Picker Grid.Column="1" Title="Periyot Seçiniz" TitleColor="#95A5A6"
+                        TextColor="#2C3E50" VerticalOptions="Center" SelectedIndex="{Binding SecilenPeriyotIndex}">
                     <Picker.ItemsSource>
                         <x:Array Type="{x:Type x:String}">
                             <x:String>Sabah Servisi</x:String>
@@ -86,22 +84,22 @@
             </Border.Shadow>
             <Grid ColumnDefinitions="45, *, Auto">
                 <Label Grid.Column="0" Text="🔍" VerticalOptions="Center" HorizontalOptions="Center" FontSize="16" TextColor="#95A5A6" />
-                <Entry Grid.Column="1" x:Name="SearchBar" Placeholder="Öğrenci ara..." PlaceholderColor="#95A5A6"
-                       TextColor="#2C3E50" FontSize="14" VerticalOptions="Center" TextChanged="OnSearchBarTextChanged" />
-                <Label Grid.Column="2" x:Name="OgrenciSayisiLabel" Text="Yükleniyor..."
+                <Entry Grid.Column="1" Placeholder="Öğrenci ara..." PlaceholderColor="#95A5A6"
+                       TextColor="#2C3E50" FontSize="14" VerticalOptions="Center" Text="{Binding AramaMetni}" />
+                <Label Grid.Column="2" Text="{Binding OgrenciSayisiMetni}"
                        VerticalOptions="Center" FontSize="12" TextColor="#7F8C8D" Margin="0,0,15,0" />
             </Grid>
         </Border>
 
         <!-- Uyarı: Daha önce kaydedilmiş yoklama -->
-        <Border x:Name="StatusWarningFrame" Grid.Row="3" IsVisible="False" Margin="15,0,15,10"
+        <Border Grid.Row="3" IsVisible="{Binding StatusUyariGorunur}" Margin="15,0,15,10"
                 StrokeShape="RoundRectangle 10" StrokeThickness="0" BackgroundColor="#FFF3CD">
             <Label Text="Bu periyodun yoklaması daha önce kaydedilmiştir." Padding="12"
                    TextColor="#856404" HorizontalOptions="Center" FontSize="13" />
         </Border>
 
         <!-- Öğrenci listesi (yoklama kartları) -->
-        <CollectionView x:Name="OgrenciCollection" Grid.Row="4" Margin="15,0" SelectionMode="None">
+        <CollectionView Grid.Row="4" Margin="15,0" SelectionMode="None" ItemsSource="{Binding FiltreliOgrenciler}">
             <CollectionView.ItemsLayout>
                 <LinearItemsLayout Orientation="Vertical" ItemSpacing="10" />
             </CollectionView.ItemsLayout>
@@ -182,10 +180,12 @@
                 <Shadow Brush="Black" Offset="0,-5" Radius="10" Opacity="0.05" />
             </Border.Shadow>
             <Grid>
-                <Button x:Name="BtnKaydet" Text="YOKLAMAYI KAYDET" HeightRequest="55" CornerRadius="12"
-                        BackgroundColor="#2980B9" TextColor="White" Clicked="OnYoklamaKaydet" />
-                <Button x:Name="BtnGuncelle" Text="YOKLAMAYI GÜNCELLE" IsVisible="False" HeightRequest="55"
-                        CornerRadius="12" BackgroundColor="#2196F3" TextColor="White" Clicked="OnYoklamaGuncelle" />
+                <Button Text="YOKLAMAYI KAYDET" HeightRequest="55" CornerRadius="12"
+                        BackgroundColor="#2980B9" TextColor="White"
+                        Command="{Binding KaydetCommand}" IsVisible="{Binding KaydetGorunur}" />
+                <Button Text="YOKLAMAYI GÜNCELLE" HeightRequest="55" CornerRadius="12"
+                        BackgroundColor="#2196F3" TextColor="White"
+                        Command="{Binding GuncelleCommand}" IsVisible="{Binding GuncelleGorunur}" />
             </Grid>
         </Border>
     </Grid>

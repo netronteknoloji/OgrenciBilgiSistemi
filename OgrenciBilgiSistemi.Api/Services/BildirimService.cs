@@ -1,12 +1,13 @@
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
 using OgrenciBilgiSistemi.Api.Models;
+using OgrenciBilgiSistemi.Api.Services.Interfaces;
 using OgrenciBilgiSistemi.Push;
 using OgrenciBilgiSistemi.Shared.Services;
 
 namespace OgrenciBilgiSistemi.Api.Services
 {
-    public class BildirimService
+    public class BildirimService : IBildirimService
     {
         private readonly TenantBaglami _tenantBaglami;
         private readonly IPushBildirimGonderici _pushGonderici;

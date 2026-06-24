@@ -1,11 +1,11 @@
-﻿@model SayfalanmisListeModel<OgrenciBilgiSistemi.Models.CihazModel>
+﻿@model OgrenciBilgiSistemi.ViewModels.CihazIndexVm
 
 @{
     ViewData["Title"] = "Cihaz İşlemleri";
-    var q = ViewData["CurrentFilter"] as string;
-    var page = Model.SayfaIndeks;
-    var total = Model.ToplamSayfa;
-    var count = Model.ToplamSayi;
+    var q = Model.CurrentFilter;
+    var page = Model.Cihazlar.SayfaIndeks;
+    var total = Model.Cihazlar.ToplamSayfa;
+    var count = Model.Cihazlar.ToplamSayi;
 }
 
 <div class="viewport-scroller">
@@ -52,7 +52,7 @@
             </form>
 
             <!-- Liste -->
-            @if (Model == null || !Model.Any())
+            @if (Model.Cihazlar == null || !Model.Cihazlar.Any())
             {
                 <div class="alert alert-warning mb-0">
                     <i class="bi bi-exclamation-triangle-fill"></i> Kayıt bulunamadı.
@@ -75,7 +75,7 @@
                             </tr>
                         </thead>
                         <tbody class="bg-white">
-                            @foreach (var cihaz in Model)
+                            @foreach (var cihaz in Model.Cihazlar)
                             {
                                 var guidStr = cihaz.CihazKodu.ToString();
                                 var zkEksik = (cihaz.DonanimTipi == DonanimTipi.ZKTeco)
@@ -174,14 +174,14 @@
                         Toplam <strong>@count</strong> kayıt • Sayfa <strong>@(page)</strong>/<strong>@(total)</strong>
                     </div>
                     <div class="btn-group btn-group-gap">
-                        <a class="btn btn-outline-secondary @(Model.OncekiSayfaVar ? "" : "disabled")"
+                        <a class="btn btn-outline-secondary @(Model.Cihazlar.OncekiSayfaVar ? "" : "disabled")"
                            asp-action="Index"
                            asp-route-searchString="@q"
                            asp-route-page="@(page - 1)">
                             ‹ Önceki
                         </a>
 
-                        <a class="btn btn-outline-secondary @(Model.SonrakiSayfaVar ? "" : "disabled")"
+                        <a class="btn btn-outline-secondary @(Model.Cihazlar.SonrakiSayfaVar ? "" : "disabled")"
                            asp-action="Index"
                            asp-route-searchString="@q"
                            asp-route-page="@(page + 1)">

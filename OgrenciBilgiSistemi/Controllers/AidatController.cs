@@ -151,8 +151,8 @@ namespace OgrenciBilgiSistemi.Controllers
                 yillar = yillar.OrderBy(y => y).ToList();
             }
 
-            ViewBag.KullanilabilirYillar = yillar;
-            ViewBag.ReturnUrl = returnUrl;
+            dto.KullanilabilirYillar = yillar;
+            dto.ReturnUrl = returnUrl;
 
             return View("Ozet", dto);
         }
@@ -176,14 +176,6 @@ namespace OgrenciBilgiSistemi.Controllers
             if (page < 1) page = 1;
             if (pageSize <= 0) pageSize = 50;
             pageSize = Math.Min(pageSize, 200);
-
-            ViewData["CurrentFilter"] = query;
-            ViewData["CurrentYear"] = yil;
-            ViewData["CurrentBirimId"] = birimId;
-            ViewData["CurrentDurum"] = durum;
-            ViewData["Bas"] = bas?.ToString("yyyy-MM-dd");
-            ViewData["Bit"] = bit?.ToString("yyyy-MM-dd");
-            ViewData["IncludePasif"] = includePasif;
 
             var rapor = await _aidatService.GetAidatRaporAsync(
                 yil,

@@ -17,7 +17,7 @@ namespace OgrenciBilgiSistemi.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.2")
+                .HasAnnotation("ProductVersion", "10.0.9")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -365,6 +365,10 @@ namespace OgrenciBilgiSistemi.Migrations
 
                     b.HasIndex("Rol")
                         .HasDatabaseName("IX_Kullanicilar_Rol");
+
+                    b.HasIndex("Telefon")
+                        .HasDatabaseName("IX_Kullanicilar_Telefon")
+                        .HasFilter("[Telefon] IS NOT NULL AND [Telefon] != ''");
 
                     b.ToTable("Kullanicilar");
                 });
@@ -1042,7 +1046,10 @@ namespace OgrenciBilgiSistemi.Migrations
 
                     b.HasKey("OgretmenRandevuId");
 
-                    b.HasIndex("OgretmenKullaniciId");
+                    b.HasIndex("OgretmenKullaniciId", "Tarih", "BaslangicSaati")
+                        .IsUnique()
+                        .HasDatabaseName("UX_OgretmenRandevular_Slot")
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.ToTable("OgretmenRandevular");
                 });
@@ -1093,12 +1100,14 @@ namespace OgrenciBilgiSistemi.Migrations
 
                     b.HasIndex("OgrenciId");
 
-                    b.HasIndex("OgretmenKullaniciId");
-
                     b.HasIndex("RandevuTarihi")
                         .HasDatabaseName("IX_Randevular_Tarih");
 
                     b.HasIndex("VeliKullaniciId");
+
+                    b.HasIndex("OgretmenKullaniciId", "RandevuTarihi")
+                        .HasDatabaseName("IX_Randevular_OgretmenTarih")
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.ToTable("Randevular");
                 });
@@ -1455,7 +1464,7 @@ namespace OgrenciBilgiSistemi.Migrations
                     b.HasOne("OgrenciBilgiSistemi.Models.MenuOgeModel", "MenuOge")
                         .WithMany("KullaniciMenuler")
                         .HasForeignKey("MenuOgeId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Kullanici");

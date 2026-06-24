@@ -1,9 +1,7 @@
-@using OgrenciBilgiSistemi.Dtos
-
-@model List<ZkUserDto>
+@model OgrenciBilgiSistemi.ViewModels.CihazKullanicilariVm
 @{
     ViewData["Title"] = "Cihaz Kullanıcıları";
-    var cihazId = (int)ViewBag.CihazId;
+    var cihazId = Model.CihazId;
 }
 
 <div class="viewport-scroller">
@@ -13,7 +11,7 @@
 
             <!-- Başlık + Aksiyonlar -->
             <div class="d-flex gap-2 justify-content-between align-items-center mb-3 flex-nowrap no-wrap-scroll">
-                <h3 class="text-primary fw-bold mb-0">Cihaz @cihazId – Kullanıcılar (@Model.Count)</h3>
+                <h3 class="text-primary fw-bold mb-0">Cihaz @cihazId – Kullanıcılar (@Model.Kullanicilar.Count)</h3>
                 <div class="d-flex gap-2">
                     <a asp-action="Index" class="btn btn-outline-secondary">
                         <i class="bi bi-arrow-left"></i> Cihaz Listesine Dön
@@ -52,7 +50,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @if (Model == null || Model.Count == 0)
+                        @if (Model.Kullanicilar.Count == 0)
                         {
                             <tr>
                                 <td colspan="6" class="p-4">
@@ -65,7 +63,7 @@
                         else
                         {
                             var i = 1;
-                            foreach (var u in Model)
+                            foreach (var u in Model.Kullanicilar)
                             {
                                 <tr class="text-center">
                                     <td>@i</td>

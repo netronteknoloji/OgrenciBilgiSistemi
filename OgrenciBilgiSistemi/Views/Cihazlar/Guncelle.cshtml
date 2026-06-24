@@ -1,11 +1,6 @@
-﻿@model OgrenciBilgiSistemi.Models.CihazModel
+﻿@model OgrenciBilgiSistemi.ViewModels.CihazFormVm
 @{
     ViewData["Title"] = "Cihaz Güncelle";
-    ViewData["Action"] = "Guncelle";
-    ViewData["SubmitText"] = "Güncelle";
-    ViewData["IncludeId"] = true;
-    ViewData["ShowGuid"] = true;
-    ViewData["GuidStr"] = Model?.CihazKodu.ToString() ?? "";
 }
 <partial name="~/Views/Shared/_CihazFormPartial.cshtml" model="Model" />
 

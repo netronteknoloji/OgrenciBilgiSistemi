@@ -1,5 +1,6 @@
 ﻿using ClosedXML.Excel;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using OgrenciBilgiSistemi.Data;
 using OgrenciBilgiSistemi.Dtos;
 using OgrenciBilgiSistemi.Models;
@@ -12,27 +13,46 @@ namespace OgrenciBilgiSistemi.Services.Implementations
     public class ZiyaretciService : IZiyaretciService
     {
         private readonly AppDbContext _db;
+        private readonly ILogger<ZiyaretciService> _logger;
+        private readonly TimeProvider _timeProvider;
 
-        public ZiyaretciService(AppDbContext db)
+        public ZiyaretciService(AppDbContext db, ILogger<ZiyaretciService> logger, TimeProvider timeProvider)
         {
             _db = db;
+            _logger = logger;
+            _timeProvider = timeProvider;
         }
 
         public async Task<int> EkleAsync(ZiyaretciModel model, CancellationToken ct = default)
         {
-            model.GirisZamani = DateTime.Now;
+            model.GirisZamani = _timeProvider.GetLocalNow().DateTime;
             model.AktifMi = true;
 
-            _db.Ziyaretciler.Add(model);
-            await _db.SaveChangesAsync(ct);
-
-            return model.ZiyaretciId;
+            try
+            {
+                _db.Ziyaretciler.Add(model);
+                await _db.SaveChangesAsync(ct);
+                return model.ZiyaretciId;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Ziyaretçi eklenirken hata. Ad: {Ad}", model.AdSoyad);
+                throw;
+            }
         }
 
         public async Task GuncelleAsync(ZiyaretciModel model, CancellationToken ct = default)
         {
-            _db.Ziyaretciler.Update(model);
-            await _db.SaveChangesAsync(ct);
+            try
+            {
+                _db.Ziyaretciler.Update(model);
+                await _db.SaveChangesAsync(ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Ziyaretçi güncellenirken hata. Id: {Id}", model.ZiyaretciId);
+                throw;
+            }
         }
 
         public async Task CikisYapAsync(int ziyaretciId, CancellationToken ct = default)
@@ -43,10 +63,18 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             if (ziyaretci == null)
                 return;
 
-            ziyaretci.CikisZamani = DateTime.Now;
+            ziyaretci.CikisZamani = _timeProvider.GetLocalNow().DateTime;
             ziyaretci.AktifMi = false;
 
-            await _db.SaveChangesAsync(ct);
+            try
+            {
+                await _db.SaveChangesAsync(ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Ziyaretçi çıkışı kaydedilirken hata. Id: {Id}", ziyaretciId);
+                throw;
+            }
         }
 
         public async Task SilAsync(int ziyaretciId, CancellationToken ct = default)
@@ -57,12 +85,19 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             if (ziyaretci == null)
                 return;
 
-            // Soft-delete: fiziksel silme yerine pasife al
             ziyaretci.AktifMi = false;
             if (!ziyaretci.CikisZamani.HasValue)
-                ziyaretci.CikisZamani = DateTime.Now;
+                ziyaretci.CikisZamani = _timeProvider.GetLocalNow().DateTime;
 
-            await _db.SaveChangesAsync(ct);
+            try
+            {
+                await _db.SaveChangesAsync(ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Ziyaretçi silinirken hata. Id: {Id}", ziyaretciId);
+                throw;
+            }
         }
 
         public async Task<ZiyaretciModel?> GetByIdAsync(int id, CancellationToken ct = default)
@@ -155,7 +190,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 return new ZiyaretciKartOkumaViewModel
                 {
                     KartNo = kartNo,
-                    KartOkumaZamani = DateTime.Now,
+                    KartOkumaZamani = _timeProvider.GetLocalNow().DateTime,
                     Mesaj = "Bu karta ait aktif ziyaretçi bulunamadı.",
                     AktifMi = false
                 };
@@ -165,7 +200,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             {
                 ZiyaretciId = ziyaretci.ZiyaretciId,
                 KartNo = ziyaretci.KartNo,
-                KartOkumaZamani = DateTime.Now,
+                KartOkumaZamani = _timeProvider.GetLocalNow().DateTime,
                 AdSoyad = ziyaretci.AdSoyad,
                 TcKimlikNo = ziyaretci.TcKimlikNo,
                 Telefon = ziyaretci.Telefon,

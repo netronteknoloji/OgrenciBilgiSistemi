@@ -2,9 +2,9 @@
 @using Microsoft.AspNetCore.Mvc.Rendering
 
 @{
-    var action = (ViewData["Action"] as string) ?? "Ekle";
-    var submitText = (ViewData["SubmitText"] as string) ?? "Kaydet";
-    var includeId = (bool?)ViewData["IncludeId"] ?? false;
+    var action = Model.FormAction;
+    var submitText = Model.SubmitText;
+    var includeId = Model.IncludeId;
 
     var formId = "ziyaretciForm";
     var submitBtnId = "submitBtn";

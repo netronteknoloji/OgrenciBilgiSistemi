@@ -1,43 +1,37 @@
-﻿@model SayfalanmisListeModel<OgrenciBilgiSistemi.Models.KitapDetayModel>
+@model OgrenciBilgiSistemi.ViewModels.KitapDetayIndexVm
+@using OgrenciBilgiSistemi.Models
 
 @{
     ViewData["Title"] = "Kitap Detay İşlemleri";
-    var q = ViewData["CurrentFilter"] as string;
-    var durum = ViewData["DurumFilter"] as string;
-    var page = Model.SayfaIndeks;
-    var total = Model.ToplamSayfa;
-    var count = Model.ToplamSayi;
 }
 
 <div class="viewport-scroller">
     <div class="fixed-canvas">
         <div class="card border rounded-4 p-4 mt-4">
 
-            <!-- Başlık + aksiyonlar (Kitap Listesi ile aynı yapı) -->
+            <!-- Başlık + aksiyonlar -->
             <div class="d-flex align-items-center mb-4 flex-nowrap no-wrap-scroll">
                 <h3 class="text-primary fw-bold mb-0">@ViewData["Title"]</h3>
 
                 <div class="d-flex gap-2 ms-auto">
-                    <a class="btn btn-success fw-semibold"
-                       asp-action="Ekle">
+                    <a class="btn btn-success fw-semibold" asp-action="Ekle">
                         <i class="bi bi-plus-lg"></i> Detay Ekle
                     </a>
 
                     <a class="btn btn-outline-success fw-semibold"
                        asp-action="ExportToExcel"
-                       asp-route-sortOrder="@(ViewData["CurrentSort"] as string)"
-                       asp-route-searchString="@q"
-                       asp-route-durumFilter="@durum">
+                       asp-route-sortOrder="@Model.Siralama"
+                       asp-route-searchString="@Model.AramaMetni"
+                       asp-route-durumFilter="@Model.DurumFiltre">
                         <i class="bi bi-file-earmark-excel"></i> Excel'e Aktar
                     </a>
                 </div>
             </div>
 
-            <!-- Filtre Formu (Kitap cshtml ile aynı stil) -->
+            <!-- Filtre Formu -->
             <form method="get" asp-action="Index"
                   class="d-flex align-items-end gap-3 flex-nowrap no-wrap-scroll w-100 bg-body-tertiary border rounded-3 p-3 mb-3">
 
-                <!-- Arama -->
                 <div>
                     <label for="searchString" class="visually-hidden">Kitap/Öğrenci</label>
                     <div class="input-group">
@@ -45,37 +39,31 @@
                         <input type="text" id="searchString" name="searchString"
                                class="form-control"
                                placeholder="Kitap adı / öğrenci adı…"
-                               value="@q" style="width:280px;" />
+                               value="@Model.AramaMetni" style="width:280px;" />
                     </div>
                 </div>
 
-                <!-- Durum -->
                 <div>
                     <label for="durumFilter" class="visually-hidden">Durum</label>
                     <div class="input-group">
                         <span class="input-group-text bg-white"><i class="bi bi-check2-circle"></i></span>
                         <select id="durumFilter" name="durumFilter" class="form-select" style="width:190px;">
                             <option value="">Tümü</option>
-
-                            <option value="Alındı"
-                                    selected="@(durum == "Alındı" ? "selected" : null)">
+                            <option value="Alındı" selected="@(Model.DurumFiltre == "Alındı" ? "selected" : null)">
                                 📖 Alındı
                             </option>
-
-                            <option value="TeslimEdildi"
-                                    selected="@(durum == "TeslimEdildi" ? "selected" : null)">
+                            <option value="TeslimEdildi" selected="@(Model.DurumFiltre == "TeslimEdildi" ? "selected" : null)">
                                 ✅ Teslim Edildi
                             </option>
                         </select>
                     </div>
                 </div>
 
-                <!-- Ara / Temizle -->
                 <div class="ms-auto">
                     <button class="btn btn-primary px-3 text-nowrap" type="submit">
                         <i class="bi bi-search me-1"></i> Ara
                     </button>
-                    @if (!string.IsNullOrWhiteSpace(q) || !string.IsNullOrWhiteSpace(durum))
+                    @if (!string.IsNullOrWhiteSpace(Model.AramaMetni) || !string.IsNullOrWhiteSpace(Model.DurumFiltre))
                     {
                         <a asp-action="Index" class="btn btn-outline-secondary ms-2">Temizle</a>
                     }
@@ -83,7 +71,7 @@
             </form>
 
             <!-- Liste -->
-            @if (Model == null || !Model.Any())
+            @if (!Model.Detaylar.Any())
             {
                 <div class="table-scroll">
                     <table class="table table-hover text-center align-middle">
@@ -115,7 +103,7 @@
                             </tr>
                         </thead>
                         <tbody class="bg-white">
-                            @foreach (var d in Model)
+                            @foreach (var d in Model.Detaylar)
                             {
                                 var kitapAd = d.Kitap?.KitapAd ?? "Bilinmiyor";
                                 var ogrAd = d.Ogrenci?.OgrenciAdSoyad ?? "Bilinmiyor";
@@ -145,8 +133,7 @@
                                         </span>
                                     </td>
                                     <td class="text-nowrap">
-                                        <a asp-action="Guncelle"
-                                           asp-route-id="@d.KitapDetayId"
+                                        <a asp-action="Guncelle" asp-route-id="@d.KitapDetayId"
                                            class="btn btn-sm btn-primary">
                                             <i class="bi bi-pencil-square"></i> Güncelle
                                         </a>
@@ -166,23 +153,22 @@
                 <!-- Sayfalama -->
                 <div class="d-flex justify-content-between align-items-center mt-3">
                     <div class="text-muted">
-                        Toplam <strong>@Model.ToplamSayi</strong> kayıt •
-                        Sayfa <strong>@Model.SayfaIndeks</strong>/<strong>@Model.ToplamSayfa</strong>
+                        Toplam <strong>@Model.Detaylar.ToplamSayi</strong> kayıt •
+                        Sayfa <strong>@Model.Detaylar.SayfaIndeks</strong>/<strong>@Model.Detaylar.ToplamSayfa</strong>
                     </div>
                     <div class="btn-group btn-group-gap">
-                        <a class="btn btn-outline-secondary @(Model.OncekiSayfaVar ? "" : "disabled")"
+                        <a class="btn btn-outline-secondary @(Model.Detaylar.OncekiSayfaVar ? "" : "disabled")"
                            asp-action="Index"
-                           asp-route-searchString="@q"
-                           asp-route-durumFilter="@durum"
-                           asp-route-pageNumber="@(page - 1)">
+                           asp-route-searchString="@Model.AramaMetni"
+                           asp-route-durumFilter="@Model.DurumFiltre"
+                           asp-route-pageNumber="@(Model.Detaylar.SayfaIndeks - 1)">
                             ‹ Önceki
                         </a>
-
-                        <a class="btn btn-outline-secondary @(Model.SonrakiSayfaVar ? "" : "disabled")"
+                        <a class="btn btn-outline-secondary @(Model.Detaylar.SonrakiSayfaVar ? "" : "disabled")"
                            asp-action="Index"
-                           asp-route-searchString="@q"
-                           asp-route-durumFilter="@durum"
-                           asp-route-pageNumber="@(page + 1)">
+                           asp-route-searchString="@Model.AramaMetni"
+                           asp-route-durumFilter="@Model.DurumFiltre"
+                           asp-route-pageNumber="@(Model.Detaylar.SayfaIndeks + 1)">
                             Sonraki ›
                         </a>
                     </div>

@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:views="clr-namespace:OgrenciBilgiSistemi.Mobil.Views"
              x:Class="OgrenciBilgiSistemi.Mobil.Views.OgrenciListeView"
+             x:Name="SayfaKoku"
              Title="Yoklama Ekranı"
              Shell.NavBarIsVisible="False"
              BackgroundColor="#F2F2F2">
@@ -32,8 +33,7 @@
                                       ShowBack="True"
                                       ShowProfile="True" />
 
-                <Label x:Name="LblClassName"
-                       Text="Sınıf Listesi"
+                <Label Text="{Binding BirimAd}"
                        FontSize="18"
                        FontFamily="OpenSansSemibold"
                        HorizontalOptions="Center"
@@ -54,8 +54,8 @@
             </Border.Shadow>
             <Grid ColumnDefinitions="55, *">
                 <Label Grid.Column="0" Text="⏰" VerticalOptions="Center" HorizontalOptions="Center" FontSize="18" />
-                <Picker x:Name="PeriodPicker" Grid.Column="1" Title="Ders Saati Seçiniz" TitleColor="#95A5A6" 
-                        TextColor="#2C3E50" VerticalOptions="Center" SelectedIndexChanged="OnPeriodChanged">
+                <Picker Grid.Column="1" Title="Ders Saati Seçiniz" TitleColor="#95A5A6"
+                        TextColor="#2C3E50" VerticalOptions="Center" SelectedIndex="{Binding SecilenPeriyotIndex}">
                     <Picker.ItemsSource>
                         <x:Array Type="{x:Type x:String}">
                             <x:String>1. Ders</x:String>
@@ -79,20 +79,20 @@
             </Border.Shadow>
             <Grid ColumnDefinitions="45, *">
                 <Label Grid.Column="0" Text="&#x1F50D;" VerticalOptions="Center" HorizontalOptions="Center" FontSize="16" />
-                <Entry x:Name="SearchEntry" Grid.Column="1" Placeholder="Ad Soyad veya No ile ara..."
+                <Entry Grid.Column="1" Placeholder="Ad Soyad veya No ile ara..."
                        PlaceholderColor="#95A5A6" TextColor="#2C3E50" FontSize="14"
                        VerticalOptions="Center" BackgroundColor="Transparent"
-                       TextChanged="OnSearchTextChanged" />
+                       Text="{Binding AramaMetni}" />
             </Grid>
         </Border>
 
-        <Border x:Name="StatusWarningFrame" Grid.Row="3" IsVisible="False" Margin="15,5,15,10"
+        <Border Grid.Row="3" IsVisible="{Binding StatusUyariGorunur}" Margin="15,5,15,10"
                 StrokeShape="RoundRectangle 10" StrokeThickness="0" BackgroundColor="#FFF3CD">
             <Label Text="&#x26A0;&#xFE0F; Bu dersin yoklaması daha önce kaydedilmiştir." Padding="12"
                    TextColor="#856404" HorizontalOptions="Center" FontSize="13" />
         </Border>
 
-        <CollectionView x:Name="StudentCollection" Grid.Row="4" Margin="15,5">
+        <CollectionView Grid.Row="4" Margin="15,5" ItemsSource="{Binding FiltreliOgrenciler}">
             <CollectionView.ItemsLayout>
                 <LinearItemsLayout Orientation="Vertical" ItemSpacing="10" />
             </CollectionView.ItemsLayout>
@@ -116,7 +116,9 @@
                                         <Shadow Brush="#007BFF" Offset="0,2" Radius="5" Opacity="0.4" />
                                     </Frame.Shadow>
                                     <Frame.GestureRecognizers>
-                                        <TapGestureRecognizer Tapped="OnStudentDetailClicked" />
+                                        <TapGestureRecognizer
+                                            Command="{Binding BindingContext.OgrenciDetayCommand, Source={x:Reference SayfaKoku}}"
+                                            CommandParameter="{Binding .}" />
                                     </Frame.GestureRecognizers>
                                     <Label Text="i" TextColor="White" FontSize="15" FontAttributes="Bold" 
                                            HorizontalTextAlignment="Center" VerticalTextAlignment="Center" />
@@ -268,10 +270,12 @@
                 <Shadow Brush="Black" Offset="0,-5" Radius="10" Opacity="0.05" />
             </Border.Shadow>
             <Grid>
-                <Button x:Name="BtnSave" Text="YOKLAMAYI KAYDET" HeightRequest="55" CornerRadius="12" 
-                        BackgroundColor="#1ABC9C" TextColor="White" Clicked="OnSaveAttendanceClicked" />
-                <Button x:Name="BtnUpdate" Text="YOKLAMAYI GÜNCELLE" IsVisible="False" HeightRequest="55"
-                        CornerRadius="12" BackgroundColor="#2196F3" TextColor="White" Clicked="OnUpdateAttendanceClicked" />
+                <Button Text="YOKLAMAYI KAYDET" HeightRequest="55" CornerRadius="12"
+                        BackgroundColor="#1ABC9C" TextColor="White"
+                        Command="{Binding KaydetCommand}" IsVisible="{Binding KaydetGorunur}" />
+                <Button Text="YOKLAMAYI GÜNCELLE" HeightRequest="55" CornerRadius="12"
+                        BackgroundColor="#2196F3" TextColor="White"
+                        Command="{Binding GuncelleCommand}" IsVisible="{Binding GuncelleGorunur}" />
             </Grid>
         </Border>
     </Grid>

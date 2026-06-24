@@ -8,11 +8,11 @@
     ViewData["Title"] = "Öğrenci Giriş-Çıkış Detayı";
     var culture = CultureInfo.CurrentCulture;
 
-    var currentSort = ViewData["CurrentSort"] as string;
-    var currentFilter = ViewData["CurrentFilter"] as string;
-    var startDate = ViewData["StartDate"] as string;
-    var endDate = ViewData["EndDate"] as string;
-    var vRapor = ViewData["RaporTipi"]?.ToString() ?? "0";
+    var currentSort = Model?.CurrentSort;
+    var currentFilter = Model?.CurrentFilter;
+    var startDate = Model?.StartDate;
+    var endDate = Model?.EndDate;
+    var vRapor = Model?.RaporTipiStr ?? "0";
     var rt = Model?.RaporTipi ?? RaporTipi.Tumu;
     bool gosterGecis = rt == RaporTipi.Tumu || rt == RaporTipi.AnaKapiGecisleri || rt == RaporTipi.YemekhaneGecisleri;
     bool gosterSinif = rt == RaporTipi.SinifYoklamasi;

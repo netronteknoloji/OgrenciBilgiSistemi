@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using OgrenciBilgiSistemi.Models;
 using OgrenciBilgiSistemi.Services.Interfaces;
 using OgrenciBilgiSistemi.Shared.Enums;
 using OgrenciBilgiSistemi.ViewModels;
@@ -12,18 +11,15 @@ namespace OgrenciBilgiSistemi.Controllers
     {
         private readonly IOgretmenProfilService _ogretmenProfilService;
         private readonly IKullaniciService _kullaniciService;
-        private readonly IBirimService _birimService;
         private readonly ILogger<OgretmenlerController> _logger;
 
         public OgretmenlerController(
             IOgretmenProfilService ogretmenProfilService,
             IKullaniciService kullaniciService,
-            IBirimService birimService,
             ILogger<OgretmenlerController> logger)
         {
             _ogretmenProfilService = ogretmenProfilService;
             _kullaniciService = kullaniciService;
-            _birimService = birimService;
             _logger = logger;
         }
 
@@ -31,39 +27,38 @@ namespace OgrenciBilgiSistemi.Controllers
         public async Task<IActionResult> Index(string searchString, int page = 1,
             OgretmenFiltre durum = OgretmenFiltre.Aktif, CancellationToken ct = default)
         {
-            ViewData["CurrentFilter"] = searchString;
-            ViewData["Durum"] = durum;
             var paged = await _ogretmenProfilService.SearchPagedAsync(searchString, page, 50, durum, ct);
-            return View(paged);
+            return View(new OgretmenIndexVm { Ogretmenler = paged, AramaMetni = searchString, Durum = durum });
         }
 
         [HttpGet]
-        public async Task<IActionResult> Ekle()
+        public async Task<IActionResult> Ekle(CancellationToken ct = default)
         {
-            ViewBag.Birimler = await _kullaniciService.GetBirimlerSelectListAsync();
-            return View(new OgretmenEkleVm());
+            var vm = new OgretmenFormVm();
+            vm.Birimler = await _kullaniciService.GetBirimlerSelectListAsync(ct);
+            return View(vm);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Ekle(OgretmenEkleVm vm, CancellationToken ct = default)
+        public async Task<IActionResult> Ekle(OgretmenFormVm vm, CancellationToken ct = default)
         {
             if (!ModelState.IsValid)
             {
-                ViewBag.Birimler = await _kullaniciService.GetBirimlerSelectListAsync(ct);
+                vm.Birimler = await _kullaniciService.GetBirimlerSelectListAsync(ct);
                 return View(vm);
             }
 
             try
             {
-                await _ogretmenProfilService.EkleKullaniciVeProfilAsync(vm, ct);
+                await _ogretmenProfilService.EkleKullaniciVeProfilAsync(vm.ToEkleVm(), ct);
                 return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Öğretmen eklenirken hata oluştu.");
                 ModelState.AddModelError(string.Empty, "Kayıt sırasında bir hata oluştu.");
-                ViewBag.Birimler = await _kullaniciService.GetBirimlerSelectListAsync(ct);
+                vm.Birimler = await _kullaniciService.GetBirimlerSelectListAsync(ct);
                 return View(vm);
             }
         }
@@ -76,33 +71,35 @@ namespace OgrenciBilgiSistemi.Controllers
             var profil = await _ogretmenProfilService.GetByIdAsync(id.Value, ct);
             if (profil == null) return NotFound();
 
-            ViewBag.Birimler = await _kullaniciService.GetBirimlerSelectListAsync(ct);
-            return View(profil);
+            var vm = OgretmenFormVm.FromModel(profil);
+            vm.Birimler = await _kullaniciService.GetBirimlerSelectListAsync(ct);
+            return View(vm);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Guncelle(OgretmenProfilModel model, string? kullaniciAdi, string? telefon, string? sifre, CancellationToken ct = default)
+        public async Task<IActionResult> Guncelle(OgretmenFormVm vm, CancellationToken ct = default)
         {
-            ModelState.Remove(nameof(sifre));
+            vm.FormAction = "Guncelle"; vm.SubmitText = "Güncelle";
+            ModelState.Remove(nameof(vm.Sifre));
 
             if (!ModelState.IsValid)
             {
-                ViewBag.Birimler = await _kullaniciService.GetBirimlerSelectListAsync(ct);
-                return View(model);
+                vm.Birimler = await _kullaniciService.GetBirimlerSelectListAsync(ct);
+                return View(vm);
             }
 
             try
             {
-                await _ogretmenProfilService.GuncelleAsync(model, kullaniciAdi, telefon, sifre, ct);
+                await _ogretmenProfilService.GuncelleAsync(vm.ToProfilModel(), vm.KullaniciAdi, vm.Telefon, vm.Sifre, ct);
                 return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Öğretmen profili güncellenirken hata oluştu.");
                 ModelState.AddModelError(string.Empty, "Güncelleme sırasında bir hata oluştu.");
-                ViewBag.Birimler = await _kullaniciService.GetBirimlerSelectListAsync(ct);
-                return View(model);
+                vm.Birimler = await _kullaniciService.GetBirimlerSelectListAsync(ct);
+                return View(vm);
             }
         }
 

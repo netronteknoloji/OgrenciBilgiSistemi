@@ -7,8 +7,8 @@
     ViewData["Title"] = "Yemekhane - Özet";
     string Money(decimal v) => v.ToString("N2") + " ₺";
 
-    var akademikYillar = ViewBag.Yillar as List<int> ?? new List<int> { yil };
-    var odemeler = ViewBag.Odemeler as List<OgrenciYemekOdemeModel> ?? new List<OgrenciYemekOdemeModel>();
+    var akademikYillar = new List<int> { yil };
+    var odemeler = Model.Odemeler;
     var tr = new CultureInfo("tr-TR");
 }
 
@@ -280,8 +280,8 @@
     ViewData["Title"] = "Yemekhane - Özet";
     string Money(decimal v) => v.ToString("N2") + " ₺";
 
-    var akademikYillar = ViewBag.Yillar as List<int> ?? new List<int> { yil };
-    var odemeler = ViewBag.Odemeler as List<OgrenciYemekOdemeModel> ?? new List<OgrenciYemekOdemeModel>();
+    var akademikYillar = new List<int> { yil };
+    var odemeler = Model.Odemeler;
     var tr = new CultureInfo("tr-TR");
 }
 

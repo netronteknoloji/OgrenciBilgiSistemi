@@ -16,5 +16,10 @@ public interface ICihazService
     Task<bool> CihazEkleAsync(CihazModel model, CancellationToken ct = default);
     Task<bool> CihazGuncelleAsync(CihazModel model, CancellationToken ct = default);
     Task<bool> CihazSilAsync(int id, CancellationToken ct = default);
+
+    Task<SayfalanmisListeModel<CihazModel>> SearchPagedAsync(string? search, int page, int pageSize, CancellationToken ct = default);
+    Task<CihazModel?> CihazBulByKodAsync(Guid cihazKodu, CancellationToken ct = default);
+    Task<CihazModel?> CihazBulAktifByKodAsync(Guid cihazKodu, CancellationToken ct = default);
+    Task<CihazModel?> CihazBulVarsayilanAsync(CancellationToken ct = default);
 }
 

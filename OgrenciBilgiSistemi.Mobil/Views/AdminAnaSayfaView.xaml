@@ -26,8 +26,7 @@
                     <VerticalStackLayout Spacing="2"
                                          VerticalOptions="End"
                                          Margin="20,0,20,35">
-                        <Label x:Name="WelcomeLabel"
-                               Text="Merhaba"
+                        <Label Text="{Binding KarsilamaMetni}"
                                FontSize="18"
                                FontFamily="OpenSansSemibold"
                                TextColor="White" />
@@ -53,8 +52,8 @@
                 <Grid ColumnDefinitions="55, *">
                     <Label Grid.Column="0" Text="&#x1F3EB;"
                            VerticalOptions="Center" HorizontalOptions="Center" FontSize="22" />
-                    <Label Grid.Column="1" x:Name="OkulAdiLabel"
-                           Text="Yükleniyor..."
+                    <Label Grid.Column="1"
+                           Text="{Binding OkulAdi}"
                            VerticalOptions="Center"
                            FontSize="15"
                            FontFamily="OpenSansSemibold"
@@ -80,12 +79,12 @@
                         <Shadow Brush="Black" Offset="0,2" Radius="8" Opacity="0.06" />
                     </Border.Shadow>
                     <Border.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnOgrencilerTapped" />
+                        <TapGestureRecognizer Command="{Binding OgrencilereGitCommand}" />
                     </Border.GestureRecognizers>
                     <Grid Padding="14" RowDefinitions="Auto,*,Auto">
                         <Label Grid.Row="0" Text="&#x1F468;&#x200D;&#x1F393;" FontSize="22" />
-                        <Label Grid.Row="1" x:Name="OgrenciSayisiLabel"
-                               Text="-"
+                        <Label Grid.Row="1"
+                               Text="{Binding OgrenciSayisi}"
                                FontSize="28"
                                FontFamily="OpenSansSemibold"
                                TextColor="#1F4E79"
@@ -106,12 +105,12 @@
                         <Shadow Brush="Black" Offset="0,2" Radius="8" Opacity="0.06" />
                     </Border.Shadow>
                     <Border.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnOgretmenlerTapped" />
+                        <TapGestureRecognizer Command="{Binding OgretmenlerGitCommand}" />
                     </Border.GestureRecognizers>
                     <Grid Padding="14" RowDefinitions="Auto,*,Auto">
                         <Label Grid.Row="0" Text="&#x1F468;&#x200D;&#x1F3EB;" FontSize="22" />
-                        <Label Grid.Row="1" x:Name="OgretmenSayisiLabel"
-                               Text="-"
+                        <Label Grid.Row="1"
+                               Text="{Binding OgretmenSayisi}"
                                FontSize="28"
                                FontFamily="OpenSansSemibold"
                                TextColor="#16A085"
@@ -132,12 +131,12 @@
                         <Shadow Brush="Black" Offset="0,2" Radius="8" Opacity="0.06" />
                     </Border.Shadow>
                     <Border.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnSiniflarTapped" />
+                        <TapGestureRecognizer Command="{Binding SiniflaraGitCommand}" />
                     </Border.GestureRecognizers>
                     <Grid Padding="14" RowDefinitions="Auto,*,Auto">
                         <Label Grid.Row="0" Text="&#x1F3EB;" FontSize="22" />
-                        <Label Grid.Row="1" x:Name="SinifSayisiLabel"
-                               Text="-"
+                        <Label Grid.Row="1"
+                               Text="{Binding SinifSayisi}"
                                FontSize="28"
                                FontFamily="OpenSansSemibold"
                                TextColor="#8E44AD"
@@ -158,12 +157,12 @@
                         <Shadow Brush="Black" Offset="0,2" Radius="8" Opacity="0.06" />
                     </Border.Shadow>
                     <Border.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnVelilerTapped" />
+                        <TapGestureRecognizer Command="{Binding VelilereGitCommand}" />
                     </Border.GestureRecognizers>
                     <Grid Padding="14" RowDefinitions="Auto,*,Auto">
                         <Label Grid.Row="0" Text="&#x1F468;&#x200D;&#x1F467;&#x200D;&#x1F466;" FontSize="22" />
-                        <Label Grid.Row="1" x:Name="VeliSayisiLabel"
-                               Text="-"
+                        <Label Grid.Row="1"
+                               Text="{Binding VeliSayisi}"
                                FontSize="28"
                                FontFamily="OpenSansSemibold"
                                TextColor="#E67E22"
@@ -184,12 +183,12 @@
                         <Shadow Brush="Black" Offset="0,2" Radius="8" Opacity="0.06" />
                     </Border.Shadow>
                     <Border.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnYemekhaneTapped" />
+                        <TapGestureRecognizer Command="{Binding YemakhaneGitCommand}" />
                     </Border.GestureRecognizers>
                     <Grid Padding="14" RowDefinitions="Auto,*,Auto">
                         <Label Grid.Row="0" Text="&#x1F37D;" FontSize="22" />
-                        <Label Grid.Row="1" x:Name="YemekhaneSayisiLabel"
-                               Text="-"
+                        <Label Grid.Row="1"
+                               Text="{Binding YemekhaneSayisi}"
                                FontSize="28"
                                FontFamily="OpenSansSemibold"
                                TextColor="#C0392B"
@@ -210,12 +209,12 @@
                         <Shadow Brush="Black" Offset="0,2" Radius="8" Opacity="0.06" />
                     </Border.Shadow>
                     <Border.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnAnakapiTapped" />
+                        <TapGestureRecognizer Command="{Binding AnakapiGitCommand}" />
                     </Border.GestureRecognizers>
                     <Grid Padding="14" RowDefinitions="Auto,*,Auto">
                         <Label Grid.Row="0" Text="&#x1F6AA;" FontSize="22" />
-                        <Label Grid.Row="1" x:Name="AnakapiSayisiLabel"
-                               Text="-"
+                        <Label Grid.Row="1"
+                               Text="{Binding AnakapiSayisi}"
                                FontSize="28"
                                FontFamily="OpenSansSemibold"
                                TextColor="#2980B9"
@@ -236,12 +235,12 @@
                         <Shadow Brush="Black" Offset="0,2" Radius="8" Opacity="0.06" />
                     </Border.Shadow>
                     <Border.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnServisOzetTapped" />
+                        <TapGestureRecognizer Command="{Binding ServisGitCommand}" />
                     </Border.GestureRecognizers>
                     <Grid Padding="14" RowDefinitions="Auto,*,Auto">
                         <Label Grid.Row="0" Text="&#x1F68C;" FontSize="22" />
-                        <Label Grid.Row="1" x:Name="ServisSayisiLabel"
-                               Text="-"
+                        <Label Grid.Row="1"
+                               Text="{Binding ServisSayisi}"
                                FontSize="28"
                                FontFamily="OpenSansSemibold"
                                TextColor="#34495E"

@@ -7,5 +7,6 @@
         public int BugunOkutulanKartSayisi { get; set; }
         public int IceridekiOkutulanKartSayisi { get; set; }
         public string HataMesaji { get; set; }
+        public string? CihazKodu { get; set; }
     }
 }

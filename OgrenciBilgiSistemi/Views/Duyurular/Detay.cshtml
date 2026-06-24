@@ -1,4 +1,5 @@
-@model OgrenciBilgiSistemi.Models.DuyuruModel
+@model OgrenciBilgiSistemi.ViewModels.DuyuruDetayVm
+@using OgrenciBilgiSistemi.Shared.Enums
 
 @{
     ViewData["Title"] = "Duyuru Detayı";
@@ -24,11 +25,11 @@
                 <dd class="col-sm-9">@Model.OlusturulmaTarihi.ToString("dd.MM.yyyy HH:mm")</dd>
 
                 <dt class="col-sm-3">Yayınlayan</dt>
-                <dd class="col-sm-9">@Model.Olusturan?.KullaniciAdi</dd>
+                <dd class="col-sm-9">@Model.OlusturanAdi</dd>
 
                 <dt class="col-sm-3">Hedef</dt>
                 <dd class="col-sm-9">
-                    @if (Model.Hedef == OgrenciBilgiSistemi.Shared.Enums.DuyuruHedefi.TumVeliler)
+                    @if (Model.Hedef == DuyuruHedefi.TumVeliler)
                     {
                         <span class="badge bg-primary">Tüm Veliler</span>
                     }

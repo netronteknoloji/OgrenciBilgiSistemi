@@ -1,10 +1,7 @@
-@model List<OgrenciBilgiSistemi.Models.OgretmenRandevuModel>
-@using Microsoft.AspNetCore.Mvc.Rendering
+@model OgrenciBilgiSistemi.ViewModels.OgretmenRandevuIndexVm
 
 @{
     ViewData["Title"] = "Öğretmen Randevu Takvimi";
-    var ogretmenId = ViewData["OgretmenId"] as int?;
-    var ogretmenler = ViewData["Ogretmenler"] as List<SelectListItem> ?? new();
 }
 
 <div class="viewport-scroller">
@@ -14,7 +11,7 @@
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h3 class="text-primary fw-bold mb-0">@ViewData["Title"]</h3>
                 <a class="btn btn-success fw-semibold"
-                   asp-action="Ekle" asp-route-ogretmenId="@ogretmenId">
+                   asp-action="Ekle" asp-route-ogretmenId="@Model.OgretmenId">
                     <i class="bi bi-plus-lg"></i> Randevu Saati Ekle
                 </a>
             </div>
@@ -31,15 +28,15 @@
                     <label class="form-label small fw-semibold">Öğretmen</label>
                     <select name="ogretmenId" class="form-select" onchange="this.form.submit()">
                         <option value="">-- Öğretmen Seçiniz --</option>
-                        @foreach (var o in ogretmenler)
+                        @foreach (var o in Model.Ogretmenler)
                         {
-                            <option value="@o.Value" selected="@(ogretmenId?.ToString() == o.Value)">@o.Text</option>
+                            <option value="@o.Value" selected="@(Model.OgretmenId?.ToString() == o.Value)">@o.Text</option>
                         }
                     </select>
                 </div>
             </form>
 
-            @if (ogretmenId.HasValue)
+            @if (Model.OgretmenId.HasValue)
             {
                 <div class="table-responsive">
                     <table class="table table-hover align-middle">
@@ -52,11 +49,11 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @if (Model.Count == 0)
+                            @if (Model.Liste.Count == 0)
                             {
                                 <tr><td colspan="4" class="text-center text-muted">Randevu saati tanımlanmamış.</td></tr>
                             }
-                            @foreach (var m in Model)
+                            @foreach (var m in Model.Liste)
                             {
                                 <tr>
                                     <td>@m.Tarih.ToString("dd.MM.yyyy")</td>
@@ -67,7 +64,7 @@
                                            asp-action="Guncelle" asp-route-id="@m.OgretmenRandevuId">
                                             <i class="bi bi-pencil"></i> Güncelle
                                         </a>
-                                        <form method="post" asp-action="Sil" asp-route-id="@m.OgretmenRandevuId" asp-route-ogretmenId="@ogretmenId" class="d-inline">
+                                        <form method="post" asp-action="Sil" asp-route-id="@m.OgretmenRandevuId" asp-route-ogretmenId="@Model.OgretmenId" class="d-inline">
                                             @Html.AntiForgeryToken()
                                             <button type="submit" class="btn btn-sm btn-outline-danger"
                                                     onclick="return confirm('Silmek istediğinize emin misiniz?')">

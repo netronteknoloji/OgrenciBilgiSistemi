@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using OgrenciBilgiSistemi.Api.Services;
+using OgrenciBilgiSistemi.Api.Services.Interfaces;
 
 namespace OgrenciBilgiSistemi.Api.Controllers
 {
@@ -9,9 +9,9 @@ namespace OgrenciBilgiSistemi.Api.Controllers
     [Authorize]
     public class OgretmenlerController : ControllerBase
     {
-        private readonly OgretmenListeService _ogretmenListeService;
+        private readonly IOgretmenListeService _ogretmenListeService;
 
-        public OgretmenlerController(OgretmenListeService ogretmenListeService)
+        public OgretmenlerController(IOgretmenListeService ogretmenListeService)
         {
             _ogretmenListeService = ogretmenListeService;
         }

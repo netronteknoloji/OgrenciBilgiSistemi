@@ -1,11 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
-using OgrenciBilgiSistemi.Data;
-using OgrenciBilgiSistemi.Models;
 using OgrenciBilgiSistemi.Services.Interfaces;
 using OgrenciBilgiSistemi.Shared.Enums;
+using OgrenciBilgiSistemi.ViewModels;
 
 namespace OgrenciBilgiSistemi.Controllers
 {
@@ -13,71 +10,73 @@ namespace OgrenciBilgiSistemi.Controllers
     public class OgretmenRandevuController : Controller
     {
         private readonly IOgretmenRandevuService _ogretmenRandevuService;
-        private readonly AppDbContext _db;
+        private readonly IKullaniciService _kullaniciService;
         private readonly ILogger<OgretmenRandevuController> _logger;
 
         public OgretmenRandevuController(
             IOgretmenRandevuService ogretmenRandevuService,
-            AppDbContext db,
+            IKullaniciService kullaniciService,
             ILogger<OgretmenRandevuController> logger)
         {
             _ogretmenRandevuService = ogretmenRandevuService;
-            _db = db;
+            _kullaniciService = kullaniciService;
             _logger = logger;
         }
 
         [HttpGet]
         public async Task<IActionResult> Index(int? ogretmenId, CancellationToken ct = default)
         {
-            ViewData["OgretmenId"] = ogretmenId;
-            ViewData["Ogretmenler"] = await OgretmenListesi(ct);
-
-            if (ogretmenId.HasValue)
+            var vm = new OgretmenRandevuIndexVm
             {
-                var liste = await _ogretmenRandevuService.OgretmeneGoreListele(ogretmenId.Value, ct);
-                return View(liste);
-            }
+                OgretmenId = ogretmenId,
+                Ogretmenler = await _kullaniciService.GetKullanicilarByRolSelectListAsync(KullaniciRolu.Ogretmen, ct),
+                Liste = ogretmenId.HasValue
+                    ? await _ogretmenRandevuService.OgretmeneGoreListele(ogretmenId.Value, ct)
+                    : [],
+            };
 
-            return View(new List<OgretmenRandevuModel>());
+            return View(vm);
         }
 
         [HttpGet]
         public async Task<IActionResult> Ekle(int? ogretmenId, CancellationToken ct = default)
         {
-            ViewData["Ogretmenler"] = await OgretmenListesi(ct);
-            var model = new OgretmenRandevuModel();
-            if (ogretmenId.HasValue)
-                model.OgretmenKullaniciId = ogretmenId.Value;
-            return View(model);
+            var vm = new OgretmenRandevuFormVm
+            {
+                OgretmenKullaniciId = ogretmenId ?? 0,
+                Ogretmenler = await _kullaniciService.GetKullanicilarByRolSelectListAsync(KullaniciRolu.Ogretmen, ct),
+            };
+
+            return View(vm);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Ekle(OgretmenRandevuModel model, CancellationToken ct = default)
+        public async Task<IActionResult> Ekle(OgretmenRandevuFormVm vm, CancellationToken ct = default)
         {
             if (!ModelState.IsValid)
             {
-                ViewData["Ogretmenler"] = await OgretmenListesi(ct);
-                return View(model);
+                vm.Ogretmenler = await _kullaniciService.GetKullanicilarByRolSelectListAsync(KullaniciRolu.Ogretmen, ct);
+                return View(vm);
             }
 
             try
             {
-                await _ogretmenRandevuService.Ekle(model, ct);
-                return RedirectToAction(nameof(Index), new { ogretmenId = model.OgretmenKullaniciId });
+                await _ogretmenRandevuService.Ekle(vm.ToModel(), ct);
+                return RedirectToAction(nameof(Index), new { ogretmenId = vm.OgretmenKullaniciId });
             }
             catch (InvalidOperationException ex)
             {
                 ModelState.AddModelError("", ex.Message);
-                ViewData["Ogretmenler"] = await OgretmenListesi(ct);
-                return View(model);
+                vm.Ogretmenler = await _kullaniciService.GetKullanicilarByRolSelectListAsync(KullaniciRolu.Ogretmen, ct);
+                return View(vm);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Randevu takvimi eklenemedi.");
                 ModelState.AddModelError("", "Randevu takvimi eklenirken bir hata oluştu.");
-                ViewData["Ogretmenler"] = await OgretmenListesi(ct);
-                return View(model);
+                vm.Ogretmenler = await _kullaniciService.GetKullanicilarByRolSelectListAsync(KullaniciRolu.Ogretmen, ct);
+                return View(vm);
             }
         }
 
@@ -87,40 +86,42 @@ namespace OgrenciBilgiSistemi.Controllers
             var model = await _ogretmenRandevuService.Getir(id, ct);
             if (model is null) return NotFound();
 
-            ViewData["Ogretmenler"] = await OgretmenListesi(ct);
-            return View(model);
+            var vm = OgretmenRandevuFormVm.FromModel(model);
+            vm.Ogretmenler = await _kullaniciService.GetKullanicilarByRolSelectListAsync(KullaniciRolu.Ogretmen, ct);
+
+            return View(vm);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Guncelle(OgretmenRandevuModel model, CancellationToken ct = default)
+        public async Task<IActionResult> Guncelle(OgretmenRandevuFormVm vm, CancellationToken ct = default)
         {
-            if (model.BitisSaati <= model.BaslangicSaati)
+            if (vm.BitisSaati <= vm.BaslangicSaati)
                 ModelState.AddModelError("", "Bitiş saati başlangıçtan büyük olmalıdır.");
 
             if (!ModelState.IsValid)
             {
-                ViewData["Ogretmenler"] = await OgretmenListesi(ct);
-                return View(model);
+                vm.Ogretmenler = await _kullaniciService.GetKullanicilarByRolSelectListAsync(KullaniciRolu.Ogretmen, ct);
+                return View(vm);
             }
 
             try
             {
-                await _ogretmenRandevuService.Guncelle(model, ct);
-                return RedirectToAction(nameof(Index), new { ogretmenId = model.OgretmenKullaniciId });
+                await _ogretmenRandevuService.Guncelle(vm.ToModel(), ct);
+                return RedirectToAction(nameof(Index), new { ogretmenId = vm.OgretmenKullaniciId });
             }
             catch (InvalidOperationException ex)
             {
                 ModelState.AddModelError("", ex.Message);
-                ViewData["Ogretmenler"] = await OgretmenListesi(ct);
-                return View(model);
+                vm.Ogretmenler = await _kullaniciService.GetKullanicilarByRolSelectListAsync(KullaniciRolu.Ogretmen, ct);
+                return View(vm);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Randevu takvimi güncellenemedi. Id={Id}", model.OgretmenRandevuId);
+                _logger.LogError(ex, "Randevu takvimi güncellenemedi. Id={Id}", vm.OgretmenRandevuId);
                 ModelState.AddModelError("", "Randevu takvimi güncellenirken bir hata oluştu.");
-                ViewData["Ogretmenler"] = await OgretmenListesi(ct);
-                return View(model);
+                vm.Ogretmenler = await _kullaniciService.GetKullanicilarByRolSelectListAsync(KullaniciRolu.Ogretmen, ct);
+                return View(vm);
             }
         }
 
@@ -139,16 +140,6 @@ namespace OgrenciBilgiSistemi.Controllers
             }
 
             return RedirectToAction(nameof(Index), new { ogretmenId });
-        }
-
-        private async Task<List<SelectListItem>> OgretmenListesi(CancellationToken ct)
-        {
-            return await _db.Kullanicilar
-                .AsNoTracking()
-                .Where(k => k.Rol == KullaniciRolu.Ogretmen && k.KullaniciDurum)
-                .OrderBy(k => k.KullaniciAdi)
-                .Select(k => new SelectListItem(k.KullaniciAdi, k.KullaniciId.ToString()))
-                .ToListAsync(ct);
         }
     }
 }

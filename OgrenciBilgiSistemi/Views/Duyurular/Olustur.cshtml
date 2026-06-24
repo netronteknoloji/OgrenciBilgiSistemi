@@ -1,4 +1,4 @@
-@model OgrenciBilgiSistemi.Models.DuyuruModel
+@model OgrenciBilgiSistemi.ViewModels.DuyuruOlusturVm
 
 @{
     ViewData["Title"] = "Yeni Duyuru";
@@ -37,8 +37,6 @@
                               placeholder="Duyuru içeriğini yazınız..."></textarea>
                     <span asp-validation-for="Icerik" class="text-danger"></span>
                 </div>
-
-                <input type="hidden" asp-for="Hedef" />
 
                 <button type="submit" class="btn btn-primary fw-semibold">
                     <i class="bi bi-megaphone"></i> Yayınla

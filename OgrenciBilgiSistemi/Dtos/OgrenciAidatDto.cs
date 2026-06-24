@@ -17,5 +17,9 @@
         // Türetilmiş convenience alanlar isterseniz:
         public decimal Kalan => Muaf ? 0m : Math.Max(0m, ToplamBorc - ToplamOdenen);
         public bool Kapandi => Muaf || Kalan == 0m;
+
+        // View state (Ozet view için — ViewBag yerine)
+        public List<int> KullanilabilirYillar { get; set; } = new();
+        public string? ReturnUrl { get; set; }
     }
 }

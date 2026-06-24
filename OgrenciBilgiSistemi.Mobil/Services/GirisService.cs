@@ -71,10 +71,16 @@ namespace OgrenciBilgiSistemi.Mobil.Services
                         try
                         {
                             var pushKayit = IPlatformApplication.Current?.Services.GetService<PushKayitServisi>();
+                            System.Diagnostics.Debug.WriteLine(
+                                $"[PUSH] Login sonrası tetikleme, pushKayit={(pushKayit is null ? "null" : "OK")}");
                             if (pushKayit != null)
                                 _ = pushKayit.LoginSonrasiKaydetAsync();
                         }
-                        catch { /* sessizce yut */ }
+                        catch (Exception pushEx)
+                        {
+                            System.Diagnostics.Debug.WriteLine(
+                                $"[PUSH] Login sonrası kayıt başlatma hatası: {pushEx.GetType().Name}: {pushEx.Message}");
+                        }
 
                         return true;
                     }

@@ -5,6 +5,7 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using OgrenciBilgiSistemi.Api.Middleware;
 using OgrenciBilgiSistemi.Api.Services;
+using OgrenciBilgiSistemi.Api.Services.Interfaces;
 using OgrenciBilgiSistemi.Shared.Models;
 using OgrenciBilgiSistemi.Shared.Services;
 using OgrenciBilgiSistemi.Sms;
@@ -83,20 +84,21 @@ builder.Services.AddAuthorization(opts =>
 // Servisler
 // --------------------
 builder.Services.AddControllers();
-builder.Services.AddScoped<GirisService>();
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddScoped<IGirisService, GirisService>();
 builder.Services.AddSingleton<RefreshTokenService>();
-builder.Services.AddScoped<SinifService>();
-builder.Services.AddScoped<OgrenciService>();
-builder.Services.AddScoped<BirimService>();
-builder.Services.AddScoped<GecisKayitService>();
-builder.Services.AddScoped<ServisService>();
-builder.Services.AddScoped<RandevuService>();
-builder.Services.AddScoped<OgretmenRandevuService>();
-builder.Services.AddScoped<BildirimService>();
-builder.Services.AddScoped<OgretmenListeService>();
-builder.Services.AddScoped<DuyuruService>();
-builder.Services.AddScoped<YoneticiService>();
-builder.Services.AddScoped<VeliListeService>();
+builder.Services.AddScoped<ISinifService, SinifService>();
+builder.Services.AddScoped<IOgrenciService, OgrenciService>();
+builder.Services.AddScoped<IBirimService, BirimService>();
+builder.Services.AddScoped<IGecisKayitService, GecisKayitService>();
+builder.Services.AddScoped<IServisService, ServisService>();
+builder.Services.AddScoped<IRandevuService, RandevuService>();
+builder.Services.AddScoped<IOgretmenRandevuService, OgretmenRandevuService>();
+builder.Services.AddScoped<IBildirimService, BildirimService>();
+builder.Services.AddScoped<IOgretmenListeService, OgretmenListeService>();
+builder.Services.AddScoped<IDuyuruService, DuyuruService>();
+builder.Services.AddScoped<IYoneticiService, YoneticiService>();
+builder.Services.AddScoped<IVeliListeService, VeliListeService>();
 
 // Rate Limiting — anonim arama endpointleri için IP bazlı sınırlama
 builder.Services.AddRateLimiter(options =>
@@ -112,7 +114,7 @@ builder.Services.AddRateLimiter(options =>
 
 // SMS
 builder.Services.AddSmsAltyapisi(builder.Configuration);
-builder.Services.AddScoped<YoklamaSmsBildirimService>();
+builder.Services.AddScoped<IYoklamaSmsBildirimService, YoklamaSmsBildirimService>();
 builder.Services.AddHostedService<BekleyenYoklamaSmsRetryService>();
 
 // Push (FCM)

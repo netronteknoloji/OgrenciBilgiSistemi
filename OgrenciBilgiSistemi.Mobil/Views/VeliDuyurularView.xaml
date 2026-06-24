@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:views="clr-namespace:OgrenciBilgiSistemi.Mobil.Views"
              x:Class="OgrenciBilgiSistemi.Mobil.Views.VeliDuyurularView"
+             x:Name="SayfaKoku"
              Title="Duyurular"
              Shell.NavBarIsVisible="False"
              BackgroundColor="#F0F2F5">
@@ -17,7 +18,7 @@
                 <views:AnaBaslikView x:Name="MyHeader" ShowBack="True" ShowProfile="False" />
                 <VerticalStackLayout Spacing="2" VerticalOptions="End" HorizontalOptions="Center" Margin="20,0,20,15">
                     <Label Text="Duyurular" FontSize="18" FontFamily="OpenSansSemibold" TextColor="White" HorizontalTextAlignment="Center" />
-                    <Label x:Name="AltBaslikLabel" Text="" FontSize="14" TextColor="White" Opacity="0.8" HorizontalTextAlignment="Center" />
+                    <Label Text="{Binding AltBaslik}" FontSize="14" TextColor="White" Opacity="0.8" HorizontalTextAlignment="Center" />
                 </VerticalStackLayout>
             </Grid>
         </Border>
@@ -29,14 +30,14 @@
                 <Shadow Brush="Black" Offset="0,10" Radius="20" Opacity="0.08" />
             </Border.Shadow>
             <Border.GestureRecognizers>
-                <TapGestureRecognizer Tapped="OnTumunuOkunduClicked" />
+                <TapGestureRecognizer Command="{Binding TumunuOkunduCommand}" />
             </Border.GestureRecognizers>
             <HorizontalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="8">
                 <Label Text="Tümünü Okundu İşaretle" FontSize="14" FontFamily="OpenSansSemibold" TextColor="#16A085" VerticalOptions="Center" />
             </HorizontalStackLayout>
         </Border>
 
-        <CollectionView Grid.Row="2" x:Name="DuyuruCollection" Margin="15,0" SelectionMode="None">
+        <CollectionView Grid.Row="2" ItemsSource="{Binding Duyurular}" Margin="15,0" SelectionMode="None">
             <CollectionView.ItemsLayout>
                 <LinearItemsLayout Orientation="Vertical" ItemSpacing="8" />
             </CollectionView.ItemsLayout>
@@ -48,7 +49,9 @@
                             <Shadow Brush="Black" Offset="0,2" Radius="6" Opacity="0.05" />
                         </Border.Shadow>
                         <Border.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnDuyuruTapped" CommandParameter="{Binding .}" />
+                            <TapGestureRecognizer
+                                Command="{Binding BindingContext.DuyuruTapCommand, Source={x:Reference SayfaKoku}}"
+                                CommandParameter="{Binding .}" />
                         </Border.GestureRecognizers>
                         <Grid ColumnDefinitions="4, *, Auto" ColumnSpacing="12">
                             <BoxView Grid.Column="0" BackgroundColor="{Binding SolCizgiRenk}" WidthRequest="4"

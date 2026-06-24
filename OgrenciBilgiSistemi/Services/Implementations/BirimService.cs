@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using OgrenciBilgiSistemi.Data;
 using OgrenciBilgiSistemi.Dtos;
 using OgrenciBilgiSistemi.Models;
@@ -10,7 +11,13 @@ namespace OgrenciBilgiSistemi.Services.Implementations
     public sealed class BirimService : IBirimService
     {
         private readonly AppDbContext _db;
-        public BirimService(AppDbContext db) => _db = db;
+        private readonly ILogger<BirimService> _logger;
+
+        public BirimService(AppDbContext db, ILogger<BirimService> logger)
+        {
+            _db = db;
+            _logger = logger;
+        }
 
         public async Task<IReadOnlyList<BirimDto>> GetAllAsync(bool? sinifMi = null, CancellationToken ct = default)
             => await _db.Birimler
@@ -118,9 +125,17 @@ namespace OgrenciBilgiSistemi.Services.Implementations
         public async Task AddAsync(BirimModel model, CancellationToken ct = default)
         {
             model.BirimAd = (model.BirimAd ?? string.Empty).Trim();
-            if (!model.BirimDurum) model.BirimDurum = true; // varsayılan aktif
-            _db.Birimler.Add(model);
-            await _db.SaveChangesAsync(ct);
+            if (!model.BirimDurum) model.BirimDurum = true;
+            try
+            {
+                _db.Birimler.Add(model);
+                await _db.SaveChangesAsync(ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Birim eklenirken hata. Ad: {Ad}", model.BirimAd);
+                throw;
+            }
         }
 
         public async Task UpdateAsync(BirimModel model, CancellationToken ct = default)
@@ -132,7 +147,15 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             ent.BirimDurum = model.BirimDurum;
             ent.BirimSinifMi = model.BirimSinifMi;
 
-            await _db.SaveChangesAsync(ct);
+            try
+            {
+                await _db.SaveChangesAsync(ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Birim güncellenirken hata. Id: {Id}", model.BirimId);
+                throw;
+            }
         }
 
         public async Task DeleteAsync(int id, CancellationToken ct = default)
@@ -141,7 +164,15 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             if (ent == null) return;
 
             ent.BirimDurum = false;
-            await _db.SaveChangesAsync(ct);
+            try
+            {
+                await _db.SaveChangesAsync(ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Birim silinirken hata. Id: {Id}", id);
+                throw;
+            }
         }
     }
 }

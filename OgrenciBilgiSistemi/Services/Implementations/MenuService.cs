@@ -1,8 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
+using OgrenciBilgiSistemi.Constants;
 using OgrenciBilgiSistemi.Data;
 using OgrenciBilgiSistemi.DTOs;
 using OgrenciBilgiSistemi.Models;
 using OgrenciBilgiSistemi.Services.Interfaces;
+using OgrenciBilgiSistemi.Shared.Services;
 using System.Linq;
 using System.Security.Claims;
 
@@ -10,15 +13,19 @@ namespace OgrenciBilgiSistemi.Services.Implementations
 {
     public class MenuService : IMenuService
     {
-        private static readonly List<MenuOgeModel> ListEmpty = new(0);
+        private static readonly TimeSpan _menuTtl = TimeSpan.FromMinutes(5);
 
         private readonly AppDbContext _db;
         private readonly ILogger<MenuService> _log;
+        private readonly IMemoryCache _cache;
+        private readonly TenantBaglami _tenant;
 
-        public MenuService(AppDbContext db, ILogger<MenuService> log)
+        public MenuService(AppDbContext db, ILogger<MenuService> log, IMemoryCache cache, TenantBaglami tenant)
         {
             _db = db;
             _log = log;
+            _cache = cache;
+            _tenant = tenant;
         }
 
         public async Task<List<MenuOgeDto>> GetSidebarForUserAsync(
@@ -26,6 +33,10 @@ namespace OgrenciBilgiSistemi.Services.Implementations
     ClaimsPrincipal user,
     CancellationToken ct = default)
         {
+            var cacheKey = $"menu:{_tenant.OkulKodu}:{kullaniciId}";
+            if (_cache.TryGetValue(cacheKey, out List<MenuOgeDto>? cached) && cached is not null)
+                return cached;
+
             // 1) Kullanıcı & atanmış menüler
             var kullanici = await _db.Kullanicilar
                 .AsNoTracking()
@@ -39,7 +50,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             }
 
             // 2) Admin / roller / atamalar (rol >= atama politikası korunuyor)
-            var isAdmin = (kullanici.Rol == KullaniciRolu.Admin) || user.IsInRole("Admin");
+            var isAdmin = (kullanici.Rol == KullaniciRolu.Admin) || user.IsInRole(RolAdlari.Admin);
             var assignedMenuIds = kullanici.KullaniciMenuler?.Select(x => x.MenuOgeId).ToHashSet() ?? new HashSet<int>();
             var userRoleSet = GetUserRoles(user); // lower-case set
 
@@ -165,6 +176,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             // 6) Kökler → görünür filtre → DTO (method group yerine lambda!)
             var visibleRoots = Roots().Where(m => IsVisibleWithChildrenFlat(m));
             var result = visibleRoots.Select(r => ToDtoFilteredFlat(r)).ToList();
+            _cache.Set(cacheKey, result, _menuTtl);
             return result;
         }
 

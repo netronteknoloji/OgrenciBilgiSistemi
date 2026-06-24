@@ -1,10 +1,11 @@
 using Microsoft.Data.SqlClient;
 using OgrenciBilgiSistemi.Api.Models;
+using OgrenciBilgiSistemi.Api.Services.Interfaces;
 using OgrenciBilgiSistemi.Shared.Services;
 
 namespace OgrenciBilgiSistemi.Api.Services
 {
-    public class SinifService
+    public class SinifService : ISinifService
     {
         private readonly TenantBaglami _tenantBaglami;
 

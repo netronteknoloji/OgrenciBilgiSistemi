@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
+using OgrenciBilgiSistemi.Constants;
 using OgrenciBilgiSistemi.Data;
 using OgrenciBilgiSistemi.Models;
 using System.Security.Claims;
@@ -38,7 +39,7 @@ namespace OgrenciBilgiSistemi.Infrastructure
                 return;
 
             // Local Admin her yere erişebilir
-            if (user.IsInRole("Admin"))
+            if (user.IsInRole(RolAdlari.Admin))
                 return;
 
             // Mevcut controller ve action adlarını al
@@ -58,7 +59,7 @@ namespace OgrenciBilgiSistemi.Infrastructure
                 return;
 
             // GenelAdmin: DB'deki menü atamalarına göre kontrol
-            if (user.IsInRole("GenelAdmin"))
+            if (user.IsInRole(RolAdlari.GenelAdmin))
             {
                 var genelAdminKullanici = await _db.Kullanicilar
                     .AsNoTracking()

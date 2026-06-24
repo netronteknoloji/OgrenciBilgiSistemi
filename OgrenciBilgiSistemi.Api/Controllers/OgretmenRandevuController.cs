@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OgrenciBilgiSistemi.Api.Dtos;
-using OgrenciBilgiSistemi.Api.Services;
+using OgrenciBilgiSistemi.Api.Services.Interfaces;
 
 namespace OgrenciBilgiSistemi.Api.Controllers
 {
@@ -10,9 +10,9 @@ namespace OgrenciBilgiSistemi.Api.Controllers
     [Authorize]
     public class OgretmenRandevuController : ControllerBase
     {
-        private readonly OgretmenRandevuService _ogretmenRandevuService;
+        private readonly IOgretmenRandevuService _ogretmenRandevuService;
 
-        public OgretmenRandevuController(OgretmenRandevuService ogretmenRandevuService)
+        public OgretmenRandevuController(IOgretmenRandevuService ogretmenRandevuService)
         {
             _ogretmenRandevuService = ogretmenRandevuService;
         }

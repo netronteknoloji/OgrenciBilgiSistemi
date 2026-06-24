@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:views="clr-namespace:OgrenciBilgiSistemi.Mobil.Views"
              x:Class="OgrenciBilgiSistemi.Mobil.Views.AdminSinifOgrenciListeView"
+             x:Name="SayfaKoku"
              Title="Sınıf Yoklama"
              Shell.NavBarIsVisible="False"
              BackgroundColor="#F0F2F5">
@@ -14,10 +15,10 @@
                 <Shadow Brush="#8E44AD" Offset="0,4" Radius="15" Opacity="0.4" />
             </Border.Shadow>
             <Grid>
-                <views:AnaBaslikView x:Name="MyHeader" ShowBack="True" ShowProfile="False" />
+                <views:AnaBaslikView ShowBack="True" ShowProfile="False" />
                 <VerticalStackLayout Spacing="2" VerticalOptions="End" HorizontalOptions="Center" Margin="20,0,20,15">
-                    <Label x:Name="SinifAdiLabel" Text="" FontSize="18" FontFamily="OpenSansSemibold" TextColor="White" HorizontalTextAlignment="Center" />
-                    <Label x:Name="AltBaslikLabel" Text="" FontSize="14" TextColor="White" Opacity="0.8" HorizontalTextAlignment="Center" />
+                    <Label Text="{Binding SinifAdi}" FontSize="18" FontFamily="OpenSansSemibold" TextColor="White" HorizontalTextAlignment="Center" />
+                    <Label Text="{Binding AltBaslik}" FontSize="14" TextColor="White" Opacity="0.8" HorizontalTextAlignment="Center" />
                 </VerticalStackLayout>
             </Grid>
         </Border>
@@ -31,9 +32,11 @@
             <Grid ColumnDefinitions="Auto, *">
                 <Label Grid.Column="0" Text="📅 Tarih:" FontSize="14" FontFamily="OpenSansSemibold"
                        TextColor="#2C3E50" VerticalOptions="Center" Margin="0,0,10,0" />
-                <DatePicker Grid.Column="1" x:Name="TarihSecici" Format="d MMMM yyyy"
-                            FontSize="14" TextColor="#2C3E50"
-                            DateSelected="OnTarihSecildi" />
+                <DatePicker Grid.Column="1"
+                            Date="{Binding SecilenTarih}"
+                            Format="d MMMM yyyy"
+                            FontSize="14"
+                            TextColor="#2C3E50" />
             </Grid>
         </Border>
 
@@ -53,7 +56,10 @@
             </Grid>
         </Grid>
 
-        <CollectionView Grid.Row="3" x:Name="OgrenciCollection" Margin="15,0,15,10" SelectionMode="None">
+        <CollectionView Grid.Row="3"
+                        ItemsSource="{Binding Ogrenciler}"
+                        Margin="15,0,15,10"
+                        SelectionMode="None">
             <CollectionView.ItemsLayout>
                 <LinearItemsLayout Orientation="Vertical" ItemSpacing="6" />
             </CollectionView.ItemsLayout>
@@ -65,10 +71,11 @@
                             <Shadow Brush="Black" Offset="0,2" Radius="5" Opacity="0.05" />
                         </Border.Shadow>
                         <Border.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnOgrenciSecildi" />
+                            <TapGestureRecognizer
+                                Command="{Binding BindingContext.OgrenciSecCommand, Source={x:Reference SayfaKoku}}"
+                                CommandParameter="{Binding .}" />
                         </Border.GestureRecognizers>
                         <Grid ColumnDefinitions="*, 240" RowDefinitions="Auto, Auto" RowSpacing="3">
-                            <!-- Sol: öğrenci bilgisi -->
                             <VerticalStackLayout Grid.Column="0" Grid.Row="0" Grid.RowSpan="2" Spacing="2" VerticalOptions="Center">
                                 <Label Text="{Binding OgrenciAdSoyad}" FontSize="13"
                                        FontFamily="OpenSansSemibold" TextColor="#2C3E50"
@@ -76,7 +83,6 @@
                                 <Label Text="{Binding OgretmenSatiri}" FontSize="10" TextColor="#95A5A6" />
                             </VerticalStackLayout>
 
-                            <!-- Sağ: 8 ders rozeti -->
                             <Grid Grid.Column="1" Grid.Row="0" Grid.RowSpan="2"
                                   ColumnDefinitions="*,*,*,*,*,*,*,*" ColumnSpacing="2"
                                   VerticalOptions="Center">
@@ -103,7 +109,7 @@
             </CollectionView.ItemTemplate>
             <CollectionView.EmptyView>
                 <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="10" Padding="20">
-                    <Label x:Name="BosDurumLabel" Text="Yükleniyor..." FontSize="16" TextColor="#95A5A6" HorizontalOptions="Center" />
+                    <Label Text="{Binding BosDurum}" FontSize="16" TextColor="#95A5A6" HorizontalOptions="Center" />
                 </VerticalStackLayout>
             </CollectionView.EmptyView>
             <CollectionView.Footer>

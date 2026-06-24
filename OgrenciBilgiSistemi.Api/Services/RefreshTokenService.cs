@@ -9,9 +9,15 @@ namespace OgrenciBilgiSistemi.Api.Services
     public class RefreshTokenService
     {
         private readonly ConcurrentDictionary<string, RefreshTokenBilgi> _tokenlar = new();
+        private readonly TimeProvider _timeProvider;
 
         // Refresh token geçerlilik süresi (8 saat)
         private static readonly TimeSpan TokenSuresi = TimeSpan.FromHours(8);
+
+        public RefreshTokenService(TimeProvider timeProvider)
+        {
+            _timeProvider = timeProvider;
+        }
 
         /// <summary>
         /// Kullanıcı için yeni bir refresh token üretir ve depoya kaydeder.
@@ -33,7 +39,7 @@ namespace OgrenciBilgiSistemi.Api.Services
             {
                 KullaniciId = kullaniciId,
                 OkulKodu = okulKodu,
-                SonKullanim = DateTime.UtcNow.Add(TokenSuresi)
+                SonKullanim = _timeProvider.GetUtcNow().UtcDateTime.Add(TokenSuresi)
             };
 
             return token;
@@ -48,7 +54,7 @@ namespace OgrenciBilgiSistemi.Api.Services
             if (!_tokenlar.TryRemove(refreshToken, out var bilgi))
                 return null;
 
-            if (DateTime.UtcNow > bilgi.SonKullanim)
+            if (_timeProvider.GetUtcNow().UtcDateTime > bilgi.SonKullanim)
                 return null;
 
             return (bilgi.KullaniciId, bilgi.OkulKodu);

@@ -1,8 +1,22 @@
-﻿@model OgrenciBilgiSistemi.Models.KullaniciModel
+@model OgrenciBilgiSistemi.ViewModels.KullaniciBaseFormVm
 @{
     ViewData["Title"] = "Kullanıcı Güncelle";
-    ViewData["Action"] = "Guncelle";
-    ViewData["SubmitText"] = "Güncelle";
-    ViewData["IncludeId"] = true;
+    var adminVm = Model as OgrenciBilgiSistemi.ViewModels.KullaniciFormVm;
 }
-<partial name="~/Views/Shared/_KullaniciFormPartial.cshtml" model="Model" />
+
+@if (Model is OgrenciBilgiSistemi.ViewModels.OgretmenKullaniciFormVm ogretmenVm)
+{
+    <partial name="~/Views/Kullanicilar/_OgretmenGuncellePartial.cshtml" model="ogretmenVm" />
+}
+else if (Model is OgrenciBilgiSistemi.ViewModels.ServisKullaniciFormVm servisVm)
+{
+    <partial name="~/Views/Kullanicilar/_ServisGuncellePartial.cshtml" model="servisVm" />
+}
+else if (Model is OgrenciBilgiSistemi.ViewModels.VeliKullaniciFormVm veliVm)
+{
+    <partial name="~/Views/Kullanicilar/_VeliGuncellePartial.cshtml" model="veliVm" />
+}
+else
+{
+    <partial name="~/Views/Shared/_KullaniciFormPartial.cshtml" model="adminVm" />
+}

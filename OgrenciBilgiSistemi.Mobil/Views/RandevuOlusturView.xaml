@@ -18,7 +18,7 @@
                 <views:AnaBaslikView x:Name="MyHeader" ShowBack="True" ShowProfile="False" />
                 <VerticalStackLayout Spacing="2" VerticalOptions="End" HorizontalOptions="Center" Margin="20,0,20,15">
                     <Label Text="Yeni Randevu" FontSize="18" FontFamily="OpenSansSemibold" TextColor="White" HorizontalTextAlignment="Center" />
-                    <Label x:Name="AltBaslikLabel" Text="" FontSize="14" TextColor="White" Opacity="0.8" HorizontalTextAlignment="Center" />
+                    <Label Text="{Binding AltBaslikMetni}" FontSize="14" TextColor="White" Opacity="0.8" HorizontalTextAlignment="Center" />
                 </VerticalStackLayout>
             </Grid>
         </Border>
@@ -27,29 +27,33 @@
             <VerticalStackLayout Padding="20,20,20,40" Spacing="15">
 
                 <!-- Öğrenci seçimi (Veli için) -->
-                <Border x:Name="OgretmenSecimBorder" StrokeShape="RoundRectangle 16" StrokeThickness="0"
-                        BackgroundColor="White" Padding="20" IsVisible="False">
+                <Border StrokeShape="RoundRectangle 16" StrokeThickness="0"
+                        BackgroundColor="White" Padding="20" IsVisible="{Binding VeliModuGorunur}">
                     <VerticalStackLayout Spacing="10">
                         <Label Text="Öğrenci Seçin" FontSize="13" FontAttributes="Bold" TextColor="#7F8C8D" />
-                        <Picker x:Name="OgrenciPicker" Title="Öğrenci seçiniz..." FontSize="14" TextColor="#2C3E50"
-                                SelectedIndexChanged="OnOgrenciSecildi" />
+                        <Picker Title="Öğrenci seçiniz..." FontSize="14" TextColor="#2C3E50"
+                                ItemsSource="{Binding CocukAdlari}"
+                                SelectedIndex="{Binding SecilenCocukIndex}"
+                                IsEnabled="{Binding CocukPickerEtkin}" />
                     </VerticalStackLayout>
                 </Border>
 
                 <!-- Öğretmen seçimi (Veli için — öğrenci seçildikten sonra görünür) -->
-                <Border x:Name="OgretmenPickerBorder" StrokeShape="RoundRectangle 16" StrokeThickness="0"
-                        BackgroundColor="White" Padding="20" IsVisible="False">
+                <Border StrokeShape="RoundRectangle 16" StrokeThickness="0"
+                        BackgroundColor="White" Padding="20" IsVisible="{Binding OgretmenPickerGorunur}">
                     <VerticalStackLayout Spacing="10">
                         <Label Text="Öğretmen Seçin" FontSize="13" FontAttributes="Bold" TextColor="#7F8C8D" />
-                        <Picker x:Name="OgretmenPicker" Title="Öğretmen seçiniz..." FontSize="14" TextColor="#2C3E50"
-                                SelectedIndexChanged="OnOgretmenSecildi" />
-                        <Label x:Name="OgretmenBilgiLabel" Text="Sınıf öğretmeni seçili" FontSize="12" TextColor="#27AE60" IsVisible="False" />
+                        <Picker Title="Öğretmen seçiniz..." FontSize="14" TextColor="#2C3E50"
+                                ItemsSource="{Binding OgretmenAdlari}"
+                                SelectedIndex="{Binding SecilenOgretmenIndex}" />
+                        <Label Text="{Binding SinifOgretmeniBilgisi}" FontSize="12" TextColor="#27AE60"
+                               IsVisible="{Binding SinifOgretmeniBilgisiGorunur}" />
                     </VerticalStackLayout>
                 </Border>
 
                 <!-- Veli seçimi (Öğretmen için) -->
-                <Border x:Name="VeliSecimBorder" StrokeShape="RoundRectangle 16" StrokeThickness="0"
-                        BackgroundColor="White" Padding="20" IsVisible="False">
+                <Border StrokeShape="RoundRectangle 16" StrokeThickness="0"
+                        BackgroundColor="White" Padding="20" IsVisible="{Binding OgretmenModuGorunur}">
                     <VerticalStackLayout Spacing="10">
                         <Label Text="Öğrenci Seçin" FontSize="13" FontAttributes="Bold" TextColor="#7F8C8D" />
                         <Border HeightRequest="40" StrokeShape="RoundRectangle 20"
@@ -57,24 +61,23 @@
                             <Grid ColumnDefinitions="40, *">
                                 <Label Grid.Column="0" Text="&#x1F50D;" FontSize="14"
                                        HorizontalOptions="Center" VerticalOptions="Center" TextColor="#7F8C8D" />
-                                <Entry x:Name="SinifAramaEntry" Grid.Column="1"
+                                <Entry Grid.Column="1"
                                        Placeholder="Sınıf veya öğrenci ara" PlaceholderColor="#95A5A6"
                                        FontSize="13" TextColor="#2C3E50"
-                                       TextChanged="OnSinifAramaDegisti" />
+                                       Text="{Binding SinifAramaMetni}" />
                             </Grid>
                         </Border>
-                        <HorizontalStackLayout x:Name="BenimSinifimToggle" Spacing="8" IsVisible="False">
-                            <CheckBox x:Name="BenimSinifimCheckBox" IsChecked="True"
-                                      Color="#27AE60" VerticalOptions="Center"
-                                      CheckedChanged="OnBenimSinifimDegisti" />
+                        <HorizontalStackLayout Spacing="8" IsVisible="{Binding BenimSinifimGorunur}">
+                            <CheckBox IsChecked="{Binding BenimSinifimSecili}"
+                                      Color="#27AE60" VerticalOptions="Center" />
                             <Label Text="Benim Sınıfım" FontSize="14" FontAttributes="Bold"
                                    TextColor="#2C3E50" VerticalOptions="Center" />
                         </HorizontalStackLayout>
                         <Border StrokeShape="RoundRectangle 8" Stroke="#E5E7EB" StrokeThickness="1" Padding="0">
-                            <CollectionView x:Name="VeliOgrenciCollectionView"
-                                            IsGrouped="True"
+                            <CollectionView IsGrouped="True"
                                             SelectionMode="Single"
                                             SelectionChanged="OnVeliOgrenciSecildi"
+                                            ItemsSource="{Binding OgrenciGruplari}"
                                             HeightRequest="320">
                                 <CollectionView.GroupHeaderTemplate>
                                     <DataTemplate x:DataType="models:OgrenciGrubu">
@@ -95,16 +98,18 @@
                                 </CollectionView.EmptyView>
                             </CollectionView>
                         </Border>
-                        <Label x:Name="SeciliOgrenciLabel" Text="" FontSize="13" TextColor="#16A34A" IsVisible="False" />
+                        <Label Text="{Binding SeciliOgrenciMetni}" FontSize="13" TextColor="#16A34A"
+                               IsVisible="{Binding SeciliOgrenciGorunur}" />
                     </VerticalStackLayout>
                 </Border>
 
                 <!-- Müsait slot seçimi (Veli için) -->
-                <Border x:Name="SlotSecimBorder" StrokeShape="RoundRectangle 16" StrokeThickness="0"
-                        BackgroundColor="White" Padding="20" IsVisible="False">
+                <Border StrokeShape="RoundRectangle 16" StrokeThickness="0"
+                        BackgroundColor="White" Padding="20" IsVisible="{Binding VeliModuGorunur}">
                     <VerticalStackLayout Spacing="10">
                         <Label Text="Randevu Saati Seçin" FontSize="13" FontAttributes="Bold" TextColor="#7F8C8D" />
-                        <CollectionView x:Name="SlotCollection" SelectionMode="Single" HeightRequest="200"
+                        <CollectionView SelectionMode="Single" HeightRequest="200"
+                                        ItemsSource="{Binding SlotListesi}"
                                         SelectionChanged="OnSlotSecildi">
                             <CollectionView.ItemsLayout>
                                 <LinearItemsLayout Orientation="Vertical" ItemSpacing="5" />
@@ -125,15 +130,18 @@
                 </Border>
 
                 <!-- Tarih ve saat seçimi (Öğretmen için) -->
-                <Border x:Name="TarihSecimBorder" StrokeShape="RoundRectangle 16" StrokeThickness="0"
-                        BackgroundColor="White" Padding="20" IsVisible="False">
+                <Border StrokeShape="RoundRectangle 16" StrokeThickness="0"
+                        BackgroundColor="White" Padding="20" IsVisible="{Binding OgretmenModuGorunur}">
                     <VerticalStackLayout Spacing="10">
                         <Label Text="Tarih ve Saat" FontSize="13" FontAttributes="Bold" TextColor="#7F8C8D" />
-                        <DatePicker x:Name="TarihSecici" FontSize="14" TextColor="#2C3E50" />
+                        <DatePicker x:Name="TarihSecici" FontSize="14" TextColor="#2C3E50"
+                                    Date="{Binding SecilenTarih}" />
                         <Grid ColumnDefinitions="*, Auto, *" ColumnSpacing="10">
-                            <TimePicker Grid.Column="0" x:Name="BaslangicSaati" FontSize="14" TextColor="#2C3E50" />
+                            <TimePicker Grid.Column="0" FontSize="14" TextColor="#2C3E50"
+                                        Time="{Binding BaslangicSaatiSecilen}" />
                             <Label Grid.Column="1" Text="-" FontSize="18" TextColor="#95A5A6" VerticalOptions="Center" />
-                            <TimePicker Grid.Column="2" x:Name="BitisSaati" FontSize="14" TextColor="#2C3E50" />
+                            <TimePicker Grid.Column="2" FontSize="14" TextColor="#2C3E50"
+                                        Time="{Binding BitisSaatiSecilen}" />
                         </Grid>
                     </VerticalStackLayout>
                 </Border>
@@ -142,15 +150,15 @@
                 <Border StrokeShape="RoundRectangle 16" StrokeThickness="0" BackgroundColor="White" Padding="20">
                     <VerticalStackLayout Spacing="10">
                         <Label Text="Not (opsiyonel)" FontSize="13" FontAttributes="Bold" TextColor="#7F8C8D" />
-                        <Editor x:Name="NotEditor" Placeholder="Randevu hakkında not ekleyin..." FontSize="14"
-                                TextColor="#2C3E50" HeightRequest="80" />
+                        <Editor Placeholder="Randevu hakkında not ekleyin..." FontSize="14"
+                                TextColor="#2C3E50" HeightRequest="80" Text="{Binding Not}" />
                     </VerticalStackLayout>
                 </Border>
 
                 <!-- Oluştur butonu -->
-                <Button x:Name="OlusturButton" Text="Randevu Oluştur" BackgroundColor="#27AE60" TextColor="White"
+                <Button Text="Randevu Oluştur" BackgroundColor="#27AE60" TextColor="White"
                         FontFamily="OpenSansSemibold" FontSize="16" CornerRadius="12" HeightRequest="52"
-                        Clicked="OnOlusturClicked" />
+                        Command="{Binding OlusturCommand}" IsEnabled="{Binding OlusturButonEtkin}" />
 
             </VerticalStackLayout>
         </ScrollView>

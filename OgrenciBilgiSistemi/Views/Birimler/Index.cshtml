@@ -1,12 +1,9 @@
-﻿@model SayfalanmisListeModel<OgrenciBilgiSistemi.Models.BirimModel>
+@model OgrenciBilgiSistemi.ViewModels.BirimIndexVm
 @using OgrenciBilgiSistemi.Models
-@using System.Linq
+@using OgrenciBilgiSistemi.ViewModels
 
 @{
     ViewData["Title"] = "Birim İşlemleri";
-    var q = ViewData["CurrentFilter"] as string;
-
-    var durum = (BirimFiltre)(ViewData["Durum"] ?? BirimFiltre.Aktif);
 }
 
 <div class="viewport-scroller">
@@ -30,17 +27,16 @@
                         <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
                         <input type="text" id="searchString" name="searchString"
                                class="form-control" placeholder="Birim adı ara…"
-                               value="@q" style="width:280px;" />
+                               value="@Model.AramaMetni" style="width:280px;" />
                     </div>
                 </div>
 
-                <!-- 🔹 Birim Durumu Filtresi -->
                 <div>
                     <label for="durum" class="visually-hidden">Durum</label>
                     <select id="durum" name="durum" class="form-select" style="width:180px;">
-                        <option value="0" selected="@(durum == BirimFiltre.Tum)">Tüm Birimler</option>
-                        <option value="1" selected="@(durum == BirimFiltre.Aktif)">Aktif Birimler</option>
-                        <option value="2" selected="@(durum == BirimFiltre.Pasif)">Pasif Birimler</option>
+                        <option value="0" selected="@(Model.Durum == BirimFiltre.Tum)">Tüm Birimler</option>
+                        <option value="1" selected="@(Model.Durum == BirimFiltre.Aktif)">Aktif Birimler</option>
+                        <option value="2" selected="@(Model.Durum == BirimFiltre.Pasif)">Pasif Birimler</option>
                     </select>
                 </div>
 
@@ -52,7 +48,7 @@
             </form>
 
             <!-- Liste -->
-            @if (Model == null || !Model.Any())
+            @if (!Model.Birimler.Any())
             {
                 <div class="alert alert-warning mb-0">
                     <i class="bi bi-exclamation-triangle-fill"></i> Kayıt bulunamadı.
@@ -64,14 +60,14 @@
                     <table class="table table-hover table-sm align-middle text-center">
                         <thead class="bg-dark text-white">
                             <tr>
-                                <th class="text-start">@Html.DisplayNameFor(m => m[0].BirimAd)</th>
-                                <th>@Html.DisplayNameFor(m => m[0].BirimSinifMi)</th>
-                                <th>@Html.DisplayNameFor(m => m[0].BirimDurum)</th>
+                                <th class="text-start">@Html.DisplayNameFor(m => m.Birimler[0].BirimAd)</th>
+                                <th>@Html.DisplayNameFor(m => m.Birimler[0].BirimSinifMi)</th>
+                                <th>@Html.DisplayNameFor(m => m.Birimler[0].BirimDurum)</th>
                                 <th>İşlemler</th>
                             </tr>
                         </thead>
                         <tbody class="bg-white">
-                            @foreach (var s in Model)
+                            @foreach (var s in Model.Birimler)
                             {
                                 <tr>
                                     <td class="text-start fw-semibold text-primary">@s.BirimAd</td>
@@ -103,9 +99,9 @@
                     </table>
                 </div>
 
-                @await Html.PartialAsync("_SayfalamaFormPartial", OgrenciBilgiSistemi.ViewModels.SayfalamaVm.Olustur(Model,
+                @await Html.PartialAsync("_SayfalamaFormPartial", SayfalamaVm.Olustur(Model.Birimler,
                     sayfaParametreAdi: "pageNumber",
-                    routeValues: new Dictionary<string, string?> { ["searchString"] = q, ["durum"] = ((int)durum).ToString() }))
+                    routeValues: new Dictionary<string, string?> { ["searchString"] = Model.AramaMetni, ["durum"] = ((int)Model.Durum).ToString() }))
             }
         </div>
     </div>

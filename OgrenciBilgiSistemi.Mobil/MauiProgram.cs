@@ -151,6 +151,7 @@ using CommunityToolkit.Maui;
 using Microsoft.Extensions.Logging;
 using Microsoft.Maui.LifecycleEvents;
 using OgrenciBilgiSistemi.Mobil.Services;
+using OgrenciBilgiSistemi.Mobil.ViewModels;
 using OgrenciBilgiSistemi.Mobil.Views;
 using Plugin.Firebase.Bundled.Shared;
 using Plugin.Firebase.CloudMessaging;
@@ -202,6 +203,34 @@ namespace OgrenciBilgiSistemi.Mobil
             builder.Services.AddSingleton<PushKayitServisi>();
             builder.Services.AddSingleton<BildirimYonlendirmeServisi>();
 
+            // GorunumModel kayitlari (Transient — her View instance'ı kendi VM'ini alır)
+            builder.Services.AddTransient<AdminAnaSayfaGorunumModel>();
+            builder.Services.AddTransient<AdminOgrenciListeGorunumModel>();
+            builder.Services.AddTransient<AdminSinifListeGorunumModel>();
+            builder.Services.AddTransient<AdminOgretmenListeGorunumModel>();
+            builder.Services.AddTransient<AdminVeliListeGorunumModel>();
+            builder.Services.AddTransient<AdminServisListeGorunumModel>();
+            builder.Services.AddTransient<AdminYemekhaneBugunGorunumModel>();
+            builder.Services.AddTransient<AdminAnakapiCikisBugunGorunumModel>();
+            builder.Services.AddTransient<AdminOgretmenDetayGorunumModel>();
+            builder.Services.AddTransient<AdminVeliDetayGorunumModel>();
+            builder.Services.AddTransient<AdminServisDetayGorunumModel>();
+            builder.Services.AddTransient<AdminSinifOgrenciListeGorunumModel>();
+            // Non-admin GorunumModel'lar
+            builder.Services.AddTransient<GirisGorunumModel>();
+            builder.Services.AddTransient<OkulSecimGorunumModel>();
+            builder.Services.AddTransient<SinifListeGorunumModel>();
+            builder.Services.AddTransient<ServisEkraniGorunumModel>();
+            // OgrenciListeGorunumModel runtime parametre (birimId, birimAd) aldigi icin DI'a kaydedilmedi.
+            builder.Services.AddTransient<OgretmenDuyuruOlusturGorunumModel>();
+            builder.Services.AddTransient<OgretmenRandevuYonetimGorunumModel>();
+            builder.Services.AddTransient<BildirimListeGorunumModel>();
+            builder.Services.AddTransient<VeliDuyurularGorunumModel>();
+            builder.Services.AddTransient<RandevuListeGorunumModel>();
+            builder.Services.AddTransient<VeliAnaSayfaGorunumModel>();
+            builder.Services.AddTransient<RandevuOlusturGorunumModel>();
+            // OgrenciDetayGorunumModel runtime parametre (ogrenciId) aldigi icin DI'a kaydedilmedi.
+
             // Sayfa kayitlari
             // GirisView ve SinifListeView Shell tarafindan DI ile cozumleniyor
             builder.Services.AddTransient<GirisView>();
@@ -210,8 +239,8 @@ namespace OgrenciBilgiSistemi.Mobil
             builder.Services.AddTransient<ServisEkraniView>();
             builder.Services.AddTransient<VeliAnaSayfaView>();
             builder.Services.AddTransient<RandevuListeView>();
-            builder.Services.AddTransient<RandevuDetayView>();
             builder.Services.AddTransient<RandevuOlusturView>();
+            // RandevuDetayView constructor'da runtime parametre (RandevuDetayGorunumModel - static factory) aldigi icin DI'a kaydedilmedi.
             builder.Services.AddTransient<OgretmenRandevuYonetimView>();
             builder.Services.AddTransient<BildirimListeView>();
             builder.Services.AddTransient<OgretmenDuyuruOlusturView>();

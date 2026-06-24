@@ -64,10 +64,9 @@ namespace OgrenciBilgiSistemi.Controllers
                 CurrentSort = sortOrder,
                 CurrentFilter = searchString,
                 BirimId = birimId,
-                Durum = durum
+                Durum = durum,
+                YemekDurumMap = map
             };
-
-            ViewData["YemekDurumMap"] = map;
 
             return View(vm);
         }
@@ -327,12 +326,6 @@ namespace OgrenciBilgiSistemi.Controllers
             if (page < 1) page = 1;
             if (pageSize <= 0) pageSize = 50;
             pageSize = Math.Min(pageSize, 200);
-
-            // Filtreleri ViewData'ya basmak istersen:
-            ViewData["CurrentFilter"] = query;
-            ViewData["CurrentBirimId"] = birimId;
-            ViewData["Page"] = page;
-            ViewData["PageSize"] = pageSize;
 
             var rapor = await _ogrenciService.GetVeliRaporAsync(query, birimId, page, pageSize, ct);
 

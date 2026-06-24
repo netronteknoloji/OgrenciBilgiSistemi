@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using OgrenciBilgiSistemi.Api.Services;
+using OgrenciBilgiSistemi.Api.Services.Interfaces;
 
 namespace OgrenciBilgiSistemi.Api.Controllers
 {
@@ -9,9 +9,9 @@ namespace OgrenciBilgiSistemi.Api.Controllers
     [Route("api/siniflar")]
     public class SiniflarController : ControllerBase
     {
-        private readonly SinifService _sinifService;
+        private readonly ISinifService _sinifService;
 
-        public SiniflarController(SinifService sinifService)
+        public SiniflarController(ISinifService sinifService)
         {
             _sinifService = sinifService;
         }

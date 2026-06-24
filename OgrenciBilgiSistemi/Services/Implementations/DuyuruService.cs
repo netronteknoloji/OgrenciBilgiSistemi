@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using OgrenciBilgiSistemi.Data;
 using OgrenciBilgiSistemi.Models;
 using OgrenciBilgiSistemi.Services.Interfaces;
@@ -10,11 +11,15 @@ namespace OgrenciBilgiSistemi.Services.Implementations
     {
         private readonly AppDbContext _db;
         private readonly IBildirimService _bildirimService;
+        private readonly ILogger<DuyuruService> _logger;
+        private readonly TimeProvider _timeProvider;
 
-        public DuyuruService(AppDbContext db, IBildirimService bildirimService)
+        public DuyuruService(AppDbContext db, IBildirimService bildirimService, ILogger<DuyuruService> logger, TimeProvider timeProvider)
         {
             _db = db;
             _bildirimService = bildirimService;
+            _logger = logger;
+            _timeProvider = timeProvider;
         }
 
         public async Task<int> Olustur(int olusturanId, DuyuruHedefi hedef, string baslik, string icerik, CancellationToken ct = default)
@@ -25,7 +30,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 Hedef = hedef,
                 Baslik = baslik.Trim(),
                 Icerik = icerik.Trim(),
-                OlusturulmaTarihi = DateTime.Now
+                OlusturulmaTarihi = _timeProvider.GetLocalNow().DateTime
             };
 
             _db.Duyurular.Add(duyuru);

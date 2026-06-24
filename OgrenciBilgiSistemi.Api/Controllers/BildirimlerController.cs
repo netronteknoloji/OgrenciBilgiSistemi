@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using OgrenciBilgiSistemi.Api.Services;
+using OgrenciBilgiSistemi.Api.Services.Interfaces;
 
 namespace OgrenciBilgiSistemi.Api.Controllers
 {
@@ -9,9 +9,9 @@ namespace OgrenciBilgiSistemi.Api.Controllers
     [Authorize]
     public class BildirimlerController : ControllerBase
     {
-        private readonly BildirimService _bildirimService;
+        private readonly IBildirimService _bildirimService;
 
-        public BildirimlerController(BildirimService bildirimService)
+        public BildirimlerController(IBildirimService bildirimService)
         {
             _bildirimService = bildirimService;
         }

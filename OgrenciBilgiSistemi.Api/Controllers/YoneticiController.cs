@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using OgrenciBilgiSistemi.Api.Services;
+using OgrenciBilgiSistemi.Api.Services.Interfaces;
 using OgrenciBilgiSistemi.Shared.Services;
 
 namespace OgrenciBilgiSistemi.Api.Controllers
@@ -10,13 +10,13 @@ namespace OgrenciBilgiSistemi.Api.Controllers
     [Authorize(Policy = "AdminOnly")]
     public class YoneticiController : ControllerBase
     {
-        private readonly YoneticiService _yoneticiService;
-        private readonly VeliListeService _veliListeService;
+        private readonly IYoneticiService _yoneticiService;
+        private readonly IVeliListeService _veliListeService;
         private readonly OkulYapilandirmaServisi _okulServisi;
 
         public YoneticiController(
-            YoneticiService yoneticiService,
-            VeliListeService veliListeService,
+            IYoneticiService yoneticiService,
+            IVeliListeService veliListeService,
             OkulYapilandirmaServisi okulServisi)
         {
             _yoneticiService = yoneticiService;

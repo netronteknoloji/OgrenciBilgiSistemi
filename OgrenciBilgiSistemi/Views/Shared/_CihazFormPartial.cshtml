@@ -1,10 +1,10 @@
-﻿@model OgrenciBilgiSistemi.Models.CihazModel
+﻿@model OgrenciBilgiSistemi.ViewModels.CihazFormVm
 @{
-    var action = (ViewData["Action"] as string) ?? "Ekle";
-    var submitText = (ViewData["SubmitText"] as string) ?? "Kaydet";
-    var includeId = (bool?)ViewData["IncludeId"] ?? false;
-    var showGuid = (bool?)ViewData["ShowGuid"] ?? false;
-    var guidStr = (ViewData["GuidStr"] as string) ?? "";
+    var action = Model.FormAction;
+    var submitText = Model.SubmitText;
+    var includeId = Model.IncludeId;
+    var showGuid = Model.ShowGuid;
+    var guidStr = Model.GuidStr;
 
     var submitingText = submitText == "Güncelle" ? "Güncelleniyor..." : "Kaydediliyor...";
 

@@ -1,8 +1,8 @@
-@model SayfalanmisListeModel<OgrenciBilgiSistemi.Models.ServisProfilModel>
+@model OgrenciBilgiSistemi.ViewModels.ServisIndexVm
 
 @{
     ViewData["Title"] = "Servis İşlemleri";
-    var q = ViewData["CurrentFilter"] as string;
+    var q = Model.AramaMetni;
 }
 
 <div class="viewport-scroller">
@@ -40,7 +40,7 @@
             </form>
 
             <!-- Liste -->
-            @if (Model == null || !Model.Any())
+            @if (!Model.Servisler.Any())
             {
                 <div class="alert alert-warning mb-0">
                     <i class="bi bi-exclamation-triangle-fill"></i> Kayıt bulunamadı.
@@ -60,7 +60,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var s in Model)
+                            @foreach (var s in Model.Servisler)
                             {
                                 <tr class="text-center">
                                     <td class="text-start fw-semibold text-primary">@s.Plaka</td>
@@ -98,7 +98,7 @@
                     </table>
                 </div>
 
-                @await Html.PartialAsync("_SayfalamaFormPartial", OgrenciBilgiSistemi.ViewModels.SayfalamaVm.Olustur(Model,
+                @await Html.PartialAsync("_SayfalamaFormPartial", OgrenciBilgiSistemi.ViewModels.SayfalamaVm.Olustur(Model.Servisler,
                     routeValues: new Dictionary<string, string?> { ["searchString"] = q }))
             }
         </div>

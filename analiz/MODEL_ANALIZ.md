@@ -1,526 +1,705 @@
-# MODEL_ANALIZ — Domain ve DTO Haritası
+# OgrenciBilgiSistemi — Model & Mimari Analiz Raporu
 
-**Tarih:** 2026-05-04
-**Proje:** OgrenciBilgiSistemi (multi-tenant okul yönetim sistemi)
-**Kapsam:** MVC entity'leri, ViewModel'leri, API DTO/response'ları, mobil model'leri ve `Shared` tipler.
-**Kapsam dışı:** `OgrenciBilgiSistemi.Sms` (yalnızca SMS retry hosted service; iş modeli yok), migration tarihi, performans benchmark.
-
-> Kaynak: `OgrenciBilgiSistemi/Models/`, `OgrenciBilgiSistemi/Data/AppDbContext.cs`, `OgrenciBilgiSistemi/ViewModels/`, `OgrenciBilgiSistemi.Api/{Controllers,Services,Models,Dtos}`, `OgrenciBilgiSistemi.Mobil/Models/`, `OgrenciBilgiSistemi.Shared/{Models,Dtos,Enums,Constants,Services,Helpers}/`.
+> Tarih: 2026-06-17  
+> Kapsam: 7 proje · 28 entity · 46 MVC ViewModel · 16 API DTO · 28 Mobil Model  
+> Amaç: Clean Architecture geçiş yol haritasına (Faz 1+) girdi sağlamak
 
 ---
 
 ## 1. Entity Kataloğu
 
-`OgrenciBilgiSistemi/Models/` altında **30 sınıf** var; bunlardan **27 tanesi** `AppDbContext` üzerinden tabloya map ediliyor. 3 tanesi (`CihazKullaniciModel`, `HataGorunumModel`, `SayfalanmisListeModel<T>`) DbSet değil — saf DTO/helper.
+### 1.1 Kullanıcı & Organizasyon
 
-### 1.1 Tablo Yapan Entity'ler
+| Entity | Amaç | PK | FK'lar (OnDelete) | Navigation Props | Global Filter | Soft Delete | Unique / Index |
+|---|---|---|---|---|---|---|---|
+| `KullaniciModel` | Sistem kullanıcısı (tüm roller) | `KullaniciId` int | — | VeliProfil¹, ServisProfil¹, OgretmenProfil¹, Ogrenciler (Veli), Ogrenciler (Ogretmen), Ziyaretciler, SinifYoklamalar, ServisYoklamalar, KullaniciMenuler | — | Hayır | `KullaniciAdi` UNIQUE; `Rol` IDX; `Telefon` IDX (non-empty) |
+| `VeliProfilModel` | Veli profili (1:1 Kullanici) | `KullaniciId` int (FK=PK) | KullaniciId → Kullanici (CASCADE) | Kullanici | — | Hayır | PK = KullaniciId |
+| `ServisProfilModel` | Servis/şoför profili | `KullaniciId` int (FK=PK) | KullaniciId → Kullanici (CASCADE) | Kullanici | — | Hayır | PK = KullaniciId |
+| `OgretmenProfilModel` | Öğretmen profili | `KullaniciId` int (FK=PK) | KullaniciId → Kullanici (CASCADE); BirimId → Birim (SET NULL) | Kullanici, Birim | — | Hayır | PK = KullaniciId |
+| `BirimModel` | Sınıf / birim | `BirimId` int | — | Ogrenciler | — | Hayır | — |
 
-| Entity | Tablo | PK | Soft Delete / Filter | Unique / Composite Index | Check Constraint | Katman |
-|---|---|---|---|---|---|---|
-| `KullaniciModel` | `Kullanicilar` | `KullaniciId` (Identity) | — | UX `KullaniciAdi`, IX `Rol` | — | MVC + API |
-| `BirimModel` | `Birimler` | `BirimId` (Identity) | — | — | — | MVC + API |
-| `OgrenciModel` | `Ogrenciler` | `OgrenciId` (Identity) | `OgrenciDurum \|\| IncludePasifOgrenciler` | UX `OgrenciNo`, UX filter `OgrenciKartNo` (NOT NULL), IX `BirimId` | — | MVC + API |
-| `OgrenciDetayModel` | `OgrenciDetaylar` | Identity | `Ogrenci.OgrenciDurum \|\| IncludePasifOgrenciler` | IX `(OgrenciId, IstasyonTipi)`, IX `OgrenciGTarih`, IX `OgrenciCTarih` | — | MVC + API |
-| `OgrenciAidatModel` | `OgrenciAidatlar` | Identity | öğrenci durum filter | UX `(OgrenciId, BaslangicYil)` | `BaslangicYil ∈ [2000,2100]`, `Borc≥0`, `Odenen≥0` | MVC |
-| `OgrenciAidatTarifeModel` | `OgrenciAidatTarifeler` | Identity | — | UX `BaslangicYil` | `BaslangicYil ∈ [2000,2100]`, `Tutar≥0` | MVC |
-| `OgrenciAidatOdemeModel` | `OgrenciAidatOdemeler` | Identity | `AktifMi && öğrenci durum` | IX `(OgrenciAidatId, OdemeTarihi)` | `Tutar≥0` | MVC |
-| `OgrenciYemekModel` | `OgrenciYemekler` | `Id` (Identity) | öğrenci durum filter | UX `(OgrenciId, Yil, Ay)` | — | MVC |
-| `OgrenciYemekTarifeModel` | `OgrenciYemekTarifeler` | `Id` (Identity) | öğrenci durum filter | UX `(OgrenciId, Yil)` | `Yil ∈ [2000,2100]` | MVC |
-| `OgrenciYemekOdemeModel` | `OgrenciYemekOdemeler` | Identity | `AktifMi && öğrenci durum` | IX `(OgrenciId, Yil, Ay)` | — | MVC |
-| `VeliProfilModel` | `VeliProfiller` | **`KullaniciId`** (None) | — | (PK = FK) | — | MVC + API |
-| `OgretmenProfilModel` | `OgretmenProfiller` | **`KullaniciId`** (None) | — | (PK = FK) | — | MVC + API |
-| `ServisProfilModel` | `ServisProfiller` | **`KullaniciId`** (None) | — | (PK = FK) | — | MVC + API |
-| `ZiyaretciModel` | `Ziyaretciler` | Identity | `AktifMi` flag | — | — | MVC |
-| `SinifYoklamaModel` | `SinifYoklamalar` | Identity | öğrenci durum filter | IX `(OgrenciId, OlusturulmaTarihi)` | — | MVC + API |
-| `ServisYoklamaModel` | `ServisYoklamalar` | Identity | öğrenci durum filter | IX `(KullaniciId, OgrenciId, Periyot, OlusturulmaTarihi)` | — | MVC + API |
-| `KitapModel` | `Kitaplar` | Identity | `KitapDurum` flag | — | `KitapGun ∈ [1,365]` | MVC |
-| `KitapDetayModel` | `KitapDetaylar` | Identity | öğrenci durum filter | — | — | MVC |
-| `MenuOgeModel` | `MenuOgeler` | `Id` (Identity) | — | IX `(AnaMenuId, Sirala)` | — | MVC |
-| `KullaniciMenuModel` | (M:N join) | composite `(KullaniciId, MenuOgeId)` | — | — | — | MVC |
-| `RandevuModel` | `Randevular` | Identity | **`!IsDeleted`** | IX `RandevuTarihi` | — | MVC + API |
-| `OgretmenRandevuModel` | `OgretmenRandevular` | Identity | **`!IsDeleted`** | — | — | MVC + API |
-| `BildirimModel` | `Bildirimler` | Identity | **`!IsDeleted`** | IX `(AliciKullaniciId, Okundu)` | — | MVC + API |
-| `DuyuruModel` | `Duyurular` | Identity | **`!IsDeleted`** | IX `OlusturulmaTarihi`, IX `OlusturanKullaniciId` | — | MVC + API |
-| `DuyuruOkumaModel` | `DuyuruOkumalari` | Identity | — | UX `(DuyuruId, KullaniciId)`, IX `KullaniciId` | — | MVC + API |
-| `SmsGonderimGecmisiModel` | `SmsGonderimGecmisleri` | Identity | — | IX `(OgrenciId, GonderimZamani)`, IX `(Tip, GonderimZamani)` | — | MVC |
-| `CihazModel` | `Cihazlar` | Identity | `Aktif` flag | UX `CihazKodu`, UX `CihazAdi`, IX `IstasyonTipi` | — | MVC |
+### 1.2 Öğrenci & Giriş-Çıkış
 
-### 1.2 `Models/` Klasöründe Olup DbSet Olmayan Tipler
+| Entity | Amaç | PK | FK'lar (OnDelete) | Navigation Props | Global Filter | Soft Delete | Unique / Index |
+|---|---|---|---|---|---|---|---|
+| `OgrenciModel` | Öğrenci | `OgrenciId` int | VeliId→Kullanici (RESTRICT); OgretmenId→Kullanici (RESTRICT); BirimId→Birim (RESTRICT); ServisId→Kullanici (RESTRICT) | Veli, Ogretmen, Birim, ServisKullanici, OgrenciDetaylar, OgrenciYemekler, OgrenciAidatlar, SinifYoklamalar, ServisYoklamalar | `OgrenciDurum \|\| IncludePasif` | Hayır | `OgrenciNo` UNIQUE; `OgrenciKartNo` UNIQUE (null/empty hariç) |
+| `OgrenciDetayModel` | Kart okuma / giriş-çıkış kaydı | `OgrenciDetayId` int | OgrenciId→Ogrenci (RESTRICT); CihazId→Cihaz (RESTRICT) | Ogrenci, Cihaz | `Ogrenci.OgrenciDurum \|\| IncludePasif` | Hayır | (OgrenciId, IstasyonTipi) IDX; OgrenciGTarih IDX; OgrenciCTarih IDX |
+| `CihazModel` | Kart okuyucu cihazı (ZKTeco / USB / QR) | `CihazId` int | — | OgrenciDetaylar, Ziyaretciler | — | Hayır | `CihazAdi` UNIQUE; `CihazKodu` UNIQUE; `IstasyonTipi` IDX |
 
-| Sınıf | Gerçek Rolü | Sorun |
-|---|---|---|
-| `CihazKullaniciModel` | ZKTeco cihazından okunan kullanıcı kaydı (DTO) | `Models/` altında olduğu için yeni biri DbSet sanabilir |
-| `HataGorunumModel` | `Hata.cshtml` view modeli (`RequestId`, `IstemKimlik`) | `ViewModels/` altında olmalı |
-| `SayfalanmisListeModel<T>` | Generic sayfalama container (`Items`, `PageIndex`, `PageSize`, `TotalCount`) | `Helpers/` veya `Common/` altında olmalı |
+### 1.3 Kütüphane
 
-> Bu üç sınıf **Bölüm 4 / Sorun 1** altında işaretlenmiştir.
+| Entity | Amaç | PK | FK'lar (OnDelete) | Navigation Props | Global Filter | Soft Delete | Unique / Index |
+|---|---|---|---|---|---|---|---|
+| `KitapModel` | Kitap tanımı | `KitapId` int | — | — | — | Hayır | — |
+| `KitapDetayModel` | Kitap ödünç kaydı | `KitapDetayId` int | KitapId→Kitap (RESTRICT); OgrenciId→Ogrenci (RESTRICT) | Kitap, Ogrenci | `Ogrenci.OgrenciDurum \|\| IncludePasif` | Hayır | — |
+
+### 1.4 Menü & Yetki
+
+| Entity | Amaç | PK | FK'lar (OnDelete) | Navigation Props | Global Filter | Soft Delete | Unique / Index |
+|---|---|---|---|---|---|---|---|
+| `MenuOgeModel` | Menü ağacı (self-ref) | `Id` int | AnaMenuId→MenuOge (RESTRICT) | AnaMenu, AltMenuler, KullaniciMenuler | — | Hayır | (AnaMenuId, Sirala) IDX; Seed: Id 1-34 |
+| `KullaniciMenuModel` | Kullanici ↔ Menü N:N köprüsü | (KullaniciId, MenuOgeId) composite | KullaniciId→Kullanici (CASCADE); MenuOgeId→MenuOge (CASCADE) | Kullanici, MenuOge | — | Hayır | Composite PK |
+
+### 1.5 Aidat
+
+| Entity | Amaç | PK | FK'lar (OnDelete) | Navigation Props | Global Filter | Soft Delete | Unique / Index |
+|---|---|---|---|---|---|---|---|
+| `OgrenciAidatModel` | Yıllık aidat kaydı | `OgrenciAidatId` int | OgrenciId→Ogrenci (RESTRICT) | Ogrenci, Odemeler | `Ogrenci.OgrenciDurum \|\| IncludePasif` | Hayır | (OgrenciId, BaslangicYil) UNIQUE; CHECK: yıl 2000-2100, tutarlar ≥ 0 |
+| `OgrenciAidatTarifeModel` | Yıllık ücret tarifesi | `OgrenciAidatTarifeId` int | — | — | — | Hayır | `BaslangicYil` UNIQUE; CHECK: yıl 2000-2100, Tutar ≥ 0 |
+| `OgrenciAidatOdemeModel` | Tekil ödeme kaydı | `OgrenciAidatOdemeId` int | OgrenciAidatId→OgrenciAidat (RESTRICT) | OgrenciAidat | `AktifMi && (Ogrenci.Durum \|\| IncludePasif)` | Hayır | (OgrenciAidatId, OdemeTarihi) IDX; CHECK: Tutar ≥ 0 |
+
+### 1.6 Yemekhane
+
+| Entity | Amaç | PK | FK'lar (OnDelete) | Navigation Props | Global Filter | Soft Delete | Unique / Index |
+|---|---|---|---|---|---|---|---|
+| `OgrenciYemekModel` | Aylık yemek kayıt | `Id` int | OgrenciId→Ogrenci (RESTRICT) | Ogrenci | `Ogrenci.OgrenciDurum \|\| IncludePasif` | Hayır | (OgrenciId, Yil, Ay) UNIQUE |
+| `OgrenciYemekTarifeModel` | Öğrenci bazlı yıllık yemek tarifesi | `Id` int | OgrenciId→Ogrenci (RESTRICT) | Ogrenci | `Ogrenci.OgrenciDurum \|\| IncludePasif` | Hayır | (OgrenciId, Yil) UNIQUE |
+| `OgrenciYemekOdemeModel` | Yemek ödemesi | `OgrenciYemekOdemeId` int | OgrenciId→Ogrenci (RESTRICT) | Ogrenci | `AktifMi && (Ogrenci.Durum \|\| IncludePasif)` | Hayır | (OgrenciId, Yil, Ay) IDX |
+
+### 1.7 Yoklama
+
+| Entity | Amaç | PK | FK'lar (OnDelete) | Navigation Props | Global Filter | Soft Delete | Unique / Index |
+|---|---|---|---|---|---|---|---|
+| `SinifYoklamaModel` | Günlük ders yoklaması (8 ders) | `SinifYoklamaId` int | OgrenciId→Ogrenci (RESTRICT); KullaniciId→Kullanici (RESTRICT) | Ogrenci, Kullanici | `Ogrenci.OgrenciDurum \|\| IncludePasif` | Hayır | (OgrenciId, OlusturulmaTarihi) IDX |
+| `ServisYoklamaModel` | Servis bindi/binmedi kaydı | `ServisYoklamaId` int | OgrenciId→Ogrenci (RESTRICT); KullaniciId→Kullanici (RESTRICT) | Ogrenci, Kullanici | `Ogrenci.OgrenciDurum \|\| IncludePasif` | Hayır | (KullaniciId, OgrenciId, Periyot, OlusturulmaTarihi) IDX |
+
+### 1.8 Ziyaretçi & Randevu
+
+| Entity | Amaç | PK | FK'lar (OnDelete) | Navigation Props | Global Filter | Soft Delete | Unique / Index |
+|---|---|---|---|---|---|---|---|
+| `ZiyaretciModel` | Okul ziyaretçisi (kart okuma) | `ZiyaretciId` int | KullaniciId→Kullanici (SET NULL); CihazId→Cihaz (SET NULL) | Kullanici, Cihaz | — | Hayır | — |
+| `RandevuModel` | Veli-öğretmen randevusu | `RandevuId` int | OgretmenKullaniciId→Kullanici (RESTRICT); VeliKullaniciId→Kullanici (RESTRICT); OgrenciId→Ogrenci (RESTRICT) | Ogretmen, Veli, Ogrenci | `!IsDeleted` | **Evet** | (RandevuTarihi) IDX; (OgretmenKullaniciId, RandevuTarihi) FILTERED IDX (IsDeleted=0) |
+| `OgretmenRandevuModel` | Öğretmen uygunluk slotu | `OgretmenRandevuId` int | OgretmenKullaniciId→Kullanici (RESTRICT) | Ogretmen | `!IsDeleted` | **Evet** | (OgretmenKullaniciId, Tarih, BaslangicSaati) UNIQUE (IsDeleted=0) |
+
+### 1.9 Bildirim & Duyuru
+
+| Entity | Amaç | PK | FK'lar (OnDelete) | Navigation Props | Global Filter | Soft Delete | Unique / Index |
+|---|---|---|---|---|---|---|---|
+| `BildirimModel` | Uygulama içi bildirim | `BildirimId` int | AliciKullaniciId→Kullanici (RESTRICT); RandevuId→Randevu (RESTRICT) | Alici, Randevu | `!IsDeleted` | **Evet** | (AliciKullaniciId, Okundu) IDX |
+| `DuyuruModel` | Öğretmen/yönetici duyurusu | `DuyuruId` int | OlusturanKullaniciId→Kullanici (RESTRICT) | Olusturan | `!IsDeleted` | **Evet** | (OlusturulmaTarihi) IDX; (OlusturanKullaniciId) IDX |
+| `DuyuruOkumaModel` | Duyuru okundu izi | `DuyuruOkumaId` int | DuyuruId→Duyuru (RESTRICT); KullaniciId→Kullanici (RESTRICT) | Duyuru, Kullanici | `!Duyuru.IsDeleted` | Hayır (dolaylı) | (DuyuruId, KullaniciId) UNIQUE; (KullaniciId) IDX |
+
+### 1.10 SMS & Push
+
+| Entity | Amaç | PK | FK'lar (OnDelete) | Navigation Props | Global Filter | Soft Delete | Unique / Index |
+|---|---|---|---|---|---|---|---|
+| `SmsGonderimGecmisiModel` | SMS gönderim logu | `SmsGonderimGecmisiId` int | OgrenciId→Ogrenci (SET NULL) | Ogrenci | — | Hayır | (OgrenciId, GonderimZamani) IDX; (Tip, GonderimZamani) IDX |
+| `BildirimCihaziModel` | FCM token kaydı | `BildirimCihaziId` int | KullaniciId→Kullanici (CASCADE) | Kullanici | — | **Evet** | `FcmToken` UNIQUE (IsDeleted=0); (KullaniciId, IsDeleted) IDX |
 
 ---
 
 ## 2. İlişki Haritası
 
-### 2.1 ER Diyagramı
+### 2.1 İlişki Türleri
+
+**1:1 (Profil Tabloları)**
+- `Kullanici` → `VeliProfil` (PK=FK, CASCADE)
+- `Kullanici` → `ServisProfil` (PK=FK, CASCADE)
+- `Kullanici` → `OgretmenProfil` (PK=FK, CASCADE)
+
+**1:N (Ana ilişkiler)**
+- `Kullanici` → `Ogrenci` (hem VeliId hem OgretmenId ve ServisId üzerinden, RESTRICT)
+- `Birim` → `Ogrenci` (RESTRICT), `OgretmenProfil` (SET NULL)
+- `Ogrenci` → `OgrenciDetay`, `KitapDetay`, `OgrenciAidat`, `OgrenciYemek`, `OgrenciYemekTarife`, `OgrenciYemekOdeme`, `SinifYoklama`, `ServisYoklama`, `SmsGonderimGecmisi`
+- `OgrenciAidat` → `OgrenciAidatOdeme`
+- `Kullanici` → `Randevu` (OgretmenKullaniciId ve VeliKullaniciId üzerinden, RESTRICT)
+- `Kullanici` → `OgretmenRandevu`, `Bildirim`, `Duyuru`, `BildirimCihazi`, `Ziyaretci`
+- `Randevu` → `Bildirim` (RESTRICT)
+- `Duyuru` → `DuyuruOkuma`
+- `Cihaz` → `OgrenciDetay`, `Ziyaretci` (SET NULL)
+- `Kitap` → `KitapDetay`
+
+**N:N**
+- `Kullanici` ↔ `MenuOge` via `KullaniciMenuModel` (her iki yönde CASCADE)
+
+**Self-Reference**
+- `MenuOge` → `MenuOge` (AnaMenuId, RESTRICT): üst-alt menü hiyerarşisi
+
+### 2.2 OnDelete Davranış Özeti
+
+| Davranış | Nerelerde |
+|---|---|
+| **RESTRICT** | Çoğunluk FK (veri silme engeli — uygulama katmanında kontrol zorunlu) |
+| **CASCADE** | Profil tabloları (Kullanici silinince profili de silinir); KullaniciMenuModel (bridge) |
+| **SET NULL** | OgretmenProfil.BirimId; ZiyaretciModel.KullaniciId, CihazId; SmsGonderimGecmisi.OgrenciId; OgrenciDetay.CihazId |
+
+### 2.3 Mermaid ER Diyagramı (Ana Varlıklar)
 
 ```mermaid
 erDiagram
-  KullaniciModel ||--o| VeliProfilModel : "1:1 Cascade"
-  KullaniciModel ||--o| OgretmenProfilModel : "1:1 Cascade"
-  KullaniciModel ||--o| ServisProfilModel : "1:1 Cascade"
-  KullaniciModel }o--o{ MenuOgeModel : "M:N (KullaniciMenuModel)"
-  KullaniciModel ||--o{ OgrenciModel : "Veli/Ogretmen/Servis (Restrict)"
-  BirimModel ||--o{ OgrenciModel : "Restrict"
-  BirimModel ||--o| OgretmenProfilModel : "SetNull"
-  OgrenciModel ||--o{ OgrenciDetayModel : "Restrict"
-  OgrenciModel ||--o{ OgrenciAidatModel : "Restrict"
-  OgrenciAidatModel ||--o{ OgrenciAidatOdemeModel : "Restrict"
-  OgrenciModel ||--o{ OgrenciYemekModel : "Restrict"
-  OgrenciModel ||--o{ OgrenciYemekOdemeModel : "Restrict"
-  OgrenciModel ||--o{ OgrenciYemekTarifeModel : "Restrict"
-  OgrenciModel ||--o{ KitapDetayModel : "Restrict"
-  KitapModel ||--o{ KitapDetayModel : "Restrict"
-  OgrenciModel ||--o{ SinifYoklamaModel : "Restrict"
-  OgrenciModel ||--o{ ServisYoklamaModel : "Restrict"
-  OgrenciModel ||--o{ SmsGonderimGecmisiModel : "SetNull"
-  KullaniciModel ||--o{ RandevuModel : "Veli/Ogretmen (Restrict)"
-  OgrenciModel ||--o{ RandevuModel : "Restrict"
-  RandevuModel ||--o{ BildirimModel : "Restrict"
-  KullaniciModel ||--o{ BildirimModel : "Alici (Restrict)"
-  KullaniciModel ||--o{ DuyuruModel : "Olusturan (Restrict)"
-  DuyuruModel ||--o{ DuyuruOkumaModel : "Restrict"
-  KullaniciModel ||--o{ DuyuruOkumaModel : "Restrict"
-  CihazModel ||--o{ OgrenciDetayModel : "Restrict"
-  CihazModel ||--o{ ZiyaretciModel : "SetNull"
-  KullaniciModel ||--o{ ZiyaretciModel : "SetNull"
-  MenuOgeModel ||--o{ MenuOgeModel : "Self (Restrict)"
+    Kullanici ||--o| VeliProfil : "1:1 (PK=FK)"
+    Kullanici ||--o| ServisProfil : "1:1 (PK=FK)"
+    Kullanici ||--o| OgretmenProfil : "1:1 (PK=FK)"
+    Kullanici ||--o{ Ogrenci : "VeliId (RESTRICT)"
+    Kullanici ||--o{ Ogrenci : "OgretmenId (RESTRICT)"
+    Kullanici ||--o{ Ogrenci : "ServisId (RESTRICT)"
+    Birim ||--o{ Ogrenci : "BirimId (RESTRICT)"
+    Birim ||--o{ OgretmenProfil : "BirimId (SET NULL)"
+
+    Ogrenci ||--o{ OgrenciDetay : ""
+    Ogrenci ||--o{ KitapDetay : ""
+    Ogrenci ||--o{ OgrenciAidat : ""
+    Ogrenci ||--o{ OgrenciYemek : ""
+    Ogrenci ||--o{ OgrenciYemekTarife : ""
+    Ogrenci ||--o{ OgrenciYemekOdeme : ""
+    Ogrenci ||--o{ SinifYoklama : ""
+    Ogrenci ||--o{ ServisYoklama : ""
+    OgrenciAidat ||--o{ OgrenciAidatOdeme : ""
+
+    Kitap ||--o{ KitapDetay : ""
+    Cihaz ||--o{ OgrenciDetay : "SET NULL"
+    Cihaz ||--o{ Ziyaretci : "SET NULL"
+
+    Kullanici }o--o{ MenuOge : "KullaniciMenuModel (N:N)"
+    MenuOge ||--o{ MenuOge : "AnaMenuId (self-ref)"
+
+    Kullanici ||--o{ Randevu : "OgretmenKullaniciId"
+    Kullanici ||--o{ Randevu : "VeliKullaniciId"
+    Randevu ||--o{ Bildirim : "RandevuId"
+    Kullanici ||--o{ Bildirim : "AliciKullaniciId"
+    Kullanici ||--o{ Duyuru : "OlusturanKullaniciId"
+    Duyuru ||--o{ DuyuruOkuma : ""
+    Kullanici ||--o{ BildirimCihazi : "CASCADE"
 ```
-
-### 2.2 İlişki Tablosu (Tüm FK'lar)
-
-| Kaynak | Hedef | FK | OnDelete | Required | Açıklama |
-|---|---|---|---|---|---|
-| OgrenciModel | KullaniciModel | OgretmenId | Restrict | false | Sınıf öğretmeni |
-| OgrenciModel | KullaniciModel | VeliId | Restrict | false | Veli rolündeki kullanıcı |
-| OgrenciModel | KullaniciModel | ServisId | Restrict | false | Servis rolündeki kullanıcı |
-| OgrenciModel | BirimModel | BirimId | Restrict | false | Sınıf/birim |
-| OgrenciDetayModel | OgrenciModel | OgrenciId | Restrict | true | Geçiş kaydı sahibi |
-| OgrenciDetayModel | CihazModel | CihazId | Restrict | false | Hangi okuyucu |
-| OgrenciAidatModel | OgrenciModel | OgrenciId | Restrict | true | — |
-| OgrenciAidatOdemeModel | OgrenciAidatModel | OgrenciAidatId | Restrict | true | — |
-| OgrenciYemekModel | OgrenciModel | OgrenciId | Restrict | true | — |
-| OgrenciYemekTarifeModel | OgrenciModel | OgrenciId | Restrict | true | — |
-| OgrenciYemekOdemeModel | OgrenciModel | OgrenciId | Restrict | true | — |
-| **VeliProfilModel** | **KullaniciModel** | **KullaniciId (PK=FK)** | **Cascade** | **true** | **1:1** |
-| **OgretmenProfilModel** | **KullaniciModel** | **KullaniciId (PK=FK)** | **Cascade** | **true** | **1:1** |
-| OgretmenProfilModel | BirimModel | BirimId | SetNull | false | Branş/birim |
-| **ServisProfilModel** | **KullaniciModel** | **KullaniciId (PK=FK)** | **Cascade** | **true** | **1:1** |
-| KitapDetayModel | OgrenciModel | OgrenciId | Restrict | true | — |
-| KitapDetayModel | KitapModel | KitapId | Restrict | true | — |
-| ZiyaretciModel | KullaniciModel | KullaniciId | SetNull | false | (opsiyonel) |
-| ZiyaretciModel | CihazModel | CihazId | SetNull | false | Giriş kapısı |
-| SinifYoklamaModel | OgrenciModel | OgrenciId | Restrict | true | — |
-| SinifYoklamaModel | KullaniciModel | KullaniciId | Restrict | true | Yoklamayı yapan öğretmen |
-| ServisYoklamaModel | OgrenciModel | OgrenciId | Restrict | true | — |
-| ServisYoklamaModel | KullaniciModel | KullaniciId | Restrict | true | Servis kullanıcısı |
-| **MenuOgeModel** | **MenuOgeModel** | **AnaMenuId** | **Restrict** | **false** | **Self-reference** |
-| KullaniciMenuModel | KullaniciModel | KullaniciId | Cascade | — | M:N tarafı |
-| KullaniciMenuModel | MenuOgeModel | MenuOgeId | Cascade | — | M:N tarafı |
-| RandevuModel | KullaniciModel | OgretmenKullaniciId | Restrict | true | — |
-| RandevuModel | KullaniciModel | VeliKullaniciId | Restrict | true | — |
-| RandevuModel | OgrenciModel | OgrenciId | Restrict | false | — |
-| OgretmenRandevuModel | KullaniciModel | OgretmenKullaniciId | Restrict | true | — |
-| BildirimModel | KullaniciModel | AliciKullaniciId | Restrict | true | Bildirim alıcısı |
-| BildirimModel | RandevuModel | RandevuId | Restrict | false | Bildirimin tetiklendiği randevu |
-| DuyuruModel | KullaniciModel | OlusturanKullaniciId | Restrict | true | — |
-| DuyuruOkumaModel | DuyuruModel | DuyuruId | Restrict | true | — |
-| DuyuruOkumaModel | KullaniciModel | KullaniciId | Restrict | true | — |
-| SmsGonderimGecmisiModel | OgrenciModel | OgrenciId | SetNull | false | (opsiyonel) |
-
-**Self-reference:** `MenuOgeModel.AnaMenuId → MenuOgeModel.Id` (`Restrict`). `AnaMenu` parent navigation, `AltMenuler` koleksiyonu child collection. `null` AnaMenuId = root menü.
-
-**M:N:** `KullaniciMenuModel`, composite PK `(KullaniciId, MenuOgeId)`, her iki FK Cascade — kullanıcı veya menü silinince köprü kaydı düşer.
-
-### 2.3 Global Query Filter'lar
-
-`AppDbContext`'te 14 global query filter tanımlı:
-
-| # | Entity | Filter |
-|---|---|---|
-| 1 | `OgrenciModel` | `o.OgrenciDurum \|\| IncludePasifOgrenciler` |
-| 2 | `OgrenciDetayModel` | `d.Ogrenci.OgrenciDurum \|\| IncludePasifOgrenciler` |
-| 3 | `KitapDetayModel` | `k.Ogrenci.OgrenciDurum \|\| IncludePasifOgrenciler` |
-| 4 | `OgrenciYemekModel` | `y.Ogrenci.OgrenciDurum \|\| IncludePasifOgrenciler` |
-| 5 | `OgrenciYemekTarifeModel` | `t.Ogrenci.OgrenciDurum \|\| IncludePasifOgrenciler` |
-| 6 | `OgrenciYemekOdemeModel` | `p.AktifMi && (p.Ogrenci.OgrenciDurum \|\| IncludePasifOgrenciler)` |
-| 7 | `OgrenciAidatModel` | `a.Ogrenci.OgrenciDurum \|\| IncludePasifOgrenciler` |
-| 8 | `OgrenciAidatOdemeModel` | `x.AktifMi && (x.OgrenciAidat.Ogrenci.OgrenciDurum \|\| IncludePasifOgrenciler)` |
-| 9 | `SinifYoklamaModel` | `sy.Ogrenci.OgrenciDurum \|\| IncludePasifOgrenciler` |
-| 10 | `ServisYoklamaModel` | `sy.Ogrenci.OgrenciDurum \|\| IncludePasifOgrenciler` |
-| 11 | `RandevuModel` | `!r.IsDeleted` |
-| 12 | `OgretmenRandevuModel` | `!m.IsDeleted` |
-| 13 | `BildirimModel` | `!b.IsDeleted` |
-| 14 | `DuyuruModel` | `!d.IsDeleted` |
-
-**`IncludePasifOgrenciler` flag (`AppDbContext` üzerinde `bool`, default `false`):** Pasif öğrenci raporu çekilecekse context oluşturduktan sonra `ctx.IncludePasifOgrenciler = true` set edilir; tüm öğrenci-türevi tabloların filter'ı eş zamanlı bypass olur.
-
-**Soft delete entity'leri** (`RandevuModel`, `OgretmenRandevuModel`, `BildirimModel`, `DuyuruModel`): CLAUDE.md'ye göre `Remove()` yasak; `IsDeleted = true` ile silinmeli.
-
-### 2.4 Index Listesi
-
-**Unique (8 adet):**
-
-- `KullaniciModel.KullaniciAdi` → `UX_Kullanicilar_KullaniciAdi`
-- `OgrenciModel.OgrenciNo` → `UX_Ogrenciler_OgrenciNo`
-- `OgrenciModel.OgrenciKartNo` filtered (`IS NOT NULL`) → `UX_Ogrenciler_OgrenciKartNo`
-- `OgrenciAidatModel (OgrenciId, BaslangicYil)`
-- `OgrenciAidatTarifeModel.BaslangicYil`
-- `OgrenciYemekModel (OgrenciId, Yil, Ay)`
-- `OgrenciYemekTarifeModel (OgrenciId, Yil)`
-- `DuyuruOkumaModel (DuyuruId, KullaniciId)` → `IX_DuyuruOkumalar_Duyuru_Kullanici_Unique`
-- `CihazModel.CihazKodu`, `CihazModel.CihazAdi`
-
-**Performans (composite/normal):**
-
-- `OgrenciModel.BirimId`
-- `OgrenciDetayModel (OgrenciId, IstasyonTipi)`, `OgrenciGTarih`, `OgrenciCTarih`
-- `OgrenciAidatOdemeModel (OgrenciAidatId, OdemeTarihi)`
-- `SinifYoklamaModel (OgrenciId, OlusturulmaTarihi)`
-- `ServisYoklamaModel (KullaniciId, OgrenciId, Periyot, OlusturulmaTarihi)`
-- `MenuOgeModel (AnaMenuId, Sirala)`
-- `RandevuModel.RandevuTarihi` → `IX_Randevular_Tarih`
-- `BildirimModel (AliciKullaniciId, Okundu)` → `IX_Bildirimler_Alici_Okundu`
-- `DuyuruModel.OlusturulmaTarihi`, `DuyuruModel.OlusturanKullaniciId`
-- `DuyuruOkumaModel.KullaniciId`
-- `SmsGonderimGecmisiModel (OgrenciId, GonderimZamani)`, `(Tip, GonderimZamani)`
-- `KullaniciModel.Rol`
-- `CihazModel.IstasyonTipi`
-- `OgrenciYemekOdemeModel (OgrenciId, Yil, Ay)` (non-unique)
-
-### 2.5 Check Constraint'ler
-
-| Entity | İsim | Koşul |
-|---|---|---|
-| `OgrenciAidatModel` | `CK_Aidat_BaslangicYil` | `[BaslangicYil] BETWEEN 2000 AND 2100` |
-| `OgrenciAidatModel` | `CK_Aidat_Pozitif` | `[Borc] >= 0 AND [Odenen] >= 0` |
-| `OgrenciAidatTarifeModel` | `CK_Tarife_BaslangicYil` | `[BaslangicYil] BETWEEN 2000 AND 2100` |
-| `OgrenciAidatTarifeModel` | `CK_Tarife_Tutar` | `[Tutar] >= 0` |
-| `OgrenciAidatOdemeModel` | `CK_AidatOdeme_Tutar_NonNegative` | `[Tutar] >= 0` |
-
-### 2.6 Seed Data
-
-`OnModelCreating` → `MenuOgeModel.HasData(...)` ile **34 menü** (Id 1–34) seed'lenmiş. Yeni ekleme yapılırken Id 35'ten başlanmalı (CLAUDE.md uyarısı).
 
 ---
 
 ## 3. DTO ↔ Entity Eşleşmeleri
 
-### 3.1 API İstek DTO'ları (`OgrenciBilgiSistemi.Api/Dtos/`)
+### 3a. MVC ViewModels (OgrenciBilgiSistemi/ViewModels/ — 46 dosya)
 
-| DTO | Tip | Endpoint | Kaynak Entity | Notlar |
-|---|---|---|---|---|
-| `GirisIstegiDto` | record | POST `/api/kimlik-dogrulama/login` | `Kullanicilar` | `(KullaniciAdi, Sifre, OkulKodu)` — anonim |
-| `TokenYenilemeIstegiDto` | record | POST `/api/kimlik-dogrulama/refresh` | (in-memory `RefreshToken` kaydı) | anonim |
-| `SifreDegistirIstegiDto` | class | POST `/api/kimlik-dogrulama/sifre-degistir` | `Kullanicilar` | yetkili |
-| `OgrenciKaydetDto` | class | POST `/api/ogrenciler`, PUT `/api/ogrenciler/{id}` | `Ogrenciler` | AdminOnly |
-| `ServisYoklamaKaydetDto` | class | POST `/api/servisler/yoklama-kaydet` | `ServisYoklamalar` | nested `List<YoklamaKayitOgesiDto>` |
-| `TopluYoklamaGuncelleDto` | class | POST `/api/ogrenciler/attendance/save-bulk` | `SinifYoklamalar` | `(SinifId, DersNumarasi 1-8, Kayitlar)` |
-| `YoklamaKayitOgesiDto` | class | (nested) | yoklama kayıt kalemi | `(OgrenciId, DurumId)` |
-| `RandevuOlusturDto` | class | POST `/api/randevular` | `Randevular` | — |
-| `OgretmenRandevuEkleDto` | class | POST `/api/ogretmen-randevu` | `OgretmenRandevular` | string saatleri TimeSpan'a parse eder |
-| `DuyuruOlusturDto` | class | POST `/api/duyurular` | `Duyurular` | OgretmenOnly |
+**Pattern 1 — FormVm (çift yönlü dönüşüm)**
 
-### 3.2 API Response Model'leri (`OgrenciBilgiSistemi.Api/Models/`)
-
-| Response Model | Endpoint(ler) | Kaynak Tablo(lar) | Açıklama |
+| ViewModel | Entity | Dönüşüm Metotları | Eksik / Farklı Alanlar |
 |---|---|---|---|
-| `OgrenciModel` | `/api/ogrenciler/benim`, `/tumu`, `/class/{sinifId}`, `/{id}` | `Ogrenciler` ⨝ `Birimler` | 12 alan, `SinifAdi` inline |
-| `OgrenciDetayDto` | `/api/ogrenciler/{id}/details` | Ogrenci + Veli + Birim + Servis (raw SQL JOIN) | tüm string default `"-"`/`"Bilinmiyor"` |
-| `SinifYoklamaOzetModel` | `/api/ogrenciler/sinif-yoklama/{sinifId}` | `Ogrenciler` ⨝ `SinifYoklamalar` ⨝ `Kullanicilar` | 8x ders nullable |
-| `RandevuModel` (Api) | `/api/randevular/benim`, `/{id}` | `Randevular` + 3 join + `OgretmenProfiller`/`VeliProfiller`/`Ogrenciler` | `DurumAdi` enum→string |
-| `DuyuruModel` (Api) | `/api/duyurular/benim`, `/{id}` | `Duyurular` ⨝ `Kullanicilar` | `OlusturanAdSoyad` |
-| `BildirimModel` (Api) | `/api/bildirimler` | `Bildirimler` | `Tur:int`, `RandevuId?` |
-| `BirimModel` (Api) | (yardımcı) | `Birimler` | — |
-| `BirimOgrenciSayisiModel` | `/api/siniflar/all-with-count` | `Birimler` + `COUNT(Ogrenciler)` | nested `BirimModel` + `OgrenciSayisi` |
-| `ServisProfilModel` (Api) | `/api/servisler/{servisId}` | `ServisProfiller` | — |
-| `VeliProfilModel` (Api) | (`VeliListeService` üzerinden) | `VeliProfiller` | enum `Yakinlik` |
-| `VeliListeModel` | (yardımcı) | `Kullanicilar` ⨝ `VeliProfiller` | — |
-| `VeliDetayModel` | (yardımcı) | `Kullanicilar` ⨝ `VeliProfiller` ⨝ `Ogrenciler` | nested `List<VeliDetayOgrenciModel>` |
-| `OgretmenListeModel` | (yardımcı) | `Kullanicilar` | `(KullaniciId, KullaniciAdi)` |
-| `OgretmenDetayModel` | (yardımcı) | `Kullanicilar` ⨝ `OgretmenProfiller` ⨝ `Birimler` | — |
-| `OgretmenRandevuTakvimModel` | `/api/ogretmen-randevu/benim` | `OgretmenRandevular` | `TimeSpan → "hh:mm"` |
-| `RandevuSlotModel` (Api) | `/api/ogretmen-randevu/ogretmen/{id}/slotlar` | `OgretmenRandevular` | — |
-| `OkulOzetModel` | `/api/yonetici/ozet` | çoklu COUNT + JOIN | dashboard |
-| `UygulamaVersiyonBilgi` | `/api/uygulama-versiyon` | konfigürasyon | — |
-| `KullaniciModel` (Api) | login response | `Kullanicilar` + profil kontrolü | `VeliProfilVar`, `ServisProfilVar` |
-| `SinifYoklamaDurumModel` | (statik mapping) | — | `(DurumId, DurumAdi)` |
+| `BirimFormVm` | `BirimModel` | `FromModel()` / `ToModel()` | FormAction, SubmitText (UI-only) |
+| `KitapFormVm` | `KitapModel` | `FromModel()` / `ToModel()` | KitapGorselFile (not mapped) |
+| `KitapDetayFormVm` | `KitapDetayModel` | `FromModel()` / `ToModel()` | Kitaplar, Ogrenciler (SelectList) |
+| `CihazFormVm` | `CihazModel` | `FromModel()` / `ToModel()` + `IValidatableObject` | ShowGuid, GuidStr (UI helper) |
+| `OgretmenFormVm` | `OgretmenProfilModel` + `KullaniciModel` | `FromModel()` / `ToProfilModel()` / `ToEkleVm()` | Sifre (input only, hash'lenmez burada) |
+| `ServisFormVm` | `ServisProfilModel` + `KullaniciModel` | `FromModel()` / `ToProfilModel()` / `ToEkleVm()` | — |
+| `VeliFormVm` | `VeliProfilModel` + `KullaniciModel` | `FromModel()` / `ToProfilModel()` / `ToEkleVm()` | — |
+| `KullaniciFormVm` | `KullaniciModel` + 3 profil | `FromModel()` / `ToModel()` | Composite: rol bazlı alanlar koşullu |
+| `OgretmenRandevuFormVm` | `OgretmenRandevuModel` | `FromModel()` / `ToModel()` | Ogretmenler (SelectList) |
+| `DuyuruDetayVm` | `DuyuruModel` | `static FromModel()` | OlusturanAdi (nav prop flatten) |
 
-### 3.3 Endpoint → DTO Haritası (Özet)
+**Pattern 2 — IndexVm (pagination wrapper)**
+
+| ViewModel | İçerdiği Tip | Entity / DTO |
+|---|---|---|
+| `OgrenciListeVm` | `SayfalanmisListeModel<OgrenciModel>` | OgrenciModel doğrudan |
+| `AidatRaporVm` | `SayfalanmisListeModel<AidatRaporDto>` | projection DTO |
+| `YemekhaneIndexVm` | `SayfalanmisListeModel<YemekhaneIndexSatirDto>` | projection DTO |
+| `OgrenciVeliRaporVm` | `SayfalanmisListeModel<OgrenciVeliRaporDto>` | projection DTO |
+| `ZiyaretciRaporVm` | `List<ZiyaretciRaporDto>` | projection DTO |
+| `RandevuListeVm` | `SayfalanmisListeModel<RandevuModel>` | entity doğrudan |
+
+### 3b. API DTOs (OgrenciBilgiSistemi.Api/Dtos/ — 16 dosya)
+
+**Input (İstek) DTOs**
+
+| DTO | Bağlı Entity | Notlar |
+|---|---|---|
+| `GirisIstegiDto` | `KullaniciModel` | `OkulKodu` field var (MVC versiyonunda yok — **ad çakışması**) |
+| `SifreDegistirIstegiDto` | `KullaniciModel` | Sadece `YeniSifre` |
+| `TokenYenilemeIstegiDto` | — (record) | RefreshToken string |
+| `OgrenciKaydetDto` | `OgrenciModel` | `OgrenciGorsel` base64 string (entity'de path) |
+| `RandevuOlusturDto` | `RandevuModel` | `KarsiTarafKullaniciId` (veli ya da öğretmen) |
+| `OgretmenRandevuEkleDto` | `OgretmenRandevuModel` | — |
+| `DuyuruOlusturDto` | `DuyuruModel` | — |
+| `TopluYoklamaGuncelleDto` | `SinifYoklamaModel` | `SinifId` + `DersNumarasi` + `List<YoklamaKayitOgesiDto>` |
+| `ServisYoklamaKaydetDto` | `ServisYoklamaModel` | `Periyot` + `List<YoklamaKayitOgesiDto>` |
+| `CihazKayitIstegiDto` | `BildirimCihaziModel` | — |
+| `CihazSilIstegiDto` | `BildirimCihaziModel` | Sadece FcmToken |
+| `CihazTokenYenileIstegiDto` | `BildirimCihaziModel` | EskiToken + YeniToken |
+| `TestPushIstegiDto` | — | Push test (yönetici) |
+
+**Output (Yanıt) DTOs**
+
+| DTO | Bağlı Entity | Eksik / Gizlenen Alanlar |
+|---|---|---|
+| `OgrenciDetayDto` | `OgrenciModel` + `VeliProfilModel` + `OgretmenProfilModel` + `ServisProfilModel` | `VeliId`, `ServisId` alanları var ama mobil `OgrenciDetay` modelinde **yok** |
+| `ServisYoklamaGecmisDto` | `ServisYoklamaModel` | OgrenciId, Periyot, DurumId, Tarih |
+
+### 3c. Shared DTOs + Mobil Models
+
+**Shared DTOs (OgrenciBilgiSistemi.Shared/Dtos/)**
+
+| DTO | Kullanım Yeri | Entity |
+|---|---|---|
+| `GecisKayitDto` | API → Mobil | `OgrenciDetayModel` projection |
+| `SinifYoklamaDto` | API → Mobil | `SinifYoklamaModel` mirror; `DersGetir(int)` metodu shared |
+
+**Mobil Models (OgrenciBilgiSistemi.Mobil/Models/) — API mirror katmanı**
+
+| Mobil Model | Karşılığı | Fark |
+|---|---|---|
+| `OgrenciDetay` | `OgrenciDetayDto` (API) | `VeliId`, `ServisId` eksik |
+| `GecisKayit` | `GecisKayitDto` (Shared) | `[JsonPropertyName]` ile API field adları eşleniyor (`ogrenciGTarih` → `GirisTarihi`) |
+| `SinifYoklama` | `SinifYoklamaDto` (Shared) | Birebir mirror + `DersGetir()` |
+| `Duyuru` | `DuyuruModel` (MVC) | Mobil'e özel `TarihMetni` computed prop |
+| `Bildirim` | `BildirimModel` (MVC) | Mobil'e özel `TarihMetni` computed prop |
+| `Randevu` | `RandevuModel` (MVC) | Flatten: `OgretmenAdSoyad`, `VeliAdSoyad` navigation flatten |
+
+### 3d. Tespit Edilen Tutarsızlıklar
+
+| # | Tutarsızlık | Konum | Risk |
+|---|---|---|---|
+| T1 | `GirisIstegiDto` — MVC'de `Okullar (List<OkulBilgiAyari>)`, API'de `OkulKodu (string)` — aynı ad, farklı contract | MVC/Dtos vs Api/Dtos | Yüksek — refactor sırasında karışıklık |
+| T2 | `OgrenciDetayDto.VeliId` ve `ServisId` var, `Mobil/Models/OgrenciDetay` modelinde yok | Api/Dtos vs Mobil/Models | Orta — mobil bu alanları kullanamıyor |
+| T3 | `OgrenciYemekTarifeModel` öğrenci bazlı (OgrenciId FK), ancak `OgrenciAidatTarifeModel` global (OgrenciId yok) — iki farklı tarife modeli | MVC/Models | Orta — raporlama mantığı karışık |
+| T4 | `RandevuListeVm` entity'yi doğrudan `RandevuModel` olarak taşıyor (DTO yok) | MVC/ViewModels | Düşük — katman sızıntısı |
+| T5 | `OgrenciListeVm` entity'yi doğrudan `OgrenciModel` olarak taşıyor | MVC/ViewModels | Düşük — katman sızıntısı |
+
+---
+
+## 4. Clean Architecture Analizi
+
+### 4.1 Mevcut Katman Haritası
 
 ```
-POST /api/kimlik-dogrulama/login        ← GirisIstegiDto         → { token, refreshToken, expiresIn, kullanici }
-POST /api/kimlik-dogrulama/refresh      ← TokenYenilemeIstegiDto → { token, refreshToken, expiresIn }
-GET  /api/kimlik-dogrulama/okullar                               → List<{ OkulKodu, OkulAdi }>
-POST /api/kimlik-dogrulama/sifre-degistir ← SifreDegistirIstegiDto → { mesaj }
-
-GET  /api/ogrenciler/benim                                       → List<OgrenciModel>          (rol-based)
-GET  /api/ogrenciler/tumu                                        → List<OgrenciModel>          (Ogretmen/Admin/GenelAdmin)
-GET  /api/ogrenciler/class/{sinifId}                             → List<OgrenciModel>
-GET  /api/ogrenciler/{id}                                        → OgrenciModel
-GET  /api/ogrenciler/{id}/details                                → OgrenciDetayDto
-GET  /api/ogrenciler/{id}/haftalik-yoklama?baslangic=&bitis=     → List<SinifYoklamaDto>
-GET  /api/ogrenciler/sinif-yoklama/{sinifId}?tarih=              → List<SinifYoklamaOzetModel>
-GET  /api/ogrenciler/attendance/{sinifId}/{dersNumarasi}         → Dictionary<int,int>
-POST /api/ogrenciler/attendance/save-bulk ← TopluYoklamaGuncelleDto → { message }
-POST /api/ogrenciler                       ← OgrenciKaydetDto    → { ogrenciId }   (CreatedAtAction)
-PUT  /api/ogrenciler/{id}                  ← OgrenciKaydetDto    → { message }
-DELETE /api/ogrenciler/{id}                                      → { message }
-
-GET  /api/siniflar/all-with-count                                → List<BirimOgrenciSayisiModel>
-
-GET  /api/servisler/{servisId}                                   → ServisProfilModel
-GET  /api/servisler/{servisId}/ogrenciler                        → List<OgrenciModel>
-GET  /api/servisler/{servisId}/yoklama/{periyot}                 → Dictionary<int,int>
-POST /api/servisler/yoklama-kaydet         ← ServisYoklamaKaydetDto → { message }
-
-GET  /api/gecis-kayit?baslangic=&bitis=&arama=&sinifId=&pageNumber=&pageSize= → List<GecisKayitDto> (paginated, rol-based)
-GET  /api/gecis-kayit/{ogrenciId}?baslangic=&bitis=              → List<GecisKayitDto>
-
-POST /api/randevular                       ← RandevuOlusturDto   → { randevuId }
-GET  /api/randevular/benim?sayfaNo=                              → List<RandevuModel>
-GET  /api/randevular/{id}                                        → RandevuModel
-PUT  /api/randevular/{id}/onayla                                 → { mesaj }
-PUT  /api/randevular/{id}/reddet                                 → { mesaj }
-PUT  /api/randevular/{id}/iptal                                  → { mesaj }
-GET  /api/randevular/cakisma-kontrolu?...                        → { cakismaVar, mesaj? }
-
-POST /api/ogretmen-randevu                 ← OgretmenRandevuEkleDto → { ogretmenRandevuId }
-GET  /api/ogretmen-randevu/benim                                 → List<OgretmenRandevuTakvimModel>
-DELETE /api/ogretmen-randevu/{id}                                → { mesaj }
-GET  /api/ogretmen-randevu/ogretmen/{ogretmenId}/slotlar?...     → List<RandevuSlotModel>
-
-POST /api/duyurular                        ← DuyuruOlusturDto    → { duyuruId }
-GET  /api/duyurular/benim?sayfaNo=                               → List<DuyuruModel>
-GET  /api/duyurular/{id}                                         → DuyuruModel
-PUT  /api/duyurular/{id}/okundu                                  → { mesaj }
-PUT  /api/duyurular/tumunu-okundu                                → { mesaj }
-GET  /api/duyurular/okunmamis-sayisi                             → { sayi }
-
-GET  /api/bildirimler?sayfaNo=                                   → List<BildirimModel>
-GET  /api/bildirimler/okunmamis-sayisi                           → { sayi }
-PUT  /api/bildirimler/{id}/okundu                                → { mesaj }
-PUT  /api/bildirimler/tumunu-okundu                              → { mesaj }
+┌─────────────────────────────────────────────────────────────┐
+│  Presentation                                               │
+│  MVC Controllers+Views │ API Controllers │ Mobil Pages+VM  │
+├─────────────────────────────────────────────────────────────┤
+│  Application (Service katmanı)                              │
+│  MVC: 25+ *Service (interface'li)                           │
+│  API: 17 *Service (interface'siz ❌)                        │
+│  Mobil: 14 HTTP Service (Singleton)                         │
+├─────────────────────────────────────────────────────────────┤
+│  Infrastructure                                             │
+│  MVC: AppDbContext (EF Core)   │ API: Raw SqlClient         │
+│  Sms (ilksms.com HttpClient)   │ Push (FCM)                 │
+│  ZKTeco COM (Singleton)        │ LocalFileStorage           │
+├─────────────────────────────────────────────────────────────┤
+│  Domain ← MEVCUT DURUMDA YOK (ayrı proje olarak)           │
+│  Entity'ler MVC projesinin Models/ klasöründe               │
+│  Enum'lar Shared projesinde                                 │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-**JWT claim'leri:** `sub`, `unique_name`, `jti`, `kullaniciId`, `rol` (`"Admin"`/`"Ogretmen"`/`"Servis"`/`"Veli"`/`"GenelAdmin"`), `okulKodu`, ek olarak rol bazlı `servisId` veya `veliId`. Lifetime 30 dk.
+### 4.2 Bağımlılık Grafiği (Mevcut)
 
-### 3.4 Mobil Model ↔ API DTO Eşleşmesi
+```
+MVC (x86)  ──────────────────────────────► Shared
+    │                                         ▲
+    ├── AppDbContext (EF Core)                 │
+    ├── 25+ Service (DbContext inject)         │
+    ├── 5 BackgroundService                    │
+    ├── ZKTecoService (Singleton COM)          │
+    └── KartOkuHub (SignalR)                   │
+                                               │
+API (x86)  ──────────────────────────────► Shared
+    │
+    ├── 17 Service (raw SqlClient inject, interface yok)
+    ├── 1 BackgroundService (SMS retry)
+    └── RefreshTokenService (in-memory Singleton)
 
-`OgrenciBilgiSistemi.Mobil/Models/` altında 24 model.
+Mobil  ───────────────────────────────────► Shared
+    └── 14 Service (HTTP → API)
 
-| Mobil Model | API Karşılığı | MVC Entity | Eşleşme | Mobil-Only Alan(lar) |
+Sms ◄──── MVC & API (bağımsız, ilksms.com)
+Push ◄─── MVC & API (bağımsız, FCM)
+```
+
+### 4.3 Tespit Edilen Clean Architecture İhlalleri
+
+| # | İhlal | Açıklama | Ağırlık |
+|---|---|---|---|
+| CA1 | **Entity'ler Presentation projesinde** | `OgrenciBilgiSistemi/Models/` → MVC projesinin içinde. Domain katmanı ayrı proje değil. | Yüksek |
+| CA2 | **API servislerinde interface yok** | 17 API servisi doğrudan somut sınıf; DI container'a kayıtlı ama test edilemez, mock'lanamaz. | Yüksek |
+| CA3 | **Repository/Unit of Work yok** | 25+ MVC servisi doğrudan `AppDbContext` inject alıyor. Veri erişim mantığı servis katmanıyla iç içe. | Yüksek |
+| CA4 | **TenantBaglami her serviste tekrar** | Tüm servisler `TenantBaglami` bağımlılığı taşıyor (connection string için). Repository pattern bunu gizleyebilirdi. | Orta |
+| CA5 | **Domain validation DB'de** | Check constraint'ler SQL'de, domain model'de değil. Uygulama dışında doğrulama yok. | Orta |
+| CA6 | **BackgroundService'ler DB'ye doğrudan müdahale** | Hosted service'ler kendi `IServiceScope` açarak DbContext/SqlClient kullanıyor. | Orta |
+| CA7 | **Mobil Models = API response mirror** | `Mobil/Models/` kendi entity katmanı gibi görünüyor ama aslında deserialize şablonu. Ayrı bir Shared API contract paketi yok. | Orta |
+
+### 4.4 Doğru Katmanda Olan Yapılar
+
+- `Shared` projesi: Enums, TenantBaglami, OkulYapilandirmaServisi → **doğru yerde**
+- `Sms` projesi: Bağımsız, arayüzü `ISmsGonderici` → **doğru yerde**
+- `Push` projesi: Bağımsız, arayüzü `IPushBildirimGonderici` → **doğru yerde**
+- MVC service interface'leri (`I*Service`) → **doğru pattern**, API'de eksik
+- `AppDbContext` global query filter'lar → **EF Core best practice uyumlu**
+
+---
+
+## 5. Riskler
+
+| # | Risk | Kategori | Ağırlık | Etkilenen Yer |
 |---|---|---|---|---|
-| `Kullanici` | `KullaniciModel` (Api) | `KullaniciModel` | tam | — |
-| `Ogrenci` | `OgrenciModel` (Api) | `OgrenciModel` | %95 | `SinifAdi` (zaten API'de de var) |
-| `OgrenciDetay` | `OgrenciDetayDto` | `OgrenciModel` + profiller | tam | UI default'ları |
-| `Veli` | (kısmi DTO) | `KullaniciModel`+`VeliProfilModel` | minimum | — |
-| `VeliDetay` | `VeliDetayModel` | `KullaniciModel`+`VeliProfilModel` | tam | `YakinlikMetni` (computed) |
-| `VeliProfil` | `VeliProfilModel` (Api) | `VeliProfilModel` | tam | — |
-| `Ogretmen` | `OgretmenListeModel` | `OgretmenProfilModel` | tam | — |
-| `OgretmenBilgi` | (yok) | `KullaniciModel` minimum | — | — |
-| `OgretmenDetay` | `OgretmenDetayModel` | `OgretmenProfilModel`+`Birim` | tam | — |
-| `Servis` | (kısmi) | `ServisProfilModel` | tam | — |
-| `Birim` | `BirimModel` (Api) | `BirimModel` | tam | — |
-| `OgrenciGrubu` | — | — | mobil-only | XAML CollectionView grouping |
-| `Randevu` | `RandevuModel` (Api) | `RandevuModel` | tam | `DurumAdi:string` |
-| `RandevuSlot` | `RandevuSlotModel` (Api) | `OgretmenRandevuModel` | tam | `GosterimMetni` (computed) |
-| `OgretmenRandevu` | `OgretmenRandevuTakvimModel` | `OgretmenRandevuModel` | tam | `TarihMetni` (computed) |
-| `SinifYoklama` | `SinifYoklamaDto` (Shared) | `SinifYoklamaModel` | tam | `DersGetir()` helper |
-| `SinifYoklamaDurum` | `SinifYoklamaDurumModel` (Api) | (statik) | **`JsonPropertyName` mapping** | `durumAd` ↔ `DurumAd` |
-| `SinifYoklamaOzet` | — | — | mobil-only | UI binding (renkler, satır metni) |
-| `Bildirim` | `BildirimModel` (Api) | `BildirimModel` | tam | `TarihMetni` |
-| `Duyuru` | `DuyuruModel` (Api) | `DuyuruModel` | tam | `Hedef:int` (enum mobilde tekrar tanımlı) |
-| `GecisKayit` | `GecisKayitDto` (Shared) | `OgrenciDetayModel` | **`JsonPropertyName` mapping** | `ogrenciDetayId↔Id`, `ogrenciGTarih↔GirisTarihi`, `ogrenciCTarih↔CikisTarihi`, `ogrenciGecisTipi↔GecisTipi` |
-| `OkulBilgi` | — | — | mobil-only | `OkulKodu`, `ApiUrl` (dinamik endpoint) |
-| `OkulOzet` | `OkulOzetModel` | (çoklu COUNT) | tam | — |
-| `UygulamaVersiyonBilgi` | `UygulamaVersiyonBilgi` | (config) | tam | — |
-
-### 3.5 Shared Tipler (`OgrenciBilgiSistemi.Shared`)
-
-**Models:**
-
-- `OkulBilgiAyari` — multi-tenant config (`OkulKodu`, `OkulAdi`, `ConnectionString`).
-
-**Services:**
-
-- `OkulYapilandirmaServisi` — `appsettings.Okullar` listesini Singleton olarak cache'ler. MVC ve API'ye `AddSingleton` ile bağlı.
-- `TenantBaglami` — Scoped HTTP context servisi. Middleware her request'te `OkulKodu`, `ConnectionString`, `OkulAdi` ile doldurur.
-
-**Dtos:**
-
-- `GecisKayitDto` — Mobil ↔ API ortak kontrat (öğrenci geçiş kaydı).
-- `SinifYoklamaDto` — 8x ders nullable + `OgrenciId`, `KullaniciId`, tarih + `DersGetir(int)` helper.
-
-**Enums (14 adet):**
-
-| Enum | Değerler |
-|---|---|
-| `KullaniciRolu` | Admin(1), Ogretmen(2), Servis(3), Veli(4), GenelAdmin(5) |
-| `OglenCikisDurumu` | Evet(0), Hayir(1) |
-| `YoklamaDurumu` | Geldi(1), Gelmedi(2), GecGeldi(3), Izinli(4), Raporlu(5), Nobetci(6), Gorevli(7) |
-| `RandevuDurumu` | Beklemede(0), Onaylandi(1), Reddedildi(2), IptalEdildi(3), Tamamlandi(4) |
-| `BildirimTuru` | RandevuOlusturuldu(1), RandevuOnaylandi(2), RandevuReddedildi(3), RandevuIptalEdildi(4), RandevuHatirlatma(5), DuyuruYayinlandi(6) |
-| `DuyuruHedefi` | OgretmenKendiOgrencileri(1), TumVeliler(2) |
-| `YakinlikTipi` | Anne(1), Baba(2), Kardes(3), Dede(4), Diger(5) |
-| `DonanimTipi` | UsbRfid(1), ZKTeco(2), QrOkuyucu(3), Diger(9) — `byte` |
-| `IstasyonTipi` | AnaKapi(10), Yemekhane(20) — `short` |
-| `RaporTipi` | Tumu(0), AnaKapiGecisleri(1), YemekhaneGecisleri(2), SinifYoklamasi(3), ServisYoklamasi(4) — `byte` |
-| `BirimFiltre` | Tum(0), Aktif(1), Pasif(2) |
-| `OgrenciFiltre` | Tum(0), Aktif(1), Pasif(2) |
-| `OgretmenFiltre` | Tum(0), Aktif(1), Pasif(2) |
-| `AidatDurumu` | Evet(0), Muaf(1) |
-| `GunEnum` | Pazartesi(1)…Pazar(7) |
-
-**Constants:**
-
-- `YoklamaRenkleri` — `YoklamaDurumu → hex` (mobil) ve `YoklamaDurumu → CSS class` (MVC) çevirici.
-
-**Helpers:**
-
-- `HaftaHesaplayici` — Pazartesi bulma, hafta aralığı; randevu scheduling.
-
-### 3.6 MVC ViewModel Kataloğu (27 adet)
-
-| ViewModel | Amaç | Ekran/Rapor |
-|---|---|---|
-| `AidatRaporVm` | Filtreleme + sayfalama | Aidat raporu |
-| `KartOkumaVm` | Dashboard sayaçları | Kart okuma dashboard |
-| `OgrenciVeliRaporVm` | Liste raporu | Öğrenci-veli rapor |
-| `YemekhaneOzetVm` | Aylık ödeme özeti | Öğrenci yemekhane detay |
-| `ZiyaretciRaporVm` | Tarih range filter | Ziyaretçi rapor |
-| `OgrenciGirisCikisVm` | Tek hareket kaydı | Öğrenci hareket detayı |
-| `OgrenciListeVm` | Liste + filter + birim DD | Öğrenci yönetimi |
-| `VeliDetayVm` | Profil + öğrenciler | Veli detay |
-| `VeliEkleVm` | Form (Kullanici + Profil) | Veli ekle/düzenle |
-| `ServisDetayVm` | Profil + öğrenciler | Servis detay |
-| `ServisEkleVm` | Form | Servis ekle/düzenle |
-| `OgretmenEkleVm` | Form | Öğretmen ekle/düzenle |
-| `OgrenciVeliFormVm` | Form + bu ay yemekhane state | Öğrenci ekle/düzenle |
-| `KullaniciMenuAtamaVm` | Multi-select | Kullanıcı menü yetkileri |
-| `MenuOgeAtamaVm` | Hierarchy + checkbox | Menü seçimi |
-| `ZiyaretciDetayViewModel` | Profil + ziyaret geçmişi | Ziyaretçi detay |
-| `ZiyaretciFormViewModel` | Form | Ziyaretçi ekle/düzenle |
-| `ZiyaretciKartOkumaViewModel` | Kart okuma sonucu | Ziyaretçi giriş/çıkış |
-| `YemekhaneRaporSatirVm` | Tek satır | Yemekhane rapor |
-| `SayfalamaVm` | Pagination partial | Tüm liste sayfaları |
-
-> Diğer 7 VM (alt rapor satırları, partial wrapper'lar) ekran-spesifik.
+| R1 | **N+1 Sorgu:** `OgrenciListeVm.YemekDurumMap` her öğrenci için ayrı sorgu çekiyor olabilir | Performans | Yüksek | MVC OgrenciController / OgrenciService |
+| R2 | **Çift Cascade Delete:** `KullaniciMenuModel` hem Kullanici hem MenuOge üzerinden CASCADE — SQL Server bunu reddeder (multiple cascade paths) | Veri Bütünlüğü | Yüksek | AppDbContext Fluent API |
+| R3 | **Soft Delete Çakışması:** `DuyuruOkumaModel` global filtresi `!Duyuru.IsDeleted`'a bağlı. Duyuru soft-delete olunca `DuyuruOkuma` kayıtları da gizlenir; okuma geçmişi kaybolur. | Veri Bütünlüğü | Yüksek | AppDbContext + DuyuruService |
+| R4 | **API Servislerinde Interface Yok** | Test Edilemezlik | Yüksek | OgrenciBilgiSistemi.Api/Services/ |
+| R5 | **GirisIstegiDto Ad Çakışması** — MVC ve API'de aynı ad, farklı property seti; using direktifleri veya refactor sırasında hata riski | Karışıklık | Yüksek | MVC/Dtos/GirisIstegiDto.cs, Api/Dtos/GirisIstegiDto.cs |
+| R6 | **OgrenciKartNo Unique Index:** Null veya boş string durumu — boş string birden fazla öğrencide olabilir mi? (Filtre `IS NULL OR = ''`) | Veri Bütünlüğü | Orta | AppDbContext Fluent API |
+| R7 | **OgrenciYemekTarifeModel per-student** — Tarife öğrenciye bağlı (OgrenciId FK), ama `OgrenciAidatTarifeModel` global. İki farklı tarife yaklaşımı; yemek raporlarında karışıklık. | Domain Netliği | Orta | OgrenciYemekTarifeModel, YemekhaneService |
+| R8 | **KullaniciFormVm Composite Yapısı** — Ogretmen + Servis + Veli rollerini tek form'da yönetiyor. SRP ihlali; yeni rol eklenince büyüyecek. | Bakım | Orta | MVC/ViewModels/KullaniciFormVm |
+| R9 | **Mobil Models API'den bağımsız** — API DTO değişince mobil model manuel güncellenmeli. `GecisKayitDto` ve `SinifYoklamaDto` Shared'da ama diğerleri yok. | Kırılganlık | Orta | Mobil/Models/ |
+| R10 | **FCM Token Birikimi:** `BildirimCihaziModel` soft-delete — unique index `IsDeleted=0` üzerinde. Eski soft-deleted token'lar DB'de kalır, birikir. | Veri Temizlik | Düşük | BildirimCihaziModel, Api/Services/RawSqlBildirimTokenDeposu |
+| R11 | **Tehlikeli Cascade: Kullanici silinince VeliProfil, ServisProfil, OgretmenProfil** silinir. Bu profillere bağlı Ogrenci kayıtları varsa RESTRICT FK'ları bloklayacak. Temizlik sırası kritik. | Veri Bütünlüğü | Orta | KullaniciService, profil tabloları |
+| R12 | **RandevuModel.OgrenciId RESTRICT** — Öğrenci silinemez eğer aktif randevusu varsa. Ancak soft-delete filter'a rağmen count kontrolü yapılmalı. | Veri Bütünlüğü | Düşük | RandevuService, OgrenciService |
 
 ---
 
-## 4. Sorunlar ve Riskler
+## 6. Öneriler
 
-### 4.1 `Models/` klasöründe DbSet olmayan tipler
+### 6.1 Mimari Öneriler (Clean Architecture Geçişi)
 
-- **Tespit:** `CihazKullaniciModel`, `HataGorunumModel`, `SayfalanmisListeModel<T>` MVC `Models/` klasöründe ama tabloya map edilmemiş.
-- **Risk:** Yeni gelen geliştirici DbSet sanabilir; `dotnet ef migrations add` gibi komutlarda yanlış değerlendirme.
-- **Etki:** Düşük (derlemeyi etkilemez), ama bilişsel maliyet yüksek.
+**Öneri M1 — Domain Projesi Çıkart (CA1)**  
+*Faz: Sonraki major milestone*
 
-### 4.2 Soft delete entity'lerinde Restrict cascade
+**Neden:** Entity'ler şu an MVC projesinin `Models/` klasöründe. API bu entity'lere ulaşmak için MVC'ye bağımlı hale geliyor — Clean Architecture'da Domain bağımsız bir proje olmalı.
 
-- **Tespit:** `RandevuModel`, `BildirimModel`, `DuyuruModel`, `OgretmenRandevuModel` `IsDeleted` bayrağıyla soft-delete yapıyor. Aynı zamanda `KullaniciModel` ile FK ilişkileri **Restrict**.
-- **Risk:** Bir kullanıcıyı **hard-delete** etmek istersen FK Restrict patlayacak, çünkü soft-deleted satırlar global filter ile gizlense bile DB'de duruyor.
-- **Sonuç:** Kullanıcı silmek için ya raw SQL temizliği gerekecek ya da `KullaniciModel`'a da soft-delete eklenecek.
+**Adımlar:**
 
-### 4.3 N+1 sorgu adayları
+1. Yeni proje oluştur:
+   ```bash
+   dotnet new classlib -n OgrenciBilgiSistemi.Domain -f net10.0
+   dotnet sln add OgrenciBilgiSistemi.Domain/OgrenciBilgiSistemi.Domain.csproj
+   ```
 
-- `OgrenciModel` 13+ navigation taşır (`Birim`, `Ogretmen`, `Veli`, `Servis`, `OgrenciDetaylar`, `OgrenciAidatlar`, `OgrenciYemekler`, `OgrenciYemekOdemeleri`, `OgrenciYemekTarifeler`, `KitapDetaylar`, `SinifYoklamalar`, `ServisYoklamalar`, `Randevular`, `SmsGonderimleri`).
-- Liste sorgusunda lazy-load tetiklenirse (örn. Razor view içinde `@Model.Veli.KullaniciAdi`) N+1 olur.
-- API tarafı raw SQL kullandığı için bu tarafta risk yok; **risk MVC'de**.
-- `KullaniciMenuModel` her request'te menü çözümleme — cache yoksa N+1 değil ama her sayfa render'ında DB'ye gidiş.
+2. Taşınacak 28 entity (`OgrenciBilgiSistemi/Models/` → `OgrenciBilgiSistemi.Domain/Entities/`):
+   `KullaniciModel`, `VeliProfilModel`, `ServisProfilModel`, `OgretmenProfilModel`, `BirimModel`,
+   `OgrenciModel`, `OgrenciDetayModel`, `CihazModel`, `KitapModel`, `KitapDetayModel`,
+   `MenuOgeModel`, `KullaniciMenuModel`, `OgrenciAidatModel`, `OgrenciAidatTarifeModel`, `OgrenciAidatOdemeModel`,
+   `OgrenciYemekModel`, `OgrenciYemekTarifeModel`, `OgrenciYemekOdemeModel`,
+   `SinifYoklamaModel`, `ServisYoklamaModel`,
+   `ZiyaretciModel`, `RandevuModel`, `OgretmenRandevuModel`,
+   `BildirimModel`, `DuyuruModel`, `DuyuruOkumaModel`,
+   `SmsGonderimGecmisiModel`, `BildirimCihaziModel`
 
-### 4.4 Aynı entity için MVC ↔ API tutarsızlığı
+3. Namespace değişimi (toplu rename):
+   `OgrenciBilgiSistemi.Models` → `OgrenciBilgiSistemi.Domain.Entities`
 
-- `OgrenciDetayDto` (API) içinde `VeliAdSoyad` aslında `Kullanicilar.KullaniciAdi` sütunundan geliyor (gerçek "ad soyad" değil; kullanıcı adı). Aynı semantik MVC tarafında `VeliDetayVm`'de `KullaniciAdi` olarak doğru adlandırılmış.
-- API tarafında alan adları MVC ile birebir aynı değil — UI ekipleri çapraz kontrol yapmadan birinde "ad soyad" sanıp diğerinde "kullanıcı adı" gösterebilir.
-- `BildirimModel` (Api) `Tur:int` döner; mobil tarafında bu int'i `BildirimTuru` enum'una manuel parse etmek gerekiyor — değerler senkronize ama sözleşme zayıf.
+4. Enum kararı: `Shared` enum'ları (`KullaniciRolu`, `OgrenciFiltre` vb.) yerinde kalır — Shared tüm projelerde referans alındığı için bağımlılık yönü korunur. Domain → Shared referansı eklenir.
 
-### 4.5 Eksik unique/index adayları
+5. `ProjectReference` değişiklikleri:
+   ```xml
+   <!-- OgrenciBilgiSistemi.Domain.csproj -->
+   <ProjectReference Include="..\OgrenciBilgiSistemi.Shared\..." />
 
-| Entity | Eksik | Etki |
-|---|---|---|
-| `KullaniciModel.Telefon` | unique veya index yok | Aynı telefonla iki kullanıcı oluşturulabilir; SMS hedef belirsizliği |
-| `RandevuModel (OgretmenKullaniciId, RandevuTarihi, !IsDeleted)` | unique yok | Çakışma kontrolü endpoint içinde — yarış koşulu ikinci POST'ta çift kayıt |
-| `OgretmenRandevuModel (OgretmenKullaniciId, Tarih, BaslangicSaati)` | unique yok | Aynı slot iki kez yaratılabilir |
-| `ServisYoklamaModel (KullaniciId, OgrenciId, Periyot, OlusturulmaTarihi.Date)` | composite var ama unique değil | Aynı periyot/gün için duplicate kayıt |
-| `SinifYoklamaModel (OgrenciId, OlusturulmaTarihi.Date)` | unique değil | Aynı gün için duplicate yoklama satırı |
+   <!-- MVC ve API .csproj -->
+   <ProjectReference Include="..\OgrenciBilgiSistemi.Domain\..." />
+   ```
 
-### 4.6 Soft delete entity'leri için `Remove()` çağrısı taraması
+6. Build sırası: `Domain` → `Shared` → `Sms` / `Push` → `MVC` / `API`
 
-- Tarama deseni: `\.Remove\(.*(Randevu|Bildirim|Duyuru|OgretmenRandevu)` ve `Set<*Model>().Remove(...)`.
-- **Sonuç:** `_db.Remove(...)` veya `Set<RandevuModel>().Remove(...)` türünden çağrı **bulunamadı**. CLAUDE.md uyarısına bütün kod uyuyor.
-- Bulunan tek `Remove(...)` çağrıları: `KullaniciService.cs` içinde `KullaniciMenuler` koleksiyonundan menü kaldırma (M:N temizliği — soft delete entity'si değil), `MenuService.cs`'te `HashSet.Remove(...)` (cycle-detection algoritmasında), `RefreshTokenService.TryRemove` (in-memory dictionary), mobil tarafta `SecureStorage.Remove`. Bunların hiçbiri kuralı ihlal etmiyor.
+7. **Kritik:** `AppDbContext` ve tüm migration'lar entity'lere bağımlı — taşıma tek commit'te yapılmalı, build kırık bırakılmamalı.
 
-### 4.7 Profil PK pattern'inde uyumsuzluk
-
-- `VeliProfilModel`, `OgretmenProfilModel`, `ServisProfilModel` doğru: PK = FK = `KullaniciId`, `DatabaseGenerated.None`, OnDelete `Cascade`.
-- `ZiyaretciModel` ise farklı: kendi `ZiyaretciId` PK'sı var ve `KullaniciId` opsiyonel `SetNull` FK. "Ziyaretçi" profil değil — kayıt sırasında kullanıcıya bağlı olabilir veya olmayabilir. Pattern adı net değil; gelen biri "neden ziyaretçi de profil değil?" sorusunu sorabilir.
-
-### 4.8 JWT claim'lerinde magic string'ler
-
-- `KimlikDogrulamaController` token üretirken `"Admin"`, `"Ogretmen"`, `"Veli"`, `"Servis"`, `"GenelAdmin"` literal'lerini kullanıyor. `KullaniciRolu` enum mevcut ama claim'e `KullaniciRolu.ToString()` yerine string literal yazılıyor.
-- `[Authorize(Policy="AdminOnly")]` ve manuel `if (rol != "Ogretmen")` kontrolleri de aynı string'lere bağımlı.
-- Enum değeri yeniden adlandırılırsa claim ile policy sessizce ayrışır.
-
-### 4.9 API'de raw SQL → mapping kırılganlığı
-
-- API service'leri `await using var reader = await cmd.ExecuteReaderAsync(); reader["KullaniciAdi"]?.ToString()` kalıbını kullanıyor.
-- EF migration tarafında bir kolon adı değişirse (`KullaniciAdi → Email`), API çalışma zamanında `null` döndürür veya `InvalidCastException` patlatır. Compile-time check yok.
-- Aynı sütun adları birden fazla service'te tekrarlanmış.
-
-### 4.10 `JsonPropertyName` köprüsü breaking-change riski
-
-- Mobil `GecisKayit.cs` ve `SinifYoklamaDurum.cs` modelleri **camelCase API → PascalCase mobil** çeviriyor:
-  - `ogrenciDetayId → Id`
-  - `ogrenciGTarih → GirisTarihi`
-  - `ogrenciCTarih → CikisTarihi`
-  - `ogrenciGecisTipi → GecisTipi`
-  - `durumId → Id` / `durumAd → DurumAd`
-- API tarafı `System.Text.Json` default'larıyla yanıt üretiyor (camelCase). API'de PascalCase'e dönmek gerekirse mobil eşleşme sessizce kırılır (eski mobil sürümler hala camelCase bekliyor olur).
-
-### 4.11 `MenuOgeModel` self-reference + Restrict
-
-- Self-FK `AnaMenuId → MenuOgeModel.Id` `Restrict`. Bir ana menü silinmeye çalışılırsa altındaki menüler nedeniyle DB hatası fırlar.
-- UI bu durumu yakalayıp mesaj veriyor mu yoksa ham SQL exception'ı kullanıcıya mı gidiyor — ek doğrulama lazım.
-
-### 4.12 Decimal precision audit
-
-- `OgrenciAidatModel.Borc/Odenen`, `OgrenciAidatTarifeModel.Tutar`, `OgrenciAidatOdemeModel.Tutar`, `OgrenciYemekModel.*`, `OgrenciYemekTarifeModel.*`, `OgrenciYemekOdemeModel.*` decimal alanları için `[Precision(18,2)]` ve check `>=0` mevcut.
-- Ancak `KitapModel`, `SmsGonderimGecmisiModel` veya gelecekte eklenecek başka tutar alanlarında pattern garanti değil. Convention seti eksik (`OnModelCreating`'te global precision policy yok).
+**Doğrulama:** `dotnet build` tüm projeler için hatasız tamamlanmalı. VS'de `OgrenciBilgiSistemi.Models` namespace'ine referans kalmadığını `Grep` ile doğrula.
 
 ---
 
-## 5. Öneriler
+**Öneri M2 — API Servislerine Interface Ekle (CA2, R4)**  
+*Faz: Faz 2 — controller'lar refactor edilirken kademeli ekle*
 
-| # | Sorun | Öneri |
-|---|---|---|
-| 1 | DbSet olmayan tipler `Models/`'de | `CihazKullaniciModel` → `Dtos/Hardware/`, `HataGorunumModel` → `ViewModels/Common/`, `SayfalanmisListeModel<T>` → `Common/Pagination/`. |
-| 2 | Soft-delete + Restrict | `KullaniciModel`'a da `IsDeleted` + global filter ekle; veya `KullaniciService.SilAsync`'i raw SQL ile profil + bağımlılık temizleme yapacak şekilde standartlaştır. CLAUDE.md'de "Kullanıcı silme kuralı" başlığı ekle. |
-| 3 | N+1 | MVC liste sorgularında `AsNoTracking()` + projection (`.Select(o => new OgrenciListeVm { ... })`) kullan; `Include` zincirini view'da değil sorguda kapat. `KullaniciMenuModel` çözümlemesi için `IMemoryCache` (KullaniciId-bazlı, 5 dk TTL). |
-| 4 | İsim tutarsızlığı | `OgrenciDetayDto.VeliAdSoyad → VeliKullaniciAdi`; veya gerçek ad-soyad istiyorsa `KullaniciModel`'a `AdSoyad` kolonu ekleyip ham SQL JOIN'inde onu seç. `BildirimModel.Tur` int yerine `BildirimTuru` enum dön. |
-| 5 | Eksik index'ler | Migration ekle: `RandevuModel HasIndex (OgretmenKullaniciId, RandevuTarihi).IsUnique().HasFilter("[IsDeleted] = 0")`; `OgretmenRandevuModel HasIndex (OgretmenKullaniciId, Tarih, BaslangicSaati).IsUnique()`; `KullaniciModel.Telefon` için filter'lı unique. Yarış koşulu kapatılır. |
-| 6 | `Remove()` taraması | Kod tabanında ihlal **yok** — mevcut durumu CLAUDE.md'ye dipnot olarak ekle (regression-safety olarak). |
-| 7 | `ZiyaretciModel` semantik | Adı `ZiyaretciKaydiModel` olarak yeniden değerlendirilsin (profil değil, hareket kaydı); ya da `Ziyaretci/` klasörüne ayrı bir alt-namespace açılsın. |
-| 8 | JWT magic string | `KullaniciRolu.Admin.ToString()` ile claim üret; `[Authorize(Roles = nameof(KullaniciRolu.Admin))]` veya policy içinde `nameof(KullaniciRolu.Admin)`. Tek dosyada role-string sabitleri (`Roller.cs`) açabilir veya doğrudan enum string kullanabilir. |
-| 9 | Raw SQL kırılganlık | API service'lerinde sütun adları için sabit (`OgrenciTablosu.OgrenciNoColumn = "OgrenciNo"`) tanımla, integration test ile kolon-mevcudiyet doğrula. Orta vadede Dapper'a geçiş (raw `SqlCommand` boilerplate'i azaltır). |
-| 10 | `JsonPropertyName` köprüsü | API'yi PascalCase JSON için yapılandır (`JsonOptions.PropertyNamingPolicy = null`) — sözleşmeyi `Shared/Dtos`'a tek kaynaktan bağla. Mobil'deki `JsonPropertyName` attribute'larını sil. Bu değişiklik API versiyonlama gerektirir (eski mobil sürümler için). |
-| 11 | `MenuOgeModel` UX | Menü silme öncesi alt-menü sayısı kontrolü UI'da; backend tarafında `DbUpdateException` yakalayıp 409 + `"Bu menünün altında {n} alt menü var, önce onları silin"` mesajı dön. |
-| 12 | Decimal precision policy | `OnModelCreating`'in sonuna convention ekle: `foreach (var prop in modelBuilder.Model.GetEntityTypes().SelectMany(t => t.GetProperties()).Where(p => p.ClrType == typeof(decimal) || p.ClrType == typeof(decimal?))) prop.SetPrecision(18); prop.SetScale(2);`. Tek satırla tüm tablolar uyumlu hale gelir. |
+**Neden:** 16 API servisi somut sınıf olarak DI'ya kayıtlı. Mock/fake yapılamıyor → unit test yazılamıyor. MVC'de her servisin `I*Service` interface'i var; API'de yok.
+
+**Adımlar:**
+
+1. `OgrenciBilgiSistemi.Api/Services/Interfaces/` klasörü oluştur.
+
+2. Her controller refactor edilirken ilgili servise interface ekle (kademeli):
+   ```
+   IBildirimService        IBirimService          IDuyuruService
+   IGecisKayitService      IGirisService          IOgrenciService
+   IOgretmenListeService   IOgretmenRandevuService IRandevuService
+   IServisService          ISinifService          IVeliListeService
+   IYoneticiService        IYoklamaSmsBildirimService
+   ```
+   - `RefreshTokenService` → Singleton; `IRefreshTokenService` opsiyonel (in-memory, test ortamında swap gerekirse ekle)
+   - `RawSqlBildirimTokenDeposu` → zaten `IBildirimTokenDeposu` uygulayan var ✓
+   - `BekleyenYoklamaSmsRetryService` → `BackgroundService` subclass, interface gerekmez
+
+3. Interface içerik kuralı: **sadece controller'ların çağırdığı public method'lar** — servis-içi yardımcı method'lar interface'e girmez.
+
+4. DI kaydı değişimi (`Program.cs`):
+   ```csharp
+   // Önce:
+   services.AddScoped<OgrenciService>();
+   // Sonra:
+   services.AddScoped<IOgrenciService, OgrenciService>();
+   ```
+
+5. Controller constructor injection güncellenir: `OgrenciService` → `IOgrenciService`.
+
+6. Test pattern (örnek):
+   ```csharp
+   var mockService = new Mock<IOgrenciService>();
+   mockService.Setup(s => s.GetByIdAsync(1)).ReturnsAsync(fakeOgrenci);
+   var controller = new OgrencilerController(mockService.Object);
+   ```
+
+**Doğrulama:** `dotnet build` hatasız. `OgrenciBilgiSistemi.Api.Tests` projesinde en az 1 controller unit testi somut sınıf yerine interface kullanmalı.
 
 ---
 
-## Ek: Kapsam Notu
+**Öneri M3 — Mobil API Contract Katmanı (CA7, R9)**  
+*Faz: Faz 3*
 
-- Bu belge yalnızca **statik analiz** sonucu. Gerçek N+1 ölçümü, performans sayımı veya migration tarihçesi kapsam dışı.
-- ZKTeco entegrasyonu (COM Interop) ve SignalR Hub'ları yalnızca model/DTO açısından geçti; iş akışı ayrı belge konusu.
-- `Sms` projesindeki retry hosted service domain'e dahil değil.
+**Neden:** API DTO'su değişince mobil modeli manuel güncellemek gerekiyor. `GecisKayitDto` ve `SinifYoklamaDto` zaten Shared'da — diğer response modelleri de oraya taşınmalı.
 
-> Sonraki adım önerisi: Bu belgenin "Sorunlar" bölümünde bulunan her madde için ayrı issue açıp, **Öneriler** sütunundaki çözümleri PR planı haline getirmek. Migration gerektiren öneriler (5, 12, kısmen 2) tek paket halinde idempotent script üretip her tenant DB'sinde çalıştırılmalı (CLAUDE.md kuralı).
+**Adımlar:**
+
+1. `OgrenciBilgiSistemi.Shared/ApiContracts/` klasörü oluştur.
+
+2. Taşınacak modeller (`Mobil/Models/` → `Shared/ApiContracts/`):
+
+   | Mobil Model | Yeni Ad | Notlar |
+   |---|---|---|
+   | `OgrenciDetay.cs` | `OgrenciDetayDto.cs` | `VeliId`, `ServisId` zaten eklendi |
+   | `Duyuru.cs` | `DuyuruDto.cs` | `TarihMetni` computed prop Mobil'de kalır |
+   | `Bildirim.cs` | `BildirimDto.cs` | `TarihMetni` computed prop Mobil'de kalır |
+   | `Randevu.cs` | `RandevuDto.cs` | `OgretmenAdSoyad`, `VeliAdSoyad` flatten |
+
+   - `GecisKayitDto`, `SinifYoklamaDto` → zaten Shared'da, yerinde kalır ✓
+
+3. API controller'ları ilgili servislerden `Shared.ApiContracts.*` DTO döndürmeye başlar.
+
+4. Mobil `using` direktifleri:
+   ```csharp
+   // Önce:
+   using OgrenciBilgiSistemi.Mobil.Models;
+   // Sonra:
+   using OgrenciBilgiSistemi.Shared.ApiContracts;
+   ```
+
+5. `[JsonPropertyName]` attribute'ları (şu an `GecisKayit`'te var) aynı pattern ile Shared DTO'larına taşınır.
+
+6. Mobil'e özel computed property'ler (`TarihMetni` vb.) Mobil'de extension method veya wrapper class olarak kalır — Shared DTO'larına UI kodu girmez.
+
+**Doğrulama:** `Mobil/Models/` içinde sadece Mobil'e özgü (UI state, computed prop) sınıflar kalmalı. API endpoint'ten dönen tüm response DTO'ları Shared'da olmalı. `dotnet build` tüm projeler hatasız.
+
+### 6.2 Veri Bütünlüğü Önerileri
+
+**Öneri V1 — Çift Cascade Delete Kontrolü (R2)** ✅ *Tamamlandı 2026-06-18*
+```
+KullaniciMenuModel:
+- Kullanici tarafı: CASCADE bırak (kullanici silinince menü atamaları gitsin)
+- MenuOge tarafı: CASCADE → RESTRICT değiştir (menü silinince atamaları önce kontrol et)
+```
+SQL Server `multiple cascade paths` hatasını engeller.  
+*Değişiklik: `AppDbContext.cs` + migration `20260618000000_KullaniciMenuMenuOgeCascadeDuzelt` — DB'ye uygulandı.*
+
+**Öneri V2 — DuyuruOkuma Filter Düzelt (R3)** ✅ *Tamamlandı 2026-06-18*
+```csharp
+// Mevcut (sorunlu):
+builder.Entity<DuyuruOkumaModel>().HasQueryFilter(o => !o.Duyuru.IsDeleted);
+
+// Düzeltme: DuyuruOkuma'yı filtreden çıkar, sadece Duyuru filtrele
+// Okuma geçmişi her zaman görünür kalsın; Duyuru sorgulanınca filtre tetiklensin
+builder.Entity<DuyuruOkumaModel>().HasQueryFilter(o => true);
+```
+*Migration gerekmez — query filter kod taraflı. `AppDbContext.cs` güncellendi.*
+
+**Öneri V3 — OgrenciKartNo Boş String Kontrolü (R6)** ✅ *Tamamlandı 2026-06-18*
+```csharp
+// Düzeltme: Uygulama katmanında boş string → null normalize et
+// MVC OgrenciService.cs: NormalizeKartNo() → null döndürür (önce "" döndürüyordu)
+// API OgrenciService.cs: EkleAsync + GuncelleAsync — @kartNo parametresinden önce normalize
+var kartNo = string.IsNullOrWhiteSpace(dto.OgrenciKartNo) ? null : dto.OgrenciKartNo.Trim();
+```
+
+### 6.3 Performans Önerileri
+
+**Öneri P1 — N+1 Sorgu Düzelt (R1)** ✅ *Zaten çözülmüş*
+
+`YemekhaneService.GetBuAyDurumlariAsync` tek `WHERE OgrenciId IN (...)` sorgusuyla dictionary döndürüyor.
+`OgrencilerController.Index` bu metodu doğrudan çağırıyor — N+1 mevcut değil.
+```csharp
+// YemekhaneService.cs:166 — mevcut, doğru implementasyon:
+var list = await _ctx.OgrenciYemekler
+    .AsNoTracking()
+    .Where(x => ids.Contains(x.OgrenciId) && x.Yil == yil && x.Ay == ay)
+    .Select(x => new { x.OgrenciId, x.Aktif })
+    .ToListAsync(ct);
+return list.GroupBy(x => x.OgrenciId).ToDictionary(g => g.Key, g => g.First().Aktif);
+```
+
+### 6.4 DTO Tutarsızlığı Önerileri
+
+**Öneri D1 — GirisIstegiDto Ad Çakışması Çöz (R5, T1)** ✅ *Tamamlandı 2026-06-18*
+```
+Api/Dtos/GirisIstegiDto.cs → ApiGirisIstegiDto.cs (dosya + sınıf adı)
+KimlikDogrulamaController.cs güncellendi: GirisIstegiDto → ApiGirisIstegiDto
+```
+
+**Öneri D2 — OgrenciDetayDto Mobil Uyumu (T2)** ✅ *Tamamlandı 2026-06-18*
+```csharp
+// Mobil/Models/OgrenciDetay.cs — eklendi:
+public int? VeliId { get; set; }
+public int? ServisId { get; set; }
+```
+Bu alanlar mobil navigasyonda (örn. veli profil ekranına geçiş) kullanılabilir.
+
+**Öneri D3 — KullaniciFormVm Böl (R8)**
+
+**Neden:** Tek form Öğretmen + Servis + Veli rollerini SRP ihlali yaparak barındırıyor. Yeni rol eklenince büyüyecek.
+
+**Adımlar:**
+
+1. `KullaniciBaseFormVm.cs` — ortak alanlar:
+   ```csharp
+   public abstract class KullaniciBaseFormVm
+   {
+       public int KullaniciId { get; set; }
+       public string KullaniciAdi { get; set; } = "";
+       public string? Sifre { get; set; }           // DataType.Password
+       public string? Telefon { get; set; }
+       public bool KullaniciDurum { get; set; } = true;
+       public string FormAction { get; set; } = "Ekle";
+       public string SubmitText { get; set; } = "Kaydet";
+       public int? ReturnPage { get; set; }
+       public string? ReturnFilter { get; set; }
+   }
+   ```
+
+2. Alt sınıflar (`ViewModels/` altında):
+   - `OgretmenKullaniciFormVm : KullaniciBaseFormVm` → `OgretmenEmail`, `OgretmenBirimId`, `OgretmenGorselFile`, `Birimler (List<SelectListItem>)`
+   - `ServisKullaniciFormVm : KullaniciBaseFormVm` → `ServisPlaka`, `Servisler (List<SelectListItem>)`
+   - `VeliKullaniciFormVm : KullaniciBaseFormVm` → `VeliAdres`, `VeliMeslek`, `VeliIsYeri`, `VeliEmail`, `VeliYakinlik`
+
+3. `FromModel()` / `ToModel()` her alt sınıfa taşınır; base sınıf abstract olarak ortak alanları doldurur.
+
+4. `KullanicilarController.Ekle/Guncelle` — rol parametresine göre ilgili VM döner:
+   ```csharp
+   return rol switch {
+       KullaniciRolu.Ogretmen => View("Ekle", new OgretmenKullaniciFormVm()),
+       KullaniciRolu.Servis   => View("Ekle", new ServisKullaniciFormVm()),
+       KullaniciRolu.Veli     => View("Ekle", new VeliKullaniciFormVm()),
+       _ => BadRequest()
+   };
+   ```
+
+5. View değişimi: `Views/Kullanicilar/Ekle.cshtml` ve `Guncelle.cshtml` rol'e göre partial view render eder (`_OgretmenForm.cshtml`, `_ServisForm.cshtml`, `_VeliForm.cshtml`).
+
+**Doğrulama:** `KullaniciFormVm.cs` silinebilir hale gelmeli; controller her rol için doğru VM döndürmeli; MVC build hatasız.
+
+### 6.5 FCM Token Temizliği (R10)
+
+**Neden:** `BildirimCihaziModel` soft-delete kullanıyor. Unique index yalnızca `IsDeleted=0` satırları kapsıyor, yani eski silinmiş token'lar DB'de birikir.
+
+**Hedef SQL:**
+```sql
+DELETE FROM BildirimCihazlari 
+WHERE IsDeleted = 1 AND SonGuncelleme < DATEADD(day, -90, GETDATE())
+```
+
+**Uygulama — MVC `BackgroundServices/BildirimCihaziTemizlemeService.cs`:**
+```csharp
+public class BildirimCihaziTemizlemeService : BackgroundService
+{
+    private readonly IServiceScopeFactory _scopeFactory;
+    private readonly ILogger<BildirimCihaziTemizlemeService> _logger;
+
+    protected override async Task ExecuteAsync(CancellationToken ct)
+    {
+        while (!ct.IsCancellationRequested)
+        {
+            await Task.Delay(TimeSpan.FromDays(1), ct);
+            using var scope = _scopeFactory.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            // Tenant bağlamı olmadan global temizlik: tüm okullar tek DB'ye sahip değil.
+            // Her okul kendi DB'sinde; bu servis okulları döner.
+            var okullar = scope.ServiceProvider
+                .GetRequiredService<OkulYapilandirmaServisi>().OkulListesi();
+            foreach (var okul in okullar)
+            {
+                db.Database.SetConnectionString(okul.ConnectionString);
+                var sinir = DateTime.UtcNow.AddDays(-90);
+                var silinecek = db.BildirimCihazlari
+                    .IgnoreQueryFilters()
+                    .Where(b => b.IsDeleted && b.SonGuncelleme < sinir);
+                db.BildirimCihazlari.RemoveRange(silinecek);
+                var sayi = await db.SaveChangesAsync(ct);
+                _logger.LogInformation("FCM token temizliği [{Okul}]: {Count} kayıt silindi.", okul.Kod, sayi);
+            }
+        }
+    }
+}
+```
+
+**DI kaydı** (`Program.cs`):
+```csharp
+builder.Services.AddHostedService<BildirimCihaziTemizlemeService>();
+```
+
+**Dikkat:** `RemoveRange` burada kasıtlı kullanılıyor — bu fiziksel silme, soft-delete bypass. `BildirimCihaziModel` için hard delete bu bağlamda doğrudur.
+
+**Doğrulama:** Servis başladıktan sonra `BildirimCihazlari` tablosunda 90 günden eski `IsDeleted=1` kayıt kalmamalı.
+
+---
+
+### 6.6 Kullanici Silme Sırası (R11)
+
+**Risk:** `Kullanici` silinince CASCADE ile `VeliProfilModel`, `ServisProfilModel`, `OgretmenProfilModel` silinir. Bu profillere `OgrenciId` FK ile bağlı `Ogrenci` kayıtları varsa `RESTRICT` FK silmeyi engeller → `SqlException` fırlar.
+
+**Fix — `KullaniciService.SilAsync` ön-kontrol:**
+```csharp
+public async Task SilAsync(int kullaniciId)
+{
+    var baglıOgrenci = await _db.Ogrenciler
+        .AnyAsync(o => o.VeliId == kullaniciId
+                    || o.OgretmenId == kullaniciId
+                    || o.ServisId == kullaniciId);
+
+    if (baglıOgrenci)
+        throw new InvalidOperationException(
+            "Bu kullanıcıya bağlı öğrenci kaydı var. " +
+            "Silmeden önce öğrenci ilişkilerini kaldırın.");
+
+    var kullanici = await _db.Kullanicilar.FindAsync(kullaniciId)
+        ?? throw new KeyNotFoundException();
+    _db.Kullanicilar.Remove(kullanici);
+    await _db.SaveChangesAsync();
+}
+```
+
+**Lokasyon:** `OgrenciBilgiSistemi/Services/Implementations/KullaniciService.cs`
+
+**Doğrulama:** Bağlı öğrencisi olan kullanıcı silinmeye çalışıldığında `InvalidOperationException` fırlamalı; controller bunu `ModelState`'e ekleyip formu tekrar göstermeli.
+
+---
+
+### 6.7 Randevu / Öğrenci Silme Güvencesi (R12)
+
+**Risk:** `RandevuModel.OgrenciId` RESTRICT FK → öğrenci fiziksel silinirse randevu kayıtları orphan kalır veya FK bloklayabilir.
+
+**Mevcut koruma (yeterli):** `OgrenciService.SilAsync` fiziksel silme yapmıyor; öğrencinin `OgrenciDurum = false` (pasif) yapılıyor. Soft-delete global query filter öğrenciyi listelerden gizliyor.
+
+**Aksiyon gerekmez.** Bu davranış belgelenmiştir; servis layer'a dokunan geliştirici `OgrenciDurum = false` pattern'ını korumalı.
+
+**Gelecek risk:** Eğer bir gün admin panel fiziksel silme özelliği alırsa, `OgrenciService.FizikselSilAsync` içinde önce:
+```csharp
+var randevuVar = await _db.Randevular
+    .IgnoreQueryFilters()
+    .AnyAsync(r => r.OgrenciId == ogrenciId);
+if (randevuVar)
+    throw new InvalidOperationException("Öğrencinin randevu kaydı var, fiziksel silme engellenmiştir.");
+```
+
+---
+
+## Özet Tablo
+
+| Alan | Durum | Öncelik |
+|---|---|---|
+| Entity Kataloğu | 28 entity, tam belgelenmiş | ✅ |
+| Global Query Filter | 10 entity filtrelenmiş | ✅ |
+| Soft Delete Tutarlılığı | DuyuruOkuma filtresi **düzeltildi** (R3) | ✅ |
+| Cascade Delete — KullaniciMenu | **Düzeltildi** (R2): Cascade → Restrict | ✅ |
+| OgrenciKartNo Normalizasyon | **Düzeltildi** (V3): NULL + trim | ✅ |
+| N+1 Riski | OgrenciListeVm.YemekDurumMap — **incelendi, zaten çözülmüş** (R1) | ✅ |
+| DTO Tutarsızlıkları | GirisIstegiDto **düzeltildi** (D1); OgrenciDetay alanları **eklendi** (D2) | ✅ |
+| Unique Constraint Kapsamı | Kritik alanlar kapsanmış | ✅ |
+| API Interface Eksikliği | 14 API servisi interface'siz | ❌ Faz 2'de ekle (M2) |
+| Repository Pattern | Yok (25+ servis direkt DbContext) | ❌ Faz 3'te ekle |
+| Domain Projesi | Entity'ler MVC içinde | ❌ Faz 4 (M1) |
+| Mobil API Contract | Modeller Shared'a taşınmamış | ❌ Faz 2 (M3) |
+| KullaniciFormVm Bölünmesi | Tek composite VM | ❌ Bakım: D3 |
+| FCM Token Temizliği | Soft-deleted token'lar birikebilir | ❌ Düşük öncelik: 6.5 |
+| Kullanici Silme Sırası | Ön-kontrol eksik | ❌ Orta: 6.6 |
+| Randevu/Öğrenci Silme | Soft-delete ile korunuyor, ek aksiyon yok | ℹ️ Belgelendi: 6.7 |
+| Test Altyapısı | Faz 0 tamamlandı (karakterizasyon testleri) | ✅ |

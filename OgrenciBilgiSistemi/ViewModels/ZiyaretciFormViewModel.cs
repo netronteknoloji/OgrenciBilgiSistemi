@@ -76,5 +76,10 @@ namespace OgrenciBilgiSistemi.ViewModels
 
         [Display(Name = "Giriş Kapısı")]
         public int? CihazId { get; set; }
+
+        // Form metadata (Ekle vs Guncelle)
+        public string FormAction { get; set; } = "Ekle";
+        public string SubmitText { get; set; } = "Kaydet";
+        public bool IncludeId { get; set; }
     }
 }

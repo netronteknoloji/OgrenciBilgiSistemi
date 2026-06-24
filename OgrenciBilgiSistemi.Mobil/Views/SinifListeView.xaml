@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:views="clr-namespace:OgrenciBilgiSistemi.Mobil.Views"
              x:Class="OgrenciBilgiSistemi.Mobil.Views.SinifListeView"
+             x:Name="SayfaKoku"
              Title="Sınıf Listesi"
              Shell.NavBarIsVisible="False"
              BackgroundColor="#F2F2F2">
@@ -25,8 +26,7 @@
                 <VerticalStackLayout Spacing="2"
                                      VerticalOptions="End"
                                      Margin="20,0,20,35">
-                    <Label x:Name="WelcomeLabel"
-                           Text="Merhaba"
+                    <Label Text="{Binding KarsilamaMetni}"
                            FontSize="18"
                            FontFamily="OpenSansSemibold"
                            TextColor="White" />
@@ -49,8 +49,8 @@
                 </Border.Shadow>
                 <Grid ColumnDefinitions="55, *">
                     <Label Grid.Column="0" Text="🔍" VerticalOptions="Center" HorizontalOptions="Center" FontSize="18" TextColor="#95A5A6" />
-                    <Entry Grid.Column="1" x:Name="SearchBar" Placeholder="Hangi sınıfı arıyorsun?" PlaceholderColor="#95A5A6"
-                           TextColor="#2C3E50" FontSize="15" VerticalOptions="Center" TextChanged="OnSearchBarTextChanged" />
+                    <Entry Grid.Column="1" Placeholder="Hangi sınıfı arıyorsun?" PlaceholderColor="#95A5A6"
+                           TextColor="#2C3E50" FontSize="15" VerticalOptions="Center" Text="{Binding AramaMetni}" />
                 </Grid>
             </Border>
 
@@ -59,7 +59,7 @@
                 <Border Grid.Column="0" StrokeShape="RoundRectangle 12" StrokeThickness="0"
                         BackgroundColor="#2980B9" Padding="8,6" HeightRequest="36">
                     <Border.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnRandevularTapped" />
+                        <TapGestureRecognizer Command="{Binding RandevularCommand}" />
                     </Border.GestureRecognizers>
                     <Label Text="Randevular" FontSize="12" TextColor="White" FontFamily="OpenSansSemibold"
                            HorizontalOptions="Center" VerticalOptions="Center" />
@@ -67,7 +67,7 @@
                 <Border Grid.Column="1" StrokeShape="RoundRectangle 12" StrokeThickness="0"
                         BackgroundColor="#8E44AD" Padding="8,6" HeightRequest="36">
                     <Border.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnRandevuTakvimTapped" />
+                        <TapGestureRecognizer Command="{Binding OgretmenRandevuCommand}" />
                     </Border.GestureRecognizers>
                     <Label Text="Randevu Takvimi" FontSize="12" TextColor="White" FontFamily="OpenSansSemibold"
                            HorizontalOptions="Center" VerticalOptions="Center" />
@@ -76,16 +76,16 @@
                     <Border StrokeShape="RoundRectangle 12" StrokeThickness="0"
                             BackgroundColor="#E67E22" Padding="8,6" HeightRequest="36">
                         <Border.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnBildirimlerTapped" />
+                            <TapGestureRecognizer Command="{Binding BildirimlerCommand}" />
                         </Border.GestureRecognizers>
                         <Label Text="Bildirimler" FontSize="12" TextColor="White" FontFamily="OpenSansSemibold"
                                HorizontalOptions="Center" VerticalOptions="Center" />
                     </Border>
-                    <Border x:Name="BildirimBadge" StrokeShape="RoundRectangle 8" StrokeThickness="0"
+                    <Border StrokeShape="RoundRectangle 8" StrokeThickness="0"
                             BackgroundColor="#E74C3C" WidthRequest="16" HeightRequest="16"
                             HorizontalOptions="End" VerticalOptions="Start" Margin="0,-6,-6,0"
-                            IsVisible="False">
-                        <Label x:Name="BildirimSayiLabel" Text="" FontSize="8" TextColor="White"
+                            IsVisible="{Binding BildirimBadgeGorunur}">
+                        <Label Text="{Binding BildirimSayiMetni}" FontSize="8" TextColor="White"
                                HorizontalOptions="Center" VerticalOptions="Center" />
                     </Border>
                 </Grid>
@@ -95,14 +95,14 @@
             <Border Margin="15,5,15,5" StrokeShape="RoundRectangle 12" StrokeThickness="0"
                     BackgroundColor="#16A085" Padding="8,6" HeightRequest="36">
                 <Border.GestureRecognizers>
-                    <TapGestureRecognizer Tapped="OnDuyuruYapTapped" />
+                    <TapGestureRecognizer Command="{Binding DuyuruYapCommand}" />
                 </Border.GestureRecognizers>
                 <Label Text="Duyuru Yap" FontSize="12" TextColor="White" FontFamily="OpenSansSemibold"
                        HorizontalOptions="Center" VerticalOptions="Center" />
             </Border>
         </VerticalStackLayout>
 
-        <CollectionView x:Name="ClassCollection" Grid.Row="2" Margin="15,0" SelectionMode="None">
+        <CollectionView Grid.Row="2" Margin="15,0" SelectionMode="None" ItemsSource="{Binding FiltreliSiniflar}">
             <CollectionView.ItemsLayout>
                 <LinearItemsLayout Orientation="Vertical" ItemSpacing="10" />
             </CollectionView.ItemsLayout>
@@ -113,7 +113,9 @@
                             <Shadow Brush="Black" Offset="0,2" Radius="5" Opacity="0.05" />
                         </Border.Shadow>
                         <Border.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnClassFrameTapped" CommandParameter="{Binding .}" />
+                            <TapGestureRecognizer
+                            Command="{Binding BindingContext.SinifSecCommand, Source={x:Reference SayfaKoku}}"
+                            CommandParameter="{Binding .}" />
                         </Border.GestureRecognizers>
                         <Grid ColumnDefinitions="8, *, Auto">
                             <BoxView Grid.Column="0" BackgroundColor="#1ABC9C" WidthRequest="8" HorizontalOptions="Start"/>

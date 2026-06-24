@@ -1,42 +1,20 @@
-using OgrenciBilgiSistemi.Mobil.Models;
-using OgrenciBilgiSistemi.Mobil.Services;
+using OgrenciBilgiSistemi.Mobil.ViewModels;
 
 namespace OgrenciBilgiSistemi.Mobil.Views
 {
     public partial class AdminOgretmenListeView : ContentPage
     {
-        private readonly OgretmenListeService _ogretmenListeService;
-
-        public AdminOgretmenListeView(OgretmenListeService ogretmenListeService)
+        public AdminOgretmenListeView(AdminOgretmenListeGorunumModel gorunumModel)
         {
             InitializeComponent();
-            _ogretmenListeService = ogretmenListeService;
+            BindingContext = gorunumModel;
         }
 
-        protected override async void OnAppearing()
+        protected override void OnAppearing()
         {
             base.OnAppearing();
-
-            try
-            {
-                var liste = await _ogretmenListeService.AktifOgretmenleriGetir();
-                OgretmenCollection.ItemsSource = liste;
-                AltBaslikLabel.Text = $"Toplam {liste.Count} öğretmen";
-
-                if (liste.Count == 0)
-                    BosDurumLabel.Text = "Kayıtlı öğretmen bulunamadı.";
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"AdminOgretmenListe Yükleme Hatası: {ex.Message}");
-                BosDurumLabel.Text = "Veriler yüklenemedi.";
-            }
-        }
-
-        private async void OnOgretmenSecildi(object sender, TappedEventArgs e)
-        {
-            if ((sender as Border)?.BindingContext is OgretmenBilgi ogretmen)
-                await Navigation.PushAsync(new AdminOgretmenDetayView(ogretmen.KullaniciId, _ogretmenListeService));
+            if (BindingContext is AdminOgretmenListeGorunumModel vm)
+                vm.YukleCommand.Execute(null);
         }
     }
 }

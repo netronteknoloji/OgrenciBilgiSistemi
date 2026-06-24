@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:views="clr-namespace:OgrenciBilgiSistemi.Mobil.Views"
              x:Class="OgrenciBilgiSistemi.Mobil.Views.VeliAnaSayfaView"
+             x:Name="SayfaKoku"
              Title="Çocuklarım"
              Shell.NavBarIsVisible="False"
              BackgroundColor="#F2F2F2">
@@ -25,8 +26,7 @@
                 <VerticalStackLayout Spacing="2"
                                      VerticalOptions="End"
                                      Margin="20,0,20,35">
-                    <Label x:Name="WelcomeLabel"
-                           Text="Merhaba"
+                    <Label Text="{Binding KarsilamaMetni}"
                            FontSize="18"
                            FontFamily="OpenSansSemibold"
                            TextColor="White" />
@@ -52,8 +52,7 @@
             <Grid ColumnDefinitions="55, *, Auto, Auto">
                 <Label Grid.Column="0" Text="&#x1F468;&#x200D;&#x1F467;&#x200D;&#x1F466;"
                        VerticalOptions="Center" HorizontalOptions="Center" FontSize="22" />
-                <Label Grid.Column="1" x:Name="CocukSayisiLabel"
-                       Text="Yükleniyor..."
+                <Label Grid.Column="1" Text="{Binding CocukSayisiMetni}"
                        VerticalOptions="Center"
                        FontSize="15"
                        FontFamily="OpenSansSemibold"
@@ -62,7 +61,7 @@
                         BackgroundColor="#2980B9" Padding="10,5" Margin="0,0,5,0"
                         VerticalOptions="Center">
                     <Border.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnRandevularTapped" />
+                        <TapGestureRecognizer Command="{Binding RandevularCommand}" />
                     </Border.GestureRecognizers>
                     <Label Text="Randevular" FontSize="11" TextColor="White" FontFamily="OpenSansSemibold" />
                 </Border>
@@ -70,15 +69,15 @@
                     <Border StrokeShape="RoundRectangle 14" StrokeThickness="0"
                             BackgroundColor="#E67E22" Padding="10,5">
                         <Border.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnBildirimlerTapped" />
+                            <TapGestureRecognizer Command="{Binding BildirimlerCommand}" />
                         </Border.GestureRecognizers>
                         <Label Text="Bildirimler" FontSize="11" TextColor="White" FontFamily="OpenSansSemibold" />
                     </Border>
-                    <Border x:Name="BildirimBadge" StrokeShape="RoundRectangle 8" StrokeThickness="0"
+                    <Border StrokeShape="RoundRectangle 8" StrokeThickness="0"
                             BackgroundColor="#E74C3C" WidthRequest="16" HeightRequest="16"
                             HorizontalOptions="End" VerticalOptions="Start" Margin="0,-6,-6,0"
-                            IsVisible="False">
-                        <Label x:Name="BildirimSayiLabel" Text="" FontSize="8" TextColor="White"
+                            IsVisible="{Binding BildirimBadgeGorunur}">
+                        <Label Text="{Binding BildirimSayiMetni}" FontSize="8" TextColor="White"
                                HorizontalOptions="Center" VerticalOptions="Center" />
                     </Border>
                 </Grid>
@@ -90,7 +89,7 @@
             <Border StrokeShape="RoundRectangle 14" StrokeThickness="0"
                     BackgroundColor="#16A085" Padding="12,10" HeightRequest="42">
                 <Border.GestureRecognizers>
-                    <TapGestureRecognizer Tapped="OnDuyurularTapped" />
+                    <TapGestureRecognizer Command="{Binding DuyurularCommand}" />
                 </Border.GestureRecognizers>
                 <Grid ColumnDefinitions="Auto, *, Auto" VerticalOptions="Center">
                     <Label Grid.Column="0" Text="&#x1F4E2;" FontSize="18" VerticalOptions="Center" />
@@ -99,17 +98,17 @@
                     <Label Grid.Column="2" Text="&#x2192;" FontSize="18" TextColor="White" VerticalOptions="Center" />
                 </Grid>
             </Border>
-            <Border x:Name="DuyuruBadge" StrokeShape="RoundRectangle 8" StrokeThickness="0"
+            <Border StrokeShape="RoundRectangle 8" StrokeThickness="0"
                     BackgroundColor="#E74C3C" WidthRequest="16" HeightRequest="16"
                     HorizontalOptions="End" VerticalOptions="Start" Margin="0,-6,-6,0"
-                    IsVisible="False">
-                <Label x:Name="DuyuruSayiLabel" Text="" FontSize="8" TextColor="White"
+                    IsVisible="{Binding DuyuruBadgeGorunur}">
+                <Label Text="{Binding DuyuruSayiMetni}" FontSize="8" TextColor="White"
                        HorizontalOptions="Center" VerticalOptions="Center" />
             </Border>
         </Grid>
 
         <!-- Çocuk listesi -->
-        <CollectionView x:Name="CocukCollection" Grid.Row="3" Margin="15,0" SelectionMode="None">
+        <CollectionView Grid.Row="3" Margin="15,0" SelectionMode="None" ItemsSource="{Binding Cocuklar}">
             <CollectionView.ItemsLayout>
                 <LinearItemsLayout Orientation="Vertical" ItemSpacing="10" />
             </CollectionView.ItemsLayout>
@@ -120,7 +119,9 @@
                             <Shadow Brush="Black" Offset="0,2" Radius="8" Opacity="0.06" />
                         </Border.Shadow>
                         <Border.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnCocukTapped" CommandParameter="{Binding .}" />
+                            <TapGestureRecognizer
+                                Command="{Binding BindingContext.CocukSecCommand, Source={x:Reference SayfaKoku}}"
+                                CommandParameter="{Binding .}" />
                         </Border.GestureRecognizers>
                         <Grid ColumnDefinitions="8, 65, *, Auto" Padding="0,12">
                             <BoxView Grid.Column="0" BackgroundColor="#8E44AD" WidthRequest="8" HorizontalOptions="Start" />

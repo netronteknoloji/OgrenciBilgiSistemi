@@ -1,7 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.EntityFrameworkCore;
-using OgrenciBilgiSistemi.Data;
 using OgrenciBilgiSistemi.Dtos;
 using OgrenciBilgiSistemi.Hubs;
 using OgrenciBilgiSistemi.Models;
@@ -13,21 +11,24 @@ namespace OgrenciBilgiSistemi.Controllers
     [Route("KartOku")]
     public class KartOkuController : Controller
     {
-        private readonly AppDbContext _db;
         private readonly IGecisService _gecisService;
+        private readonly ICihazService _cihazService;
+        private readonly IKartOkuService _kartOkuService;
         private readonly IHubContext<KartOkuHub> _hub;
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly ILogger<KartOkuController> _logger;
 
         public KartOkuController(
-            AppDbContext db,
             IGecisService gecisService,
+            ICihazService cihazService,
+            IKartOkuService kartOkuService,
             IHubContext<KartOkuHub> hub,
             IServiceScopeFactory scopeFactory,
             ILogger<KartOkuController> logger)
         {
-            _db = db;
             _gecisService = gecisService;
+            _cihazService = cihazService;
+            _kartOkuService = kartOkuService;
             _hub = hub;
             _scopeFactory = scopeFactory;
             _logger = logger;
@@ -77,23 +78,14 @@ namespace OgrenciBilgiSistemi.Controllers
                 CihazModel? cihaz = null;
 
                 if (Guid.TryParse(cihazKodu?.Trim().Trim('<', '>'), out var guid))
-                {
-                    cihaz = await _db.Cihazlar.AsNoTracking()
-                        .FirstOrDefaultAsync(c => c.CihazKodu == guid, ct);
-                }
+                    cihaz = await _cihazService.CihazBulByKodAsync(guid, ct);
                 else
-                {
-                    cihaz = await _db.Cihazlar.AsNoTracking()
-                        .OrderByDescending(c => c.Aktif)
-                        .ThenBy(c => c.CihazId)
-                        .FirstOrDefaultAsync(ct);
-                }
+                    cihaz = await _cihazService.CihazBulVarsayilanAsync(ct);
 
                 if (cihaz is null)
                     return View(new KartOkumaVm { HataMesaji = "Cihaz bilgisi eksik." });
 
-                ViewBag.CihazKodu = cihaz.CihazKodu.ToString();
-                return View(new KartOkumaVm());
+                return View(new KartOkumaVm { CihazKodu = cihaz.CihazKodu.ToString() });
             }
             catch (Exception ex)
             {
@@ -115,8 +107,7 @@ namespace OgrenciBilgiSistemi.Controllers
                 if (!Guid.TryParse(cihazKodu, out var guid))
                     return BadRequest("Cihaz kodu geçersiz.");
 
-                var cihaz = await _db.Cihazlar.AsNoTracking()
-                    .FirstOrDefaultAsync(c => c.CihazKodu == guid && c.Aktif, ct);
+                var cihaz = await _cihazService.CihazBulAktifByKodAsync(guid, ct);
 
                 if (cihaz is null)
                     return NotFound("Cihaz bulunamadı veya pasif.");
@@ -125,24 +116,12 @@ namespace OgrenciBilgiSistemi.Controllers
                 if (string.IsNullOrEmpty(no))
                     return BadRequest("Kart numarası geçersiz.");
 
-                var ogrenci = await _db.Ogrenciler
-                    .AsNoTracking()
-                    .Select(o => new
-                    {
-                        o.OgrenciId,
-                        o.OgrenciNo,
-                        o.OgrenciAdSoyad,
-                        o.OgrenciKartNo,
-                        o.OgrenciDurum,
-                        o.OgrenciCikisDurumu,
-                        o.OgrenciGorsel,
-                        Sinif = o.Birim != null ? o.Birim.BirimAd : "-"
-                    })
-                    .FirstOrDefaultAsync(o => o.OgrenciKartNo == no && o.OgrenciDurum, ct);
+                var ogrenci = await _kartOkuService.GetOgrenciByKartNoAsync(no, ct);
 
                 if (ogrenci is null)
                     return NotFound("Kart tanımsız.");
 
+                var ogrenciSinif = ogrenci.Birim?.BirimAd ?? "-";
                 var now = DateTime.Now;
                 var today = now.Date;
                 var tomorrow = today.AddDays(1);
@@ -156,7 +135,7 @@ namespace OgrenciBilgiSistemi.Controllers
                     {
                         OgrenciAdSoyad = ogrenci.OgrenciAdSoyad,
                         OgrenciNo = ogrenci.OgrenciNo,
-                        OgrenciSinif = ogrenci.Sinif ?? "-",
+                        OgrenciSinif = ogrenciSinif,
                         OgrenciGorsel = ogrenci.OgrenciGorsel,
                         OgrenciGirisSaati = "-",
                         OgrenciCikisSaati = "-",
@@ -176,20 +155,15 @@ namespace OgrenciBilgiSistemi.Controllers
                 {
                     var yil = now.Year;
                     var ay = now.Month;
+                    var yemekIzniVar = await _kartOkuService.YemekIzniVarMiAsync(ogrenci.OgrenciId, yil, ay, ct);
 
-                    var ayAktif = await _db.OgrenciYemekler.AsNoTracking()
-                        .AnyAsync(x => x.OgrenciId == ogrenci.OgrenciId && x.Yil == yil && x.Ay == ay && x.Aktif, ct);
-
-                    var odemeVarMi = await _db.OgrenciYemekOdemeler.AsNoTracking()
-                        .AnyAsync(p => p.OgrenciId == ogrenci.OgrenciId && p.Yil == yil && p.Ay == ay && p.Tutar > 0m, ct);
-
-                    if (!ayAktif && !odemeVarMi)
+                    if (!yemekIzniVar)
                     {
                         await GuvenliYayinAsync(_hub, new OgrenciBilgisiDto
                         {
                             OgrenciAdSoyad = ogrenci.OgrenciAdSoyad,
                             OgrenciNo = ogrenci.OgrenciNo,
-                            OgrenciSinif = ogrenci.Sinif ?? "-",
+                            OgrenciSinif = ogrenciSinif,
                             OgrenciGorsel = ogrenci.OgrenciGorsel,
                             OgrenciGirisSaati = "-",
                             OgrenciCikisSaati = "-",
@@ -209,23 +183,15 @@ namespace OgrenciBilgiSistemi.Controllers
                 // --- Günlük limit kontrolleri (LOG ATMADAN) ---
                 if (cihaz.IstasyonTipi == IstasyonTipi.Yemekhane)
                 {
-                    var bugunYemekhaneVarMi = await _db.OgrenciDetaylar
-                        .AsNoTracking()
-                        .AnyAsync(l => l.OgrenciId == ogrenci.OgrenciId
-                                       && l.Cihaz != null
-                                       && l.Cihaz.IstasyonTipi == IstasyonTipi.Yemekhane
-                                       && (
-                                           (l.OgrenciGTarih >= today && l.OgrenciGTarih < tomorrow)
-                                           || (l.OgrenciCTarih >= today && l.OgrenciCTarih < tomorrow)
-                                       ), ct);
+                    var bugunYemekVar = await _kartOkuService.BugunYemekGirisiVarMiAsync(ogrenci.OgrenciId, today, tomorrow, ct);
 
-                    if (bugunYemekhaneVarMi)
+                    if (bugunYemekVar)
                     {
                         await GuvenliYayinAsync(_hub, new OgrenciBilgisiDto
                         {
                             OgrenciAdSoyad = ogrenci.OgrenciAdSoyad,
                             OgrenciNo = ogrenci.OgrenciNo,
-                            OgrenciSinif = ogrenci.Sinif ?? "-",
+                            OgrenciSinif = ogrenciSinif,
                             OgrenciGorsel = ogrenci.OgrenciGorsel,
                             OgrenciGirisSaati = "-",
                             OgrenciCikisSaati = "-",
@@ -244,40 +210,24 @@ namespace OgrenciBilgiSistemi.Controllers
                 else if (cihaz.IstasyonTipi == IstasyonTipi.AnaKapi &&
                          ogrenci.OgrenciCikisDurumu == OglenCikisDurumu.Evet)
                 {
-                    // 1) Bugün ÇIKIŞ var mı?
-                    var cikisVarMi = await _db.OgrenciDetaylar
-                        .AsNoTracking()
-                        .AnyAsync(l => l.OgrenciId == ogrenci.OgrenciId
-                                       && l.Cihaz != null
-                                       && l.Cihaz.IstasyonTipi == IstasyonTipi.AnaKapi
-                                       && l.OgrenciCTarih >= today && l.OgrenciCTarih < tomorrow, ct);
-
-                    // 2) Bugün GİRİŞ var mı?
-                    var girisVarMi = await _db.OgrenciDetaylar
-                        .AsNoTracking()
-                        .AnyAsync(l => l.OgrenciId == ogrenci.OgrenciId
-                                       && l.Cihaz != null
-                                       && l.Cihaz.IstasyonTipi == IstasyonTipi.AnaKapi
-                                       && l.OgrenciGTarih >= today && l.OgrenciGTarih < tomorrow, ct);
+                    var (cikisVarMi, girisVarMi) = await _kartOkuService.BugunAnaKapiHareketleriAsync(
+                        ogrenci.OgrenciId, today, tomorrow, ct);
 
                     if (!cikisVarMi)
                     {
-                        // İlk okutma -> forced ÇIKIŞ
                         forcedGecisTipi = "Çıkış";
                     }
                     else if (!girisVarMi)
                     {
-                        // İkinci okutma (okula dönüş) -> forced GİRİŞ
                         forcedGecisTipi = "Giriş";
                     }
                     else
                     {
-                        // Çıkış + Giriş zaten yapılmış -> üçüncü ve sonrası RED
                         await GuvenliYayinAsync(_hub, new OgrenciBilgisiDto
                         {
                             OgrenciAdSoyad = ogrenci.OgrenciAdSoyad,
                             OgrenciNo = ogrenci.OgrenciNo,
-                            OgrenciSinif = ogrenci.Sinif ?? "-",
+                            OgrenciSinif = ogrenciSinif,
                             OgrenciGorsel = ogrenci.OgrenciGorsel,
                             OgrenciGirisSaati = "-",
                             OgrenciCikisSaati = "-",
@@ -294,15 +244,14 @@ namespace OgrenciBilgiSistemi.Controllers
                     }
                 }
 
-                // --- Kayıt: istasyona göre netleştir (isteğe bağlı "force" geçiş tipi) ---
+                // --- Kayıt: istasyona göre netleştir ---
                 if (forcedGecisTipi is null)
                 {
                     forcedGecisTipi = cihaz.IstasyonTipi switch
                     {
-                        IstasyonTipi.Yemekhane => "Giriş", // yemekhane her zaman giriş (forced)
-                        IstasyonTipi.AnaKapi when ogrenci.OgrenciCikisDurumu != OglenCikisDurumu.Evet
-                            => null,                        // Ana Kapı + öğle izni yok -> toggle
-                        _ => null                           // diğer durumlar -> toggle
+                        IstasyonTipi.Yemekhane => "Giriş",
+                        IstasyonTipi.AnaKapi when ogrenci.OgrenciCikisDurumu != OglenCikisDurumu.Evet => null,
+                        _ => null
                     };
                 }
 
@@ -321,7 +270,7 @@ namespace OgrenciBilgiSistemi.Controllers
                 {
                     OgrenciAdSoyad = ogrenci.OgrenciAdSoyad,
                     OgrenciNo = ogrenci.OgrenciNo,
-                    OgrenciSinif = ogrenci.Sinif ?? "-",
+                    OgrenciSinif = ogrenciSinif,
                     OgrenciGorsel = ogrenci.OgrenciGorsel,
                     OgrenciGirisSaati = girisSaati,
                     OgrenciCikisSaati = cikisSaati,
@@ -344,8 +293,7 @@ namespace OgrenciBilgiSistemi.Controllers
 
                 await GuvenliYayinAsync(_hub, dto, ct);
 
-                // Ana Kapı geçişlerinde veliye SMS bildirimi (yemekhane hariç)
-                // Fire-and-forget: SMS sağlayıcı yavaşsa kart okuma yanıtını blocklamasın.
+                // Ana Kapı geçişlerinde veliye SMS bildirimi (fire-and-forget)
                 if (cihaz.IstasyonTipi == IstasyonTipi.AnaKapi &&
                     (string.Equals(sonuc.GecisTipi, "Giriş", StringComparison.OrdinalIgnoreCase) ||
                      string.Equals(sonuc.GecisTipi, "Çıkış", StringComparison.OrdinalIgnoreCase)))

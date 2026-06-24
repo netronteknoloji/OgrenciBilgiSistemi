@@ -1,10 +1,11 @@
 using Microsoft.Data.SqlClient;
+using OgrenciBilgiSistemi.Api.Services.Interfaces;
 using OgrenciBilgiSistemi.Shared.Dtos;
 using OgrenciBilgiSistemi.Shared.Services;
 
 namespace OgrenciBilgiSistemi.Api.Services
 {
-    public class GecisKayitService
+    public class GecisKayitService : IGecisKayitService
     {
         private readonly TenantBaglami _tenantBaglami;
 

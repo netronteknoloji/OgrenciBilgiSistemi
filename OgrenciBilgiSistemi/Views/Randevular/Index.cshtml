@@ -1,15 +1,8 @@
-@model SayfalanmisListeModel<OgrenciBilgiSistemi.Models.RandevuModel>
+@model OgrenciBilgiSistemi.ViewModels.RandevuListeVm
 @using OgrenciBilgiSistemi.Shared.Enums
-@using Microsoft.AspNetCore.Mvc.Rendering
 
 @{
     ViewData["Title"] = "Randevu Listesi";
-    var arama = ViewData["Arama"] as string;
-    var ogretmenId = ViewData["OgretmenId"] as int?;
-    var durum = ViewData["Durum"] as RandevuDurumu?;
-    var baslangic = ViewData["Baslangic"] as string;
-    var bitis = ViewData["Bitis"] as string;
-    var ogretmenler = ViewData["Ogretmenler"] as List<SelectListItem> ?? new();
 }
 
 <div class="viewport-scroller">
@@ -22,11 +15,11 @@
 
                 <a class="btn btn-success fw-semibold"
                    asp-action="ExcelExport"
-                   asp-route-arama="@arama"
-                   asp-route-ogretmenId="@ogretmenId"
-                   asp-route-durum="@((int?)durum)"
-                   asp-route-baslangic="@baslangic"
-                   asp-route-bitis="@bitis">
+                   asp-route-arama="@Model.Arama"
+                   asp-route-ogretmenId="@Model.OgretmenId"
+                   asp-route-durum="@((int?)Model.Durum)"
+                   asp-route-baslangic="@Model.Baslangic"
+                   asp-route-bitis="@Model.Bitis">
                     <i class="bi bi-file-earmark-excel"></i> Excel'e Aktar
                 </a>
             </div>
@@ -43,7 +36,7 @@
                 <!-- Arama -->
                 <div class="input-group">
                     <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
-                    <input name="arama" value="@arama"
+                    <input name="arama" value="@Model.Arama"
                            class="form-control" placeholder="Ad, soyad ara…" style="width:200px;" />
                 </div>
 
@@ -52,9 +45,9 @@
                     <span class="input-group-text bg-white"><i class="bi bi-person"></i></span>
                     <select name="ogretmenId" class="form-select">
                         <option value="">Öğretmen</option>
-                        @foreach (var o in ogretmenler)
+                        @foreach (var o in Model.Ogretmenler)
                         {
-                            <option value="@o.Value" selected="@(ogretmenId?.ToString() == o.Value)">@o.Text</option>
+                            <option value="@o.Value" selected="@(Model.OgretmenId?.ToString() == o.Value)">@o.Text</option>
                         }
                     </select>
                 </div>
@@ -66,7 +59,7 @@
                         <option value="">Durum</option>
                         @foreach (RandevuDurumu d in Enum.GetValues<RandevuDurumu>())
                         {
-                            <option value="@((int)d)" selected="@(durum == d)">@d</option>
+                            <option value="@((int)d)" selected="@(Model.Durum == d)">@d</option>
                         }
                     </select>
                 </div>
@@ -74,12 +67,12 @@
                 <!-- Tarihler -->
                 <div class="input-group">
                     <span class="input-group-text bg-white"><i class="bi bi-calendar-event"></i></span>
-                    <input name="baslangic" type="date" value="@baslangic" class="form-control" />
+                    <input name="baslangic" type="date" value="@Model.Baslangic" class="form-control" />
                 </div>
 
                 <div class="input-group">
                     <span class="input-group-text bg-white"><i class="bi bi-calendar-event"></i></span>
-                    <input name="bitis" type="date" value="@bitis" class="form-control" />
+                    <input name="bitis" type="date" value="@Model.Bitis" class="form-control" />
                 </div>
 
                 <button class="btn btn-primary ms-auto px-3 text-nowrap" type="submit">
@@ -88,7 +81,7 @@
             </form>
 
             <!-- Liste -->
-            @if (Model == null || !Model.Any())
+            @if (Model.Randevular == null || !Model.Randevular.Any())
             {
                 <div class="alert alert-warning mb-0">
                     <i class="bi bi-exclamation-triangle-fill"></i> Kayıt bulunamadı.
@@ -110,7 +103,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var r in Model)
+                            @foreach (var r in Model.Randevular)
                             {
                                 <tr class="text-center">
                                     <td class="text-start fw-semibold text-primary">@r.RandevuTarihi.ToString("dd.MM.yyyy HH:mm")</td>
@@ -152,15 +145,15 @@
                     </table>
                 </div>
 
-                @await Html.PartialAsync("_SayfalamaFormPartial", OgrenciBilgiSistemi.ViewModels.SayfalamaVm.Olustur(Model,
+                @await Html.PartialAsync("_SayfalamaFormPartial", OgrenciBilgiSistemi.ViewModels.SayfalamaVm.Olustur(Model.Randevular,
                     sayfaParametreAdi: "sayfaNo",
                     routeValues: new Dictionary<string, string?>
                     {
-                        ["arama"] = arama,
-                        ["ogretmenId"] = ogretmenId?.ToString(),
-                        ["durum"] = ((int?)durum)?.ToString(),
-                        ["baslangic"] = baslangic,
-                        ["bitis"] = bitis
+                        ["arama"] = Model.Arama,
+                        ["ogretmenId"] = Model.OgretmenId?.ToString(),
+                        ["durum"] = ((int?)Model.Durum)?.ToString(),
+                        ["baslangic"] = Model.Baslangic,
+                        ["bitis"] = Model.Bitis
                     }))
             }
         </div>

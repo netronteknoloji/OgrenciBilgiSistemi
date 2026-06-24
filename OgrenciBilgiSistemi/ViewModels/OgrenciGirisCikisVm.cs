@@ -23,12 +23,20 @@ namespace OgrenciBilgiSistemi.ViewModels
         public List<SinifYoklamaModel> SinifYoklamalar { get; set; } = new();
         public List<ServisYoklamaModel> ServisYoklamalar { get; set; } = new();
         public RaporTipi RaporTipi { get; set; } = RaporTipi.Tumu;
+        public string? StartDate { get; set; }
+        public string? EndDate { get; set; }
+        public string RaporTipiStr { get; set; } = "0";
     }
 
     // Global Detay listesi için rapor tipine göre dinamik içerikli wrapper
     public class OgrenciDetayRaporVm
     {
         public RaporTipi RaporTipi { get; set; } = RaporTipi.Tumu;
+        public string? CurrentSort { get; set; }
+        public string? CurrentFilter { get; set; }
+        public string? StartDate { get; set; }
+        public string? EndDate { get; set; }
+        public string RaporTipiStr { get; set; } = "0";
         public SayfalanmisListeModel<OgrenciDetayModel>? Gecisler { get; set; }
         public SayfalanmisListeModel<SinifYoklamaModel>? SinifYoklamalar { get; set; }
         public SayfalanmisListeModel<ServisYoklamaModel>? ServisYoklamalar { get; set; }

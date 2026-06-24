@@ -1,11 +1,12 @@
 using Microsoft.Data.SqlClient;
 using OgrenciBilgiSistemi.Api.Models;
+using OgrenciBilgiSistemi.Api.Services.Interfaces;
 using OgrenciBilgiSistemi.Shared.Enums;
 using OgrenciBilgiSistemi.Shared.Services;
 
 namespace OgrenciBilgiSistemi.Api.Services
 {
-    public class RandevuService
+    public class RandevuService : IRandevuService
     {
         private readonly TenantBaglami _tenantBaglami;
         private string ConnectionString => _tenantBaglami.ConnectionString;

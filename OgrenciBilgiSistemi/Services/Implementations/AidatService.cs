@@ -1,11 +1,13 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using ClosedXML.Excel;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using OgrenciBilgiSistemi.Data;
 using OgrenciBilgiSistemi.Dtos;
 using OgrenciBilgiSistemi.Helpers;
 using OgrenciBilgiSistemi.Models;
 using OgrenciBilgiSistemi.Services.Interfaces;
-using ClosedXML.Excel;
+using OgrenciBilgiSistemi.Shared.Services;
 
 namespace OgrenciBilgiSistemi.Services.Implementations
 {
@@ -13,18 +15,22 @@ namespace OgrenciBilgiSistemi.Services.Implementations
     {
         private readonly AppDbContext _db;
         private readonly ILogger<AidatService> _logger;
+        private readonly IMemoryCache _cache;
+        private readonly TenantBaglami _tenant;
 
-        public AidatService(AppDbContext db, ILogger<AidatService> logger)
+        public AidatService(AppDbContext db, ILogger<AidatService> logger, IMemoryCache cache, TenantBaglami tenant)
         {
             _db = db;
             _logger = logger;
+            _cache = cache;
+            _tenant = tenant;
         }
 
         // ---------------------- Helpers ----------------------
         private static (DateTime? Start, DateTime? EndExcl) NormalizeDateRange(DateTime? bas, DateTime? bit)
         {
             var start = bas?.Date;
-            var endExcl = bit?.Date;
+            var endExcl = bit?.Date.AddDays(1); // inclusive end: bit günündeki ödemeler dahil
             if (start.HasValue && endExcl.HasValue && endExcl <= start)
                 endExcl = start.Value.AddDays(1);
             return (start, endExcl);
@@ -32,13 +38,19 @@ namespace OgrenciBilgiSistemi.Services.Implementations
 
         private async Task<decimal> GetTarifeTutarAsync(int baslangicYil, CancellationToken ct)
         {
+            var key = $"aidat_tarife:{_tenant.OkulKodu}:{baslangicYil}";
+            if (_cache.TryGetValue(key, out decimal cached))
+                return cached;
+
             var tutar = await _db.OgrenciAidatTarifeler
                 .AsNoTracking()
                 .Where(t => t.BaslangicYil == baslangicYil)
                 .Select(t => (decimal?)t.Tutar)
                 .FirstOrDefaultAsync(ct);
 
-            return tutar ?? 0m;
+            var result = tutar ?? 0m;
+            _cache.Set(key, result, TimeSpan.FromMinutes(30));
+            return result;
         }
 
         // ---------------------- Öğrenci Yıllık Özet ----------------------
@@ -119,9 +131,6 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             var ty = tarifeYil ?? y;
 
             var students = _db.Ogrenciler.AsNoTracking().AsQueryable();
-
-            if (!includePasif)
-                students = students.Where(s => s.OgrenciDurum == true);
 
             if (birimId is not null)
                 students = students.Where(s => s.BirimId == birimId);
@@ -225,44 +234,50 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             page = Math.Max(1, page);
             pageSize = Math.Clamp(pageSize, 5, 200);
 
-            // ✅ Ortak sorgu (filtreler + durum filtresi dahil)
-            var dtoQuery = await BuildAidatRaporDtoQueryAsync(
-                yil, bas, bit, query, birimId, durum, tarifeYil, includePasif, ct);
-
-            // ✅ Toplamlar: sayfalama öncesi, filtreli tüm veri üzerinden
-            var aktifQuery = dtoQuery.Where(x => !x.Muaf);
-
-            var toplamBorc = await aktifQuery.SumAsync(x => (decimal?)x.BorcGosterim, ct) ?? 0m;
-            var toplamOdenen = await aktifQuery.SumAsync(x => (decimal?)x.GosterilenOdenen, ct) ?? 0m;
-            var toplamKalan = await aktifQuery.SumAsync(x => (decimal?)x.Kalan, ct) ?? 0m;
-
-            // ✅ UI için sayfalama
-            var orderedQuery = dtoQuery
-                .OrderBy(x => x.OgrenciSinif)
-                .ThenBy(x => x.OgrenciAdSoyad);
-
-            var paged = await SayfalanmisListeModel<AidatRaporDto>.CreateAsync(
-                orderedQuery,
-                page,
-                pageSize,
-                ct);
-
-            // ✅ Kullanılabilir yıllar
-            var kullanilabilirYillar = await _db.OgrenciAidatlar
-                .AsNoTracking()
-                .Select(a => a.BaslangicYil)
-                .Distinct()
-                .OrderByDescending(x => x)
-                .ToListAsync(ct);
-
-            return new AidatRaporSonucDto
+            var oncekiPasifFlag = _db.IncludePasifOgrenciler;
+            try
             {
-                Satirlar = paged,
-                ToplamBorc = toplamBorc,
-                ToplamOdenenGosterilen = toplamOdenen,
-                ToplamKalan = toplamKalan,
-                KullanilabilirYillar = kullanilabilirYillar
-            };
+                _db.IncludePasifOgrenciler = includePasif;
+
+                var dtoQuery = await BuildAidatRaporDtoQueryAsync(
+                    yil, bas, bit, query, birimId, durum, tarifeYil, includePasif, ct);
+
+                var aktifQuery = dtoQuery.Where(x => !x.Muaf);
+
+                var toplamBorc = await aktifQuery.SumAsync(x => (decimal?)x.BorcGosterim, ct) ?? 0m;
+                var toplamOdenen = await aktifQuery.SumAsync(x => (decimal?)x.GosterilenOdenen, ct) ?? 0m;
+                var toplamKalan = await aktifQuery.SumAsync(x => (decimal?)x.Kalan, ct) ?? 0m;
+
+                var orderedQuery = dtoQuery
+                    .OrderBy(x => x.OgrenciSinif)
+                    .ThenBy(x => x.OgrenciAdSoyad);
+
+                var paged = await SayfalanmisListeModel<AidatRaporDto>.CreateAsync(
+                    orderedQuery,
+                    page,
+                    pageSize,
+                    ct);
+
+                var kullanilabilirYillar = await _db.OgrenciAidatlar
+                    .AsNoTracking()
+                    .Select(a => a.BaslangicYil)
+                    .Distinct()
+                    .OrderByDescending(x => x)
+                    .ToListAsync(ct);
+
+                return new AidatRaporSonucDto
+                {
+                    Satirlar = paged,
+                    ToplamBorc = toplamBorc,
+                    ToplamOdenenGosterilen = toplamOdenen,
+                    ToplamKalan = toplamKalan,
+                    KullanilabilirYillar = kullanilabilirYillar
+                };
+            }
+            finally
+            {
+                _db.IncludePasifOgrenciler = oncekiPasifFlag;
+            }
         }
 
 
@@ -278,14 +293,24 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             bool includePasif = false,
             CancellationToken ct = default)
         {
-            // ✅ Aynı filtrelerle tüm kayıtları çek (pagination YOK)
-            var dtoQuery = await BuildAidatRaporDtoQueryAsync(
-                yil, bas, bit, query, birimId, durum, tarifeYil, includePasif, ct);
+            var oncekiPasifFlag = _db.IncludePasifOgrenciler;
+            List<AidatRaporDto> rows;
+            try
+            {
+                _db.IncludePasifOgrenciler = includePasif;
 
-            var rows = await dtoQuery
-                .OrderBy(x => x.OgrenciSinif)
-                .ThenBy(x => x.OgrenciAdSoyad)
-                .ToListAsync(ct);
+                var dtoQuery = await BuildAidatRaporDtoQueryAsync(
+                    yil, bas, bit, query, birimId, durum, tarifeYil, includePasif, ct);
+
+                rows = await dtoQuery
+                    .OrderBy(x => x.OgrenciSinif)
+                    .ThenBy(x => x.OgrenciAdSoyad)
+                    .ToListAsync(ct);
+            }
+            finally
+            {
+                _db.IncludePasifOgrenciler = oncekiPasifFlag;
+            }
 
             // ✅ Toplamlar (filtreli tüm kayıtlar üzerinden)
             var aktif = rows.Where(x => !x.Muaf).ToList();

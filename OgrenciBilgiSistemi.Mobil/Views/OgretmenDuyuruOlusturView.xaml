@@ -31,24 +31,25 @@
 
                     <Label Text="Başlık" FontSize="13" FontAttributes="Bold" TextColor="#7F8C8D" />
                     <Border StrokeShape="RoundRectangle 10" Stroke="#E0E0E0" StrokeThickness="1" BackgroundColor="#FAFAFA">
-                        <Entry x:Name="BaslikEntry" Placeholder="Duyuru başlığı"
+                        <Entry Placeholder="Duyuru başlığı" Text="{Binding Baslik}"
                                FontSize="14" TextColor="#2C3E50" MaxLength="200"
                                BackgroundColor="Transparent" Margin="10,0" />
                     </Border>
 
                     <Label Text="İçerik" FontSize="13" FontAttributes="Bold" TextColor="#7F8C8D" />
                     <Border StrokeShape="RoundRectangle 10" Stroke="#E0E0E0" StrokeThickness="1" BackgroundColor="#FAFAFA">
-                        <Editor x:Name="IcerikEditor" Placeholder="Duyuru içeriğini buraya yazınız..."
+                        <Editor Placeholder="Duyuru içeriğini buraya yazınız..." Text="{Binding Icerik}"
                                 FontSize="14" TextColor="#2C3E50" MaxLength="2000"
                                 AutoSize="TextChanges" HeightRequest="180"
                                 BackgroundColor="Transparent" Margin="10,5" />
                     </Border>
 
-                    <Label x:Name="HataLabel" Text="" TextColor="#E74C3C" FontSize="13" IsVisible="False" />
+                    <Label Text="{Binding HataMesaji}" TextColor="#E74C3C" FontSize="13" IsVisible="{Binding HataGorunur}" />
 
-                    <Button x:Name="YayinlaButonu" Text="Yayınla"
+                    <Button Text="Yayınla"
                             BackgroundColor="#16A085" TextColor="White" FontFamily="OpenSansSemibold"
-                            FontSize="15" CornerRadius="10" HeightRequest="46" Clicked="OnYayinlaClicked" />
+                            FontSize="15" CornerRadius="10" HeightRequest="46"
+                            Command="{Binding YayinlaCommand}" IsEnabled="{Binding ButonEtkin}" />
 
                 </VerticalStackLayout>
             </Border>

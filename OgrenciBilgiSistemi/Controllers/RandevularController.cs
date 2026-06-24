@@ -1,11 +1,10 @@
 using ClosedXML.Excel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
-using OgrenciBilgiSistemi.Data;
+using OgrenciBilgiSistemi.Models;
 using OgrenciBilgiSistemi.Services.Interfaces;
 using OgrenciBilgiSistemi.Shared.Enums;
+using OgrenciBilgiSistemi.ViewModels;
 
 namespace OgrenciBilgiSistemi.Controllers
 {
@@ -13,16 +12,16 @@ namespace OgrenciBilgiSistemi.Controllers
     public class RandevularController : Controller
     {
         private readonly IRandevuService _randevuService;
-        private readonly AppDbContext _db;
+        private readonly IKullaniciService _kullaniciService;
         private readonly ILogger<RandevularController> _logger;
 
         public RandevularController(
             IRandevuService randevuService,
-            AppDbContext db,
+            IKullaniciService kullaniciService,
             ILogger<RandevularController> logger)
         {
             _randevuService = randevuService;
-            _db = db;
+            _kullaniciService = kullaniciService;
             _logger = logger;
         }
 
@@ -32,21 +31,20 @@ namespace OgrenciBilgiSistemi.Controllers
             DateTime? baslangic, DateTime? bitis,
             int sayfaNo = 1, CancellationToken ct = default)
         {
-            ViewData["Arama"] = arama;
-            ViewData["OgretmenId"] = ogretmenId;
-            ViewData["Durum"] = durum;
-            ViewData["Baslangic"] = baslangic?.ToString("yyyy-MM-dd");
-            ViewData["Bitis"] = bitis?.ToString("yyyy-MM-dd");
-
-            ViewData["Ogretmenler"] = await _db.Kullanicilar
-                .AsNoTracking()
-                .Where(k => k.Rol == KullaniciRolu.Ogretmen && k.KullaniciDurum)
-                .OrderBy(k => k.KullaniciAdi)
-                .Select(k => new SelectListItem(k.KullaniciAdi, k.KullaniciId.ToString()))
-                .ToListAsync(ct);
-
             var paged = await _randevuService.AraVeListele(arama, ogretmenId, durum, baslangic, bitis, sayfaNo, 20, ct);
-            return View(paged);
+
+            var vm = new RandevuListeVm
+            {
+                Randevular = paged,
+                Arama = arama,
+                OgretmenId = ogretmenId,
+                Durum = durum,
+                Baslangic = baslangic?.ToString("yyyy-MM-dd"),
+                Bitis = bitis?.ToString("yyyy-MM-dd"),
+                Ogretmenler = await _kullaniciService.GetKullanicilarByRolSelectListAsync(KullaniciRolu.Ogretmen, ct),
+            };
+
+            return View(vm);
         }
 
         [HttpGet]
@@ -65,36 +63,11 @@ namespace OgrenciBilgiSistemi.Controllers
             DateTime? baslangic, DateTime? bitis,
             CancellationToken ct = default)
         {
-            var query = _db.Randevular
-                .AsNoTracking()
-                .Include(r => r.Ogretmen)
-                .Include(r => r.Veli)
-                .Include(r => r.Ogrenci)
-                .AsQueryable();
-
-            if (ogretmenId.HasValue)
-                query = query.Where(r => r.OgretmenKullaniciId == ogretmenId.Value);
-            if (durum.HasValue)
-                query = query.Where(r => r.Durum == durum.Value);
-            if (baslangic.HasValue)
-                query = query.Where(r => r.RandevuTarihi >= baslangic.Value);
-            if (bitis.HasValue)
-                query = query.Where(r => r.RandevuTarihi <= bitis.Value);
-            if (!string.IsNullOrWhiteSpace(arama))
-            {
-                var q = arama.Trim();
-                query = query.Where(r =>
-                    r.Ogretmen.KullaniciAdi.Contains(q) ||
-                    r.Veli.KullaniciAdi.Contains(q) ||
-                    (r.Ogrenci != null && r.Ogrenci.OgrenciAdSoyad.Contains(q)));
-            }
-
-            var liste = await query.OrderByDescending(r => r.RandevuTarihi).ToListAsync(ct);
+            var liste = await _randevuService.ExcelListeleAsync(arama, ogretmenId, durum, baslangic, bitis, ct);
 
             using var workbook = new XLWorkbook();
             var ws = workbook.Worksheets.Add("Randevular");
 
-            // Başlıklar
             ws.Cell(1, 1).Value = "Tarih";
             ws.Cell(1, 2).Value = "Öğretmen";
             ws.Cell(1, 3).Value = "Veli";

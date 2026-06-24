@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using OgrenciBilgiSistemi.Data;
 using OgrenciBilgiSistemi.Models;
 using OgrenciBilgiSistemi.Services.Interfaces;
 using OgrenciBilgiSistemi.Shared.Enums;
+using OgrenciBilgiSistemi.Shared.Services;
 using OgrenciBilgiSistemi.ViewModels;
 
 namespace OgrenciBilgiSistemi.Services.Implementations
@@ -13,12 +15,16 @@ namespace OgrenciBilgiSistemi.Services.Implementations
     {
         private readonly AppDbContext _db;
         private readonly IWebHostEnvironment _env;
+        private readonly IMemoryCache _cache;
+        private readonly TenantBaglami _tenant;
         private readonly PasswordHasher<KullaniciModel> _passwordHasher = new();
 
-        public KullaniciService(AppDbContext db, IWebHostEnvironment env)
+        public KullaniciService(AppDbContext db, IWebHostEnvironment env, IMemoryCache cache, TenantBaglami tenant)
         {
             _db = db;
             _env = env;
+            _cache = cache;
+            _tenant = tenant;
         }
 
         public async Task<SayfalanmisListeModel<KullaniciModel>> SearchPagedAsync(
@@ -141,6 +147,14 @@ namespace OgrenciBilgiSistemi.Services.Implementations
         {
             var kullanici = await _db.Kullanicilar.FindAsync([id], ct);
             if (kullanici == null) return;
+
+            var bagliOgrenciVar = await _db.Ogrenciler
+                .AnyAsync(o => o.OgrenciDurum &&
+                               (o.VeliId == id || o.OgretmenId == id || o.ServisId == id), ct);
+            if (bagliOgrenciVar)
+                throw new InvalidOperationException(
+                    "Bu kullanıcıya bağlı aktif öğrenci kaydı var. " +
+                    "Kullanıcıyı pasife almadan önce öğrenci ilişkilerini kaldırın veya öğrencileri pasife alın.");
 
             kullanici.KullaniciDurum = false;
 
@@ -288,6 +302,8 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 await _db.SaveChangesAsync(ct);
                 await tx.CommitAsync(ct);
             });
+
+            _cache.Remove($"menu:{_tenant.OkulKodu}:{kullaniciId}");
         }
 
         public async Task<List<SelectListItem>> GetBirimlerSelectListAsync(CancellationToken ct = default)

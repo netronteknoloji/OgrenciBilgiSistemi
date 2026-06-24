@@ -14,7 +14,7 @@
                 <Shadow Brush="#16A085" Offset="0,4" Radius="15" Opacity="0.4" />
             </Border.Shadow>
             <Grid>
-                <views:AnaBaslikView x:Name="MyHeader" ShowBack="True" ShowProfile="False" />
+                <views:AnaBaslikView ShowBack="True" ShowProfile="False" />
                 <VerticalStackLayout Spacing="2" VerticalOptions="End" HorizontalOptions="Center" Margin="20,0,20,15">
                     <Label Text="Öğretmen Detayı" FontSize="18" FontFamily="OpenSansSemibold" TextColor="White" HorizontalTextAlignment="Center" />
                 </VerticalStackLayout>
@@ -33,14 +33,14 @@
                         <Border Grid.Column="0" WidthRequest="80" HeightRequest="80"
                                 StrokeShape="RoundRectangle 40" StrokeThickness="2" Stroke="#16A085"
                                 BackgroundColor="#F0F2F5">
-                            <Image x:Name="GorselImage" Aspect="AspectFill" />
+                            <Image Source="{Binding GorselKaynak}" Aspect="AspectFill" />
                         </Border>
                         <VerticalStackLayout Grid.Column="1" Spacing="4" VerticalOptions="Center">
-                            <Label x:Name="AdSoyadLabel" Text="" FontSize="17" FontFamily="OpenSansSemibold" TextColor="#2C3E50" />
-                            <Label x:Name="BirimLabel" Text="" FontSize="13" TextColor="#7F8C8D" />
-                            <Border x:Name="DurumRozet" StrokeShape="RoundRectangle 6" StrokeThickness="0"
-                                    BackgroundColor="#27AE60" Padding="8,3" HorizontalOptions="Start">
-                                <Label x:Name="DurumLabel" Text="Aktif" FontSize="11" TextColor="White" FontFamily="OpenSansSemibold" />
+                            <Label Text="{Binding AdSoyad}" FontSize="17" FontFamily="OpenSansSemibold" TextColor="#2C3E50" />
+                            <Label Text="{Binding Birim}" FontSize="13" TextColor="#7F8C8D" />
+                            <Border StrokeShape="RoundRectangle 6" StrokeThickness="0"
+                                    BackgroundColor="{Binding DurumRenk}" Padding="8,3" HorizontalOptions="Start">
+                                <Label Text="{Binding DurumMetin}" FontSize="11" TextColor="White" FontFamily="OpenSansSemibold" />
                             </Border>
                         </VerticalStackLayout>
                     </Grid>
@@ -56,21 +56,21 @@
 
                         <VerticalStackLayout Spacing="2">
                             <Label Text="Telefon" FontSize="11" TextColor="#95A5A6" />
-                            <Label x:Name="TelefonLabel" Text="-" FontSize="14" TextColor="#2C3E50" FontFamily="OpenSansSemibold">
+                            <Label Text="{Binding Telefon}" FontSize="14" TextColor="#2C3E50" FontFamily="OpenSansSemibold">
                                 <Label.GestureRecognizers>
-                                    <TapGestureRecognizer Tapped="OnTelefonTapped" />
+                                    <TapGestureRecognizer Command="{Binding TelefonAraCommand}" />
                                 </Label.GestureRecognizers>
                             </Label>
                         </VerticalStackLayout>
 
                         <VerticalStackLayout Spacing="2">
                             <Label Text="E-Posta" FontSize="11" TextColor="#95A5A6" />
-                            <Label x:Name="EmailLabel" Text="-" FontSize="14" TextColor="#2C3E50" />
+                            <Label Text="{Binding Email}" FontSize="14" TextColor="#2C3E50" />
                         </VerticalStackLayout>
                     </VerticalStackLayout>
                 </Border>
 
-                <Label x:Name="DurumYazisi" Text="" FontSize="13" TextColor="#E74C3C" HorizontalTextAlignment="Center" />
+                <Label Text="{Binding DurumYazisi}" FontSize="13" TextColor="#E74C3C" HorizontalTextAlignment="Center" />
             </VerticalStackLayout>
         </ScrollView>
     </Grid>

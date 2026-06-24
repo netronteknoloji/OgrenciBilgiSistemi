@@ -1,6 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using OgrenciBilgiSistemi.Models;
 using OgrenciBilgiSistemi.Services.Interfaces;
+using OgrenciBilgiSistemi.ViewModels;
 
 namespace OgrenciBilgiSistemi.Controllers
 {
@@ -18,9 +19,6 @@ namespace OgrenciBilgiSistemi.Controllers
         public async Task<IActionResult> Index(string? searchString, int pageNumber = 1,
             BirimFiltre durum = BirimFiltre.Aktif, CancellationToken ct = default)
         {
-            ViewData["CurrentFilter"] = searchString;
-            ViewData["Durum"] = durum;
-
             var paged = await _birimService.SearchPagedAsync(
                 searchString: searchString,
                 page: pageNumber,
@@ -29,31 +27,36 @@ namespace OgrenciBilgiSistemi.Controllers
                 sinifMi: null,
                 ct: ct);
 
-            return View(paged);
+            return View(new BirimIndexVm
+            {
+                Birimler = paged,
+                AramaMetni = searchString,
+                Durum = durum,
+            });
         }
 
         [HttpGet]
-        public IActionResult Ekle() => View(new BirimModel());
+        public IActionResult Ekle() => View(new BirimFormVm());
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Ekle(BirimModel model, CancellationToken ct)
+        public async Task<IActionResult> Ekle(BirimFormVm vm, CancellationToken ct)
         {
             if (!ModelState.IsValid)
             {
                 TempData["Warning"] = "Lütfen formu kontrol edin.";
-                return View(model);
+                return View(vm);
             }
 
             try
             {
-                if (await _birimService.ExistsWithNameAsync(model.BirimAd, excludeId: null, ct))
+                if (await _birimService.ExistsWithNameAsync(vm.BirimAd, excludeId: null, ct))
                 {
-                    ModelState.AddModelError(nameof(model.BirimAd), "Bu ad zaten kullanılıyor.");
-                    return View(model);
+                    ModelState.AddModelError(nameof(vm.BirimAd), "Bu ad zaten kullanılıyor.");
+                    return View(vm);
                 }
 
-                await _birimService.AddAsync(model, ct);
+                await _birimService.AddAsync(vm.ToModel(), ct);
                 TempData["Success"] = "Birim başarıyla kaydedildi.";
                 return RedirectToAction(nameof(Index));
             }
@@ -61,7 +64,7 @@ namespace OgrenciBilgiSistemi.Controllers
             {
                 _logger.LogError(ex, "Birim eklenirken hata oluştu.");
                 TempData["Error"] = "Kayıt sırasında bir hata oluştu.";
-                return View(model);
+                return View(vm);
             }
         }
 
@@ -70,28 +73,29 @@ namespace OgrenciBilgiSistemi.Controllers
         {
             var birim = await _birimService.GetByIdAsync(id, true, ct);
             if (birim == null) return NotFound();
-            return View(birim);
+            return View(BirimFormVm.FromModel(birim));
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Guncelle(BirimModel model, CancellationToken ct)
+        public async Task<IActionResult> Guncelle(BirimFormVm vm, CancellationToken ct)
         {
+            vm.FormAction = "Guncelle"; vm.SubmitText = "Güncelle"; vm.IncludeId = true;
             if (!ModelState.IsValid)
             {
                 TempData["Warning"] = "Lütfen formu kontrol edin.";
-                return View(model);
+                return View(vm);
             }
 
             try
             {
-                if (await _birimService.ExistsWithNameAsync(model.BirimAd, excludeId: model.BirimId, ct))
+                if (await _birimService.ExistsWithNameAsync(vm.BirimAd, excludeId: vm.BirimId, ct))
                 {
-                    ModelState.AddModelError(nameof(model.BirimAd), "Bu ad zaten kullanılıyor.");
-                    return View(model);
+                    ModelState.AddModelError(nameof(vm.BirimAd), "Bu ad zaten kullanılıyor.");
+                    return View(vm);
                 }
 
-                await _birimService.UpdateAsync(model, ct);
+                await _birimService.UpdateAsync(vm.ToModel(), ct);
                 TempData["Success"] = "Birim başarıyla güncellendi.";
                 return RedirectToAction(nameof(Index));
             }
@@ -103,7 +107,7 @@ namespace OgrenciBilgiSistemi.Controllers
             {
                 _logger.LogError(ex, "Birim güncellenirken hata oluştu.");
                 TempData["Error"] = "Güncelleme sırasında bir hata oluştu.";
-                return View(model);
+                return View(vm);
             }
         }
 

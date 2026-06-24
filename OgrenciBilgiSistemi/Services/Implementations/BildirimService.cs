@@ -15,17 +15,20 @@ namespace OgrenciBilgiSistemi.Services.Implementations
         private readonly IPushBildirimGonderici _pushGonderici;
         private readonly TenantBaglami _tenantBaglami;
         private readonly ILogger<BildirimService> _logger;
+        private readonly TimeProvider _timeProvider;
 
         public BildirimService(
             AppDbContext db,
             IPushBildirimGonderici pushGonderici,
             TenantBaglami tenantBaglami,
-            ILogger<BildirimService> logger)
+            ILogger<BildirimService> logger,
+            TimeProvider timeProvider)
         {
             _db = db;
             _pushGonderici = pushGonderici;
             _tenantBaglami = tenantBaglami;
             _logger = logger;
+            _timeProvider = timeProvider;
         }
 
         public async Task Olustur(int aliciKullaniciId, BildirimTuru tur, string mesaj, int? randevuId = null, CancellationToken ct = default)
@@ -37,7 +40,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 Mesaj = mesaj,
                 RandevuId = randevuId,
                 Okundu = false,
-                OlusturulmaTarihi = DateTime.Now
+                OlusturulmaTarihi = _timeProvider.GetLocalNow().DateTime
             };
 
             _db.Bildirimler.Add(bildirim);

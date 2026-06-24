@@ -32,6 +32,8 @@
     {
         public int? Yil { get; set; }
         public string? Query { get; set; }
+        public string? Bas { get; set; }
+        public string? Bit { get; set; }
         public YemekhaneRaporListeVm Rapor { get; set; } = new();
     }
 }

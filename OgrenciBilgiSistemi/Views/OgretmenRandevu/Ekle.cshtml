@@ -1,9 +1,7 @@
-@model OgrenciBilgiSistemi.Models.OgretmenRandevuModel
-@using Microsoft.AspNetCore.Mvc.Rendering
+@model OgrenciBilgiSistemi.ViewModels.OgretmenRandevuFormVm
 
 @{
     ViewData["Title"] = "Randevu Saati Ekle";
-    var ogretmenler = ViewData["Ogretmenler"] as List<SelectListItem> ?? new();
 }
 
 <div class="viewport-scroller">
@@ -22,7 +20,7 @@
 
                                 <div class="mb-3">
                                     <label asp-for="OgretmenKullaniciId" class="form-label fw-semibold">Öğretmen</label>
-                                    <select asp-for="OgretmenKullaniciId" class="form-select" asp-items="ogretmenler">
+                                    <select asp-for="OgretmenKullaniciId" class="form-select" asp-items="Model.Ogretmenler">
                                         <option value="">-- Seçiniz --</option>
                                     </select>
                                     <span asp-validation-for="OgretmenKullaniciId" class="text-danger"></span>
@@ -30,7 +28,9 @@
 
                                 <div class="mb-3">
                                     <label asp-for="Tarih" class="form-label fw-semibold">Tarih</label>
-                                    <input asp-for="Tarih" type="date" class="form-control" min="@DateTime.Today.ToString("yyyy-MM-dd")" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                                    <input asp-for="Tarih" type="date" class="form-control"
+                                           min="@DateTime.Today.ToString("yyyy-MM-dd")"
+                                           value="@DateTime.Today.ToString("yyyy-MM-dd")" />
                                     <span asp-validation-for="Tarih" class="text-danger"></span>
                                 </div>
 

@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:views="clr-namespace:OgrenciBilgiSistemi.Mobil.Views"
              x:Class="OgrenciBilgiSistemi.Mobil.Views.AdminOgretmenListeView"
+             x:Name="SayfaKoku"
              Title="Öğretmenler"
              Shell.NavBarIsVisible="False"
              BackgroundColor="#F0F2F5">
@@ -14,15 +15,18 @@
                 <Shadow Brush="#16A085" Offset="0,4" Radius="15" Opacity="0.4" />
             </Border.Shadow>
             <Grid>
-                <views:AnaBaslikView x:Name="MyHeader" ShowBack="True" ShowProfile="False" />
+                <views:AnaBaslikView ShowBack="True" ShowProfile="False" />
                 <VerticalStackLayout Spacing="2" VerticalOptions="End" HorizontalOptions="Center" Margin="20,0,20,15">
                     <Label Text="Öğretmenler" FontSize="18" FontFamily="OpenSansSemibold" TextColor="White" HorizontalTextAlignment="Center" />
-                    <Label x:Name="AltBaslikLabel" Text="" FontSize="14" TextColor="White" Opacity="0.8" HorizontalTextAlignment="Center" />
+                    <Label Text="{Binding AltBaslik}" FontSize="14" TextColor="White" Opacity="0.8" HorizontalTextAlignment="Center" />
                 </VerticalStackLayout>
             </Grid>
         </Border>
 
-        <CollectionView Grid.Row="1" x:Name="OgretmenCollection" Margin="15,10" SelectionMode="None">
+        <CollectionView Grid.Row="1"
+                        ItemsSource="{Binding Ogretmenler}"
+                        Margin="15,10"
+                        SelectionMode="None">
             <CollectionView.ItemsLayout>
                 <LinearItemsLayout Orientation="Vertical" ItemSpacing="8" />
             </CollectionView.ItemsLayout>
@@ -34,7 +38,9 @@
                             <Shadow Brush="Black" Offset="0,2" Radius="6" Opacity="0.05" />
                         </Border.Shadow>
                         <Border.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnOgretmenSecildi" />
+                            <TapGestureRecognizer
+                                Command="{Binding BindingContext.OgretmenSecCommand, Source={x:Reference SayfaKoku}}"
+                                CommandParameter="{Binding .}" />
                         </Border.GestureRecognizers>
                         <Grid ColumnDefinitions="4, *">
                             <BoxView Grid.Column="0" BackgroundColor="#16A085" WidthRequest="4"
@@ -52,7 +58,7 @@
             </CollectionView.ItemTemplate>
             <CollectionView.EmptyView>
                 <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="10" Padding="20">
-                    <Label x:Name="BosDurumLabel" Text="Yükleniyor..." FontSize="16" TextColor="#95A5A6" HorizontalOptions="Center" />
+                    <Label Text="{Binding BosDurum}" FontSize="16" TextColor="#95A5A6" HorizontalOptions="Center" />
                 </VerticalStackLayout>
             </CollectionView.EmptyView>
         </CollectionView>

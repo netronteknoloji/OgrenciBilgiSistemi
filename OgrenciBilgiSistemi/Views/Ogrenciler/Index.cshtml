@@ -161,7 +161,7 @@
                                     <td>
                                         @{
                                             bool aktifMi = false;
-                                            if (ViewBag.YemekDurumMap is IDictionary<int, bool> dict && dict.TryGetValue(ogrenci.OgrenciId, out var v))
+                                            if (Model.YemekDurumMap is IDictionary<int, bool> dict && dict.TryGetValue(ogrenci.OgrenciId, out var v))
                                             { aktifMi = v; }
                                             var yemekBadge = aktifMi ? "bg-success" : "bg-danger";
                                             var yemekText = aktifMi ? "Evet" : "Hayır";

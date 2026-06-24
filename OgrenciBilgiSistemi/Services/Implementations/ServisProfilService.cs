@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using OgrenciBilgiSistemi.Data;
 using OgrenciBilgiSistemi.Models;
 using OgrenciBilgiSistemi.Services.Interfaces;
@@ -11,9 +12,14 @@ namespace OgrenciBilgiSistemi.Services.Implementations
     public sealed class ServisProfilService : IServisProfilService
     {
         private readonly AppDbContext _db;
+        private readonly ILogger<ServisProfilService> _logger;
         private readonly PasswordHasher<KullaniciModel> _passwordHasher = new();
 
-        public ServisProfilService(AppDbContext db) => _db = db;
+        public ServisProfilService(AppDbContext db, ILogger<ServisProfilService> logger)
+        {
+            _db = db;
+            _logger = logger;
+        }
 
         public async Task<SayfalanmisListeModel<ServisProfilModel>> SearchPagedAsync(
             string? searchString, int page, int pageSize = 20, CancellationToken ct = default)
@@ -64,8 +70,16 @@ namespace OgrenciBilgiSistemi.Services.Implementations
 
             kullanici.Sifre = _passwordHasher.HashPassword(kullanici, vm.Sifre);
 
-            _db.Kullanicilar.Add(kullanici);
-            await _db.SaveChangesAsync(ct);
+            try
+            {
+                _db.Kullanicilar.Add(kullanici);
+                await _db.SaveChangesAsync(ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Servis kullanıcısı eklenirken hata. Plaka: {Plaka}", vm.Plaka);
+                throw;
+            }
             return kullanici.KullaniciId;
         }
 
@@ -88,7 +102,15 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                     kullanici.Sifre = _passwordHasher.HashPassword(kullanici, sifre);
             }
 
-            await _db.SaveChangesAsync(ct);
+            try
+            {
+                await _db.SaveChangesAsync(ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Servis profili güncellenirken hata. Id: {Id}", model.KullaniciId);
+                throw;
+            }
         }
 
         public async Task SilAsync(int kullaniciId, CancellationToken ct = default)
@@ -97,7 +119,15 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             if (profil == null) return;
 
             profil.ServisDurum = false;
-            await _db.SaveChangesAsync(ct);
+            try
+            {
+                await _db.SaveChangesAsync(ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Servis pasifleştirilirken hata. Id: {Id}", kullaniciId);
+                throw;
+            }
         }
 
         public async Task<ServisProfilModel?> GetByIdAsync(int kullaniciId, CancellationToken ct = default)

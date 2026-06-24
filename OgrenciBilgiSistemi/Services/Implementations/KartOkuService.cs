@@ -32,6 +32,46 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 .FirstOrDefaultAsync(o => o.OgrenciKartNo == k && o.OgrenciDurum, ct);
         }
 
+        public async Task<bool> YemekIzniVarMiAsync(int ogrenciId, int yil, int ay, CancellationToken ct = default)
+        {
+            var ayAktif = await _context.OgrenciYemekler.AsNoTracking()
+                .AnyAsync(x => x.OgrenciId == ogrenciId && x.Yil == yil && x.Ay == ay && x.Aktif, ct);
+
+            if (ayAktif)
+                return true;
+
+            return await _context.OgrenciYemekOdemeler.AsNoTracking()
+                .AnyAsync(p => p.OgrenciId == ogrenciId && p.Yil == yil && p.Ay == ay && p.Tutar > 0m, ct);
+        }
+
+        public async Task<bool> BugunYemekGirisiVarMiAsync(int ogrenciId, DateTime today, DateTime tomorrow, CancellationToken ct = default)
+        {
+            return await _context.OgrenciDetaylar.AsNoTracking()
+                .AnyAsync(l => l.OgrenciId == ogrenciId
+                               && l.Cihaz != null
+                               && l.Cihaz.IstasyonTipi == IstasyonTipi.Yemekhane
+                               && ((l.OgrenciGTarih >= today && l.OgrenciGTarih < tomorrow)
+                                   || (l.OgrenciCTarih >= today && l.OgrenciCTarih < tomorrow)), ct);
+        }
+
+        public async Task<(bool CikisVarMi, bool GirisVarMi)> BugunAnaKapiHareketleriAsync(
+            int ogrenciId, DateTime today, DateTime tomorrow, CancellationToken ct = default)
+        {
+            var cikisVarMi = await _context.OgrenciDetaylar.AsNoTracking()
+                .AnyAsync(l => l.OgrenciId == ogrenciId
+                               && l.Cihaz != null
+                               && l.Cihaz.IstasyonTipi == IstasyonTipi.AnaKapi
+                               && l.OgrenciCTarih >= today && l.OgrenciCTarih < tomorrow, ct);
+
+            var girisVarMi = await _context.OgrenciDetaylar.AsNoTracking()
+                .AnyAsync(l => l.OgrenciId == ogrenciId
+                               && l.Cihaz != null
+                               && l.Cihaz.IstasyonTipi == IstasyonTipi.AnaKapi
+                               && l.OgrenciGTarih >= today && l.OgrenciGTarih < tomorrow, ct);
+
+            return (cikisVarMi, girisVarMi);
+        }
+
         public Task<OgrenciBilgisiDto> OgrenciDtoHazirla(
             OgrenciModel ogrenci,
             OgrenciDetayModel log,

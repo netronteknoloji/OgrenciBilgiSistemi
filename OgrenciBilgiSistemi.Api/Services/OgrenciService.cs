@@ -1,12 +1,13 @@
 using Microsoft.Data.SqlClient;
 using OgrenciBilgiSistemi.Api.Dtos;
 using OgrenciBilgiSistemi.Api.Models;
+using OgrenciBilgiSistemi.Api.Services.Interfaces;
 using OgrenciBilgiSistemi.Shared.Dtos;
 using OgrenciBilgiSistemi.Shared.Services;
 
 namespace OgrenciBilgiSistemi.Api.Services
 {
-    public class OgrenciService
+    public class OgrenciService : IOgrenciService
     {
         private readonly TenantBaglami _tenantBaglami;
 
@@ -408,7 +409,7 @@ namespace OgrenciBilgiSistemi.Api.Services
                 const string query = @"
                     SELECT
                         s.OgrenciAdSoyad, s.OgrenciNo, s.OgrenciKartNo, s.OgrenciGorsel,
-                        s.OgrenciCikisDurumu,
+                        s.OgrenciCikisDurumu, s.VeliId, s.ServisId,
                         u.BirimAd,
                         vk.KullaniciAdi AS VeliAdSoyad, vk.Telefon AS VeliTelefon,
                         p.VeliEmail, p.VeliMeslek, p.VeliIsYeri, p.VeliAdres,
@@ -438,6 +439,8 @@ namespace OgrenciBilgiSistemi.Api.Services
 
                     return new OgrenciDetayDto
                     {
+                        VeliId           = reader["VeliId"] != DBNull.Value ? (int?)reader["VeliId"] : null,
+                        ServisId         = reader["ServisId"] != DBNull.Value ? (int?)reader["ServisId"] : null,
                         OgrenciAdSoyad   = reader["OgrenciAdSoyad"]?.ToString()  ?? "Bilinmiyor",
                         OgrenciNo        = reader["OgrenciNo"]?.ToString()       ?? "-",
                         OgrenciKartNo    = reader["OgrenciKartNo"]?.ToString()   ?? "-",
@@ -484,9 +487,10 @@ namespace OgrenciBilgiSistemi.Api.Services
                 await using var conn = new SqlConnection(ConnectionString);
                 await using var cmd  = new SqlCommand(query, conn);
 
+                var kartNo = string.IsNullOrWhiteSpace(dto.OgrenciKartNo) ? null : dto.OgrenciKartNo.Trim();
                 cmd.Parameters.AddWithValue("@adSoyad",      dto.OgrenciAdSoyad.Trim().ToUpperInvariant());
                 cmd.Parameters.AddWithValue("@no",           dto.OgrenciNo);
-                cmd.Parameters.AddWithValue("@kartNo",       (object?)dto.OgrenciKartNo ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@kartNo",       (object?)kartNo ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@cikisDurumu",  dto.OgrenciCikisDurumu);
                 var ogretmenId = await BirimdenOgretmenBulAsync(dto.BirimId);
                 cmd.Parameters.AddWithValue("@birimId",      (object?)dto.BirimId    ?? DBNull.Value);
@@ -529,10 +533,11 @@ namespace OgrenciBilgiSistemi.Api.Services
                 await using var conn = new SqlConnection(ConnectionString);
                 await using var cmd  = new SqlCommand(query, conn);
 
+                var kartNo = string.IsNullOrWhiteSpace(dto.OgrenciKartNo) ? null : dto.OgrenciKartNo.Trim();
                 cmd.Parameters.AddWithValue("@id",           ogrenciId);
                 cmd.Parameters.AddWithValue("@adSoyad",      dto.OgrenciAdSoyad.Trim().ToUpperInvariant());
                 cmd.Parameters.AddWithValue("@no",           dto.OgrenciNo);
-                cmd.Parameters.AddWithValue("@kartNo",       (object?)dto.OgrenciKartNo ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@kartNo",       (object?)kartNo ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@cikisDurumu",  dto.OgrenciCikisDurumu);
                 cmd.Parameters.AddWithValue("@durum",        dto.OgrenciDurum);
                 var ogretmenId = await BirimdenOgretmenBulAsync(dto.BirimId);

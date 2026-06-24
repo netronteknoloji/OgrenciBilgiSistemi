@@ -72,27 +72,20 @@ public sealed class BekleyenSmsRetryService : BackgroundService
         if (bekleyenler.Count == 0) return;
 
         var ogrIdler = bekleyenler.Select(x => x.OgrenciId).Distinct().ToList();
-        var ogrenciBilgileri = await db.Ogrenciler.AsNoTracking()
+        var bilgiVeDenemeler = await db.Ogrenciler.AsNoTracking()
             .Where(o => ogrIdler.Contains(o.OgrenciId) && o.VeliId != null)
             .Select(o => new
             {
                 o.OgrenciId,
                 o.OgrenciAdSoyad,
-                VeliTelefon = o.Veli!.Telefon
+                VeliTelefon = o.Veli!.Telefon,
+                OncekiDenemeSayisi = db.SmsGonderimGecmisleri
+                    .Count(g => g.Tip == TIP
+                             && g.GonderimZamani >= today
+                             && g.GonderimZamani < tomorrow
+                             && g.OgrenciId == o.OgrenciId)
             })
             .ToDictionaryAsync(o => o.OgrenciId, ct);
-
-        // Bugün için bu öğrenciye ait önceki deneme sayılarını topluca çek
-        var oncekiDenemeler = await db.SmsGonderimGecmisleri
-            .AsNoTracking()
-            .Where(g => g.Tip == TIP
-                     && g.GonderimZamani >= today
-                     && g.GonderimZamani < tomorrow
-                     && g.OgrenciId != null
-                     && ogrIdler.Contains(g.OgrenciId.Value))
-            .GroupBy(g => g.OgrenciId!.Value)
-            .Select(grp => new { OgrenciId = grp.Key, Sayi = grp.Count() })
-            .ToDictionaryAsync(x => x.OgrenciId, x => x.Sayi, ct);
 
         // Önce eligible kayıtları topla; giveup edilenleri burada işaretle
         var gonderilecekler = new List<(OgrenciDetayModel Log, string Telefon, string Mesaj, string GecisTipi, int OncekiSayi)>();
@@ -101,10 +94,10 @@ public sealed class BekleyenSmsRetryService : BackgroundService
         {
             ct.ThrowIfCancellationRequested();
 
-            if (!ogrenciBilgileri.TryGetValue(log.OgrenciId, out var bilgi)) continue;
+            if (!bilgiVeDenemeler.TryGetValue(log.OgrenciId, out var bilgi)) continue;
             if (string.IsNullOrWhiteSpace(bilgi.VeliTelefon)) continue;
 
-            var oncekiSayi = oncekiDenemeler.GetValueOrDefault(log.OgrenciId, 0);
+            var oncekiSayi = bilgi.OncekiDenemeSayisi;
 
             // Emniyet: çok fazla denenmişse vazgeç (kategori yanlış belirlenmiş olma ihtimali)
             if (oncekiSayi >= MAX_DENEME)

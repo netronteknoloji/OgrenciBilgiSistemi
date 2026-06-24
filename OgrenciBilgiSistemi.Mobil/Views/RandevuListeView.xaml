@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:views="clr-namespace:OgrenciBilgiSistemi.Mobil.Views"
              x:Class="OgrenciBilgiSistemi.Mobil.Views.RandevuListeView"
+             x:Name="SayfaKoku"
              Title="Randevularım"
              Shell.NavBarIsVisible="False"
              BackgroundColor="#F0F2F5">
@@ -26,20 +27,21 @@
         <Grid Grid.Row="1" ColumnDefinitions="*, *" Margin="15,-15,15,10" HeightRequest="55">
             <Button Grid.Column="0" Text="+ Yeni Randevu" BackgroundColor="#27AE60" TextColor="White"
                     FontFamily="OpenSansSemibold" FontSize="13" CornerRadius="28" Margin="0,0,5,0"
-                    Clicked="OnYeniRandevuClicked" />
+                    Command="{Binding YeniRandevuCommand}" />
             <Button Grid.Column="1" Text="Bildirimler" BackgroundColor="White" TextColor="#2980B9"
                     FontFamily="OpenSansSemibold" FontSize="13" CornerRadius="28" Margin="5,0,0,0"
-                    Clicked="OnBildirimlerClicked">
+                    Command="{Binding BildirimlerCommand}">
                 <Button.Shadow>
                     <Shadow Brush="Black" Offset="0,4" Radius="10" Opacity="0.08" />
                 </Button.Shadow>
             </Button>
         </Grid>
 
-        <RefreshView Grid.Row="2" x:Name="RandevuRefresh" Refreshing="OnRefreshing">
-            <CollectionView x:Name="RandevuCollection" Margin="15,0" SelectionMode="None"
-                              RemainingItemsThreshold="5"
-                              RemainingItemsThresholdReached="OnRemainingItemsThresholdReached">
+        <RefreshView Grid.Row="2" IsRefreshing="{Binding Yenileniyor}" Command="{Binding YenileCommand}">
+            <CollectionView Margin="15,0" SelectionMode="None"
+                            ItemsSource="{Binding Randevular}"
+                            RemainingItemsThreshold="5"
+                            RemainingItemsThresholdReachedCommand="{Binding DahaFazlaYukleCommand}">
                 <CollectionView.ItemsLayout>
                     <LinearItemsLayout Orientation="Vertical" ItemSpacing="10" />
                 </CollectionView.ItemsLayout>
@@ -50,7 +52,9 @@
                                 <Shadow Brush="Black" Offset="0,2" Radius="8" Opacity="0.06" />
                             </Border.Shadow>
                             <Border.GestureRecognizers>
-                                <TapGestureRecognizer Tapped="OnRandevuTapped" CommandParameter="{Binding .}" />
+                                <TapGestureRecognizer
+                                    Command="{Binding BindingContext.RandevuSecCommand, Source={x:Reference SayfaKoku}}"
+                                    CommandParameter="{Binding .}" />
                             </Border.GestureRecognizers>
                             <Grid ColumnDefinitions="4, *, Auto" ColumnSpacing="14">
                                 <BoxView Grid.Column="0" BackgroundColor="{Binding DurumRenk}" WidthRequest="4"

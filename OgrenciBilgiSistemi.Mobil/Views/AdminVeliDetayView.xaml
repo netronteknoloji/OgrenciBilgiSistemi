@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:views="clr-namespace:OgrenciBilgiSistemi.Mobil.Views"
              x:Class="OgrenciBilgiSistemi.Mobil.Views.AdminVeliDetayView"
+             x:Name="SayfaKoku"
              Title="Veli Detayı"
              Shell.NavBarIsVisible="False"
              BackgroundColor="#F0F2F5">
@@ -14,7 +15,7 @@
                 <Shadow Brush="#E67E22" Offset="0,4" Radius="15" Opacity="0.4" />
             </Border.Shadow>
             <Grid>
-                <views:AnaBaslikView x:Name="MyHeader" ShowBack="True" ShowProfile="False" />
+                <views:AnaBaslikView ShowBack="True" ShowProfile="False" />
                 <VerticalStackLayout Spacing="2" VerticalOptions="End" HorizontalOptions="Center" Margin="20,0,20,15">
                     <Label Text="Veli Detayı" FontSize="18" FontFamily="OpenSansSemibold" TextColor="White" HorizontalTextAlignment="Center" />
                 </VerticalStackLayout>
@@ -30,8 +31,8 @@
                         <Shadow Brush="Black" Offset="0,2" Radius="6" Opacity="0.05" />
                     </Border.Shadow>
                     <VerticalStackLayout Spacing="6">
-                        <Label x:Name="AdSoyadLabel" Text="" FontSize="17" FontFamily="OpenSansSemibold" TextColor="#2C3E50" />
-                        <Label x:Name="YakinlikLabel" Text="" FontSize="13" TextColor="#7F8C8D" />
+                        <Label Text="{Binding AdSoyad}" FontSize="17" FontFamily="OpenSansSemibold" TextColor="#2C3E50" />
+                        <Label Text="{Binding Yakinlik}" FontSize="13" TextColor="#7F8C8D" />
                     </VerticalStackLayout>
                 </Border>
 
@@ -45,21 +46,21 @@
 
                         <VerticalStackLayout Spacing="2">
                             <Label Text="Telefon" FontSize="11" TextColor="#95A5A6" />
-                            <Label x:Name="TelefonLabel" Text="-" FontSize="14" TextColor="#2C3E50" FontFamily="OpenSansSemibold">
+                            <Label Text="{Binding Telefon}" FontSize="14" TextColor="#2C3E50" FontFamily="OpenSansSemibold">
                                 <Label.GestureRecognizers>
-                                    <TapGestureRecognizer Tapped="OnTelefonTapped" />
+                                    <TapGestureRecognizer Command="{Binding TelefonAraCommand}" />
                                 </Label.GestureRecognizers>
                             </Label>
                         </VerticalStackLayout>
 
                         <VerticalStackLayout Spacing="2">
                             <Label Text="E-Posta" FontSize="11" TextColor="#95A5A6" />
-                            <Label x:Name="EmailLabel" Text="-" FontSize="14" TextColor="#2C3E50" />
+                            <Label Text="{Binding Email}" FontSize="14" TextColor="#2C3E50" />
                         </VerticalStackLayout>
 
                         <VerticalStackLayout Spacing="2">
                             <Label Text="Adres" FontSize="11" TextColor="#95A5A6" />
-                            <Label x:Name="AdresLabel" Text="-" FontSize="14" TextColor="#2C3E50" />
+                            <Label Text="{Binding Adres}" FontSize="14" TextColor="#2C3E50" />
                         </VerticalStackLayout>
                     </VerticalStackLayout>
                 </Border>
@@ -74,12 +75,12 @@
 
                         <VerticalStackLayout Spacing="2">
                             <Label Text="Meslek" FontSize="11" TextColor="#95A5A6" />
-                            <Label x:Name="MeslekLabel" Text="-" FontSize="14" TextColor="#2C3E50" />
+                            <Label Text="{Binding Meslek}" FontSize="14" TextColor="#2C3E50" />
                         </VerticalStackLayout>
 
                         <VerticalStackLayout Spacing="2">
                             <Label Text="İş Yeri" FontSize="11" TextColor="#95A5A6" />
-                            <Label x:Name="IsYeriLabel" Text="-" FontSize="14" TextColor="#2C3E50" />
+                            <Label Text="{Binding IsYeri}" FontSize="14" TextColor="#2C3E50" />
                         </VerticalStackLayout>
                     </VerticalStackLayout>
                 </Border>
@@ -90,8 +91,8 @@
                         <Shadow Brush="Black" Offset="0,2" Radius="6" Opacity="0.05" />
                     </Border.Shadow>
                     <VerticalStackLayout Spacing="10">
-                        <Label x:Name="CocuklarBaslik" Text="Çocuklar" FontSize="14" FontFamily="OpenSansSemibold" TextColor="#E67E22" />
-                        <CollectionView x:Name="CocukCollection" SelectionMode="None">
+                        <Label Text="{Binding CocuklarBaslik}" FontSize="14" FontFamily="OpenSansSemibold" TextColor="#E67E22" />
+                        <CollectionView ItemsSource="{Binding Cocuklar}" SelectionMode="None">
                             <CollectionView.ItemsLayout>
                                 <LinearItemsLayout Orientation="Vertical" ItemSpacing="6" />
                             </CollectionView.ItemsLayout>
@@ -99,7 +100,9 @@
                                 <DataTemplate>
                                     <Border StrokeShape="RoundRectangle 10" StrokeThickness="0" Padding="12,10" BackgroundColor="#F7F9FB">
                                         <Border.GestureRecognizers>
-                                            <TapGestureRecognizer Tapped="OnCocukSecildi" />
+                                            <TapGestureRecognizer
+                                                Command="{Binding BindingContext.CocukSecCommand, Source={x:Reference SayfaKoku}}"
+                                                CommandParameter="{Binding .}" />
                                         </Border.GestureRecognizers>
                                         <Grid ColumnDefinitions="4, *, Auto" ColumnSpacing="10">
                                             <BoxView Grid.Column="0" BackgroundColor="#1F4E79" WidthRequest="4"
@@ -125,7 +128,7 @@
                     </VerticalStackLayout>
                 </Border>
 
-                <Label x:Name="DurumYazisi" Text="" FontSize="13" TextColor="#E74C3C" HorizontalTextAlignment="Center" />
+                <Label Text="{Binding DurumYazisi}" FontSize="13" TextColor="#E74C3C" HorizontalTextAlignment="Center" />
             </VerticalStackLayout>
         </ScrollView>
     </Grid>

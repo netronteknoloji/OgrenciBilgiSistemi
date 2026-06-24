@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OgrenciBilgiSistemi.Api.Models;
-using OgrenciBilgiSistemi.Api.Services;
+using OgrenciBilgiSistemi.Api.Services.Interfaces;
 
 namespace OgrenciBilgiSistemi.Api.Controllers
 {
@@ -10,9 +10,9 @@ namespace OgrenciBilgiSistemi.Api.Controllers
     [Authorize]
     public class BirimlerController : ControllerBase
     {
-        private readonly BirimService _birimService;
+        private readonly IBirimService _birimService;
 
-        public BirimlerController(BirimService birimService)
+        public BirimlerController(IBirimService birimService)
         {
             _birimService = birimService;
         }

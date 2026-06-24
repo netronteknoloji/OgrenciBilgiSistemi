@@ -1,9 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using OgrenciBilgiSistemi.Data;
-using OgrenciBilgiSistemi.Models;
+using OgrenciBilgiSistemi.Services.Interfaces;
 using OgrenciBilgiSistemi.Shared.Services;
+using OgrenciBilgiSistemi.ViewModels;
 
 namespace OgrenciBilgiSistemi.Controllers
 {
@@ -11,64 +10,34 @@ namespace OgrenciBilgiSistemi.Controllers
     public class OkulSecimController : Controller
     {
         private readonly OkulYapilandirmaServisi _okulServisi;
+        private readonly IKimlikDogrulamaService _kimlikServisi;
 
-        public OkulSecimController(OkulYapilandirmaServisi okulServisi)
+        public OkulSecimController(OkulYapilandirmaServisi okulServisi, IKimlikDogrulamaService kimlikServisi)
         {
             _okulServisi = okulServisi;
+            _kimlikServisi = kimlikServisi;
         }
 
         public IActionResult Index()
         {
-            var okullar = _okulServisi.TumOkullariGetir();
-            ViewBag.SeciliOkulKodu = HttpContext.Session.GetString("SeciliOkulKodu");
-            return View(okullar);
+            return View(new OkulSecimVm
+            {
+                Okullar = _okulServisi.TumOkullariGetir(),
+                SeciliOkulKodu = HttpContext.Session.GetString("SeciliOkulKodu")
+            });
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> OkulSec(string okulKodu)
+        public async Task<IActionResult> OkulSec(string okulKodu, CancellationToken ct = default)
         {
             if (!_okulServisi.OkulVarMi(okulKodu))
                 return BadRequest("Geçersiz okul kodu.");
 
             HttpContext.Session.SetString("SeciliOkulKodu", okulKodu);
 
-            // GenelAdmin kaydı yoksa otomatik oluştur + tüm menüleri ata
             var okul = _okulServisi.OkulGetir(okulKodu);
-            var optionsBuilder = new DbContextOptionsBuilder<AppDbContext>();
-            optionsBuilder.UseSqlServer(okul!.ConnectionString);
-
-            using var db = new AppDbContext(optionsBuilder.Options);
-
-            var mevcutKayit = await db.Kullanicilar
-                .FirstOrDefaultAsync(k => k.Rol == KullaniciRolu.GenelAdmin);
-
-            if (mevcutKayit == null)
-            {
-                var genelAdmin = new KullaniciModel
-                {
-                    KullaniciAdi = "GenelAdmin",
-                    Sifre = "-",
-                    Rol = KullaniciRolu.GenelAdmin,
-                    KullaniciDurum = true
-                };
-                db.Kullanicilar.Add(genelAdmin);
-                await db.SaveChangesAsync();
-
-                var tumMenuler = await db.MenuOgeler
-                    .Select(m => m.Id)
-                    .ToListAsync();
-
-                foreach (var menuId in tumMenuler)
-                {
-                    db.KullaniciMenuOgeler.Add(new KullaniciMenuModel
-                    {
-                        KullaniciId = genelAdmin.KullaniciId,
-                        MenuOgeId = menuId
-                    });
-                }
-                await db.SaveChangesAsync();
-            }
+            await _kimlikServisi.GenelAdminOlusturAsync(okul!.ConnectionString, ct);
 
             return RedirectToAction("Index", "Home");
         }

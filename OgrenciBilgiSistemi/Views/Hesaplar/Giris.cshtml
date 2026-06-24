@@ -26,15 +26,12 @@
 
                 <div asp-validation-summary="All" class="text-danger mb-3"></div>
 
-                @{
-                    var okullar = ViewBag.Okullar as List<OgrenciBilgiSistemi.Shared.Models.OkulBilgiAyari>;
-                }
-                @if (okullar?.Count > 0)
+                @if (Model.Okullar.Count > 0)
                 {
                     <div class="form-floating mb-3">
                         <select asp-for="OkulKodu" class="form-select">
                             <option value="">Okul Seçiniz</option>
-                            @foreach (var okul in okullar)
+                            @foreach (var okul in Model.Okullar)
                             {
                                 <option value="@okul.OkulKodu">@okul.OkulAdi</option>
                             }

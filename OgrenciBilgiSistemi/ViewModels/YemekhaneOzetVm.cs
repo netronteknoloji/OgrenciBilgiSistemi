@@ -1,4 +1,5 @@
 ﻿// ViewModels/YemekhaneOzetVm.cs
+using OgrenciBilgiSistemi.Models;
 
 namespace OgrenciBilgiSistemi.ViewModels
 {
@@ -32,5 +33,6 @@ namespace OgrenciBilgiSistemi.ViewModels
         public decimal ToplamKalan => Math.Max(0, ToplamBorc - ToplamOdenen);
 
         public List<YemekhaneOzetAyVm> Aylar { get; set; } = new();
+        public List<OgrenciYemekOdemeModel> Odemeler { get; set; } = new();
     }
 }

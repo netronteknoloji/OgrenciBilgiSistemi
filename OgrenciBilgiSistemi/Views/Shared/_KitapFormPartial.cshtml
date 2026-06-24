@@ -1,9 +1,9 @@
-﻿@model OgrenciBilgiSistemi.Models.KitapModel
+@model OgrenciBilgiSistemi.ViewModels.KitapFormVm
 
 @{
-    var action = (ViewData["Action"] as string) ?? "Ekle";      // "Ekle" | "Guncelle"
-    var submitText = (ViewData["SubmitText"] as string) ?? "Kaydet";    // "Kaydet" | "Güncelle"
-    var includeId = (bool?)ViewData["IncludeId"] ?? false;       // Güncelle'de true
+    var action = Model.FormAction;
+    var submitText = Model.SubmitText;
+    var includeId = Model.IncludeId;
 
     var formId = "kitapForm";
     var submitBtnId = "submitBtn";
@@ -91,11 +91,10 @@
                                     </button>
                                 </div>
                             </form>
-                        </div> <!-- /card-body -->
-                    </div> <!-- /card -->
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div> <!-- /container -->
+        </div>
     </div>
 </div>
-

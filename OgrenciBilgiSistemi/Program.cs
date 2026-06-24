@@ -108,6 +108,9 @@ builder.Services.AddScoped<IBildirimService, BildirimService>();
 builder.Services.AddScoped<IDuyuruService, DuyuruService>();
 builder.Services.AddScoped<IKitapDetayService, KitapDetayService>();
 builder.Services.AddScoped<IKullaniciService, KullaniciService>();
+builder.Services.AddScoped<IDashboardService, DashboardService>();
+builder.Services.AddScoped<IKimlikDogrulamaService, KimlikDogrulamaService>();
+builder.Services.AddScoped<IGecisRaporService, GecisRaporService>();
 
 // SMS
 builder.Services.AddSmsAltyapisi(builder.Configuration);
@@ -123,10 +126,12 @@ builder.Services.AddHostedService<ZkBaglantiIzleyiciHostedService>();
 builder.Services.AddHostedService<YemekhanePollingService>();
 builder.Services.AddHostedService<BekleyenSmsRetryService>();
 builder.Services.AddHostedService<RandevuArkaPlanService>();
+builder.Services.AddHostedService<BildirimCihaziTemizlemeService>();
 
-// SignalR + Cache
+// SignalR + Cache + TimeProvider
 builder.Services.AddSignalR();
 builder.Services.AddMemoryCache();
+builder.Services.AddSingleton(TimeProvider.System);
 
 // Cookie Auth
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)

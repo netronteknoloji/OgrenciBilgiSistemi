@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using OgrenciBilgiSistemi.Models;
 using OgrenciBilgiSistemi.Services.Interfaces;
 using OgrenciBilgiSistemi.Shared.Enums;
+using OgrenciBilgiSistemi.ViewModels;
 
 namespace OgrenciBilgiSistemi.Controllers
 {
@@ -25,26 +25,23 @@ namespace OgrenciBilgiSistemi.Controllers
         public async Task<IActionResult> Index(int sayfaNo = 1, CancellationToken ct = default)
         {
             var paged = await _duyuruService.Listele(sayfaNo, 20, ct);
-            return View(paged);
+            return View(new DuyuruIndexVm { Duyurular = paged });
         }
 
         [HttpGet]
-        public IActionResult Olustur()
-        {
-            return View(new DuyuruModel { Hedef = DuyuruHedefi.TumVeliler });
-        }
+        public IActionResult Olustur() => View(new DuyuruOlusturVm());
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Olustur(DuyuruModel model, CancellationToken ct = default)
+        public async Task<IActionResult> Olustur(DuyuruOlusturVm vm, CancellationToken ct = default)
         {
             if (!ModelState.IsValid)
-                return View(model);
+                return View(vm);
 
             try
             {
                 await _duyuruService.Olustur(OturumKullaniciId, DuyuruHedefi.TumVeliler,
-                    model.Baslik, model.Icerik, ct);
+                    vm.Baslik, vm.Icerik, ct);
                 TempData["Mesaj"] = "Duyuru başarıyla yayınlandı.";
                 return RedirectToAction(nameof(Index));
             }
@@ -52,7 +49,7 @@ namespace OgrenciBilgiSistemi.Controllers
             {
                 _logger.LogError(ex, "Duyuru oluşturulamadı.");
                 ModelState.AddModelError("", "Duyuru oluşturulurken bir hata oluştu.");
-                return View(model);
+                return View(vm);
             }
         }
 
@@ -61,8 +58,7 @@ namespace OgrenciBilgiSistemi.Controllers
         {
             var duyuru = await _duyuruService.IdIleGetir(id, ct);
             if (duyuru is null) return NotFound();
-
-            return View(duyuru);
+            return View(DuyuruDetayVm.FromModel(duyuru));
         }
 
         [HttpPost]

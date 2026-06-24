@@ -2,7 +2,7 @@
 
 Multi-tenant okul yönetim sistemi. Web paneli + REST API + MAUI mobil. Her okul ayrı SQL DB. ZKTeco kart okuyucu entegrasyonu.
 
-## Çözüm (7 proje)
+## Çözüm (6 proje)
 
 ```
 OgrenciBilgiSistemi/         → MVC paneli (EF Core, ZKTeco, SignalR)
@@ -11,7 +11,6 @@ OgrenciBilgiSistemi.Mobil/   → MAUI (Android + iOS)
 OgrenciBilgiSistemi.Shared/  → Ortak modeller (TenantBaglami, OkulBilgiAyari)
 OgrenciBilgiSistemi.Sms/     → SMS (ilksms.com)
 OgrenciBilgiSistemi.Push/    → FCM push bildirimleri
-OgrenciBilgiSistemi.Tests/   → Birim testleri (xunit, LocalDB, x86)
 ```
 
 Her projenin **kendi CLAUDE.md**'si vardır — detaylar oradadır.
@@ -75,20 +74,7 @@ dotnet build OgrenciBilgiSistemi.Mobil -t:Run -f net9.0-android
 dotnet ef migrations add <Isim> --project OgrenciBilgiSistemi/OgrenciBilgiSistemi.csproj
 dotnet ef database update --project OgrenciBilgiSistemi/OgrenciBilgiSistemi.csproj
 dotnet ef migrations script --idempotent --project OgrenciBilgiSistemi/OgrenciBilgiSistemi.csproj
-
-# Test — DİKKAT: `dotnet build` MVC'nin COM referansında MSB4803 ile patlar.
-# Önce VS MSBuild ile derle, sonra --no-build ile koş:
-# (MSBuild yolu: vswhere -latest -find MSBuild\**\Bin\MSBuild.exe)
-& "C:\Program Files\Microsoft Visual Studio\18\Enterprise\MSBuild\Current\Bin\MSBuild.exe" OgrenciBilgiSistemi.Tests\OgrenciBilgiSistemi.Tests.csproj /t:Build /restore /v:m
-dotnet test OgrenciBilgiSistemi.Tests/OgrenciBilgiSistemi.Tests.csproj --no-build
 ```
-
-## Testler
-
-- `OgrenciBilgiSistemi.Tests` → MVC servis katmanının karakterizasyon testleri.
-- Her test **kendi LocalDB veritabanını** oluşturur/siler (`VeritabaniTestTabani`); SQLite KULLANMA (decimal aggregate + Turkish collation desteklenmez).
-- Test projesi **x86** (MVC'nin ZKTeco COM'u nedeniyle) — değiştirme.
-- Servis refactor'ünden ÖNCE ilgili servise karakterizasyon testi yaz; davranış bilerek değişiyorsa testi aynı commit'te güncelle.
 
 ## Naming
 

@@ -20,10 +20,10 @@
                 <Border.Shadow>
                     <Shadow Brush="Black" Offset="0,10" Radius="20" Opacity="0.15" />
                 </Border.Shadow>
-                <Image x:Name="ImgStudent" Aspect="AspectFill" Source="{Binding OgrenciData.OgrenciGorsel}" />
+                <Image Aspect="AspectFill" Source="{Binding OgrenciGorsel}" />
             </Border>
-            <Label Text="{Binding OgrenciData.OgrenciAdSoyad}" FontSize="26" FontAttributes="Bold" TextColor="#2C3E50" HorizontalOptions="Center" />
-            <Label x:Name="LblClass" FontSize="16" TextColor="#7F8C8D" HorizontalOptions="Center" />
+            <Label Text="{Binding OgrenciAdSoyad}" FontSize="26" FontAttributes="Bold" TextColor="#2C3E50" HorizontalOptions="Center" />
+            <Label Text="{Binding BirimAd}" FontSize="16" TextColor="#7F8C8D" HorizontalOptions="Center" />
         </VerticalStackLayout>
 
         <ScrollView Grid.Row="2">
@@ -33,12 +33,12 @@
                     <Grid ColumnDefinitions="*, *" Padding="20">
                         <VerticalStackLayout Grid.Column="0" Spacing="5" HorizontalOptions="Center">
                             <Label Text="Öğrenci No" FontSize="12" TextColor="#95A5A6" HorizontalOptions="Center"/>
-                            <Label x:Name="LblStudentNo" FontSize="18" FontAttributes="Bold" TextColor="#1ABC9C" HorizontalOptions="Center"/>
+                            <Label Text="{Binding OgrenciNo}" FontSize="18" FontAttributes="Bold" TextColor="#1ABC9C" HorizontalOptions="Center"/>
                         </VerticalStackLayout>
                         <BoxView Grid.Column="0" WidthRequest="1" BackgroundColor="#ECF0F1" HorizontalOptions="End" Margin="0,5"/>
                         <VerticalStackLayout Grid.Column="1" Spacing="5" HorizontalOptions="Center">
                             <Label Text="Kart No" FontSize="12" TextColor="#95A5A6" HorizontalOptions="Center"/>
-                            <Label x:Name="LblCardNo" FontSize="18" FontAttributes="Bold" TextColor="#34495E" HorizontalOptions="Center"/>
+                            <Label Text="{Binding OgrenciKartNo}" FontSize="18" FontAttributes="Bold" TextColor="#34495E" HorizontalOptions="Center"/>
                         </VerticalStackLayout>
                     </Grid>
                 </Border>
@@ -49,10 +49,10 @@
                         <BoxView HeightRequest="1" Color="#F5F6FA" />
 
                         <VerticalStackLayout Spacing="5">
-                            <Label x:Name="LblParentName" FontSize="20" FontAttributes="Bold" TextColor="#2C3E50" />
+                            <Label Text="{Binding VeliAdSoyad}" FontSize="20" FontAttributes="Bold" TextColor="#2C3E50" />
                             <HorizontalStackLayout Spacing="8">
                                 <Label Text="📞" FontSize="14" VerticalOptions="Center"/>
-                                <Label x:Name="LblParentPhone" FontSize="16" FontAttributes="Bold" TextColor="#2980B9" VerticalOptions="Center">
+                                <Label x:Name="LblParentPhone" Text="{Binding VeliTelefon}" FontSize="16" FontAttributes="Bold" TextColor="#2980B9" VerticalOptions="Center">
                                     <Label.GestureRecognizers>
                                         <TapGestureRecognizer Tapped="OnPhoneTapped" />
                                     </Label.GestureRecognizers>
@@ -63,22 +63,22 @@
                         <Grid ColumnDefinitions="*, *" RowDefinitions="Auto, Auto" ColumnSpacing="10" RowSpacing="20" Padding="0,10">
                             <VerticalStackLayout Grid.Row="0" Grid.Column="0" Spacing="5">
                                 <Label Text="📧 E-Posta" FontSize="11" TextColor="#95A5A6" FontAttributes="Bold"/>
-                                <Label x:Name="LblParentEmail" FontSize="13" TextColor="#34495E" LineBreakMode="TailTruncation"/>
+                                <Label Text="{Binding VeliEmail}" FontSize="13" TextColor="#34495E" LineBreakMode="TailTruncation"/>
                             </VerticalStackLayout>
 
                             <VerticalStackLayout Grid.Row="0" Grid.Column="1" Spacing="5">
                                 <Label Text="📍 Adres" FontSize="11" TextColor="#95A5A6" FontAttributes="Bold"/>
-                                <Label x:Name="LblParentAddress" FontSize="12" TextColor="#34495E" LineBreakMode="WordWrap"/>
+                                <Label Text="{Binding VeliAdres}" FontSize="12" TextColor="#34495E" LineBreakMode="WordWrap"/>
                             </VerticalStackLayout>
 
                             <VerticalStackLayout Grid.Row="1" Grid.Column="0" Spacing="5">
                                 <Label Text="💼 Meslek" FontSize="11" TextColor="#95A5A6" FontAttributes="Bold"/>
-                                <Label x:Name="LblParentJob" FontSize="13" TextColor="#34495E" />
+                                <Label Text="{Binding VeliMeslek}" FontSize="13" TextColor="#34495E" />
                             </VerticalStackLayout>
 
                             <VerticalStackLayout Grid.Row="1" Grid.Column="1" Spacing="5">
                                 <Label Text="🏢 İş Yeri" FontSize="11" TextColor="#95A5A6" FontAttributes="Bold"/>
-                                <Label x:Name="LblParentWork" FontSize="13" TextColor="#34495E" />
+                                <Label Text="{Binding VeliIsYeri}" FontSize="13" TextColor="#34495E" />
                             </VerticalStackLayout>
                         </Grid>
                     </VerticalStackLayout>
@@ -89,7 +89,7 @@
                         <Label Text="🚌" FontSize="24" VerticalOptions="Center" />
                         <VerticalStackLayout VerticalOptions="Center">
                             <Label Text="Okul Servis Plakası" FontSize="13" TextColor="#7F8C8D" FontAttributes="Bold" />
-                            <Label x:Name="LblServicePlate" FontSize="16" TextColor="#2980B9" FontAttributes="Bold" />
+                            <Label Text="{Binding Plaka}" FontSize="16" TextColor="#2980B9" FontAttributes="Bold" />
                         </VerticalStackLayout>
                     </HorizontalStackLayout>
                 </Border>
@@ -99,7 +99,7 @@
                         <Label Text="👨‍🏫" FontSize="24" VerticalOptions="Center" />
                         <VerticalStackLayout VerticalOptions="Center">
                             <Label Text="Sınıf Öğretmeni" FontSize="13" TextColor="#7F8C8D" FontAttributes="Bold" />
-                            <Label x:Name="LblTeacherName" FontSize="13" TextColor="#2C3E50" FontAttributes="Bold" />
+                            <Label Text="{Binding OgretmenAdSoyad}" FontSize="13" TextColor="#2C3E50" FontAttributes="Bold" />
                         </VerticalStackLayout>
                     </HorizontalStackLayout>
                 </Border>
@@ -112,13 +112,13 @@
                             <Grid ColumnDefinitions="50, *, 50">
                                 <Label Grid.Column="0" Text="◀" TextColor="#1ABC9C" FontSize="22" HorizontalOptions="Center" VerticalOptions="Center" FontAttributes="Bold">
                                     <Label.GestureRecognizers>
-                                        <TapGestureRecognizer Tapped="OnPreviousWeekClicked" />
+                                        <TapGestureRecognizer Command="{Binding OncekiHaftaCommand}" />
                                     </Label.GestureRecognizers>
                                 </Label>
-                                <Label Grid.Column="1" x:Name="LblWeekRange" Text="Yükleniyor..." HorizontalOptions="Center" VerticalOptions="Center" FontAttributes="Bold" TextColor="#2C3E50" FontSize="13"/>
+                                <Label Grid.Column="1" Text="{Binding HaftaMetni}" HorizontalOptions="Center" VerticalOptions="Center" FontAttributes="Bold" TextColor="#2C3E50" FontSize="13"/>
                                 <Label Grid.Column="2" Text="▶" TextColor="#1ABC9C" FontSize="22" HorizontalOptions="Center" VerticalOptions="Center" FontAttributes="Bold">
                                     <Label.GestureRecognizers>
-                                        <TapGestureRecognizer Tapped="OnNextWeekClicked" />
+                                        <TapGestureRecognizer Command="{Binding SonrakiHaftaCommand}" />
                                     </Label.GestureRecognizers>
                                 </Label>
                             </Grid>
@@ -126,11 +126,11 @@
 
                         <Grid ColumnDefinitions="*, *" Margin="0,5">
                             <HorizontalStackLayout Grid.Column="0" Spacing="5" HorizontalOptions="Center">
-                                <Label x:Name="LblAttendanceRate" Text="-%" FontSize="20" FontAttributes="Bold" TextColor="#1ABC9C"/>
+                                <Label Text="{Binding YoklamaOraniMetni}" FontSize="20" FontAttributes="Bold" TextColor="#1ABC9C"/>
                                 <Label Text="Katılım" FontSize="11" TextColor="#95A5A6" VerticalOptions="Center"/>
                             </HorizontalStackLayout>
                             <HorizontalStackLayout Grid.Column="1" Spacing="5" HorizontalOptions="Center">
-                                <Label x:Name="LblAbsenteeismCount" Text="-" FontSize="20" FontAttributes="Bold" TextColor="#E74C3C"/>
+                                <Label Text="{Binding DevamsizlikMetni}" FontSize="20" FontAttributes="Bold" TextColor="#E74C3C"/>
                                 <Label Text="Gelmedi" FontSize="11" TextColor="#95A5A6" VerticalOptions="Center"/>
                             </HorizontalStackLayout>
                         </Grid>

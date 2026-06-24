@@ -115,10 +115,7 @@ namespace OgrenciBilgiSistemi.Controllers
             var vm = await _svc.GetOzetAsync(ogrenciId, akYil, ct);
 
             // Akademik yılın tamamındaki ödemeler (Eyl..Ara + Oca..Ağu)
-            var odemeler = await _svc.GetAkademikYilOdemeleriAsync(ogrenciId, akYil, ct);
-            ViewBag.Odemeler = odemeler;
-
-            ViewBag.OgrenciId = ogrenciId;
+            vm.Odemeler = await _svc.GetAkademikYilOdemeleriAsync(ogrenciId, akYil, ct);
             return View(vm);
         }
 
@@ -193,13 +190,10 @@ namespace OgrenciBilgiSistemi.Controllers
             int page = 1,
             CancellationToken ct = default)
         {
-            // View'da tarih inputlarının dolu gelmesi için
-            ViewData["Bas"] = bas?.ToString("yyyy-MM-dd");
-            ViewData["Bit"] = bit?.ToString("yyyy-MM-dd");
-
-            // Yeni tarih-bazlı overload (önerilen)
-            var pageSize = 50; // formda kaldırıldığı için sabit
+            var pageSize = 50;
             var vm = await _svc.GetTopluRaporAsync(bas, bit, q, page, pageSize, ct);
+            vm.Bas = bas?.ToString("yyyy-MM-dd");
+            vm.Bit = bit?.ToString("yyyy-MM-dd");
 
             return View(vm);
         }

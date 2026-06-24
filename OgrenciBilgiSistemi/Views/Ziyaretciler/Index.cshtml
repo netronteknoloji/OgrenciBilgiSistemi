@@ -1,15 +1,7 @@
-﻿@model SayfalanmisListeModel<OgrenciBilgiSistemi.Models.ZiyaretciModel>
-@using OgrenciBilgiSistemi.Models
-@using Microsoft.AspNetCore.Mvc.Rendering
+@model OgrenciBilgiSistemi.ViewModels.ZiyaretciIndexVm
 
 @{
     ViewData["Title"] = "Ziyaretçi İşlemleri";
-
-    var q = ViewData["CurrentFilter"] as string;
-
-    var sadeceAktif = ViewData["SadeceAktif"] as bool? ?? true;
-    var seciliKullaniciId = ViewData["KullaniciId"] as int?;
-    var kullanicilar = ViewBag.Kullanicilar as IEnumerable<SelectListItem> ?? Enumerable.Empty<SelectListItem>();
 }
 
 <div class="viewport-scroller">
@@ -41,7 +33,7 @@
                         <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
                         <input type="text" id="searchString" name="searchString"
                                class="form-control" placeholder="Ad, T.C. No, telefon, kart no ara…"
-                               value="@q" style="width:280px;" />
+                               value="@Model.AramaMetni" style="width:280px;" />
                     </div>
                 </div>
 
@@ -51,7 +43,7 @@
                     <select id="kullaniciId" name="kullaniciId" class="form-select" style="width:220px;">
                         <option value="">Tüm Personeller</option>
 
-                        @foreach (var k in kullanicilar)
+                        @foreach (var k in Model.Kullanicilar)
                         {
                             <option value="@k.Value">@k.Text</option>
                         }
@@ -65,7 +57,7 @@
                            value="true"
                            id="sadeceAktif"
                            name="sadeceAktif"
-                           @(sadeceAktif ? "checked" : "") />
+                           @(Model.SadeceAktif ? "checked" : "") />
                     <label class="form-check-label fw-semibold" for="sadeceAktif">
                         Aktif ziyaretler
                     </label>
@@ -83,7 +75,7 @@
             </form>
 
             <!-- Liste -->
-            @if (Model == null || !Model.Any())
+            @if (Model.Ziyaretciler == null || !Model.Ziyaretciler.Any())
             {
                 <div class="alert alert-warning mb-0">
                     <i class="bi bi-exclamation-triangle-fill"></i> Kayıt bulunamadı.
@@ -95,36 +87,20 @@
                     <table class="table table-hover table-sm align-middle">
                         <thead class="bg-dark text-white">
                             <tr class="text-center">
-                                <th class="text-start">
-                                    @Html.DisplayNameFor(m => m[0].AdSoyad)
-                                </th>
-                                <th>
-                                    @Html.DisplayNameFor(m => m[0].TcKimlikNo)
-                                </th>
-                                <th>
-                                    @Html.DisplayNameFor(m => m[0].Telefon)
-                                </th>
+                                <th class="text-start">Ad Soyad</th>
+                                <th>T.C. Kimlik No</th>
+                                <th>Telefon</th>
                                 <th>Görüştüğü Personel</th>
-                                <th>
-                                    @Html.DisplayNameFor(m => m[0].ZiyaretSebebi)
-                                </th>
-                                <th>
-                                    @Html.DisplayNameFor(m => m[0].KartNo)
-                                </th>
-                                <th>
-                                    @Html.DisplayNameFor(m => m[0].GirisZamani)
-                                </th>
-                                <th>
-                                    @Html.DisplayNameFor(m => m[0].CikisZamani)
-                                </th>
-                                <th>
-                                    @Html.DisplayNameFor(m => m[0].AktifMi)
-                                </th>
+                                <th>Ziyaret Sebebi</th>
+                                <th>Kart Numarası</th>
+                                <th>Giriş Tarihi / Saati</th>
+                                <th>Çıkış Tarihi / Saati</th>
+                                <th>Aktif Mi?</th>
                                 <th>İşlem</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var z in Model)
+                            @foreach (var z in Model.Ziyaretciler)
                             {
                                 <tr class="text-center @(z.AktifMi ? "" : "table-secondary")">
                                     <td class="text-start fw-semibold text-primary">@z.AdSoyad</td>
@@ -185,11 +161,11 @@
                     </table>
                 </div>
 
-                @await Html.PartialAsync("_SayfalamaFormPartial", OgrenciBilgiSistemi.ViewModels.SayfalamaVm.Olustur(Model,
+                @await Html.PartialAsync("_SayfalamaFormPartial", OgrenciBilgiSistemi.ViewModels.SayfalamaVm.Olustur(Model.Ziyaretciler,
                     routeValues: new Dictionary<string, string?> {
-                        ["searchString"] = q,
-                        ["kullaniciId"] = seciliKullaniciId?.ToString(),
-                        ["sadeceAktif"] = sadeceAktif.ToString()
+                        ["searchString"] = Model.AramaMetni,
+                        ["kullaniciId"] = Model.KullaniciId?.ToString(),
+                        ["sadeceAktif"] = Model.SadeceAktif.ToString()
                     }))
             }
         </div>
@@ -228,8 +204,6 @@
             if (!chk || !form) return;
 
             chk.addEventListener('change', function () {
-                // filtre değişince sayfa her zaman 1. sayfadan başlasın istiyorsan:
-                // (şu an formda page input'u yok, ama ileride eklersen otomatik 1'e çeker)
                 const pageInput = form.querySelector('input[name="page"]');
                 if (pageInput) pageInput.value = '1';
 

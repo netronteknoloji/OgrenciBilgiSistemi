@@ -4,15 +4,9 @@
     ViewData["Title"] = "Öğrenci Giriş-Çıkış Listesi";
     var currentYear = DateTime.Now.Year;
 
-    // ViewData -> güvenli parse
-    DateTime? vStart = null, vEnd = null;
-    if (ViewData["StartDate"] is DateTime d1) vStart = d1;
-    else if (ViewData["StartDate"] is string s1 && DateTime.TryParse(s1, out var p1)) vStart = p1;
-
-    if (ViewData["EndDate"] is DateTime d2) vEnd = d2;
-    else if (ViewData["EndDate"] is string s2 && DateTime.TryParse(s2, out var p2)) vEnd = p2;
-
-    var vRapor = ViewData["RaporTipi"]?.ToString() ?? "0";
+    DateTime? vStart = DateTime.TryParse(Model.StartDate, out var p1) ? p1 : (DateTime?)null;
+    DateTime? vEnd = DateTime.TryParse(Model.EndDate, out var p2) ? p2 : (DateTime?)null;
+    var vRapor = Model.RaporTipiStr;
     var rt = Model.RaporTipi;
     bool gosterGecis = rt == RaporTipi.Tumu || rt == RaporTipi.AnaKapiGecisleri || rt == RaporTipi.YemekhaneGecisleri;
     bool gosterSinif = rt == RaporTipi.Tumu || rt == RaporTipi.SinifYoklamasi;
@@ -59,7 +53,6 @@
                 <div class="d-flex gap-2">
                     <a asp-action="DetayExportToExcel"
                        asp-route-id="@Model.Ogrenci.OgrenciId"
-                       asp-route-searchName="@ViewData["SearchName"]"
                        asp-route-startDate="@(vStart?.ToString("yyyy-MM-dd"))"
                        asp-route-endDate="@(vEnd?.ToString("yyyy-MM-dd"))"
                        asp-route-raporTipi="@vRapor"
@@ -308,7 +301,6 @@
                         <a class="page-link" asp-action="GirisCikisDetay"
                            asp-route-id="@Model.Ogrenci.OgrenciId"
                            asp-route-pageNumber="@(Model.Hareketler.SayfaIndeks - 1)"
-                           asp-route-searchName="@ViewData["SearchName"]"
                            asp-route-startDate="@(vStart?.ToString("yyyy-MM-dd"))"
                            asp-route-endDate="@(vEnd?.ToString("yyyy-MM-dd"))"
                            asp-route-raporTipi="@vRapor">Önceki</a>
@@ -320,7 +312,6 @@
                     <li class="page-item">
                         <a class="page-link" asp-action="GirisCikisDetay" asp-route-pageNumber="1"
                            asp-route-id="@Model.Ogrenci.OgrenciId"
-                           asp-route-searchName="@ViewData["SearchName"]"
                            asp-route-startDate="@(vStart?.ToString("yyyy-MM-dd"))"
                            asp-route-endDate="@(vEnd?.ToString("yyyy-MM-dd"))"
                            asp-route-raporTipi="@vRapor">1</a>
@@ -333,7 +324,6 @@
                     <li class="page-item @(i == Model.Hareketler.SayfaIndeks ? "active" : "")">
                         <a class="page-link" asp-action="GirisCikisDetay" asp-route-pageNumber="@i"
                            asp-route-id="@Model.Ogrenci.OgrenciId"
-                           asp-route-searchName="@ViewData["SearchName"]"
                            asp-route-startDate="@(vStart?.ToString("yyyy-MM-dd"))"
                            asp-route-endDate="@(vEnd?.ToString("yyyy-MM-dd"))"
                            asp-route-raporTipi="@vRapor">@i</a>
@@ -346,7 +336,6 @@
                     <li class="page-item">
                         <a class="page-link" asp-action="GirisCikisDetay" asp-route-pageNumber="@Model.Hareketler.ToplamSayfa"
                            asp-route-id="@Model.Ogrenci.OgrenciId"
-                           asp-route-searchName="@ViewData["SearchName"]"
                            asp-route-startDate="@(vStart?.ToString("yyyy-MM-dd"))"
                            asp-route-endDate="@(vEnd?.ToString("yyyy-MM-dd"))"
                            asp-route-raporTipi="@vRapor">@Model.Hareketler.ToplamSayfa</a>
@@ -359,7 +348,6 @@
                         <a class="page-link" asp-action="GirisCikisDetay"
                            asp-route-id="@Model.Ogrenci.OgrenciId"
                            asp-route-pageNumber="@(Model.Hareketler.SayfaIndeks + 1)"
-                           asp-route-searchName="@ViewData["SearchName"]"
                            asp-route-startDate="@(vStart?.ToString("yyyy-MM-dd"))"
                            asp-route-endDate="@(vEnd?.ToString("yyyy-MM-dd"))"
                            asp-route-raporTipi="@vRapor">Sonraki</a>

@@ -40,10 +40,10 @@ namespace OgrenciBilgiSistemi.Services.Implementations
 
         // ---- Helpers ---------------------------------------------------------
 
-        private static string NormalizeKartNo(string? val)
+        private static string? NormalizeKartNo(string? val)
         {
             if (string.IsNullOrWhiteSpace(val))
-                return string.Empty;
+                return null;
             return val.Trim().TrimStart('0');
         }
 
@@ -125,13 +125,14 @@ namespace OgrenciBilgiSistemi.Services.Implementations
 
         public async Task GuncelleAsync(OgrenciModel model, IFormFile? gorsel, bool? buAyYemekhaneAktif, CancellationToken ct = default)
         {
+            OgrenciModel? ent = null;
             var strategy = _db.Database.CreateExecutionStrategy();
             await strategy.ExecuteAsync(async () =>
             {
                 await using var tx = await _db.Database.BeginTransactionAsync(ct);
 
-                var ent = await _db.Ogrenciler.FindAsync(new object[] { model.OgrenciId }, ct)
-                          ?? throw new KeyNotFoundException("Öğrenci yok");
+                ent = await _db.Ogrenciler.FindAsync(new object[] { model.OgrenciId }, ct)
+                      ?? throw new KeyNotFoundException("Öğrenci yok");
 
                 ent.OgrenciAdSoyad = (model.OgrenciAdSoyad ?? string.Empty).ToUpper(_tr);
                 ent.OgrenciNo = model.OgrenciNo;
@@ -159,35 +160,28 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             });
 
             // Cihaz senkronizasyonu transaction dışında — uzak cihaz çağrısı transaction'ı uzun tutmamalı.
-            // Committed entity (DB'deki güncel değerler) üzerinden çalışır.
-            if (buAyYemekhaneAktif.HasValue)
+            if (buAyYemekhaneAktif.HasValue && ent is not null)
             {
-                var commitliOgrenci = await _db.Ogrenciler.AsNoTracking()
-                    .FirstOrDefaultAsync(o => o.OgrenciId == model.OgrenciId, ct);
+                var cihazlar = await _db.Cihazlar
+                    .Where(c => c.Aktif && c.IstasyonTipi == IstasyonTipi.Yemekhane)
+                    .ToListAsync(ct);
 
-                if (commitliOgrenci != null)
+                foreach (var cihaz in cihazlar)
                 {
-                    var cihazlar = await _db.Cihazlar
-                        .Where(c => c.Aktif && c.IstasyonTipi == IstasyonTipi.Yemekhane)
-                        .ToListAsync(ct);
-
-                    foreach (var cihaz in cihazlar)
+                    try
                     {
-                        try
+                        if (buAyYemekhaneAktif.Value)
                         {
-                            if (buAyYemekhaneAktif.Value)
-                            {
-                                await _cihaz.CihazaOgrenciGuncelleAsync(commitliOgrenci, ct);
-                            }
-                            else
-                            {
-                                await _cihaz.CihazaOgrenciSilAsync(commitliOgrenci.OgrenciId, ct);
-                            }
+                            await _cihaz.CihazaOgrenciGuncelleAsync(ent, ct);
                         }
-                        catch (Exception ex)
+                        else
                         {
-                            _log.LogError(ex, "Cihaz senkron hatası. Cihaz: {ip}, ÖğrenciId: {id}", cihaz.IpAdresi, commitliOgrenci.OgrenciId);
+                            await _cihaz.CihazaOgrenciSilAsync(ent.OgrenciId, ct);
                         }
+                    }
+                    catch (Exception ex)
+                    {
+                        _log.LogError(ex, "Cihaz senkron hatası. Cihaz: {ip}, ÖğrenciId: {id}", cihaz.IpAdresi, ent.OgrenciId);
                     }
                 }
             }

@@ -1,11 +1,12 @@
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Options;
+using OgrenciBilgiSistemi.Api.Services.Interfaces;
 using OgrenciBilgiSistemi.Shared.Services;
 using OgrenciBilgiSistemi.Sms;
 
 namespace OgrenciBilgiSistemi.Api.Services;
 
-public sealed class YoklamaSmsBildirimService
+public sealed class YoklamaSmsBildirimService : IYoklamaSmsBildirimService
 {
     private readonly TenantBaglami _tenantBaglami;
     private readonly ISmsService _smsService;
