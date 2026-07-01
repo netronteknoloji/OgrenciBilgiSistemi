@@ -1,4 +1,3 @@
-using OgrenciBilgiSistemi.Shared.Enums;
 using System.ComponentModel.DataAnnotations;
 
 namespace OgrenciBilgiSistemi.ViewModels
@@ -14,7 +13,7 @@ namespace OgrenciBilgiSistemi.ViewModels
         public string? Sifre { get; set; }
 
         public KullaniciRolu Rol { get; set; } = KullaniciRolu.Ogretmen;
-        public bool KullaniciDurum { get; set; } = true;
+        public bool IsDeleted { get; set; } = false;
 
         [StringLength(15)]
         [RegularExpression(@"^\d{10,15}$", ErrorMessage = "Telefon numarası yalnızca rakamlardan oluşmalıdır!")]

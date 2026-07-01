@@ -62,7 +62,7 @@
                             <tr>
                                 <th class="text-start">@Html.DisplayNameFor(m => m.Birimler[0].BirimAd)</th>
                                 <th>@Html.DisplayNameFor(m => m.Birimler[0].BirimSinifMi)</th>
-                                <th>@Html.DisplayNameFor(m => m.Birimler[0].BirimDurum)</th>
+                                <th>@Html.DisplayNameFor(m => m.Birimler[0].IsDeleted)</th>
                                 <th>İşlemler</th>
                             </tr>
                         </thead>
@@ -77,8 +77,8 @@
                                         </span>
                                     </td>
                                     <td>
-                                        <span class="badge @(s.BirimDurum ? "bg-success" : "bg-danger")">
-                                            @(s.BirimDurum ? "Aktif" : "Pasif")
+                                        <span class="badge @(!s.IsDeleted ? "bg-success" : "bg-danger")">
+                                            @(!s.IsDeleted ? "Aktif" : "Pasif")
                                         </span>
                                     </td>
                                     <td>

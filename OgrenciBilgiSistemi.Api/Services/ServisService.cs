@@ -31,7 +31,7 @@ namespace OgrenciBilgiSistemi.Api.Services
                            B.BirimAd AS SinifAdi
                     FROM Ogrenciler O
                     LEFT JOIN Birimler B ON O.BirimId = B.BirimId
-                    WHERE O.ServisId = @servisId AND O.OgrenciDurum = 1
+                    WHERE O.ServisId = @servisId AND O.IsDeleted = 0
                     ORDER BY O.OgrenciAdSoyad";
 
                 await using var cmd = new SqlCommand(query, conn);
@@ -68,7 +68,8 @@ namespace OgrenciBilgiSistemi.Api.Services
             {
                 await using var conn = new SqlConnection(ConnectionString);
                 const string query = @"
-                    SELECT SP.KullaniciId, SP.Plaka, K.Telefon AS ServisTelefon, SP.ServisDurum
+                    SELECT SP.KullaniciId, SP.Plaka, K.Telefon AS ServisTelefon,
+                           SP.IsDeleted
                     FROM ServisProfiller SP
                     INNER JOIN Kullanicilar K ON K.KullaniciId = SP.KullaniciId
                     WHERE SP.KullaniciId = @kullaniciId";
@@ -85,7 +86,7 @@ namespace OgrenciBilgiSistemi.Api.Services
                         KullaniciId = (int)reader["KullaniciId"],
                         Plaka       = reader["Plaka"]?.ToString() ?? string.Empty,
                         ServisTelefon = reader["ServisTelefon"]?.ToString(),
-                        ServisDurum = Convert.ToBoolean(reader["ServisDurum"])
+                        IsDeleted = Convert.ToBoolean(reader["IsDeleted"])
                     };
                 }
             }

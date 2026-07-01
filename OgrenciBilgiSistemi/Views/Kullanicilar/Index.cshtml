@@ -75,8 +75,8 @@
                                     </td>
                                     <td>@(s.Telefon ?? "-")</td>
                                     <td>
-                                        <span class="badge @(s.KullaniciDurum ? "bg-success" : "bg-danger")">
-                                            @(s.KullaniciDurum ? "Aktif" : "Pasif")
+                                        <span class="badge @(!s.IsDeleted ? "bg-success" : "bg-danger")">
+                                            @(!s.IsDeleted ? "Aktif" : "Pasif")
                                         </span>
                                     </td>
                                     <td>

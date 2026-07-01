@@ -125,10 +125,10 @@ namespace OgrenciBilgiSistemi.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
-                    b.Property<bool>("BirimDurum")
+                    b.Property<bool>("BirimSinifMi")
                         .HasColumnType("bit");
 
-                    b.Property<bool>("BirimSinifMi")
+                    b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
                     b.HasKey("BirimId");
@@ -144,9 +144,6 @@ namespace OgrenciBilgiSistemi.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CihazId"));
 
-                    b.Property<bool>("Aktif")
-                        .HasColumnType("bit");
-
                     b.Property<string>("CihazAdi")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -161,6 +158,9 @@ namespace OgrenciBilgiSistemi.Migrations
                     b.Property<string>("IpAdresi")
                         .HasMaxLength(45)
                         .HasColumnType("nvarchar(45)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
 
                     b.Property<short>("IstasyonTipi")
                         .HasColumnType("smallint");
@@ -291,13 +291,13 @@ namespace OgrenciBilgiSistemi.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("KitapId"));
 
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
                     b.Property<string>("KitapAd")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
-
-                    b.Property<bool>("KitapDurum")
-                        .HasColumnType("bit");
 
                     b.Property<string>("KitapGorsel")
                         .HasColumnType("nvarchar(max)");
@@ -340,12 +340,12 @@ namespace OgrenciBilgiSistemi.Migrations
                     b.Property<bool>("BeniHatirla")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
                     b.Property<string>("KullaniciAdi")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
-
-                    b.Property<bool>("KullaniciDurum")
-                        .HasColumnType("bit");
 
                     b.Property<int>("Rol")
                         .HasColumnType("int");
@@ -730,7 +730,7 @@ namespace OgrenciBilgiSistemi.Migrations
                     b.Property<string>("Aciklama")
                         .HasColumnType("nvarchar(255)");
 
-                    b.Property<bool>("AktifMi")
+                    b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
                     b.Property<DateTime>("OdemeTarihi")
@@ -844,6 +844,9 @@ namespace OgrenciBilgiSistemi.Migrations
                     b.Property<int?>("BirimId")
                         .HasColumnType("int");
 
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
                     b.Property<string>("OgrenciAdSoyad")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -851,9 +854,6 @@ namespace OgrenciBilgiSistemi.Migrations
 
                     b.Property<int>("OgrenciCikisDurumu")
                         .HasColumnType("int");
-
-                    b.Property<bool>("OgrenciDurum")
-                        .HasColumnType("bit");
 
                     b.Property<string>("OgrenciGorsel")
                         .HasColumnType("nvarchar(max)");
@@ -940,11 +940,11 @@ namespace OgrenciBilgiSistemi.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
-                    b.Property<bool>("AktifMi")
-                        .HasColumnType("bit");
-
                     b.Property<int>("Ay")
                         .HasColumnType("int");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
 
                     b.Property<int>("OgrenciId")
                         .HasColumnType("int");
@@ -1011,7 +1011,7 @@ namespace OgrenciBilgiSistemi.Migrations
                     b.Property<string>("GorselPath")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool>("OgretmenDurum")
+                    b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
                     b.HasKey("KullaniciId");
@@ -1117,13 +1117,13 @@ namespace OgrenciBilgiSistemi.Migrations
                     b.Property<int>("KullaniciId")
                         .HasColumnType("int");
 
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Plaka")
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
-
-                    b.Property<bool>("ServisDurum")
-                        .HasColumnType("bit");
 
                     b.HasKey("KullaniciId");
 
@@ -1288,12 +1288,12 @@ namespace OgrenciBilgiSistemi.Migrations
                     b.Property<int>("KullaniciId")
                         .HasColumnType("int");
 
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
                     b.Property<string>("VeliAdres")
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
-
-                    b.Property<bool>("VeliDurum")
-                        .HasColumnType("bit");
 
                     b.Property<string>("VeliEmail")
                         .HasMaxLength(100)

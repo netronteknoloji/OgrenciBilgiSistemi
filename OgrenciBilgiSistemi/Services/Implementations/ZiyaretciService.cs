@@ -1,12 +1,10 @@
 ﻿using ClosedXML.Excel;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using OgrenciBilgiSistemi.Data;
 using OgrenciBilgiSistemi.Dtos;
 using OgrenciBilgiSistemi.Models;
 using OgrenciBilgiSistemi.Services.Interfaces;
 using OgrenciBilgiSistemi.ViewModels;
-using System.IO;
 
 namespace OgrenciBilgiSistemi.Services.Implementations
 {

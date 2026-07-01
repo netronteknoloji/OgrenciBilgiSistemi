@@ -17,7 +17,7 @@ namespace OgrenciBilgiSistemi.Api.Services
         private string ConnectionString => _tenantBaglami.ConnectionString;
 
         /// <summary>
-        /// Aktif velileri (VeliProfiller.VeliDurum=1) listeler.
+        /// Aktif velileri (VeliProfiller.IsDeleted=0) listeler.
         /// </summary>
         public async Task<List<VeliListeModel>> AktifVelileriGetirAsync()
         {
@@ -27,7 +27,7 @@ namespace OgrenciBilgiSistemi.Api.Services
                 SELECT k.KullaniciId, k.KullaniciAdi, k.Telefon
                 FROM Kullanicilar k
                 INNER JOIN VeliProfiller vp ON k.KullaniciId = vp.KullaniciId
-                WHERE vp.VeliDurum = 1
+                WHERE vp.IsDeleted = 0
                 ORDER BY k.KullaniciAdi";
 
             try
@@ -61,7 +61,8 @@ namespace OgrenciBilgiSistemi.Api.Services
             const string veliQuery = @"
                 SELECT k.KullaniciId, k.KullaniciAdi, k.Telefon,
                        vp.VeliEmail, vp.VeliAdres, vp.VeliMeslek, vp.VeliIsYeri,
-                       vp.VeliYakinlik, vp.VeliDurum
+                       vp.VeliYakinlik,
+                       vp.IsDeleted
                 FROM Kullanicilar k
                 INNER JOIN VeliProfiller vp ON k.KullaniciId = vp.KullaniciId
                 WHERE k.KullaniciId = @id";
@@ -70,7 +71,7 @@ namespace OgrenciBilgiSistemi.Api.Services
                 SELECT o.OgrenciId, o.OgrenciAdSoyad, o.OgrenciNo, b.BirimAd
                 FROM Ogrenciler o
                 LEFT JOIN Birimler b ON o.BirimId = b.BirimId
-                WHERE o.VeliId = @id AND o.OgrenciDurum = 1
+                WHERE o.VeliId = @id AND o.IsDeleted = 0
                 ORDER BY o.OgrenciNo";
 
             try
@@ -96,7 +97,7 @@ namespace OgrenciBilgiSistemi.Api.Services
                         VeliMeslek = reader["VeliMeslek"] as string,
                         VeliIsYeri = reader["VeliIsYeri"] as string,
                         VeliYakinlik = reader["VeliYakinlik"] as int?,
-                        VeliDurum = reader["VeliDurum"] != DBNull.Value && (bool)reader["VeliDurum"]
+                        IsDeleted = reader["IsDeleted"] != DBNull.Value && (bool)reader["IsDeleted"]
                     };
                 }
 

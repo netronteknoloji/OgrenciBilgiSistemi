@@ -6,7 +6,7 @@ namespace OgrenciBilgiSistemi.Api.Models
         public string KullaniciAdi { get; set; } = "";
         public string? Plaka { get; set; }
         public string? ServisTelefon { get; set; }
-        public bool ServisDurum { get; set; }
+        public bool IsDeleted { get; set; }
         public int OgrenciSayisi { get; set; }
     }
 }

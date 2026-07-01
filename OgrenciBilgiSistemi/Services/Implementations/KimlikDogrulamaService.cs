@@ -22,7 +22,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             await using var db = CreateContext(connectionString);
 
             var user = await db.Kullanicilar
-                .Where(k => k.KullaniciDurum)
+                .Where(k => !k.IsDeleted)
                 .SingleOrDefaultAsync(u => u.KullaniciAdi == kullaniciAdi, ct);
 
             if (user is null)
@@ -50,7 +50,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 KullaniciAdi = "GenelAdmin",
                 Sifre = "-",
                 Rol = KullaniciRolu.GenelAdmin,
-                KullaniciDurum = true
+                IsDeleted = false
             };
             db.Kullanicilar.Add(genelAdmin);
             await db.SaveChangesAsync(ct);

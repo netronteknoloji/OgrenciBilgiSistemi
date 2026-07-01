@@ -12,6 +12,6 @@ namespace OgrenciBilgiSistemi.Mobil.Models
         public string? VeliIsYeri { get; set; }
         public string? VeliEmail { get; set; }
         public YakinlikTipi? VeliYakinlik { get; set; }
-        public bool VeliDurum { get; set; }
+        public bool IsDeleted { get; set; }
     }
 }

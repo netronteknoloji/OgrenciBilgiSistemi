@@ -71,8 +71,8 @@
                                         <span class="badge bg-info">@v.OgrenciSayisi</span>
                                     </td>
                                     <td>
-                                        <span class="badge @(v.VeliDurum ? "bg-success" : "bg-danger")">
-                                            @(v.VeliDurum ? "Aktif" : "Pasif")
+                                        <span class="badge @(!v.IsDeleted ? "bg-success" : "bg-danger")">
+                                            @(!v.IsDeleted ? "Aktif" : "Pasif")
                                         </span>
                                     </td>
                                     <td>

@@ -7,7 +7,8 @@ namespace OgrenciBilgiSistemi.Data
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
-        public bool IncludePasifOgrenciler { get; set; } = false;
+        // true iken global soft-delete filtreleri bypass edilir (silinmişleri de getirir).
+        public bool IncludeDeleted { get; set; } = false;
 
         public DbSet<BirimModel> Birimler { get; set; }
         public DbSet<KullaniciModel> Kullanicilar { get; set; }
@@ -48,7 +49,7 @@ namespace OgrenciBilgiSistemi.Data
             // GLOBAL QUERY FILTER
             // =========================
             modelBuilder.Entity<OgrenciModel>()
-                .HasQueryFilter(o => o.OgrenciDurum || IncludePasifOgrenciler);
+                .HasQueryFilter(o => !o.IsDeleted || IncludeDeleted);
 
             // =========================
             // OGRENCI <-> KULLANICI/OGRETMEN (optional)
@@ -91,7 +92,7 @@ namespace OgrenciBilgiSistemi.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<OgrenciDetayModel>()
-                .HasQueryFilter(d => d.Ogrenci.OgrenciDurum || IncludePasifOgrenciler);
+                .HasQueryFilter(d => !d.Ogrenci.IsDeleted || IncludeDeleted);
 
             // =========================
             // KITAP DETAY (matching filter + ilişkiyi netleştir)
@@ -111,7 +112,7 @@ namespace OgrenciBilgiSistemi.Data
                 .IsRequired();
 
             modelBuilder.Entity<KitapDetayModel>()
-                .HasQueryFilter(k => k.Ogrenci.OgrenciDurum || IncludePasifOgrenciler);
+                .HasQueryFilter(k => !k.Ogrenci.IsDeleted || IncludeDeleted);
 
             // =========================
             // YEMEK: KAYIT (required -> Ogrenci)
@@ -128,7 +129,7 @@ namespace OgrenciBilgiSistemi.Data
             });
 
             modelBuilder.Entity<OgrenciYemekModel>()
-                .HasQueryFilter(y => y.Ogrenci.OgrenciDurum || IncludePasifOgrenciler);
+                .HasQueryFilter(y => !y.Ogrenci.IsDeleted || IncludeDeleted);
 
             // =========================
             // YEMEK: TARIFE (required -> Ogrenci)
@@ -145,7 +146,7 @@ namespace OgrenciBilgiSistemi.Data
             });
 
             modelBuilder.Entity<OgrenciYemekTarifeModel>()
-                .HasQueryFilter(t => t.Ogrenci.OgrenciDurum || IncludePasifOgrenciler);
+                .HasQueryFilter(t => !t.Ogrenci.IsDeleted || IncludeDeleted);
 
             // =========================
             // YEMEK: ODEME (required -> Ogrenci)
@@ -162,7 +163,7 @@ namespace OgrenciBilgiSistemi.Data
             });
 
             modelBuilder.Entity<OgrenciYemekOdemeModel>()
-                .HasQueryFilter(p => p.AktifMi && (p.Ogrenci.OgrenciDurum || IncludePasifOgrenciler));
+                .HasQueryFilter(p => (!p.IsDeleted || IncludeDeleted) && (!p.Ogrenci.IsDeleted || IncludeDeleted));
 
             // =========================
             // AIDAT: KAYIT (required -> Ogrenci)
@@ -185,7 +186,7 @@ namespace OgrenciBilgiSistemi.Data
             });
 
             modelBuilder.Entity<OgrenciAidatModel>()
-                .HasQueryFilter(a => a.Ogrenci.OgrenciDurum || IncludePasifOgrenciler);
+                .HasQueryFilter(a => !a.Ogrenci.IsDeleted || IncludeDeleted);
 
             // =========================
             // AIDAT: ODEME (required -> Aidat -> Ogrenci)
@@ -207,7 +208,7 @@ namespace OgrenciBilgiSistemi.Data
             });
 
             modelBuilder.Entity<OgrenciAidatOdemeModel>()
-                .HasQueryFilter(x => x.AktifMi && (x.OgrenciAidat.Ogrenci.OgrenciDurum || IncludePasifOgrenciler));
+                .HasQueryFilter(x => (!x.IsDeleted || IncludeDeleted) && (!x.OgrenciAidat.Ogrenci.IsDeleted || IncludeDeleted));
 
             // =========================
             // AIDAT: TARIFE (global)
@@ -311,7 +312,7 @@ namespace OgrenciBilgiSistemi.Data
             });
 
             modelBuilder.Entity<SinifYoklamaModel>()
-                .HasQueryFilter(sy => sy.Ogrenci.OgrenciDurum || IncludePasifOgrenciler);
+                .HasQueryFilter(sy => !sy.Ogrenci.IsDeleted || IncludeDeleted);
 
             // =========================
             // SERVIS YOKLAMA
@@ -334,7 +335,7 @@ namespace OgrenciBilgiSistemi.Data
             });
 
             modelBuilder.Entity<ServisYoklamaModel>()
-                .HasQueryFilter(sy => sy.Ogrenci.OgrenciDurum || IncludePasifOgrenciler);
+                .HasQueryFilter(sy => !sy.Ogrenci.IsDeleted || IncludeDeleted);
 
             // =========================
             // UNIQUE INDEKSLER

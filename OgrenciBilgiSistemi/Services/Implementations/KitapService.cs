@@ -1,7 +1,4 @@
-﻿using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.EntityFrameworkCore;
 using OgrenciBilgiSistemi.Data;
 using OgrenciBilgiSistemi.Models;
 using OgrenciBilgiSistemi.Services.Interfaces;
@@ -36,7 +33,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
         {
             var q = _db.Kitaplar
                 .AsNoTracking()
-                .Where(k => k.KitapDurum);
+                .Where(k => !k.IsDeleted);
 
             if (!string.IsNullOrWhiteSpace(searchString))
             {
@@ -70,7 +67,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 .AsQueryable();
 
             if (onlyActive)
-                q = q.Where(k => k.KitapDurum);
+                q = q.Where(k => !k.IsDeleted);
 
             if (!string.IsNullOrWhiteSpace(searchString))
             {
@@ -115,7 +112,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             kitap.KitapAd = model.KitapAd;
             kitap.KitapTurAd = model.KitapTurAd;
             kitap.KitapGun = model.KitapGun;
-            kitap.KitapDurum = model.KitapDurum;
+            kitap.IsDeleted = model.IsDeleted;
 
             if (gorsel != null)
             {
@@ -131,7 +128,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             if (kitap == null)
                 throw new InvalidOperationException("Kitap bulunamadı.");
 
-            kitap.KitapDurum = false;
+            kitap.IsDeleted = true;
             await _db.SaveChangesAsync(ct);
         }
 
@@ -140,7 +137,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             var q = _db.Kitaplar.AsNoTracking().AsQueryable();
 
             if (!tumKitaplar)
-                q = q.Where(k => k.KitapDurum);
+                q = q.Where(k => !k.IsDeleted);
 
             return await q.FirstOrDefaultAsync(k => k.KitapId == id, ct);
         }

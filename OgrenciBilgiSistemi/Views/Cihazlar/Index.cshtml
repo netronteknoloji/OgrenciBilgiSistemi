@@ -110,8 +110,8 @@
                                     <td class="text-muted">@(cihaz.PortNo.HasValue && cihaz.PortNo.Value > 0 ? cihaz.PortNo.ToString() : "—")</td>
 
                                     <td>
-                                        <span class="badge @(cihaz.Aktif ? "bg-success" : "bg-danger")">
-                                            @(cihaz.Aktif ? "Aktif" : "Pasif")
+                                        <span class="badge @(!cihaz.IsDeleted ? "bg-success" : "bg-danger")">
+                                            @(!cihaz.IsDeleted ? "Aktif" : "Pasif")
                                         </span>
                                         @if (zkEksik)
                                         {

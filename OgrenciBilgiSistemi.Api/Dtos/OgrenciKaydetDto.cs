@@ -14,7 +14,7 @@ namespace OgrenciBilgiSistemi.Api.Dtos
         public int OgrenciNo { get; set; }
         public string? OgrenciKartNo { get; set; }
         public OglenCikisDurumu OgrenciCikisDurumu { get; set; }
-        public bool OgrenciDurum { get; set; } = true;
+        public bool IsDeleted { get; set; } = false;
         public int? BirimId { get; set; }
         public int? VeliId { get; set; }
         public int? ServisId { get; set; }

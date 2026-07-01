@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using OgrenciBilgiSistemi.Data;
 using OgrenciBilgiSistemi.Models;
 using OgrenciBilgiSistemi.Services.Interfaces;
@@ -220,7 +219,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
         {
             return await _db.Kitaplar
                 .AsNoTracking()
-                .Where(k => k.KitapDurum)
+                .Where(k => !k.IsDeleted)
                 .OrderBy(k => k.KitapAd)
                 .Select(k => new SelectListItem
                 {
@@ -234,7 +233,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
         {
             return await _db.Ogrenciler
                 .AsNoTracking()
-                .Where(o => o.OgrenciDurum)
+                .Where(o => !o.IsDeleted)
                 .OrderBy(o => o.OgrenciAdSoyad)
                 .Select(o => new SelectListItem
                 {

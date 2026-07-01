@@ -1,5 +1,4 @@
 using OgrenciBilgiSistemi.Models;
-using OgrenciBilgiSistemi.Shared.Enums;
 
 namespace OgrenciBilgiSistemi.Services.Interfaces
 {

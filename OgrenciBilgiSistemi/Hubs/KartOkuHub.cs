@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using OgrenciBilgiSistemi.Dtos;
-using OgrenciBilgiSistemi.Services.Interfaces;
 
 namespace OgrenciBilgiSistemi.Hubs
 {

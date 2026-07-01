@@ -1,4 +1,3 @@
-using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -108,7 +107,7 @@ namespace OgrenciBilgiSistemi.Api.Controllers
                     KullaniciAdi = genelAdminKullaniciAdi,
                     AdSoyad = "Genel Yönetici",
                     Rol = KullaniciRolu.GenelAdmin,
-                    KullaniciDurum = true
+                    IsDeleted = false
                 };
 
                 var genelToken = GenerateJwtToken(genelAdminKullanici, okul.OkulKodu);
@@ -124,7 +123,7 @@ namespace OgrenciBilgiSistemi.Api.Controllers
                         genelAdminKullanici.KullaniciId,
                         genelAdminKullanici.KullaniciAdi,
                         genelAdminKullanici.AdSoyad,
-                        genelAdminKullanici.KullaniciDurum,
+                        genelAdminKullanici.IsDeleted,
                         genelAdminKullanici.Rol,
                         genelAdminKullanici.BirimId,
                         genelAdminKullanici.VeliProfilVar,
@@ -155,7 +154,7 @@ namespace OgrenciBilgiSistemi.Api.Controllers
                     kullanici.KullaniciId,
                     kullanici.KullaniciAdi,
                     kullanici.AdSoyad,
-                    kullanici.KullaniciDurum,
+                    kullanici.IsDeleted,
                     kullanici.Rol,
                     kullanici.BirimId,
                     kullanici.VeliProfilVar,
@@ -189,7 +188,7 @@ namespace OgrenciBilgiSistemi.Api.Controllers
 
             // Kullanıcının hâlâ aktif olduğunu doğrula
             var kullanici = await _girisService.KimlikDogrulaAsync_IdIle(kullaniciId, okul.ConnectionString);
-            if (kullanici is null || !kullanici.KullaniciDurum)
+            if (kullanici is null || kullanici.IsDeleted)
                 return Unauthorized("Kullanıcı hesabı aktif değil.");
 
             // Yeni access token + yeni refresh token üret (token rotation)

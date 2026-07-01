@@ -18,15 +18,6 @@
     bool gosterSinif = rt == RaporTipi.SinifYoklamasi;
     bool gosterServis = rt == RaporTipi.ServisYoklamasi;
 
-    string SortClass(string col)
-    {
-        if (string.IsNullOrEmpty(currentSort) && col == "Tarih_desc")
-            return "text-decoration-underline";
-        return currentSort == col ? "text-decoration-underline" : "";
-    }
-
-    string NextSort(string col) => currentSort == col ? col + "_desc" : col;
-
     string SinifDurumMetni(int? d) => d switch
     {
         1 => "Geldi",

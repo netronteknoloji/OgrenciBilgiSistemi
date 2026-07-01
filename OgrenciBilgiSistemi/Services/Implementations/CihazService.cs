@@ -26,7 +26,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
 
         // --- Yardımcılar ---
         private static bool ZkBaglantiUygunMu(CihazModel c) =>
-            c is { Aktif: true } &&
+            c is { IsDeleted: false } &&
             c.DonanimTipi == DonanimTipi.ZKTeco &&
             !string.IsNullOrWhiteSpace(c.IpAdresi) &&
             c.PortNo is > 0;
@@ -445,7 +445,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 if (codeClash) return false;
 
                 // ---- Kaydet ----
-                model.Aktif = true;
+                model.IsDeleted = false;
 
                 _context.Cihazlar.Add(model);
                 await _context.SaveChangesAsync(ct);
@@ -495,7 +495,6 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 ent.CihazAdi = temizAd;
                 ent.IpAdresi = temizIp;
                 ent.PortNo = model.PortNo;
-                ent.Aktif = model.Aktif;
                 ent.DonanimTipi = model.DonanimTipi;
                 ent.IstasyonTipi = model.IstasyonTipi;
 
@@ -534,7 +533,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 var ent = await _context.Cihazlar.FirstOrDefaultAsync(c => c.CihazId == id, ct);
                 if (ent is null) return false;
 
-                ent.Aktif = false;
+                ent.IsDeleted = true;
                 await _context.SaveChangesAsync(ct);
 
                 await YenileCihazListesiAsync(ct);
@@ -643,7 +642,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             string? search, int page, int pageSize, CancellationToken ct = default)
         {
             var query = _context.Cihazlar
-                .Where(c => c.Aktif)
+                .Where(c => !c.IsDeleted)
                 .AsNoTracking()
                 .AsQueryable();
 
@@ -675,13 +674,13 @@ namespace OgrenciBilgiSistemi.Services.Implementations
         public async Task<CihazModel?> CihazBulAktifByKodAsync(Guid cihazKodu, CancellationToken ct = default)
         {
             return await _context.Cihazlar.AsNoTracking()
-                .FirstOrDefaultAsync(c => c.CihazKodu == cihazKodu && c.Aktif, ct);
+                .FirstOrDefaultAsync(c => c.CihazKodu == cihazKodu && !c.IsDeleted, ct);
         }
 
         public async Task<CihazModel?> CihazBulVarsayilanAsync(CancellationToken ct = default)
         {
             return await _context.Cihazlar.AsNoTracking()
-                .OrderByDescending(c => c.Aktif)
+                .OrderBy(c => c.IsDeleted)
                 .ThenBy(c => c.CihazId)
                 .FirstOrDefaultAsync(ct);
         }

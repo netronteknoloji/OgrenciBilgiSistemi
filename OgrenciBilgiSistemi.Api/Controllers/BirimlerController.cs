@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using OgrenciBilgiSistemi.Api.Models;
 using OgrenciBilgiSistemi.Api.Services.Interfaces;
 
 namespace OgrenciBilgiSistemi.Api.Controllers

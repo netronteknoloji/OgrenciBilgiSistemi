@@ -59,7 +59,7 @@ namespace OgrenciBilgiSistemi.Api.Controllers
             => Ok(await _yoneticiService.ServisOgrencileriGetirAsync(id));
 
         /// <summary>
-        /// Aktif velileri (VeliProfiller.VeliDurum=1) döner.
+        /// Aktif velileri (VeliProfiller.IsDeleted=0) döner.
         /// </summary>
         [HttpGet("veliler")]
         public async Task<IActionResult> Veliler()

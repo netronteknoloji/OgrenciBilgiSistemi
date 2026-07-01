@@ -1,5 +1,4 @@
 using OgrenciBilgiSistemi.Models;
-using OgrenciBilgiSistemi.Shared.Enums;
 using System.ComponentModel.DataAnnotations;
 
 namespace OgrenciBilgiSistemi.ViewModels
@@ -21,7 +20,7 @@ namespace OgrenciBilgiSistemi.ViewModels
             KullaniciAdi = m.KullaniciAdi,
             Sifre = string.Empty,
             Rol = KullaniciRolu.Veli,
-            KullaniciDurum = m.KullaniciDurum,
+            IsDeleted = m.IsDeleted,
             Telefon = m.Telefon,
             VeliAdres = m.VeliProfil?.VeliAdres,
             VeliMeslek = m.VeliProfil?.VeliMeslek,
@@ -39,7 +38,7 @@ namespace OgrenciBilgiSistemi.ViewModels
             KullaniciAdi = KullaniciAdi,
             Sifre = Sifre ?? string.Empty,
             Rol = KullaniciRolu.Veli,
-            KullaniciDurum = KullaniciDurum,
+            IsDeleted = this.IsDeleted,
             Telefon = Telefon,
             VeliProfil = new VeliProfilModel
             {

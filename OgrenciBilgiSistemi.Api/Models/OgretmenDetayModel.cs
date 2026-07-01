@@ -9,6 +9,6 @@ namespace OgrenciBilgiSistemi.Api.Models
         public string? GorselPath { get; set; }
         public int? BirimId { get; set; }
         public string? BirimAd { get; set; }
-        public bool OgretmenDurum { get; set; }
+        public bool IsDeleted { get; set; }
     }
 }

@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using OgrenciBilgiSistemi.Data;
 using OgrenciBilgiSistemi.Models;
 using OgrenciBilgiSistemi.Services.Interfaces;
-using OgrenciBilgiSistemi.Shared.Enums;
 using OgrenciBilgiSistemi.ViewModels;
 
 namespace OgrenciBilgiSistemi.Services.Implementations
@@ -24,7 +23,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             var query = _db.VeliProfiller
                 .Include(v => v.Kullanici)
                 .AsNoTracking()
-                .Where(v => v.VeliDurum)
+                .Where(v => !v.IsDeleted)
                 .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(searchString))
@@ -40,7 +39,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             // Her velinin öğrenci sayısını doldur
             var veliIdler = paged.Select(v => v.KullaniciId).ToList();
             var sayilar = await _db.Ogrenciler
-                .Where(o => o.VeliId != null && veliIdler.Contains(o.VeliId.Value) && o.OgrenciDurum)
+                .Where(o => o.VeliId != null && veliIdler.Contains(o.VeliId.Value) && !o.IsDeleted)
                 .GroupBy(o => o.VeliId!.Value)
                 .Select(g => new { VeliId = g.Key, Sayi = g.Count() })
                 .ToDictionaryAsync(x => x.VeliId, x => x.Sayi, ct);
@@ -58,7 +57,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 KullaniciAdi = vm.KullaniciAdi,
                 Rol = KullaniciRolu.Veli,
                 Telefon = vm.Telefon,
-                KullaniciDurum = true,
+                IsDeleted = false,
                 VeliProfil = new VeliProfilModel
                 {
                     VeliAdres = vm.VeliAdres,
@@ -66,7 +65,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                     VeliIsYeri = vm.VeliIsYeri,
                     VeliEmail = vm.VeliEmail,
                     VeliYakinlik = vm.VeliYakinlik,
-                    VeliDurum = true
+                    IsDeleted = false
                 }
             };
 
@@ -87,14 +86,14 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             mevcut.VeliIsYeri = model.VeliIsYeri;
             mevcut.VeliEmail = model.VeliEmail;
             mevcut.VeliYakinlik = model.VeliYakinlik;
-            mevcut.VeliDurum = model.VeliDurum;
+            mevcut.IsDeleted = model.IsDeleted;
 
             var kullanici = await _db.Kullanicilar.FindAsync([model.KullaniciId], ct);
             if (kullanici != null)
             {
                 kullanici.KullaniciAdi = kullaniciAdi ?? kullanici.KullaniciAdi;
                 kullanici.Telefon = telefon;
-                kullanici.KullaniciDurum = model.VeliDurum;
+                kullanici.IsDeleted = model.IsDeleted;
 
                 if (!string.IsNullOrWhiteSpace(sifre))
                     kullanici.Sifre = _passwordHasher.HashPassword(kullanici, sifre);
@@ -110,7 +109,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
 
             if (veli is null) return;
 
-            veli.VeliDurum = false;
+            veli.IsDeleted = true;
             await _db.SaveChangesAsync(ct);
         }
 
@@ -125,7 +124,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
         public async Task<List<OgrenciModel>> GetOgrencilerAsync(int kullaniciId, CancellationToken ct = default)
             => await _db.Ogrenciler
                 .Include(o => o.Birim)
-                .Where(o => o.VeliId == kullaniciId && o.OgrenciDurum)
+                .Where(o => o.VeliId == kullaniciId && !o.IsDeleted)
                 .OrderBy(o => o.OgrenciAdSoyad)
                 .AsNoTracking()
                 .ToListAsync(ct);

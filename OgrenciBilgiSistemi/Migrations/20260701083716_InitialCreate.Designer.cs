@@ -12,18 +12,67 @@ using OgrenciBilgiSistemi.Data;
 namespace OgrenciBilgiSistemi.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260502143618_02052026")]
-    partial class _02052026
+    [Migration("20260701083716_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.2")
+                .HasAnnotation("ProductVersion", "10.0.9")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+
+            modelBuilder.Entity("OgrenciBilgiSistemi.Models.BildirimCihaziModel", b =>
+                {
+                    b.Property<int>("BildirimCihaziId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("BildirimCihaziId"));
+
+                    b.Property<string>("CihazModeli")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("FcmToken")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("KullaniciId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("OlusturulmaTarihi")
+                        .HasColumnType("datetime2");
+
+                    b.Property<byte>("Platform")
+                        .HasColumnType("tinyint");
+
+                    b.Property<DateTime>("SonGuncelleme")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UygulamaSurumu")
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.HasKey("BildirimCihaziId");
+
+                    b.HasIndex("FcmToken")
+                        .IsUnique()
+                        .HasDatabaseName("UX_BildirimCihazlari_FcmToken_Aktif")
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.HasIndex("KullaniciId", "IsDeleted")
+                        .HasDatabaseName("IX_BildirimCihazlari_Kullanici_Aktif");
+
+                    b.ToTable("BildirimCihazlari");
+                });
 
             modelBuilder.Entity("OgrenciBilgiSistemi.Models.BildirimModel", b =>
                 {
@@ -79,10 +128,10 @@ namespace OgrenciBilgiSistemi.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
-                    b.Property<bool>("BirimDurum")
+                    b.Property<bool>("BirimSinifMi")
                         .HasColumnType("bit");
 
-                    b.Property<bool>("BirimSinifMi")
+                    b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
                     b.HasKey("BirimId");
@@ -98,9 +147,6 @@ namespace OgrenciBilgiSistemi.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CihazId"));
 
-                    b.Property<bool>("Aktif")
-                        .HasColumnType("bit");
-
                     b.Property<string>("CihazAdi")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -115,6 +161,9 @@ namespace OgrenciBilgiSistemi.Migrations
                     b.Property<string>("IpAdresi")
                         .HasMaxLength(45)
                         .HasColumnType("nvarchar(45)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
 
                     b.Property<short>("IstasyonTipi")
                         .HasColumnType("smallint");
@@ -133,6 +182,76 @@ namespace OgrenciBilgiSistemi.Migrations
                     b.HasIndex("IstasyonTipi");
 
                     b.ToTable("Cihazlar");
+                });
+
+            modelBuilder.Entity("OgrenciBilgiSistemi.Models.DuyuruModel", b =>
+                {
+                    b.Property<int>("DuyuruId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("DuyuruId"));
+
+                    b.Property<string>("Baslik")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("Hedef")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Icerik")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("OlusturanKullaniciId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("OlusturulmaTarihi")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("DuyuruId");
+
+                    b.HasIndex("OlusturanKullaniciId")
+                        .HasDatabaseName("IX_Duyurular_Olusturan");
+
+                    b.HasIndex("OlusturulmaTarihi")
+                        .HasDatabaseName("IX_Duyurular_Tarih");
+
+                    b.ToTable("Duyurular");
+                });
+
+            modelBuilder.Entity("OgrenciBilgiSistemi.Models.DuyuruOkumaModel", b =>
+                {
+                    b.Property<int>("DuyuruOkumaId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("DuyuruOkumaId"));
+
+                    b.Property<int>("DuyuruId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("KullaniciId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("OkunduTarihi")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("DuyuruOkumaId");
+
+                    b.HasIndex("KullaniciId")
+                        .HasDatabaseName("IX_DuyuruOkumalar_Kullanici");
+
+                    b.HasIndex("DuyuruId", "KullaniciId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_DuyuruOkumalar_Duyuru_Kullanici_Unique");
+
+                    b.ToTable("DuyuruOkumalari");
                 });
 
             modelBuilder.Entity("OgrenciBilgiSistemi.Models.KitapDetayModel", b =>
@@ -175,13 +294,13 @@ namespace OgrenciBilgiSistemi.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("KitapId"));
 
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
                     b.Property<string>("KitapAd")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
-
-                    b.Property<bool>("KitapDurum")
-                        .HasColumnType("bit");
 
                     b.Property<string>("KitapGorsel")
                         .HasColumnType("nvarchar(max)");
@@ -224,12 +343,12 @@ namespace OgrenciBilgiSistemi.Migrations
                     b.Property<bool>("BeniHatirla")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
                     b.Property<string>("KullaniciAdi")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
-
-                    b.Property<bool>("KullaniciDurum")
-                        .HasColumnType("bit");
 
                     b.Property<int>("Rol")
                         .HasColumnType("int");
@@ -245,11 +364,14 @@ namespace OgrenciBilgiSistemi.Migrations
                     b.HasKey("KullaniciId");
 
                     b.HasIndex("KullaniciAdi")
-                        .IsUnique()
-                        .HasDatabaseName("UX_Kullanicilar_KullaniciAdi");
+                        .HasDatabaseName("IX_Kullanicilar_KullaniciAdi");
 
                     b.HasIndex("Rol")
                         .HasDatabaseName("IX_Kullanicilar_Rol");
+
+                    b.HasIndex("Telefon")
+                        .HasDatabaseName("IX_Kullanicilar_Telefon")
+                        .HasFilter("[Telefon] IS NOT NULL AND [Telefon] != ''");
 
                     b.ToTable("Kullanicilar");
                 });
@@ -541,6 +663,21 @@ namespace OgrenciBilgiSistemi.Migrations
                             Baslik = "Öğretmen Randevu Takvimi",
                             Controller = "OgretmenRandevu",
                             Sirala = 2
+                        },
+                        new
+                        {
+                            Id = 33,
+                            Baslik = "Duyurular",
+                            Sirala = 13
+                        },
+                        new
+                        {
+                            Id = 34,
+                            Action = "Index",
+                            AnaMenuId = 33,
+                            Baslik = "Duyuru İşlemleri",
+                            Controller = "Duyurular",
+                            Sirala = 1
                         });
                 });
 
@@ -596,7 +733,7 @@ namespace OgrenciBilgiSistemi.Migrations
                     b.Property<string>("Aciklama")
                         .HasColumnType("nvarchar(255)");
 
-                    b.Property<bool>("AktifMi")
+                    b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
                     b.Property<DateTime>("OdemeTarihi")
@@ -710,6 +847,9 @@ namespace OgrenciBilgiSistemi.Migrations
                     b.Property<int?>("BirimId")
                         .HasColumnType("int");
 
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
                     b.Property<string>("OgrenciAdSoyad")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -717,9 +857,6 @@ namespace OgrenciBilgiSistemi.Migrations
 
                     b.Property<int>("OgrenciCikisDurumu")
                         .HasColumnType("int");
-
-                    b.Property<bool>("OgrenciDurum")
-                        .HasColumnType("bit");
 
                     b.Property<string>("OgrenciGorsel")
                         .HasColumnType("nvarchar(max)");
@@ -751,8 +888,7 @@ namespace OgrenciBilgiSistemi.Migrations
                         .HasFilter("[OgrenciKartNo] IS NOT NULL AND [OgrenciKartNo] != ''");
 
                     b.HasIndex("OgrenciNo")
-                        .IsUnique()
-                        .HasDatabaseName("UX_Ogrenciler_OgrenciNo");
+                        .HasDatabaseName("IX_Ogrenciler_OgrenciNo");
 
                     b.HasIndex("OgretmenId");
 
@@ -807,11 +943,11 @@ namespace OgrenciBilgiSistemi.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
-                    b.Property<bool>("AktifMi")
-                        .HasColumnType("bit");
-
                     b.Property<int>("Ay")
                         .HasColumnType("int");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
 
                     b.Property<int>("OgrenciId")
                         .HasColumnType("int");
@@ -878,7 +1014,7 @@ namespace OgrenciBilgiSistemi.Migrations
                     b.Property<string>("GorselPath")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool>("OgretmenDurum")
+                    b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
                     b.HasKey("KullaniciId");
@@ -913,7 +1049,10 @@ namespace OgrenciBilgiSistemi.Migrations
 
                     b.HasKey("OgretmenRandevuId");
 
-                    b.HasIndex("OgretmenKullaniciId");
+                    b.HasIndex("OgretmenKullaniciId", "Tarih", "BaslangicSaati")
+                        .IsUnique()
+                        .HasDatabaseName("UX_OgretmenRandevular_Slot")
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.ToTable("OgretmenRandevular");
                 });
@@ -964,12 +1103,14 @@ namespace OgrenciBilgiSistemi.Migrations
 
                     b.HasIndex("OgrenciId");
 
-                    b.HasIndex("OgretmenKullaniciId");
-
                     b.HasIndex("RandevuTarihi")
                         .HasDatabaseName("IX_Randevular_Tarih");
 
                     b.HasIndex("VeliKullaniciId");
+
+                    b.HasIndex("OgretmenKullaniciId", "RandevuTarihi")
+                        .HasDatabaseName("IX_Randevular_OgretmenTarih")
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.ToTable("Randevular");
                 });
@@ -979,13 +1120,13 @@ namespace OgrenciBilgiSistemi.Migrations
                     b.Property<int>("KullaniciId")
                         .HasColumnType("int");
 
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Plaka")
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
-
-                    b.Property<bool>("ServisDurum")
-                        .HasColumnType("bit");
 
                     b.HasKey("KullaniciId");
 
@@ -1150,12 +1291,12 @@ namespace OgrenciBilgiSistemi.Migrations
                     b.Property<int>("KullaniciId")
                         .HasColumnType("int");
 
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
                     b.Property<string>("VeliAdres")
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
-
-                    b.Property<bool>("VeliDurum")
-                        .HasColumnType("bit");
 
                     b.Property<string>("VeliEmail")
                         .HasMaxLength(100)
@@ -1237,6 +1378,17 @@ namespace OgrenciBilgiSistemi.Migrations
                     b.ToTable("Ziyaretciler");
                 });
 
+            modelBuilder.Entity("OgrenciBilgiSistemi.Models.BildirimCihaziModel", b =>
+                {
+                    b.HasOne("OgrenciBilgiSistemi.Models.KullaniciModel", "Kullanici")
+                        .WithMany()
+                        .HasForeignKey("KullaniciId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Kullanici");
+                });
+
             modelBuilder.Entity("OgrenciBilgiSistemi.Models.BildirimModel", b =>
                 {
                     b.HasOne("OgrenciBilgiSistemi.Models.KullaniciModel", "Alici")
@@ -1253,6 +1405,36 @@ namespace OgrenciBilgiSistemi.Migrations
                     b.Navigation("Alici");
 
                     b.Navigation("Randevu");
+                });
+
+            modelBuilder.Entity("OgrenciBilgiSistemi.Models.DuyuruModel", b =>
+                {
+                    b.HasOne("OgrenciBilgiSistemi.Models.KullaniciModel", "Olusturan")
+                        .WithMany()
+                        .HasForeignKey("OlusturanKullaniciId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Olusturan");
+                });
+
+            modelBuilder.Entity("OgrenciBilgiSistemi.Models.DuyuruOkumaModel", b =>
+                {
+                    b.HasOne("OgrenciBilgiSistemi.Models.DuyuruModel", "Duyuru")
+                        .WithMany()
+                        .HasForeignKey("DuyuruId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("OgrenciBilgiSistemi.Models.KullaniciModel", "Kullanici")
+                        .WithMany()
+                        .HasForeignKey("KullaniciId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Duyuru");
+
+                    b.Navigation("Kullanici");
                 });
 
             modelBuilder.Entity("OgrenciBilgiSistemi.Models.KitapDetayModel", b =>
@@ -1285,7 +1467,7 @@ namespace OgrenciBilgiSistemi.Migrations
                     b.HasOne("OgrenciBilgiSistemi.Models.MenuOgeModel", "MenuOge")
                         .WithMany("KullaniciMenuler")
                         .HasForeignKey("MenuOgeId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Kullanici");

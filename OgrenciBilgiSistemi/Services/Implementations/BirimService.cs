@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using OgrenciBilgiSistemi.Data;
 using OgrenciBilgiSistemi.Dtos;
 using OgrenciBilgiSistemi.Models;
@@ -22,7 +21,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
         public async Task<IReadOnlyList<BirimDto>> GetAllAsync(bool? sinifMi = null, CancellationToken ct = default)
             => await _db.Birimler
                 .AsNoTracking()
-                .Where(b => b.BirimDurum)
+                .Where(b => !b.IsDeleted)
                 .Where(b => !sinifMi.HasValue || b.BirimSinifMi == sinifMi.Value)
                 .OrderBy(b => b.BirimAd)
                 .Select(b => new BirimDto { Id = b.BirimId, Ad = b.BirimAd })
@@ -40,7 +39,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             if (filtre != BirimFiltre.Tum)
             {
                 bool aktifMi = filtre == BirimFiltre.Aktif;
-                q = q.Where(b => b.BirimDurum == aktifMi);
+                q = q.Where(b => b.IsDeleted != aktifMi);
             }
 
             // Sınıf filtresi (opsiyonel)
@@ -80,8 +79,8 @@ namespace OgrenciBilgiSistemi.Services.Implementations
 
             q = filtre switch
             {
-                BirimFiltre.Aktif => q.Where(p => p.BirimDurum),
-                BirimFiltre.Pasif => q.Where(p => !p.BirimDurum),
+                BirimFiltre.Aktif => q.Where(p => !p.IsDeleted),
+                BirimFiltre.Pasif => q.Where(p => p.IsDeleted),
                 _ => q
             };
 
@@ -109,7 +108,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
 
         public Task<BirimModel?> GetByIdAsync(int id, bool tumBirimler = false, CancellationToken ct = default)
             => _db.Birimler.AsNoTracking()
-               .FirstOrDefaultAsync(b => b.BirimId == id && (tumBirimler || b.BirimDurum), ct);
+               .FirstOrDefaultAsync(b => b.BirimId == id && (tumBirimler || !b.IsDeleted), ct);
 
         public async Task<bool> ExistsWithNameAsync(string ad, int? excludeId = null, CancellationToken ct = default)
         {
@@ -125,7 +124,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
         public async Task AddAsync(BirimModel model, CancellationToken ct = default)
         {
             model.BirimAd = (model.BirimAd ?? string.Empty).Trim();
-            if (!model.BirimDurum) model.BirimDurum = true;
+            model.IsDeleted = false;
             try
             {
                 _db.Birimler.Add(model);
@@ -144,7 +143,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                       ?? throw new KeyNotFoundException("Birim bulunamadı.");
 
             ent.BirimAd = (model.BirimAd ?? string.Empty).Trim();
-            ent.BirimDurum = model.BirimDurum;
+            ent.IsDeleted = model.IsDeleted;
             ent.BirimSinifMi = model.BirimSinifMi;
 
             try
@@ -163,7 +162,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             var ent = await _db.Birimler.FirstOrDefaultAsync(b => b.BirimId == id, ct);
             if (ent == null) return;
 
-            ent.BirimDurum = false;
+            ent.IsDeleted = true;
             try
             {
                 await _db.SaveChangesAsync(ct);

@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
 using OgrenciBilgiSistemi.Constants;
 using OgrenciBilgiSistemi.Data;
-using OgrenciBilgiSistemi.Models;
 using System.Security.Claims;
 
 namespace OgrenciBilgiSistemi.Infrastructure

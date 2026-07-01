@@ -87,12 +87,12 @@
 
                                         <!-- Kullanıcı Durumu -->
                                         <div class="mb-3">
-                                            <label asp-for="KullaniciDurum" class="form-label fw-semibold">Kullanıcı Durumu</label>
-                                            <select asp-for="KullaniciDurum" class="form-select">
-                                                <option value="true">Aktif</option>
-                                                <option value="false">Pasif</option>
+                                            <label asp-for="IsDeleted" class="form-label fw-semibold">Kullanıcı Durumu</label>
+                                            <select asp-for="IsDeleted" class="form-select">
+                                                <option value="false">Aktif</option>
+                                                <option value="true">Pasif</option>
                                             </select>
-                                            <span asp-validation-for="KullaniciDurum" class="text-danger"></span>
+                                            <span asp-validation-for="IsDeleted" class="text-danger"></span>
                                         </div>
 
                                         <!-- Telefon -->

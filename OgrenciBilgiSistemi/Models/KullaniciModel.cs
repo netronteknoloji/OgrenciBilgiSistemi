@@ -25,7 +25,8 @@ namespace OgrenciBilgiSistemi.Models
         [Display(Name = "Rol")]
         public KullaniciRolu Rol { get; set; } = KullaniciRolu.Ogretmen;
 
-        public bool KullaniciDurum { get; set; } = true;
+        // true = silinmiş (soft delete). Eski KullaniciDurum (aktif/pasif) IsDeleted'a birleştirildi.
+        public bool IsDeleted { get; set; } = false;
 
         [StringLength(15)]
         [RegularExpression(@"^\d{10,15}$", ErrorMessage = "Telefon numarası yalnızca rakamlardan oluşmalıdır!")]

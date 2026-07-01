@@ -86,8 +86,8 @@
                                     <td class="text-muted">@kitap.KitapTurAd</td>
                                     <td class="text-muted">@kitap.KitapGun</td>
                                     <td>
-                                        <span class="badge @(kitap.KitapDurum ? "bg-success" : "bg-danger")">
-                                            @(kitap.KitapDurum ? "🟢 Aktif" : "🔴 Pasif")
+                                        <span class="badge @(!kitap.IsDeleted ? "bg-success" : "bg-danger")">
+                                            @(!kitap.IsDeleted ? "🟢 Aktif" : "🔴 Pasif")
                                         </span>
                                     </td>
                                     <td>

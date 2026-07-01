@@ -94,7 +94,7 @@ public sealed class BekleyenYoklamaSmsRetryService : BackgroundService
             LEFT JOIN Kullanicilar k ON o.VeliId = k.KullaniciId
             WHERE CAST(sy.OlusturulmaTarihi AS DATE) = CAST(GETDATE() AS DATE)
               AND sy.SmsGonderildi = 0
-              AND o.OgrenciDurum = 1
+              AND o.IsDeleted = 0
               AND k.Telefon IS NOT NULL AND k.Telefon <> ''";
 
         var bekleyenler = new List<(int Id, int OgrenciId, int Periyot, int DurumId, string AdSoyad, string Telefon)>();
@@ -205,7 +205,7 @@ public sealed class BekleyenYoklamaSmsRetryService : BackgroundService
                 WHERE CAST(sy.OlusturulmaTarihi AS DATE) = CAST(GETDATE() AS DATE)
                   AND sy.{dersKolonu} = 2
                   AND (sy.SmsDurumu & @dersBit) = 0
-                  AND o.OgrenciDurum = 1
+                  AND o.IsDeleted = 0
                   AND k.Telefon IS NOT NULL AND k.Telefon <> ''";
 
             var bekleyenler = new List<(int Id, int OgrenciId, string AdSoyad, string Telefon)>();

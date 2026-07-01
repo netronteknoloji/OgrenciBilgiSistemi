@@ -27,25 +27,25 @@ namespace OgrenciBilgiSistemi.Api.Services
             var yarin = bugun.AddDays(1);
 
             // Sayım sorguları MVC tarafıyla uyumlu kriterler kullanır:
-            // - Öğrenci: OgrenciDurum=1 (HomeController.DashboardStats ve OgrenciService liste filtresi)
-            // - Öğretmen: OgretmenProfiller.OgretmenDurum=1 (OgretmenProfilService default Aktif filtresi)
-            // - Veli: VeliProfiller.VeliDurum=1 (her iki taraf aktif velileri sayar)
+            // - Öğrenci: IsDeleted=0 (HomeController.DashboardStats ve OgrenciService liste filtresi)
+            // - Öğretmen: OgretmenProfiller.IsDeleted=0 (OgretmenProfilService default Aktif filtresi)
+            // - Veli: VeliProfiller.IsDeleted=0 (her iki taraf aktif velileri sayar)
             const string query = @"
                 SELECT
                     (SELECT COUNT(*) FROM Ogrenciler
-                        WHERE OgrenciDurum = 1) AS ToplamOgrenci,
+                        WHERE IsDeleted = 0) AS ToplamOgrenci,
 
                     (SELECT COUNT(*) FROM OgretmenProfiller
-                        WHERE OgretmenDurum = 1) AS ToplamOgretmen,
+                        WHERE IsDeleted = 0) AS ToplamOgretmen,
 
                     (SELECT COUNT(*) FROM Birimler
-                        WHERE BirimSinifMi = 1 AND BirimDurum = 1) AS ToplamSinif,
+                        WHERE BirimSinifMi = 1 AND IsDeleted = 0) AS ToplamSinif,
 
                     (SELECT COUNT(*) FROM VeliProfiller
-                        WHERE VeliDurum = 1) AS ToplamVeli,
+                        WHERE IsDeleted = 0) AS ToplamVeli,
 
                     (SELECT COUNT(*) FROM ServisProfiller
-                        WHERE ServisDurum = 1) AS ToplamServis,
+                        WHERE IsDeleted = 0) AS ToplamServis,
 
                     (SELECT COUNT(*) FROM OgrenciDetaylar d
                         INNER JOIN Ogrenciler o ON o.OgrenciId = d.OgrenciId
@@ -53,7 +53,7 @@ namespace OgrenciBilgiSistemi.Api.Services
                           AND d.OgrenciGecisTipi = N'GİRİŞ'
                           AND d.OgrenciGTarih >= @bugun
                           AND d.OgrenciGTarih < @yarin
-                          AND o.OgrenciDurum = 1) AS BugunYemekhaneGiris,
+                          AND o.IsDeleted = 0) AS BugunYemekhaneGiris,
 
                     (SELECT COUNT(*) FROM OgrenciDetaylar d
                         INNER JOIN Ogrenciler o ON o.OgrenciId = d.OgrenciId
@@ -61,7 +61,7 @@ namespace OgrenciBilgiSistemi.Api.Services
                           AND d.OgrenciGecisTipi = N'ÇIKIŞ'
                           AND d.OgrenciCTarih >= @bugun
                           AND d.OgrenciCTarih < @yarin
-                          AND o.OgrenciDurum = 1) AS BugunAnakapiCikis;";
+                          AND o.IsDeleted = 0) AS BugunAnakapiCikis;";
 
             var ozet = new OkulOzetModel();
 
@@ -103,9 +103,7 @@ namespace OgrenciBilgiSistemi.Api.Services
         /// </summary>
         public async Task<List<ServisListeOgesiModel>> TumServisleriGetirAsync()
         {
-            // MVC Servisler/Index ile uyumlu: ServisDurum filtresi yok (pasifler de listelenir),
-            // Plaka'ya göre sıralı.
-            // MVC Servisler/Index ile uyumlu: ServisDurum filtresi yok (pasifler de listelenir),
+            // MVC Servisler/Index ile uyumlu: IsDeleted filtresi yok (silinmişler de listelenir),
             // Plaka'ya göre sıralı. Telefon Kullanicilar.Telefon'dan alınır
             // (ServisProfiller'da telefon kolonu yoktur).
             const string query = @"
@@ -113,10 +111,10 @@ namespace OgrenciBilgiSistemi.Api.Services
                        k.KullaniciAdi,
                        k.Telefon AS ServisTelefon,
                        sp.Plaka,
-                       sp.ServisDurum,
+                       sp.IsDeleted,
                        (SELECT COUNT(*) FROM Ogrenciler o
                           WHERE o.ServisId = k.KullaniciId
-                            AND o.OgrenciDurum = 1) AS OgrenciSayisi
+                            AND o.IsDeleted = 0) AS OgrenciSayisi
                 FROM ServisProfiller sp
                 INNER JOIN Kullanicilar k ON k.KullaniciId = sp.KullaniciId
                 ORDER BY sp.Plaka;";
@@ -139,7 +137,7 @@ namespace OgrenciBilgiSistemi.Api.Services
                         KullaniciAdi = reader["KullaniciAdi"]?.ToString() ?? "",
                         Plaka = reader["Plaka"] is DBNull ? null : reader["Plaka"]?.ToString(),
                         ServisTelefon = reader["ServisTelefon"] is DBNull ? null : reader["ServisTelefon"]?.ToString(),
-                        ServisDurum = reader["ServisDurum"] is not DBNull && Convert.ToBoolean(reader["ServisDurum"]),
+                        IsDeleted = reader["IsDeleted"] is not DBNull && Convert.ToBoolean(reader["IsDeleted"]),
                         OgrenciSayisi = Convert.ToInt32(reader["OgrenciSayisi"])
                     });
                 }
@@ -163,7 +161,7 @@ namespace OgrenciBilgiSistemi.Api.Services
                        B.BirimAd AS SinifAdi
                 FROM Ogrenciler O
                 LEFT JOIN Birimler B ON O.BirimId = B.BirimId
-                WHERE O.ServisId = @servisId AND O.OgrenciDurum = 1
+                WHERE O.ServisId = @servisId AND O.IsDeleted = 0
                 ORDER BY O.OgrenciAdSoyad";
 
             var ogrenciler = new List<OgrenciModel>();
@@ -221,7 +219,7 @@ namespace OgrenciBilgiSistemi.Api.Services
                   AND d.OgrenciGecisTipi  = N'GİRİŞ'
                   AND d.OgrenciGTarih    >= @bugun
                   AND d.OgrenciGTarih    <  @yarin
-                  AND o.OgrenciDurum      = 1
+                  AND o.IsDeleted      = 0
                 ORDER BY d.OgrenciGTarih DESC;";
 
             var liste = new List<YemekhaneBugunOgesiModel>();
@@ -282,7 +280,7 @@ namespace OgrenciBilgiSistemi.Api.Services
                   AND d.OgrenciGecisTipi  = N'ÇIKIŞ'
                   AND d.OgrenciCTarih    >= @bugun
                   AND d.OgrenciCTarih    <  @yarin
-                  AND o.OgrenciDurum      = 1
+                  AND o.IsDeleted      = 0
                 ORDER BY d.OgrenciCTarih DESC;";
 
             var liste = new List<AnakapiCikisBugunOgesiModel>();

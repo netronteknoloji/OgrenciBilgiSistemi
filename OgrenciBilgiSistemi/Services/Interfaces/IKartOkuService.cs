@@ -1,6 +1,5 @@
 ﻿using OgrenciBilgiSistemi.Dtos;
 using OgrenciBilgiSistemi.Models;
-using System.Threading;
 
 public interface IKartOkuService
 {

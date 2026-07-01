@@ -19,7 +19,7 @@ namespace OgrenciBilgiSistemi.ViewModels
         [Range(1, 365, ErrorMessage = "Kitap gün sayısı 1 ile 365 arasında olmalıdır.")]
         public int KitapGun { get; set; }
 
-        public bool KitapDurum { get; set; } = true;
+        public bool IsDeleted { get; set; } = false;
 
         public IFormFile? KitapGorselFile { get; set; }
 
@@ -34,7 +34,7 @@ namespace OgrenciBilgiSistemi.ViewModels
             KitapGorsel = m.KitapGorsel,
             KitapTurAd = m.KitapTurAd,
             KitapGun = m.KitapGun,
-            KitapDurum = m.KitapDurum,
+            IsDeleted = m.IsDeleted,
             FormAction = "Guncelle",
             SubmitText = "Güncelle",
             IncludeId = true,
@@ -47,7 +47,7 @@ namespace OgrenciBilgiSistemi.ViewModels
             KitapGorsel = KitapGorsel,
             KitapTurAd = KitapTurAd,
             KitapGun = KitapGun,
-            KitapDurum = KitapDurum,
+            IsDeleted = IsDeleted,
         };
     }
 }

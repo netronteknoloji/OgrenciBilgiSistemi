@@ -1,14 +1,10 @@
 ﻿using ClosedXML.Excel;
-using DocumentFormat.OpenXml.Vml.Office;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using OgrenciBilgiSistemi.Abstractions;
 using OgrenciBilgiSistemi.Data;
 using OgrenciBilgiSistemi.Dtos;
 using OgrenciBilgiSistemi.Models;
 using OgrenciBilgiSistemi.Services.Interfaces;
-using OgrenciBilgiSistemi.Shared.Enums;
 using System.Globalization;
 
 
@@ -87,7 +83,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             if (birimId is null) return null;
             return await _db.OgretmenProfiller
                 .AsNoTracking()
-                .Where(op => op.BirimId == birimId && op.OgretmenDurum)
+                .Where(op => op.BirimId == birimId && !op.IsDeleted)
                 .OrderBy(op => op.KullaniciId)
                 .Select(op => (int?)op.KullaniciId)
                 .FirstOrDefaultAsync(ct);
@@ -139,7 +135,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 ent.OgrenciKartNo = NormalizeKartNo(model.OgrenciKartNo);
                 ent.BirimId = model.BirimId;
                 ent.OgretmenId = await BirimdenOgretmenBulAsync(model.BirimId, ct);
-                ent.OgrenciDurum = model.OgrenciDurum;
+                ent.IsDeleted = model.IsDeleted;
                 ent.OgrenciCikisDurumu = model.OgrenciCikisDurumu;
                 ent.VeliId = model.VeliId;
                 ent.ServisId = model.ServisId;
@@ -163,7 +159,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             if (buAyYemekhaneAktif.HasValue && ent is not null)
             {
                 var cihazlar = await _db.Cihazlar
-                    .Where(c => c.Aktif && c.IstasyonTipi == IstasyonTipi.Yemekhane)
+                    .Where(c => !c.IsDeleted && c.IstasyonTipi == IstasyonTipi.Yemekhane)
                     .ToListAsync(ct);
 
                 foreach (var cihaz in cihazlar)
@@ -201,7 +197,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                     return;
                 }
 
-                ent.OgrenciDurum = false;
+                ent.IsDeleted = true;
                 await _db.SaveChangesAsync(ct);
 
                 await tx.CommitAsync(ct);
@@ -251,8 +247,8 @@ namespace OgrenciBilgiSistemi.Services.Implementations
 
             q = filtre switch
             {
-                OgrenciFiltre.Aktif => q.Where(o => o.OgrenciDurum),
-                OgrenciFiltre.Pasif => q.Where(o => !o.OgrenciDurum),
+                OgrenciFiltre.Aktif => q.Where(o => !o.IsDeleted),
+                OgrenciFiltre.Pasif => q.Where(o => o.IsDeleted),
                 _ => q
             };
 
@@ -325,7 +321,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 .Include(o => o.Birim)
                 .Include(o => o.Veli)
                     .ThenInclude(k => k!.VeliProfil)
-                .Where(o => o.OgrenciDurum);
+                .Where(o => !o.IsDeleted);
 
             ogrenciler = AramaFiltreUygula(ogrenciler, searchString);
 
@@ -372,7 +368,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 ws.Cell(row, 6).Value = o.Veli?.KullaniciAdi;
                 ws.Cell(row, 7).Value = o.Veli?.Telefon;
 
-                ws.Cell(row, 8).Value = o.OgrenciDurum ? "Aktif" : "Pasif";
+                ws.Cell(row, 8).Value = !o.IsDeleted ? "Aktif" : "Pasif";
                 ws.Cell(row, 9).Value = o.OgrenciCikisDurumu switch
                 {
                     OglenCikisDurumu.Hayir => "Hayır",
@@ -413,7 +409,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 .Include(o => o.Birim)
                 .Include(o => o.Veli)
                     .ThenInclude(k => k!.VeliProfil)
-                .Where(o => o.OgrenciDurum); // sadece aktif öğrenciler
+                .Where(o => !o.IsDeleted); // sadece aktif öğrenciler
 
             // Sınıf filtresi
             if (birimId.HasValue)
@@ -473,7 +469,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 .Include(o => o.Birim)
                 .Include(o => o.Veli)
                     .ThenInclude(k => k!.VeliProfil)
-                .Where(o => o.OgrenciDurum);
+                .Where(o => !o.IsDeleted);
 
             if (birimId.HasValue)
                 q = q.Where(o => o.BirimId == birimId.Value);

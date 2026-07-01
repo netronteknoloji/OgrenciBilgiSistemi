@@ -13,7 +13,7 @@ namespace OgrenciBilgiSistemi.ViewModels
         public string BirimAd { get; set; } = string.Empty;
 
         [Display(Name = "Aktif Mi?")]
-        public bool BirimDurum { get; set; } = true;
+        public bool IsDeleted { get; set; } = false;
 
         [Display(Name = "Sınıf Mı?")]
         public bool BirimSinifMi { get; set; } = true;
@@ -26,7 +26,7 @@ namespace OgrenciBilgiSistemi.ViewModels
         {
             BirimId = m.BirimId,
             BirimAd = m.BirimAd,
-            BirimDurum = m.BirimDurum,
+            IsDeleted = m.IsDeleted,
             BirimSinifMi = m.BirimSinifMi,
             FormAction = "Guncelle",
             SubmitText = "Güncelle",
@@ -37,7 +37,7 @@ namespace OgrenciBilgiSistemi.ViewModels
         {
             BirimId = BirimId,
             BirimAd = BirimAd,
-            BirimDurum = BirimDurum,
+            IsDeleted = IsDeleted,
             BirimSinifMi = BirimSinifMi,
         };
     }

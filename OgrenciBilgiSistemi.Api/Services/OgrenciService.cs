@@ -30,7 +30,7 @@ namespace OgrenciBilgiSistemi.Api.Services
             if (birimId is null) return null;
             const string sql = @"
                 SELECT TOP 1 KullaniciId FROM OgretmenProfiller
-                WHERE BirimId = @birimId AND OgretmenDurum = 1
+                WHERE BirimId = @birimId AND IsDeleted = 0
                 ORDER BY KullaniciId";
             await using var conn = new SqlConnection(ConnectionString);
             await using var cmd = new SqlCommand(sql, conn);
@@ -49,7 +49,7 @@ namespace OgrenciBilgiSistemi.Api.Services
                 const string query = @"
                     SELECT OgrenciId, OgrenciAdSoyad, OgrenciNo, OgrenciGorsel
                     FROM Ogrenciler
-                    WHERE BirimId = @sinifId AND OgrenciDurum = 1
+                    WHERE BirimId = @sinifId AND IsDeleted = 0
                     ORDER BY OgrenciNo";
 
                 await using var cmd = new SqlCommand(query, conn);
@@ -87,7 +87,7 @@ namespace OgrenciBilgiSistemi.Api.Services
                            O.BirimId, O.VeliId, B.BirimAd AS SinifAdi
                     FROM Ogrenciler O
                     LEFT JOIN Birimler B ON O.BirimId = B.BirimId
-                    WHERE O.OgrenciDurum = 1
+                    WHERE O.IsDeleted = 0
                     ORDER BY O.BirimId, O.OgrenciNo";
 
                 await using var cmd = new SqlCommand(query, conn);
@@ -131,10 +131,10 @@ namespace OgrenciBilgiSistemi.Api.Services
                     OUTER APPLY (
                         SELECT TOP 1 op.KullaniciId
                         FROM OgretmenProfiller op
-                        WHERE op.BirimId = O.BirimId AND op.OgretmenDurum = 1
+                        WHERE op.BirimId = O.BirimId AND op.IsDeleted = 0
                         ORDER BY op.KullaniciId
                     ) sinifOgretmen
-                    WHERE O.VeliId = @veliId AND O.OgrenciDurum = 1";
+                    WHERE O.VeliId = @veliId AND O.IsDeleted = 0";
 
                 await using var cmd = new SqlCommand(query, conn);
                 cmd.Parameters.AddWithValue("@veliId", veliId);
@@ -173,7 +173,7 @@ namespace OgrenciBilgiSistemi.Api.Services
                 const string query = @"
                     SELECT OgrenciId, OgrenciAdSoyad, OgrenciGorsel, BirimId, VeliId, ServisId
                     FROM Ogrenciler
-                    WHERE OgrenciId = @ogrenciId AND OgrenciDurum = 1";
+                    WHERE OgrenciId = @ogrenciId AND IsDeleted = 0";
 
                 await using var cmd = new SqlCommand(query, conn);
                 cmd.Parameters.AddWithValue("@ogrenciId", ogrenciId);
@@ -224,7 +224,7 @@ namespace OgrenciBilgiSistemi.Api.Services
                     AND sy.OlusturulmaTarihi >= @gunBaslangic
                     AND sy.OlusturulmaTarihi < @gunSonu
                 LEFT JOIN Kullanicilar k ON k.KullaniciId = sy.KullaniciId
-                WHERE o.BirimId = @sinifId AND o.OgrenciDurum = 1
+                WHERE o.BirimId = @sinifId AND o.IsDeleted = 0
                 ORDER BY o.OgrenciNo";
 
             try
@@ -421,12 +421,12 @@ namespace OgrenciBilgiSistemi.Api.Services
                     OUTER APPLY (
                         SELECT TOP 1 op.KullaniciId
                         FROM OgretmenProfiller op
-                        WHERE op.BirimId = s.BirimId AND op.OgretmenDurum = 1
+                        WHERE op.BirimId = s.BirimId AND op.IsDeleted = 0
                         ORDER BY op.KullaniciId
                     ) sinifOgretmen
                     LEFT JOIN Kullanicilar      t   ON sinifOgretmen.KullaniciId = t.KullaniciId
                     LEFT JOIN ServisProfiller    srv ON s.ServisId       = srv.KullaniciId
-                    WHERE s.OgrenciId = @ogrenciId AND s.OgrenciDurum = 1";
+                    WHERE s.OgrenciId = @ogrenciId AND s.IsDeleted = 0";
 
                 await using var cmd = new SqlCommand(query, conn);
                 cmd.Parameters.AddWithValue("@ogrenciId", ogrenciId);
@@ -476,11 +476,11 @@ namespace OgrenciBilgiSistemi.Api.Services
             const string query = @"
                 INSERT INTO Ogrenciler
                     (OgrenciAdSoyad, OgrenciNo, OgrenciKartNo, OgrenciCikisDurumu,
-                     OgrenciDurum, BirimId, OgretmenId, VeliId, ServisId, OgrenciGorsel)
+                     IsDeleted, BirimId, OgretmenId, VeliId, ServisId, OgrenciGorsel)
                 OUTPUT INSERTED.OgrenciId
                 VALUES
                     (@adSoyad, @no, @kartNo, @cikisDurumu,
-                     1, @birimId, @ogretmenId, @veliId, @servisId, @gorsel)";
+                     0, @birimId, @ogretmenId, @veliId, @servisId, @gorsel)";
 
             try
             {
@@ -520,13 +520,13 @@ namespace OgrenciBilgiSistemi.Api.Services
                     OgrenciNo        = @no,
                     OgrenciKartNo    = @kartNo,
                     OgrenciCikisDurumu = @cikisDurumu,
-                    OgrenciDurum     = @durum,
+                    IsDeleted        = @durum,
                     BirimId          = @birimId,
                     OgretmenId       = @ogretmenId,
                     VeliId           = @veliId,
                     ServisId         = @servisId,
                     OgrenciGorsel    = @gorsel
-                WHERE OgrenciId = @id AND OgrenciDurum = 1";
+                WHERE OgrenciId = @id AND IsDeleted = 0";
 
             try
             {
@@ -539,7 +539,7 @@ namespace OgrenciBilgiSistemi.Api.Services
                 cmd.Parameters.AddWithValue("@no",           dto.OgrenciNo);
                 cmd.Parameters.AddWithValue("@kartNo",       (object?)kartNo ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@cikisDurumu",  dto.OgrenciCikisDurumu);
-                cmd.Parameters.AddWithValue("@durum",        dto.OgrenciDurum);
+                cmd.Parameters.AddWithValue("@durum",        dto.IsDeleted);
                 var ogretmenId = await BirimdenOgretmenBulAsync(dto.BirimId);
                 cmd.Parameters.AddWithValue("@birimId",      (object?)dto.BirimId    ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@ogretmenId",   (object?)ogretmenId ?? DBNull.Value);
@@ -562,7 +562,7 @@ namespace OgrenciBilgiSistemi.Api.Services
         /// </summary>
         public async Task<bool> SilAsync(int ogrenciId)
         {
-            const string query = "UPDATE Ogrenciler SET OgrenciDurum = 0 WHERE OgrenciId = @id";
+            const string query = "UPDATE Ogrenciler SET IsDeleted = 1 WHERE OgrenciId = @id";
 
             try
             {

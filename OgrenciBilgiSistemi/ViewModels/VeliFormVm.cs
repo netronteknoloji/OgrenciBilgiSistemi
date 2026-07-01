@@ -1,5 +1,4 @@
 using OgrenciBilgiSistemi.Models;
-using OgrenciBilgiSistemi.Shared.Enums;
 using System.ComponentModel.DataAnnotations;
 
 namespace OgrenciBilgiSistemi.ViewModels
@@ -32,7 +31,7 @@ namespace OgrenciBilgiSistemi.ViewModels
         public YakinlikTipi? VeliYakinlik { get; set; }
 
         [Display(Name = "Durum")]
-        public bool VeliDurum { get; set; } = true;
+        public bool IsDeleted { get; set; } = false;
 
         public string FormAction { get; set; } = "Ekle";
         public string SubmitText { get; set; } = "Kaydet";
@@ -47,7 +46,7 @@ namespace OgrenciBilgiSistemi.ViewModels
             VeliIsYeri = m.VeliIsYeri,
             VeliEmail = m.VeliEmail,
             VeliYakinlik = m.VeliYakinlik,
-            VeliDurum = m.VeliDurum,
+            IsDeleted = m.IsDeleted,
             FormAction = "Guncelle",
             SubmitText = "Güncelle",
         };
@@ -72,7 +71,7 @@ namespace OgrenciBilgiSistemi.ViewModels
             VeliIsYeri = VeliIsYeri,
             VeliEmail = VeliEmail,
             VeliYakinlik = VeliYakinlik,
-            VeliDurum = VeliDurum,
+            IsDeleted = this.IsDeleted,
         };
     }
 }

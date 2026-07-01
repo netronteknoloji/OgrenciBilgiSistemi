@@ -1,5 +1,4 @@
 using Microsoft.Data.SqlClient;
-using OgrenciBilgiSistemi.Api.Models;
 using OgrenciBilgiSistemi.Api.Services.Interfaces;
 using OgrenciBilgiSistemi.Shared.Enums;
 using OgrenciBilgiSistemi.Shared.Services;
@@ -9,10 +8,10 @@ namespace OgrenciBilgiSistemi.Api.Services
     public class DuyuruService : IDuyuruService
     {
         private readonly TenantBaglami _tenantBaglami;
-        private readonly BildirimService _bildirimService;
+        private readonly IBildirimService _bildirimService;
         private string ConnectionString => _tenantBaglami.ConnectionString;
 
-        public DuyuruService(TenantBaglami tenantBaglami, BildirimService bildirimService)
+        public DuyuruService(TenantBaglami tenantBaglami, IBildirimService bildirimService)
         {
             _tenantBaglami = tenantBaglami;
             _bildirimService = bildirimService;
@@ -26,7 +25,7 @@ namespace OgrenciBilgiSistemi.Api.Services
                 SELECT COUNT(*) FROM Kullanicilar k
                 INNER JOIN OgretmenProfiller op ON op.KullaniciId = k.KullaniciId
                 WHERE k.KullaniciId = @id AND k.Rol = 2
-                  AND k.KullaniciDurum = 1 AND op.OgretmenDurum = 1";
+                  AND k.IsDeleted = 0 AND op.IsDeleted = 0";
 
             const string insert = @"
                 INSERT INTO Duyurular (OlusturanKullaniciId, Hedef, Baslik, Icerik, OlusturulmaTarihi, IsDeleted)
@@ -40,9 +39,9 @@ namespace OgrenciBilgiSistemi.Api.Services
                 INNER JOIN OgretmenProfiller op ON op.BirimId = o.BirimId AND op.KullaniciId = @ogretmenId
                 INNER JOIN Kullanicilar v       ON v.KullaniciId  = o.VeliId
                 INNER JOIN VeliProfiller vp     ON vp.KullaniciId = v.KullaniciId
-                WHERE o.OgrenciDurum = 1 AND o.VeliId IS NOT NULL
-                  AND op.OgretmenDurum = 1
-                  AND v.KullaniciDurum = 1 AND vp.VeliDurum = 1";
+                WHERE o.IsDeleted = 0 AND o.VeliId IS NOT NULL
+                  AND op.IsDeleted = 0
+                  AND v.IsDeleted = 0 AND vp.IsDeleted = 0";
 
             await using var conn = new SqlConnection(ConnectionString);
             await conn.OpenAsync();
@@ -102,8 +101,8 @@ namespace OgrenciBilgiSistemi.Api.Services
                             INNER JOIN OgretmenProfiller op ON op.BirimId = o.BirimId
                             WHERE o.VeliId = @veliId
                               AND op.KullaniciId = d.OlusturanKullaniciId
-                              AND op.OgretmenDurum = 1
-                              AND o.OgrenciDurum = 1)))
+                              AND op.IsDeleted = 0
+                              AND o.IsDeleted = 0)))
                 ORDER BY d.OlusturulmaTarihi DESC
                 OFFSET @offset ROWS FETCH NEXT @boyut ROWS ONLY";
 
@@ -149,8 +148,8 @@ namespace OgrenciBilgiSistemi.Api.Services
                                     INNER JOIN OgretmenProfiller op ON op.BirimId = o.BirimId
                                     WHERE o.VeliId = @veliId
                                       AND op.KullaniciId = d.OlusturanKullaniciId
-                                      AND op.OgretmenDurum = 1
-                                      AND o.OgrenciDurum = 1)))
+                                      AND op.IsDeleted = 0
+                                      AND o.IsDeleted = 0)))
                     ) THEN 1 ELSE 0 END
                 );
 
@@ -192,8 +191,8 @@ namespace OgrenciBilgiSistemi.Api.Services
                             INNER JOIN OgretmenProfiller op ON op.BirimId = o.BirimId
                             WHERE o.VeliId = @veliId
                               AND op.KullaniciId = d.OlusturanKullaniciId
-                              AND op.OgretmenDurum = 1
-                              AND o.OgrenciDurum = 1)));";
+                              AND op.IsDeleted = 0
+                              AND o.IsDeleted = 0)));";
 
             await using var conn = new SqlConnection(ConnectionString);
             await using var cmd = new SqlCommand(query, conn);
@@ -216,8 +215,8 @@ namespace OgrenciBilgiSistemi.Api.Services
                             INNER JOIN OgretmenProfiller op ON op.BirimId = o.BirimId
                             WHERE o.VeliId = @veliId
                               AND op.KullaniciId = d.OlusturanKullaniciId
-                              AND op.OgretmenDurum = 1
-                              AND o.OgrenciDurum = 1)));";
+                              AND op.IsDeleted = 0
+                              AND o.IsDeleted = 0)));";
 
             await using var conn = new SqlConnection(ConnectionString);
             await using var cmd = new SqlCommand(query, conn);

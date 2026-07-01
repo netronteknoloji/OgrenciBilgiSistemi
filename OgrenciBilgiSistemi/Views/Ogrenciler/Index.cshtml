@@ -111,7 +111,7 @@
                                 Yemekhane (Bu Ay)
                             </th>
                             <th class="p-3">
-                                @Html.DisplayNameFor(m => m.Page[0].OgrenciDurum)
+                                @Html.DisplayNameFor(m => m.Page[0].IsDeleted)
                             </th>
                             <th class="p-3">İşlem</th>
                         </tr>
@@ -170,8 +170,8 @@
                                     </td>
 
                                     <td>
-                                        <span class="badge @(ogrenci.OgrenciDurum ? "bg-success" : "bg-danger")">
-                                            @(ogrenci.OgrenciDurum ? "Aktif" : "Pasif")
+                                        <span class="badge @(!ogrenci.IsDeleted ? "bg-success" : "bg-danger")">
+                                            @(!ogrenci.IsDeleted ? "Aktif" : "Pasif")
                                         </span>
                                     </td>
 

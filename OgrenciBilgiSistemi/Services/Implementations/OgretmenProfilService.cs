@@ -1,10 +1,8 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using OgrenciBilgiSistemi.Data;
 using OgrenciBilgiSistemi.Models;
 using OgrenciBilgiSistemi.Services.Interfaces;
-using OgrenciBilgiSistemi.Shared.Enums;
 using OgrenciBilgiSistemi.ViewModels;
 
 namespace OgrenciBilgiSistemi.Services.Implementations
@@ -35,8 +33,8 @@ namespace OgrenciBilgiSistemi.Services.Implementations
 
             query = filtre switch
             {
-                OgretmenFiltre.Aktif => query.Where(o => o.OgretmenDurum),
-                OgretmenFiltre.Pasif => query.Where(o => !o.OgretmenDurum),
+                OgretmenFiltre.Aktif => query.Where(o => !o.IsDeleted),
+                OgretmenFiltre.Pasif => query.Where(o => o.IsDeleted),
                 _ => query
             };
 
@@ -59,7 +57,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             {
                 Email = vm.Email,
                 BirimId = vm.BirimId,
-                OgretmenDurum = true
+                IsDeleted = false
             };
 
             if (vm.GorselFile != null && vm.GorselFile.Length > 0)
@@ -70,7 +68,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 KullaniciAdi = vm.KullaniciAdi,
                 Rol = KullaniciRolu.Ogretmen,
                 Telefon = vm.Telefon,
-                KullaniciDurum = true,
+                IsDeleted = false,
                 OgretmenProfil = profil
             };
 
@@ -96,7 +94,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
 
             mevcut.BirimId = model.BirimId;
             mevcut.Email = model.Email;
-            mevcut.OgretmenDurum = model.OgretmenDurum;
+            mevcut.IsDeleted = model.IsDeleted;
 
             if (model.GorselFile != null && model.GorselFile.Length > 0)
                 mevcut.GorselPath = await SaveImageAsync(model.GorselFile, ct);
@@ -106,7 +104,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             {
                 kullanici.KullaniciAdi = kullaniciAdi ?? kullanici.KullaniciAdi;
                 kullanici.Telefon = telefon;
-                kullanici.KullaniciDurum = model.OgretmenDurum;
+                kullanici.IsDeleted = model.IsDeleted;
 
                 if (!string.IsNullOrWhiteSpace(sifre))
                     kullanici.Sifre = _passwordHasher.HashPassword(kullanici, sifre);
@@ -128,7 +126,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             var profil = await _db.OgretmenProfiller.FindAsync([kullaniciId], ct);
             if (profil == null) return;
 
-            profil.OgretmenDurum = false;
+            profil.IsDeleted = true;
             try
             {
                 await _db.SaveChangesAsync(ct);

@@ -5,6 +5,6 @@ namespace OgrenciBilgiSistemi.Api.Models
         public int KullaniciId { get; set; }
         public string Plaka { get; set; } = string.Empty;
         public string? ServisTelefon { get; set; }
-        public bool ServisDurum { get; set; }
+        public bool IsDeleted { get; set; }
     }
 }

@@ -4,7 +4,7 @@ namespace OgrenciBilgiSistemi.Api.Models
     {
         public int BirimId { get; set; }
         public string BirimAd { get; set; } = string.Empty;
-        public bool BirimDurum { get; set; }
+        public bool IsDeleted { get; set; }
         public bool BirimSinifMi { get; set; }
     }
 }

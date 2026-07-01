@@ -31,8 +31,9 @@ namespace OgrenciBilgiSistemi.Models
         [Display(Name = "Fotoğraf Yükle")]
         public IFormFile? GorselFile { get; set; }
 
-        [Display(Name = "Durum (Aktif)")]
-        public bool OgretmenDurum { get; set; } = true;
+        // true = silinmiş (soft delete). Eski OgretmenDurum (aktif/pasif) IsDeleted'a birleştirildi.
+        [Display(Name = "Durum")]
+        public bool IsDeleted { get; set; } = false;
 
         [ForeignKey(nameof(KullaniciId))]
         [ValidateNever]

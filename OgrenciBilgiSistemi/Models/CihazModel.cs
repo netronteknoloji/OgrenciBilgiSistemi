@@ -28,8 +28,8 @@ namespace OgrenciBilgiSistemi.Models
         [Required]
         public IstasyonTipi IstasyonTipi { get; set; } = IstasyonTipi.AnaKapi;
 
-        /// <summary>Cihaz aktif/pasif.</summary>
-        public bool Aktif { get; set; } = true;
+        /// <summary>Soft-delete bayrağı (silinen cihaz true; listelerde gizlenir).</summary>
+        public bool IsDeleted { get; set; } = false;
 
         // --- ZKTeco (IP tabanlı bağlantı) ---
         /// <summary>ZKTeco için IPv4 adresi (USB-RFID için boş).</summary>

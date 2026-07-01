@@ -10,7 +10,7 @@ namespace OgrenciBilgiSistemi.Api.Models
         public string? VeliMeslek { get; set; }
         public string? VeliIsYeri { get; set; }
         public int? VeliYakinlik { get; set; }
-        public bool VeliDurum { get; set; }
+        public bool IsDeleted { get; set; }
 
         public List<VeliDetayOgrenciModel> Cocuklar { get; set; } = new();
     }

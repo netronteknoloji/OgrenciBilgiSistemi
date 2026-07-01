@@ -1,12 +1,7 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.EntityFrameworkCore;
 using OgrenciBilgiSistemi.Data;
 using OgrenciBilgiSistemi.Dtos;
 using OgrenciBilgiSistemi.Models;
-using OgrenciBilgiSistemi.Services.Interfaces;
 
 namespace OgrenciBilgiSistemi.Services.Implementations
 {
@@ -29,7 +24,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             return await _context.Ogrenciler
                 .AsNoTracking()
                 .Include(o => o.Birim)
-                .FirstOrDefaultAsync(o => o.OgrenciKartNo == k && o.OgrenciDurum, ct);
+                .FirstOrDefaultAsync(o => o.OgrenciKartNo == k && !o.IsDeleted, ct);
         }
 
         public async Task<bool> YemekIzniVarMiAsync(int ogrenciId, int yil, int ay, CancellationToken ct = default)

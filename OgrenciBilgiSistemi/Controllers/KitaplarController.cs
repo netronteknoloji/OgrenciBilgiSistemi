@@ -117,7 +117,7 @@ namespace OgrenciBilgiSistemi.Controllers
                 worksheet.Cell(row, 2).Value = k.KitapAd;
                 worksheet.Cell(row, 3).Value = k.KitapTurAd;
                 worksheet.Cell(row, 4).Value = k.KitapGun;
-                worksheet.Cell(row, 5).Value = k.KitapDurum ? "Aktif" : "Pasif";
+                worksheet.Cell(row, 5).Value = !k.IsDeleted ? "Aktif" : "Pasif";
                 row++;
             }
 

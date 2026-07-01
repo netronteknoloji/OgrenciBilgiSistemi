@@ -6,7 +6,6 @@ using OgrenciBilgiSistemi.DTOs;
 using OgrenciBilgiSistemi.Models;
 using OgrenciBilgiSistemi.Services.Interfaces;
 using OgrenciBilgiSistemi.Shared.Services;
-using System.Linq;
 using System.Security.Claims;
 
 namespace OgrenciBilgiSistemi.Services.Implementations

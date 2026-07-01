@@ -36,8 +36,9 @@ namespace OgrenciBilgiSistemi.Models
         [Display(Name = "Öğle Çıkış")]
         public OglenCikisDurumu OgrenciCikisDurumu { get; set; } = OglenCikisDurumu.Hayir;
 
-        [Display(Name = "Durum (Aktif)")]
-        public bool OgrenciDurum { get; set; } = true;
+        // true = silinmiş (soft delete). Aktif/pasif konvansiyonu IsDeleted'a birleştirildi.
+        [Display(Name = "Durum")]
+        public bool IsDeleted { get; set; } = false;
 
         [Display(Name = "Öğretmen")]
         public int? OgretmenId { get; set; }

@@ -48,7 +48,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
 
                 // 🔧 DonanimTipi'ni kullan
                 var cihaz = await db.Cihazlar.AsNoTracking()
-                    .Where(c => c.Aktif
+                    .Where(c => !c.IsDeleted
                              && c.DonanimTipi == DonanimTipi.ZKTeco
                              && !string.IsNullOrWhiteSpace(c.IpAdresi)
                              && c.PortNo.HasValue && c.PortNo.Value > 0)

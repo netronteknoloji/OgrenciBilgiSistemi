@@ -262,7 +262,7 @@ public sealed class YoklamaSmsBildirimService : IYoklamaSmsBildirimService
             FROM Ogrenciler O
             INNER JOIN Kullanicilar K ON O.VeliId = K.KullaniciId
             WHERE O.OgrenciId IN ({string.Join(", ", parametreAdlari)})
-              AND O.OgrenciDurum = 1
+              AND O.IsDeleted = 0
               AND K.Telefon IS NOT NULL AND K.Telefon <> ''";
 
         await using var cmd = new SqlCommand(query, conn);

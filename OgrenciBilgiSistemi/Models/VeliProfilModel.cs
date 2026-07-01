@@ -30,8 +30,9 @@ namespace OgrenciBilgiSistemi.Models
         [Display(Name = "Yakınlık")]
         public YakinlikTipi? VeliYakinlik { get; set; }
 
-        [Display(Name = "Durum (Aktif)")]
-        public bool VeliDurum { get; set; } = true;
+        // true = silinmiş (soft delete). Eski VeliDurum (aktif/pasif) IsDeleted'a birleştirildi.
+        [Display(Name = "Durum")]
+        public bool IsDeleted { get; set; } = false;
 
         [NotMapped]
         public int OgrenciSayisi { get; set; }

@@ -5,9 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using OgrenciBilgiSistemi.Data;
 using OgrenciBilgiSistemi.Models;
-using OgrenciBilgiSistemi.Services.Interfaces;
 using OgrenciBilgiSistemi.Sms;
-using OgrenciBilgiSistemi.Shared.Enums;
 using zkemkeeper;
 
 namespace OgrenciBilgiSistemi.Services.BackgroundServices;
@@ -70,7 +68,7 @@ public sealed class YemekhanePollingService : BackgroundService
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
         var cihazlar = await db.Cihazlar.AsNoTracking()
-            .Where(c => c.Aktif
+            .Where(c => !c.IsDeleted
                      && c.DonanimTipi == DonanimTipi.ZKTeco
                      && c.IstasyonTipi == IstasyonTipi.Yemekhane
                      && c.IpAdresi != null

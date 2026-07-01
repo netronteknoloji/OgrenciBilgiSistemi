@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using OgrenciBilgiSistemi.Models;
+﻿using OgrenciBilgiSistemi.Models;
 
 namespace OgrenciBilgiSistemi.Services.Interfaces
 {

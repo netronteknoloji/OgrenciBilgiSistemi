@@ -69,8 +69,8 @@
                                         <span class="badge bg-info">@s.OgrenciSayisi</span>
                                     </td>
                                     <td>
-                                        <span class="badge @(s.ServisDurum ? "bg-success" : "bg-danger")">
-                                            @(s.ServisDurum ? "Aktif" : "Pasif")
+                                        <span class="badge @(!s.IsDeleted ? "bg-success" : "bg-danger")">
+                                            @(!s.IsDeleted ? "Aktif" : "Pasif")
                                         </span>
                                     </td>
                                     <td>

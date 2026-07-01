@@ -24,14 +24,14 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             // Cihaz ve öğrenci aktif mi?
             var cihaz = await _db.Cihazlar
                 .AsNoTracking()
-                .FirstOrDefaultAsync(c => c.CihazId == cihazId && c.Aktif, ct);
+                .FirstOrDefaultAsync(c => c.CihazId == cihazId && !c.IsDeleted, ct);
 
             if (cihaz is null)
                 throw new InvalidOperationException("Cihaz pasif veya bulunamadı.");
 
             var ogrenciAktifMi = await _db.Ogrenciler
                 .AsNoTracking()
-                .AnyAsync(o => o.OgrenciId == ogrenciId && o.OgrenciDurum, ct);
+                .AnyAsync(o => o.OgrenciId == ogrenciId && !o.IsDeleted, ct);
 
             if (!ogrenciAktifMi)
                 throw new InvalidOperationException("Öğrenci pasif veya bulunamadı.");

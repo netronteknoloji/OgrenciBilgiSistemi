@@ -97,12 +97,12 @@
                                 {
                                     <!-- Durum -->
                                     <div class="mb-3">
-                                        <label asp-for="OgretmenDurum" class="form-label fw-semibold"></label>
-                                        <select asp-for="OgretmenDurum" class="form-select">
-                                            <option value="true">Aktif</option>
-                                            <option value="false">Pasif</option>
+                                        <label asp-for="IsDeleted" class="form-label fw-semibold"></label>
+                                        <select asp-for="IsDeleted" class="form-select">
+                                            <option value="false">Aktif</option>
+                                            <option value="true">Pasif</option>
                                         </select>
-                                        <span asp-validation-for="OgretmenDurum" class="text-danger"></span>
+                                        <span asp-validation-for="IsDeleted" class="text-danger"></span>
                                     </div>
                                 }
 

@@ -1,7 +1,5 @@
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using OgrenciBilgiSistemi.Models;
-using OgrenciBilgiSistemi.Shared.Enums;
 using System.ComponentModel.DataAnnotations;
 
 namespace OgrenciBilgiSistemi.ViewModels
@@ -38,7 +36,7 @@ namespace OgrenciBilgiSistemi.ViewModels
             KullaniciAdi = m.KullaniciAdi,
             Sifre = string.Empty,
             Rol = m.Rol,
-            KullaniciDurum = m.KullaniciDurum,
+            IsDeleted = m.IsDeleted,
             Telefon = m.Telefon,
             OgretmenEmail = m.OgretmenProfil?.Email,
             OgretmenBirimId = m.OgretmenProfil?.BirimId,
@@ -60,7 +58,7 @@ namespace OgrenciBilgiSistemi.ViewModels
             KullaniciAdi = KullaniciAdi,
             Sifre = Sifre ?? string.Empty,
             Rol = Rol,
-            KullaniciDurum = KullaniciDurum,
+            IsDeleted = this.IsDeleted,
             Telefon = Telefon,
             OgretmenProfil = Rol == KullaniciRolu.Ogretmen ? new OgretmenProfilModel
             {

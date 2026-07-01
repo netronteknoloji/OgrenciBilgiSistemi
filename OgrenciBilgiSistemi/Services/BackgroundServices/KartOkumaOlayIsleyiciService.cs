@@ -55,7 +55,7 @@ public class KartOkumaOlayIsleyiciService : IHostedService
 
             // 1) Öğrenciyi bul
             var ogr = await db.Ogrenciler.AsNoTracking()
-                .FirstOrDefaultAsync(o => o.OgrenciKartNo == norm && o.OgrenciDurum == true);
+                .FirstOrDefaultAsync(o => o.OgrenciKartNo == norm && !o.IsDeleted);
             if (ogr is null)
             {
                 _logger.LogWarning("ZKTeco kart tanımsız: {Kart}", norm);
@@ -65,7 +65,7 @@ public class KartOkumaOlayIsleyiciService : IHostedService
             // 2) Bu worker’ın kullanacağı ZKTeco cihazını seç
             // (Basit: ilk aktif ZKTeco. İstersen appsettings ile spesifik CihazKodu/Id bağlayabilirsin.)
             var cihaz = await db.Cihazlar.AsNoTracking()
-                .Where(c => c.DonanimTipi == DonanimTipi.ZKTeco && c.Aktif)
+                .Where(c => c.DonanimTipi == DonanimTipi.ZKTeco && !c.IsDeleted)
                 .OrderBy(c => c.CihazId)
                 .FirstOrDefaultAsync();
 

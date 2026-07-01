@@ -17,7 +17,7 @@ namespace OgrenciBilgiSistemi.Models
 
 
         [Display(Name = "Aktif Mi?")]
-        public bool BirimDurum { get; set; } = true;
+        public bool IsDeleted { get; set; } = false;
 
         [Display(Name = "Sınıf Mı?")]
         public bool BirimSinifMi { get; set; } = true;

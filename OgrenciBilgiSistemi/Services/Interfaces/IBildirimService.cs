@@ -1,5 +1,3 @@
-using OgrenciBilgiSistemi.Shared.Enums;
-
 namespace OgrenciBilgiSistemi.Services.Interfaces
 {
     public interface IBildirimService

@@ -10,7 +10,6 @@ using OgrenciBilgiSistemi.Shared.Models;
 using OgrenciBilgiSistemi.Shared.Services;
 using OgrenciBilgiSistemi.Sms;
 using OgrenciBilgiSistemi.Push;
-using OgrenciBilgiSistemi.Services;
 using OgrenciBilgiSistemi.Services.BackgroundServices;
 using OgrenciBilgiSistemi.Services.Implementations;
 using OgrenciBilgiSistemi.Services.Interfaces;

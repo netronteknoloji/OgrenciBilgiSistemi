@@ -1,8 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
+﻿using Microsoft.AspNetCore.Mvc.Rendering;
 using OgrenciBilgiSistemi.Dtos;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
 
 namespace OgrenciBilgiSistemi.ViewModels
 {

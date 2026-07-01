@@ -73,12 +73,12 @@
 
                                 <!-- Kitap Durumu -->
                                 <div class="mb-4">
-                                    <label asp-for="KitapDurum" class="form-label fw-semibold">Kitap Durumu</label>
-                                    <select asp-for="KitapDurum" class="form-select">
-                                        <option value="true">Aktif</option>
-                                        <option value="false">Pasif</option>
+                                    <label asp-for="IsDeleted" class="form-label fw-semibold">Kitap Durumu</label>
+                                    <select asp-for="IsDeleted" class="form-select">
+                                        <option value="false">Aktif</option>
+                                        <option value="true">Pasif</option>
                                     </select>
-                                    <span asp-validation-for="KitapDurum" class="text-danger"></span>
+                                    <span asp-validation-for="IsDeleted" class="text-danger"></span>
                                 </div>
 
                                 <!-- Butonlar -->

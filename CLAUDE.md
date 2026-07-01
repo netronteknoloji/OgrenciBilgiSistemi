@@ -68,7 +68,7 @@ Mobil     → Shared (HTTP üzerinden Api'ye)
 # Çalıştır
 dotnet run --project OgrenciBilgiSistemi/OgrenciBilgiSistemi.csproj
 dotnet run --project OgrenciBilgiSistemi.Api/OgrenciBilgiSistemi.Api.csproj
-dotnet build OgrenciBilgiSistemi.Mobil -t:Run -f net9.0-android
+dotnet build OgrenciBilgiSistemi.Mobil -t:Run -f net10.0-android
 
 # Migration (sadece MVC)
 dotnet ef migrations add <Isim> --project OgrenciBilgiSistemi/OgrenciBilgiSistemi.csproj
@@ -90,7 +90,7 @@ dotnet ef migrations script --idempotent --project OgrenciBilgiSistemi/OgrenciBi
 
 ## Önemli Davranışlar
 
-- **`AppDbContext.IncludePasifOgrenciler`** flag'i çoğu entity'de global query filter'ı kontrol eder. Pasif öğrenci raporu için `true` yap.
+- **`AppDbContext.IncludeDeleted`** flag'i çoğu entity'de global query filter'ı kontrol eder. Pasif öğrenci raporu için `true` yap.
 - **Profil tabloları** (`VeliProfilModel`, `ServisProfilModel`, `OgretmenProfilModel`): PK = `KullaniciId`.
 - **Menu seed**: 34 menü (Id 1-34), yeni eklerken Id 35'ten başla.
 - **SMS retry** her iki backend'de de bağımsız hosted service olarak var.

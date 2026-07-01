@@ -41,8 +41,8 @@ namespace OgrenciBilgiSistemi.Mobil.ViewModels
                 Telefon = string.IsNullOrWhiteSpace(detay.Telefon) ? "-" : detay.Telefon;
                 Email = string.IsNullOrWhiteSpace(detay.Email) ? "-" : detay.Email;
                 GorselKaynak = Constants.GorselUrl(detay.GorselPath);
-                DurumRenk = detay.OgretmenDurum ? Color.FromArgb("#27AE60") : Color.FromArgb("#95A5A6");
-                DurumMetin = detay.OgretmenDurum ? "Aktif" : "Pasif";
+                DurumRenk = !detay.IsDeleted ? Color.FromArgb("#27AE60") : Color.FromArgb("#95A5A6");
+                DurumMetin = !detay.IsDeleted ? "Aktif" : "Pasif";
             }
             catch (Exception ex)
             {

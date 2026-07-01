@@ -1,5 +1,4 @@
 using Microsoft.Data.SqlClient;
-using OgrenciBilgiSistemi.Api.Models;
 using OgrenciBilgiSistemi.Api.Services.Interfaces;
 using OgrenciBilgiSistemi.Shared.Enums;
 using OgrenciBilgiSistemi.Shared.Services;
@@ -42,8 +41,8 @@ namespace OgrenciBilgiSistemi.Api.Services
                 INNER JOIN VeliProfiller     vp ON vp.KullaniciId = v.KullaniciId
                 LEFT  JOIN Ogrenciler        o  ON r.OgrenciId = o.OgrenciId
                 WHERE r.IsDeleted = 0
-                  AND og.KullaniciDurum = 1 AND op.OgretmenDurum = 1
-                  AND v.KullaniciDurum  = 1 AND vp.VeliDurum     = 1
+                  AND og.IsDeleted = 0 AND op.IsDeleted = 0
+                  AND v.IsDeleted = 0 AND vp.IsDeleted = 0
                   AND ((@rol = 'Ogretmen' AND r.OgretmenKullaniciId = @kullaniciId)
                     OR (@rol = 'Veli'      AND r.VeliKullaniciId = @kullaniciId))
                 ORDER BY r.RandevuTarihi DESC
@@ -98,8 +97,8 @@ namespace OgrenciBilgiSistemi.Api.Services
                 INNER JOIN VeliProfiller     vp ON vp.KullaniciId = v.KullaniciId
                 LEFT  JOIN Ogrenciler        o  ON r.OgrenciId = o.OgrenciId
                 WHERE r.RandevuId = @id AND r.IsDeleted = 0
-                  AND og.KullaniciDurum = 1 AND op.OgretmenDurum = 1
-                  AND v.KullaniciDurum  = 1 AND vp.VeliDurum     = 1";
+                  AND og.IsDeleted = 0 AND op.IsDeleted = 0
+                  AND v.IsDeleted = 0 AND vp.IsDeleted = 0";
 
             await using var conn = new SqlConnection(ConnectionString);
             await using var cmd = new SqlCommand(query, conn);
@@ -153,7 +152,7 @@ namespace OgrenciBilgiSistemi.Api.Services
                 ogretmenTarafindanOlusturuldu: false, durum: (int)RandevuDurumu.Beklemede);
         }
 
-        // Hem öğretmen hem veli (KullaniciDurum + rol bazlı OgretmenDurum/VeliDurum) aktif mi?
+        // Hem öğretmen hem veli (Kullanicilar + rol profili IsDeleted=0) aktif mi?
         // Aktif değilse Türkçe açıklama döner; her ikisi de aktifse null.
         private async Task<string?> AktiflikKontrolu(int ogretmenId, int veliId)
         {
@@ -162,11 +161,11 @@ namespace OgrenciBilgiSistemi.Api.Services
                   (SELECT COUNT(*) FROM Kullanicilar k
                     INNER JOIN OgretmenProfiller op ON op.KullaniciId = k.KullaniciId
                     WHERE k.KullaniciId = @ogretmenId
-                      AND k.Rol = 2 AND k.KullaniciDurum = 1 AND op.OgretmenDurum = 1) AS OgretmenAktif,
+                      AND k.Rol = 2 AND k.IsDeleted = 0 AND op.IsDeleted = 0) AS OgretmenAktif,
                   (SELECT COUNT(*) FROM Kullanicilar k
                     INNER JOIN VeliProfiller vp ON vp.KullaniciId = k.KullaniciId
                     WHERE k.KullaniciId = @veliId
-                      AND k.Rol = 4 AND k.KullaniciDurum = 1 AND vp.VeliDurum = 1)     AS VeliAktif";
+                      AND k.Rol = 4 AND k.IsDeleted = 0 AND vp.IsDeleted = 0)     AS VeliAktif";
 
             await using var conn = new SqlConnection(ConnectionString);
             await using var cmd = new SqlCommand(query, conn);

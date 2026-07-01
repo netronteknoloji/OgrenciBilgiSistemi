@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using OgrenciBilgiSistemi.Models;
 using OgrenciBilgiSistemi.Services.Interfaces;
 using OgrenciBilgiSistemi.ViewModels;
 

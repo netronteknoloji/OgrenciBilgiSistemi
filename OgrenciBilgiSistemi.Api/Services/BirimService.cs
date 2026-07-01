@@ -24,7 +24,7 @@ namespace OgrenciBilgiSistemi.Api.Services
             try
             {
                 await using var conn = new SqlConnection(ConnectionString);
-                const string query = "SELECT BirimId, BirimAd, BirimSinifMi, BirimDurum FROM Birimler WHERE BirimId = @birimId AND BirimDurum = 1";
+                const string query = "SELECT BirimId, BirimAd, BirimSinifMi, IsDeleted FROM Birimler WHERE BirimId = @birimId AND IsDeleted = 0";
 
                 await using var cmd = new SqlCommand(query, conn);
                 cmd.Parameters.AddWithValue("@birimId", birimId);
@@ -38,7 +38,7 @@ namespace OgrenciBilgiSistemi.Api.Services
                         BirimId      = (int)reader["BirimId"],
                         BirimAd      = reader["BirimAd"]?.ToString() ?? string.Empty,
                         BirimSinifMi = (bool)reader["BirimSinifMi"],
-                        BirimDurum   = (bool)reader["BirimDurum"]
+                        IsDeleted    = (bool)reader["IsDeleted"]
                     };
                 }
             }

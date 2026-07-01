@@ -1,7 +1,5 @@
 ﻿using OgrenciBilgiSistemi.Dtos;
 using OgrenciBilgiSistemi.Models;
-using OgrenciBilgiSistemi.Shared.Enums;
-using Microsoft.AspNetCore.Http;
 
 public interface IOgrenciService
 {

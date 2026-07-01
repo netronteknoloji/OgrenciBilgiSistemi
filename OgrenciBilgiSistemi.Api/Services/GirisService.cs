@@ -28,7 +28,7 @@ namespace OgrenciBilgiSistemi.Api.Services
                 SELECT
                     K.KullaniciId,
                     K.KullaniciAdi,
-                    K.KullaniciDurum,
+                    K.IsDeleted,
                     K.Rol,
                     K.Sifre,
                     K.KullaniciAdi AS AdSoyad,
@@ -40,7 +40,7 @@ namespace OgrenciBilgiSistemi.Api.Services
                 LEFT JOIN ServisProfiller SP ON SP.KullaniciId = K.KullaniciId
                 LEFT JOIN OgretmenProfiller OP ON OP.KullaniciId = K.KullaniciId
                 WHERE K.KullaniciAdi = @kullaniciAdi
-                  AND K.KullaniciDurum = 1";
+                  AND K.IsDeleted = 0";
 
             string?        storedHash = null;
             KullaniciModel?  found      = null;
@@ -61,7 +61,7 @@ namespace OgrenciBilgiSistemi.Api.Services
                     {
                         KullaniciId    = (int)reader["KullaniciId"],
                         KullaniciAdi   = reader["KullaniciAdi"].ToString() ?? string.Empty,
-                        KullaniciDurum = Convert.ToBoolean(reader["KullaniciDurum"]),
+                        IsDeleted      = Convert.ToBoolean(reader["IsDeleted"]),
                         Rol            = reader["Rol"] != DBNull.Value ? (KullaniciRolu)Convert.ToInt32(reader["Rol"]) : KullaniciRolu.Ogretmen,
                         AdSoyad        = reader["AdSoyad"]?.ToString(),
                         BirimId        = reader["BirimId"] != DBNull.Value ? (int?)Convert.ToInt32(reader["BirimId"]) : null,
@@ -97,7 +97,7 @@ namespace OgrenciBilgiSistemi.Api.Services
                 SELECT
                     K.KullaniciId,
                     K.KullaniciAdi,
-                    K.KullaniciDurum,
+                    K.IsDeleted,
                     K.Rol,
                     K.KullaniciAdi AS AdSoyad,
                     OP.BirimId,
@@ -108,7 +108,7 @@ namespace OgrenciBilgiSistemi.Api.Services
                 LEFT JOIN ServisProfiller SP ON SP.KullaniciId = K.KullaniciId
                 LEFT JOIN OgretmenProfiller OP ON OP.KullaniciId = K.KullaniciId
                 WHERE K.KullaniciId = @kullaniciId
-                  AND K.KullaniciDurum = 1";
+                  AND K.IsDeleted = 0";
 
             try
             {
@@ -125,7 +125,7 @@ namespace OgrenciBilgiSistemi.Api.Services
                     {
                         KullaniciId    = (int)reader["KullaniciId"],
                         KullaniciAdi   = reader["KullaniciAdi"].ToString() ?? string.Empty,
-                        KullaniciDurum = Convert.ToBoolean(reader["KullaniciDurum"]),
+                        IsDeleted      = Convert.ToBoolean(reader["IsDeleted"]),
                         Rol            = reader["Rol"] != DBNull.Value ? (KullaniciRolu)Convert.ToInt32(reader["Rol"]) : KullaniciRolu.Ogretmen,
                         AdSoyad        = reader["AdSoyad"]?.ToString(),
                         BirimId        = reader["BirimId"] != DBNull.Value ? (int?)Convert.ToInt32(reader["BirimId"]) : null,
@@ -151,7 +151,7 @@ namespace OgrenciBilgiSistemi.Api.Services
             var dummy = new KullaniciModel { KullaniciId = kullaniciId };
             var hash = hasher.HashPassword(dummy, yeniSifre);
 
-            const string query = "UPDATE Kullanicilar SET Sifre = @sifre WHERE KullaniciId = @id AND KullaniciDurum = 1";
+            const string query = "UPDATE Kullanicilar SET Sifre = @sifre WHERE KullaniciId = @id AND IsDeleted = 0";
 
             try
             {
@@ -179,7 +179,7 @@ namespace OgrenciBilgiSistemi.Api.Services
             const string query = @"
                 SELECT TOP 10 KullaniciAdi
                 FROM Kullanicilar
-                WHERE KullaniciDurum = 1
+                WHERE IsDeleted = 0
                   AND KullaniciAdi COLLATE Turkish_CI_AI LIKE @aranan + '%'
                 ORDER BY KullaniciAdi";
 

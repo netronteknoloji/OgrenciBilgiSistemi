@@ -15,8 +15,9 @@ namespace OgrenciBilgiSistemi.Models
         [Display(Name = "Plaka")]
         public string Plaka { get; set; } = string.Empty;
 
-        [Display(Name = "Durum (Aktif)")]
-        public bool ServisDurum { get; set; } = true;
+        // true = silinmiş (soft delete). Eski ServisDurum (aktif/pasif) IsDeleted'a birleştirildi.
+        [Display(Name = "Durum")]
+        public bool IsDeleted { get; set; } = false;
 
         [NotMapped]
         public int OgrenciSayisi { get; set; }

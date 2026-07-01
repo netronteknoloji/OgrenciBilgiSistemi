@@ -89,8 +89,8 @@
                                     <td>@(o.Email ?? "—")</td>
                                     <td>@(o.Birim?.BirimAd ?? "—")</td>
                                     <td>
-                                        <span class="badge @(o.OgretmenDurum ? "bg-success" : "bg-danger")">
-                                            @(o.OgretmenDurum ? "Aktif" : "Pasif")
+                                        <span class="badge @(!o.IsDeleted ? "bg-success" : "bg-danger")">
+                                            @(!o.IsDeleted ? "Aktif" : "Pasif")
                                         </span>
                                     </td>
                                     <td>

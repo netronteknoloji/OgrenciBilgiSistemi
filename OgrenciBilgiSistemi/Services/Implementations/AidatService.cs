@@ -1,7 +1,6 @@
 ﻿using ClosedXML.Excel;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Logging;
 using OgrenciBilgiSistemi.Data;
 using OgrenciBilgiSistemi.Dtos;
 using OgrenciBilgiSistemi.Helpers;
@@ -234,10 +233,10 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             page = Math.Max(1, page);
             pageSize = Math.Clamp(pageSize, 5, 200);
 
-            var oncekiPasifFlag = _db.IncludePasifOgrenciler;
+            var oncekiPasifFlag = _db.IncludeDeleted;
             try
             {
-                _db.IncludePasifOgrenciler = includePasif;
+                _db.IncludeDeleted = includePasif;
 
                 var dtoQuery = await BuildAidatRaporDtoQueryAsync(
                     yil, bas, bit, query, birimId, durum, tarifeYil, includePasif, ct);
@@ -276,7 +275,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             }
             finally
             {
-                _db.IncludePasifOgrenciler = oncekiPasifFlag;
+                _db.IncludeDeleted = oncekiPasifFlag;
             }
         }
 
@@ -293,11 +292,11 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             bool includePasif = false,
             CancellationToken ct = default)
         {
-            var oncekiPasifFlag = _db.IncludePasifOgrenciler;
+            var oncekiPasifFlag = _db.IncludeDeleted;
             List<AidatRaporDto> rows;
             try
             {
-                _db.IncludePasifOgrenciler = includePasif;
+                _db.IncludeDeleted = includePasif;
 
                 var dtoQuery = await BuildAidatRaporDtoQueryAsync(
                     yil, bas, bit, query, birimId, durum, tarifeYil, includePasif, ct);
@@ -309,7 +308,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             }
             finally
             {
-                _db.IncludePasifOgrenciler = oncekiPasifFlag;
+                _db.IncludeDeleted = oncekiPasifFlag;
             }
 
             // ✅ Toplamlar (filtreli tüm kayıtlar üzerinden)
@@ -443,7 +442,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
 
                 var aidat = ent.OgrenciAidat;
                 aidat.Odenen = decimal.Round(Math.Max(0m, aidat.Odenen - ent.Tutar), 2, MidpointRounding.AwayFromZero);
-                ent.AktifMi = false;
+                ent.IsDeleted = true;
                 await _db.SaveChangesAsync(ct);
 
                 aidat.SonOdemeTarihi = await _db.OgrenciAidatOdemeler

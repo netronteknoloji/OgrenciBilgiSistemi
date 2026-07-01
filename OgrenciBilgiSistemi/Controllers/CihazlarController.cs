@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using OgrenciBilgiSistemi.Models;
 using OgrenciBilgiSistemi.ViewModels;
 
 namespace OgrenciBilgiSistemi.Controllers

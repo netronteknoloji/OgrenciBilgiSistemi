@@ -37,7 +37,7 @@ namespace OgrenciBilgiSistemi.Api.Services
             int offset = (pageNumber - 1) * pageSize;
 
             // Dinamik WHERE koşulları (soft-delete: sadece aktif öğrenciler)
-            var kosullar = new List<string> { "o.OgrenciDurum = 1" };
+            var kosullar = new List<string> { "o.IsDeleted = 0" };
             if (baslangic.HasValue) kosullar.Add("COALESCE(od.OgrenciGTarih, od.OgrenciCTarih) >= @baslangic");
             if (bitis.HasValue)    kosullar.Add("COALESCE(od.OgrenciGTarih, od.OgrenciCTarih) <= @bitis");
             if (!string.IsNullOrWhiteSpace(arama))
@@ -100,7 +100,7 @@ namespace OgrenciBilgiSistemi.Api.Services
         {
             var kayitlar = new List<GecisKayitDto>();
 
-            var kosullar = new List<string> { "od.OgrenciId = @ogrenciId", "o.OgrenciDurum = 1" };
+            var kosullar = new List<string> { "od.OgrenciId = @ogrenciId", "o.IsDeleted = 0" };
             if (baslangic.HasValue) kosullar.Add("COALESCE(od.OgrenciGTarih, od.OgrenciCTarih) >= @baslangic");
             if (bitis.HasValue)    kosullar.Add("COALESCE(od.OgrenciGTarih, od.OgrenciCTarih) <= @bitis");
 

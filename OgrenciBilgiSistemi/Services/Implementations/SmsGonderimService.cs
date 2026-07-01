@@ -3,7 +3,6 @@ using Microsoft.Extensions.Options;
 using OgrenciBilgiSistemi.Data;
 using OgrenciBilgiSistemi.Models;
 using OgrenciBilgiSistemi.Services.Interfaces;
-using OgrenciBilgiSistemi.Shared.Enums;
 using OgrenciBilgiSistemi.Sms;
 
 namespace OgrenciBilgiSistemi.Services.Implementations;

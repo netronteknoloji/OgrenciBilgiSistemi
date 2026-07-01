@@ -16,8 +16,6 @@ namespace OgrenciBilgiSistemi.ViewModels
         [Required]
         public IstasyonTipi IstasyonTipi { get; set; } = IstasyonTipi.AnaKapi;
 
-        public bool Aktif { get; set; } = true;
-
         [StringLength(45)]
         [RegularExpression(
             @"^$|^(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)$",
@@ -52,7 +50,6 @@ namespace OgrenciBilgiSistemi.ViewModels
             CihazAdi = m.CihazAdi,
             DonanimTipi = m.DonanimTipi,
             IstasyonTipi = m.IstasyonTipi,
-            Aktif = m.Aktif,
             IpAdresi = m.IpAdresi,
             PortNo = m.PortNo,
             FormAction = "Guncelle",
@@ -68,7 +65,6 @@ namespace OgrenciBilgiSistemi.ViewModels
             CihazAdi = CihazAdi,
             DonanimTipi = DonanimTipi,
             IstasyonTipi = IstasyonTipi,
-            Aktif = Aktif,
             IpAdresi = IpAdresi,
             PortNo = PortNo,
         };

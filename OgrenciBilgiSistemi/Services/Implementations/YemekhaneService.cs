@@ -221,7 +221,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
 
             if (od != null)
             {
-                od.AktifMi = false;
+                od.IsDeleted = true;
                 await _ctx.SaveChangesAsync(ct);
                 _logger.LogInformation("Yemek OdemeSil: OdemeId={Id}", odemeId);
             }
@@ -313,9 +313,9 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             var y1 = akYil;
             var y2 = akYil + 1;
 
-            var oncekiPasifFlag = _ctx.IncludePasifOgrenciler;
+            var oncekiPasifFlag = _ctx.IncludeDeleted;
             if (includePasif)
-                _ctx.IncludePasifOgrenciler = true;
+                _ctx.IncludeDeleted = true;
 
             try
             {
@@ -371,7 +371,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
 
                 // 4) Batch: ödemeler
                 var odemeler = await _ctx.OgrenciYemekOdemeler.AsNoTracking()
-                    .Where(o => ogrenciIds.Contains(o.OgrenciId) && o.AktifMi &&
+                    .Where(o => ogrenciIds.Contains(o.OgrenciId) && !o.IsDeleted &&
                                 ((o.Yil == y1 && o.Ay >= 9 && o.Ay <= 12) ||
                                  (o.Yil == y2 && o.Ay >= 1 && o.Ay <= 8)))
                     .Select(o => new { o.OgrenciId, o.Tutar })
@@ -444,7 +444,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             }
             finally
             {
-                _ctx.IncludePasifOgrenciler = oncekiPasifFlag;
+                _ctx.IncludeDeleted = oncekiPasifFlag;
             }
         }
 

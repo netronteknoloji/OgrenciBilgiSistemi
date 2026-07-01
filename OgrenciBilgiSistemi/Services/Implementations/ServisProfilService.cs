@@ -1,10 +1,8 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using OgrenciBilgiSistemi.Data;
 using OgrenciBilgiSistemi.Models;
 using OgrenciBilgiSistemi.Services.Interfaces;
-using OgrenciBilgiSistemi.Shared.Enums;
 using OgrenciBilgiSistemi.ViewModels;
 
 namespace OgrenciBilgiSistemi.Services.Implementations
@@ -42,7 +40,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             // Her servisin öğrenci sayısını doldur
             var servisIdler = paged.Select(s => s.KullaniciId).ToList();
             var sayilar = await _db.Ogrenciler
-                .Where(o => o.ServisId != null && servisIdler.Contains(o.ServisId.Value) && o.OgrenciDurum)
+                .Where(o => o.ServisId != null && servisIdler.Contains(o.ServisId.Value) && !o.IsDeleted)
                 .GroupBy(o => o.ServisId!.Value)
                 .Select(g => new { ServisId = g.Key, Sayi = g.Count() })
                 .ToDictionaryAsync(x => x.ServisId, x => x.Sayi, ct);
@@ -60,11 +58,11 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 KullaniciAdi = vm.KullaniciAdi,
                 Rol = KullaniciRolu.Servis,
                 Telefon = vm.Telefon,
-                KullaniciDurum = true,
+                IsDeleted = false,
                 ServisProfil = new ServisProfilModel
                 {
                     Plaka = vm.Plaka,
-                    ServisDurum = true
+                    IsDeleted = false
                 }
             };
 
@@ -89,14 +87,14 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 ?? throw new KeyNotFoundException("Servis profili bulunamadı.");
 
             mevcut.Plaka = model.Plaka;
-            mevcut.ServisDurum = model.ServisDurum;
+            mevcut.IsDeleted = model.IsDeleted;
 
             var kullanici = await _db.Kullanicilar.FindAsync([model.KullaniciId], ct);
             if (kullanici != null)
             {
                 kullanici.KullaniciAdi = kullaniciAdi ?? kullanici.KullaniciAdi;
                 kullanici.Telefon = telefon;
-                kullanici.KullaniciDurum = model.ServisDurum;
+                kullanici.IsDeleted = model.IsDeleted;
 
                 if (!string.IsNullOrWhiteSpace(sifre))
                     kullanici.Sifre = _passwordHasher.HashPassword(kullanici, sifre);
@@ -118,7 +116,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             var profil = await _db.ServisProfiller.FindAsync([kullaniciId], ct);
             if (profil == null) return;
 
-            profil.ServisDurum = false;
+            profil.IsDeleted = true;
             try
             {
                 await _db.SaveChangesAsync(ct);
@@ -139,7 +137,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
         public async Task<List<OgrenciModel>> GetOgrencilerAsync(int kullaniciId, CancellationToken ct = default)
             => await _db.Ogrenciler
                 .Include(o => o.Birim)
-                .Where(o => o.ServisId == kullaniciId && o.OgrenciDurum)
+                .Where(o => o.ServisId == kullaniciId && !o.IsDeleted)
                 .OrderBy(o => o.OgrenciAdSoyad)
                 .AsNoTracking()
                 .ToListAsync(ct);
@@ -153,7 +151,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
 
             return await _db.Ogrenciler
                 .Include(o => o.Birim)
-                .Where(o => o.OgrenciDurum && (o.ServisId == null || o.ServisId != servisId))
+                .Where(o => !o.IsDeleted && (o.ServisId == null || o.ServisId != servisId))
                 .Where(o =>
                     (o.OgrenciAdSoyad != null && o.OgrenciAdSoyad.Contains(s)) ||
                     o.OgrenciNo.ToString().Contains(s))

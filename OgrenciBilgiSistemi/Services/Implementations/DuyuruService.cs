@@ -1,9 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using OgrenciBilgiSistemi.Data;
 using OgrenciBilgiSistemi.Models;
 using OgrenciBilgiSistemi.Services.Interfaces;
-using OgrenciBilgiSistemi.Shared.Enums;
 
 namespace OgrenciBilgiSistemi.Services.Implementations
 {
@@ -81,18 +79,18 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 return await (from o in _db.Ogrenciler
                               join op in _db.OgretmenProfiller on o.BirimId equals op.BirimId
                               where op.KullaniciId == olusturanId
-                                    && op.OgretmenDurum
-                                    && o.OgrenciDurum
+                                    && !op.IsDeleted
+                                    && !o.IsDeleted
                                     && o.VeliId != null
                                     && o.Veli != null
-                                    && o.Veli.KullaniciDurum
+                                    && !o.Veli.IsDeleted
                               select o.VeliId!.Value)
                               .Distinct()
                               .ToListAsync(ct);
             }
 
             return await _db.Kullanicilar
-                .Where(k => k.Rol == KullaniciRolu.Veli && k.KullaniciDurum)
+                .Where(k => k.Rol == KullaniciRolu.Veli && !k.IsDeleted)
                 .Select(k => k.KullaniciId)
                 .ToListAsync(ct);
         }

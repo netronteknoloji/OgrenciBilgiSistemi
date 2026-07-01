@@ -35,7 +35,7 @@ namespace OgrenciBilgiSistemi.ViewModels
         public string? GorselPath { get; set; }
 
         [Display(Name = "Durum")]
-        public bool OgretmenDurum { get; set; } = true;
+        public bool IsDeleted { get; set; } = false;
 
         public List<SelectListItem> Birimler { get; set; } = [];
 
@@ -50,7 +50,7 @@ namespace OgrenciBilgiSistemi.ViewModels
             Email = m.Email,
             BirimId = m.BirimId,
             GorselPath = m.GorselPath,
-            OgretmenDurum = m.OgretmenDurum,
+            IsDeleted = m.IsDeleted,
             FormAction = "Guncelle",
             SubmitText = "Güncelle",
         };
@@ -71,7 +71,7 @@ namespace OgrenciBilgiSistemi.ViewModels
             Email = Email,
             BirimId = BirimId,
             GorselFile = GorselFile,
-            OgretmenDurum = OgretmenDurum,
+            IsDeleted = this.IsDeleted,
         };
     }
 }

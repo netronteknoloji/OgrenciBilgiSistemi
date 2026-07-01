@@ -26,7 +26,7 @@ namespace OgrenciBilgiSistemi.ViewModels
         public string Plaka { get; set; } = string.Empty;
 
         [Display(Name = "Durum")]
-        public bool ServisDurum { get; set; } = true;
+        public bool IsDeleted { get; set; } = false;
 
         public string FormAction { get; set; } = "Ekle";
         public string SubmitText { get; set; } = "Kaydet";
@@ -37,7 +37,7 @@ namespace OgrenciBilgiSistemi.ViewModels
             KullaniciAdi = m.Kullanici?.KullaniciAdi ?? string.Empty,
             Telefon = m.Kullanici?.Telefon,
             Plaka = m.Plaka,
-            ServisDurum = m.ServisDurum,
+            IsDeleted = m.IsDeleted,
             FormAction = "Guncelle",
             SubmitText = "Güncelle",
         };
@@ -54,7 +54,7 @@ namespace OgrenciBilgiSistemi.ViewModels
         {
             KullaniciId = KullaniciId,
             Plaka = Plaka,
-            ServisDurum = ServisDurum,
+            IsDeleted = this.IsDeleted,
         };
     }
 }

@@ -10,7 +10,7 @@ namespace OgrenciBilgiSistemi.Api.Models
         public string? OgrenciGorsel { get; set; }
         public string? OgrenciKartNo { get; set; }
         public OglenCikisDurumu OgrenciCikisDurumu { get; set; }
-        public bool OgrenciDurum { get; set; }
+        public bool IsDeleted { get; set; }
         public int? BirimId { get; set; }
         public int? OgretmenId { get; set; }
         public int? VeliId { get; set; }

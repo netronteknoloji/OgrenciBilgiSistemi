@@ -22,7 +22,7 @@ namespace OgrenciBilgiSistemi.Models
         [Range(1, 365, ErrorMessage = "Kitap gün sayısı 1 ile 365 arasında olmalıdır.")]
         public int KitapGun { get; set; }
 
-        public bool KitapDurum { get; set; } = true; // 📌 Varsayılan olarak aktif
+        public bool IsDeleted { get; set; } = false; // 📌 Varsayılan olarak aktif (IsDeleted = false)
 
         [NotMapped]
         public IFormFile? KitapGorselFile { get; set; } // 📌 Kullanıcıdan gelen görsel dosyası (Veritabanına kaydedilmez)

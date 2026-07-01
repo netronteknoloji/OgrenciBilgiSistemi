@@ -4,7 +4,6 @@ using OgrenciBilgiSistemi.Dtos;
 using OgrenciBilgiSistemi.Helpers;
 using OgrenciBilgiSistemi.Services.Interfaces;
 using OgrenciBilgiSistemi.ViewModels;
-using System.Globalization;
 
 namespace OgrenciBilgiSistemi.Controllers
 {
@@ -305,14 +304,8 @@ namespace OgrenciBilgiSistemi.Controllers
 
             try
             {
-                // 1) Eğer servis ID döndürüyorsa:
                 await _aidatService.OdemeEkleAsync(dto, ct);
 
-                // 2) Eğer servis OdemeSatiriDto döndürüyorsa:
-                // var sonuc = await _aidatService.OdemeEkleAsync(dto, ct);
-                // TempData["Success"] = $"Ödeme kaydedildi. Tutar: {sonuc.Tutar:N2} • Tarih: {sonuc.Tarih:dd.MM.yyyy HH:mm}";
-
-                // ID döndürüyorsa dto ile mesaj verin:
                 TempData["Success"] = $"Ödeme kaydedildi. Tutar: {dto.Tutar:N2} • Tarih: {dto.Tarih:dd.MM.yyyy HH:mm}";
 
                 return SafeRedirect(returnUrl, nameof(Index), new { yil = dto.Yil });

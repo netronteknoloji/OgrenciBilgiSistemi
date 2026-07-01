@@ -22,7 +22,7 @@ namespace OgrenciBilgiSistemi.Api.Services
                 SELECT k.KullaniciId, k.KullaniciAdi
                 FROM Kullanicilar k
                 INNER JOIN OgretmenProfiller op ON k.KullaniciId = op.KullaniciId
-                WHERE op.OgretmenDurum = 1
+                WHERE op.IsDeleted = 0
                 ORDER BY k.KullaniciAdi";
 
             await using var conn = new SqlConnection(ConnectionString);
@@ -45,7 +45,8 @@ namespace OgrenciBilgiSistemi.Api.Services
         {
             const string query = @"
                 SELECT k.KullaniciId, k.KullaniciAdi, k.Telefon,
-                       op.Email, op.GorselPath, op.BirimId, op.OgretmenDurum,
+                       op.Email, op.GorselPath, op.BirimId,
+                       op.IsDeleted,
                        b.BirimAd
                 FROM Kullanicilar k
                 INNER JOIN OgretmenProfiller op ON k.KullaniciId = op.KullaniciId
@@ -70,7 +71,7 @@ namespace OgrenciBilgiSistemi.Api.Services
                 GorselPath = reader["GorselPath"] as string,
                 BirimId = reader["BirimId"] as int?,
                 BirimAd = reader["BirimAd"] as string,
-                OgretmenDurum = reader["OgretmenDurum"] != DBNull.Value && (bool)reader["OgretmenDurum"]
+                IsDeleted = reader["IsDeleted"] != DBNull.Value && (bool)reader["IsDeleted"]
             };
         }
     }

@@ -5,7 +5,6 @@ using Microsoft.Extensions.Caching.Memory;
 using OgrenciBilgiSistemi.Data;
 using OgrenciBilgiSistemi.Models;
 using OgrenciBilgiSistemi.Services.Interfaces;
-using OgrenciBilgiSistemi.Shared.Enums;
 using OgrenciBilgiSistemi.Shared.Services;
 using OgrenciBilgiSistemi.ViewModels;
 
@@ -84,7 +83,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
 
             kullanici.KullaniciAdi = model.KullaniciAdi;
             kullanici.Rol = model.Rol;
-            kullanici.KullaniciDurum = model.KullaniciDurum;
+            kullanici.IsDeleted = model.IsDeleted;
             kullanici.Telefon = model.Telefon;
             kullanici.BeniHatirla = model.BeniHatirla;
 
@@ -100,7 +99,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
 
                 profil.BirimId = model.OgretmenProfil?.BirimId;
                 profil.Email = model.OgretmenProfil?.Email;
-                profil.OgretmenDurum = kullanici.KullaniciDurum;
+                profil.IsDeleted = kullanici.IsDeleted;
 
                 if (model.OgretmenProfil?.GorselFile != null && model.OgretmenProfil.GorselFile.Length > 0)
                     profil.GorselPath = await SaveImageAsync(model.OgretmenProfil.GorselFile, ct);
@@ -117,7 +116,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 }
 
                 profil.Plaka = model.ServisProfil?.Plaka ?? string.Empty;
-                profil.ServisDurum = kullanici.KullaniciDurum;
+                profil.IsDeleted = kullanici.IsDeleted;
             }
 
             // VeliProfil yönetimi
@@ -149,24 +148,24 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             if (kullanici == null) return;
 
             var bagliOgrenciVar = await _db.Ogrenciler
-                .AnyAsync(o => o.OgrenciDurum &&
+                .AnyAsync(o => !o.IsDeleted &&
                                (o.VeliId == id || o.OgretmenId == id || o.ServisId == id), ct);
             if (bagliOgrenciVar)
                 throw new InvalidOperationException(
                     "Bu kullanıcıya bağlı aktif öğrenci kaydı var. " +
                     "Kullanıcıyı pasife almadan önce öğrenci ilişkilerini kaldırın veya öğrencileri pasife alın.");
 
-            kullanici.KullaniciDurum = false;
+            kullanici.IsDeleted = true;
 
             // Bağlı servis profili varsa durumunu pasife çek
             var servisProfil = await _db.ServisProfiller.FindAsync([id], ct);
             if (servisProfil != null)
-                servisProfil.ServisDurum = false;
+                servisProfil.IsDeleted = true;
 
             // Bağlı öğretmen profili varsa durumunu pasife çek
             var ogretmenProfil = await _db.OgretmenProfiller.FindAsync([id], ct);
             if (ogretmenProfil != null)
-                ogretmenProfil.OgretmenDurum = false;
+                ogretmenProfil.IsDeleted = true;
 
             await _db.SaveChangesAsync(ct);
         }
@@ -174,13 +173,13 @@ namespace OgrenciBilgiSistemi.Services.Implementations
         public Task<bool> KullaniciAdiVarMiAsync(string kullaniciAdi, int? excludeId = null, CancellationToken ct = default)
             => _db.Kullanicilar.AnyAsync(k =>
                 k.KullaniciAdi == kullaniciAdi &&
-                k.KullaniciDurum &&
+                !k.IsDeleted &&
                 (!excludeId.HasValue || k.KullaniciId != excludeId.Value), ct);
 
         public async Task<List<SelectListItem>> GetPersonellerSelectListAsync(CancellationToken ct = default)
             => await _db.Kullanicilar
                 .AsNoTracking()
-                .Where(k => k.KullaniciDurum && k.Rol == KullaniciRolu.Ogretmen)
+                .Where(k => !k.IsDeleted && k.Rol == KullaniciRolu.Ogretmen)
                 .OrderBy(k => k.KullaniciAdi)
                 .Select(k => new SelectListItem
                 {
@@ -192,7 +191,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
         public async Task<List<SelectListItem>> GetServislerSelectListAsync(CancellationToken ct = default)
             => await _db.ServisProfiller
                 .AsNoTracking()
-                .Where(s => s.ServisDurum)
+                .Where(s => !s.IsDeleted)
                 .OrderBy(s => s.Plaka)
                 .Select(s => new SelectListItem
                 {
@@ -204,7 +203,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
         public async Task<List<SelectListItem>> GetServislerByIdSelectListAsync(int? selectedId = null, CancellationToken ct = default)
             => await _db.Kullanicilar
                 .AsNoTracking()
-                .Where(k => k.KullaniciDurum && k.Rol == KullaniciRolu.Servis)
+                .Where(k => !k.IsDeleted && k.Rol == KullaniciRolu.Servis)
                 .OrderBy(k => k.KullaniciAdi)
                 .Select(k => new SelectListItem
                 {
@@ -217,7 +216,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
         public async Task<List<SelectListItem>> GetServislerPlakaliSelectListAsync(CancellationToken ct = default)
             => await _db.Kullanicilar
                 .AsNoTracking()
-                .Where(k => k.Rol == KullaniciRolu.Servis && k.KullaniciDurum)
+                .Where(k => k.Rol == KullaniciRolu.Servis && !k.IsDeleted)
                 .OrderBy(k => k.KullaniciAdi)
                 .Select(k => new SelectListItem
                 {
@@ -229,7 +228,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
         public async Task<List<SelectListItem>> GetKullanicilarByRolSelectListAsync(KullaniciRolu rol, CancellationToken ct = default)
             => await _db.Kullanicilar
                 .AsNoTracking()
-                .Where(k => k.KullaniciDurum && k.Rol == rol)
+                .Where(k => !k.IsDeleted && k.Rol == rol)
                 .OrderBy(k => k.KullaniciAdi)
                 .Select(k => new SelectListItem
                 {
@@ -309,7 +308,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
         public async Task<List<SelectListItem>> GetBirimlerSelectListAsync(CancellationToken ct = default)
             => await _db.Birimler
                 .AsNoTracking()
-                .Where(b => b.BirimDurum)
+                .Where(b => !b.IsDeleted)
                 .OrderBy(b => b.BirimAd)
                 .Select(b => new SelectListItem
                 {

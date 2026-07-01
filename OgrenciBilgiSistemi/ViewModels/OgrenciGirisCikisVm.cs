@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using OgrenciBilgiSistemi.Models;
+﻿using OgrenciBilgiSistemi.Models;
 
 namespace OgrenciBilgiSistemi.ViewModels
 {
