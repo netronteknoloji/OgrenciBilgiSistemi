@@ -130,13 +130,27 @@ namespace OgrenciBilgiSistemi.Mobil
                 {
                     try
                     {
-                        CrossFirebase.Initialize(CreateCrossFirebaseSettings());
+                        // Firebase options KODDAN veriliyor (GoogleService-Info.plist'e bakılmaz).
+                        // plist bundle köküne kopyalanmadığında Configure() NSException fırlatıyordu;
+                        // explicit Options bu dosya-konumu bağımlılığını tamamen kaldırır.
+                        // Değerler Platforms/iOS/GoogleService-Info.plist ile birebir aynıdır.
+                        var firebaseOptions = new Firebase.Core.Options(
+                            googleAppId: "1:1043626344131:ios:ce2edd9da1e82c968d2c76",
+                            gcmSenderId: "1043626344131")
+                        {
+                            ApiKey = "AIzaSyD4ZdHfWibYFYX0rDO4cCSF1FcD31UQoWE",
+                            ProjectId = "ogrencibilgisistemi-b0a52",
+                            BundleId = "com.netronyazilim.ogrencibilgisistemi",
+                            StorageBucket = "ogrencibilgisistemi-b0a52.firebasestorage.app"
+                        };
+
+                        CrossFirebase.Initialize(CreateCrossFirebaseSettings(), firebaseOptions);
                         FirebaseCloudMessagingImplementation.Initialize();
-                        Services.PushTaniGunlugu.Ekle("Firebase init OK (iOS)");
+                        Services.PushTaniGunlugu.Ekle("Firebase init OK (iOS, explicit options)");
                     }
                     catch (Exception ex)
                     {
-                        Services.PushTaniGunlugu.Ekle($"Firebase init HATA: {ex.Message}");
+                        Services.PushTaniGunlugu.Ekle($"Firebase init HATA ({ex.GetType().Name}): {ex.Message}");
                     }
                     return false;
                 }));

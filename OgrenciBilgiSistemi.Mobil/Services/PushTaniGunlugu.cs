@@ -15,6 +15,12 @@ namespace OgrenciBilgiSistemi.Mobil.Services
 
         public static void Ekle(string mesaj)
         {
+            // NSException gibi çok satırlı mesajlar (stack trace) tek satıra indirilir ve
+            // kırpılır; yoksa 25 satırlık pencereyi tek mesaj yutar, asıl hata satırı kaybolur.
+            mesaj = mesaj.Replace("\r", " ").Replace("\n", " ¶ ");
+            if (mesaj.Length > 500)
+                mesaj = mesaj[..500] + " …(kırpıldı)";
+
             var satir = $"{DateTime.Now:HH:mm:ss} {mesaj}";
             Console.WriteLine($"[PUSH] {satir}");
 
