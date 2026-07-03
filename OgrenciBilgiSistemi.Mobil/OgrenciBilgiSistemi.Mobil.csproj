@@ -11,8 +11,8 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<ApplicationTitle>OgrenciBilgiSistemi</ApplicationTitle>
-		<ApplicationDisplayVersion>3.8</ApplicationDisplayVersion>
-		<ApplicationVersion>63</ApplicationVersion>
+		<ApplicationDisplayVersion>3.9</ApplicationDisplayVersion>
+		<ApplicationVersion>64</ApplicationVersion>
 	</PropertyGroup>
 
 	<!-- Platform versiyonlari -->
@@ -56,9 +56,10 @@
 		<GoogleServicesJson Include="Platforms\Android\google-services.json" Condition="Exists('Platforms\Android\google-services.json')" />
 	</ItemGroup>
 
-	<!-- iOS icin Firebase config -->
+	<!-- iOS icin Firebase config. Link ZORUNLU: dosya bundle KOKUNE kopyalanmali,
+	     yoksa Firebase.Core.App.Configure() plist'i bulamaz ve init sessizce basarisiz olur. -->
 	<ItemGroup Condition="$(TargetFramework.Contains('-ios'))">
-		<BundleResource Include="Platforms\iOS\GoogleService-Info.plist" Condition="Exists('Platforms\iOS\GoogleService-Info.plist')" />
+		<BundleResource Include="Platforms\iOS\GoogleService-Info.plist" Link="GoogleService-Info.plist" Condition="Exists('Platforms\iOS\GoogleService-Info.plist')" />
 	</ItemGroup>
 
 	<!-- iOS APNs entitlement: Debug -> development (sandbox), Release -> production (TestFlight/App Store) -->

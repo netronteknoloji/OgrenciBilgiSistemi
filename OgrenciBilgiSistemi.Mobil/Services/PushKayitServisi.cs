@@ -13,7 +13,25 @@ namespace OgrenciBilgiSistemi.Mobil.Services
     {
         private const string AnahtarFcmToken = "fcm_token";
 
+        /// <summary>Son teşhis durumu — sorun bildiriminde cihazdan okunabilir.</summary>
+        public const string AnahtarTaniDurumu = "push_tani_durumu";
+
         private bool _dinleyicilerBagli;
+
+        /// <summary>
+        /// Teşhis izi: Debug.WriteLine Release build'de derlenmediği için Console'a yazar
+        /// (iOS Console.app / adb logcat'te görünür) ve son durumu Preferences'a kaydeder.
+        /// Token değeri asla yazılmaz (yalnız uzunluk).
+        /// </summary>
+        private static void Tani(string mesaj)
+        {
+            Console.WriteLine($"[PUSH] {mesaj}");
+            try
+            {
+                Preferences.Default.Set(AnahtarTaniDurumu, $"{DateTime.Now:HH:mm:ss} {mesaj}");
+            }
+            catch { /* Preferences erişilemezse teşhis akışı kırılmasın */ }
+        }
 
         public async Task DinleyicileriBaslatAsync()
         {
@@ -40,12 +58,11 @@ namespace OgrenciBilgiSistemi.Mobil.Services
 
         public async Task LoginSonrasiKaydetAsync()
         {
-            System.Diagnostics.Debug.WriteLine(
-                $"[PUSH] LoginSonrasiKaydet başladı, GirisYapildiMi={KullaniciOturum.GirisYapildiMi}");
+            Tani($"LoginSonrasiKaydet başladı, GirisYapildiMi={KullaniciOturum.GirisYapildiMi}");
 
             if (!KullaniciOturum.GirisYapildiMi)
             {
-                System.Diagnostics.Debug.WriteLine("[PUSH] GirisYapildiMi=false → skip");
+                Tani("GirisYapildiMi=false → skip");
                 return;
             }
 
@@ -55,13 +72,13 @@ namespace OgrenciBilgiSistemi.Mobil.Services
                 // üzerinden istiyor; çift dialog'u önlemek için yalnız Android'de)
 #if ANDROID
                 var izin = await LocalNotificationCenter.Current.RequestNotificationPermission();
-                System.Diagnostics.Debug.WriteLine($"[PUSH] Android bildirim izni={izin}");
+                Tani($"Android bildirim izni={izin}");
 #endif
                 await CrossFirebaseCloudMessaging.Current.CheckIfValidAsync();
-                System.Diagnostics.Debug.WriteLine("[PUSH] CheckIfValidAsync OK");
+                Tani("CheckIfValidAsync OK");
 
                 var token = await CrossFirebaseCloudMessaging.Current.GetTokenAsync();
-                System.Diagnostics.Debug.WriteLine($"[PUSH] GetTokenAsync 1. deneme len={token?.Length ?? 0}");
+                Tani($"GetTokenAsync 1. deneme len={token?.Length ?? 0}");
 
                 // iOS'ta APNs registration tamamlanmadan FCM token null/empty dönebilir.
                 // Tek seferlik kısa retry ile race condition'ı tolere et.
@@ -69,24 +86,23 @@ namespace OgrenciBilgiSistemi.Mobil.Services
                 {
                     await Task.Delay(TimeSpan.FromSeconds(2));
                     token = await CrossFirebaseCloudMessaging.Current.GetTokenAsync();
-                    System.Diagnostics.Debug.WriteLine($"[PUSH] GetTokenAsync 2. deneme len={token?.Length ?? 0}");
+                    Tani($"GetTokenAsync 2. deneme len={token?.Length ?? 0}");
                 }
 
                 if (string.IsNullOrWhiteSpace(token))
                 {
-                    System.Diagnostics.Debug.WriteLine("[PUSH] token null/empty → API çağrılmadı");
+                    Tani("token null/empty → API çağrılmadı (APNs kaydı tamamlanmamış olabilir)");
                     return;
                 }
 
                 await SecureStorage.Default.SetAsync(AnahtarFcmToken, token);
-                System.Diagnostics.Debug.WriteLine("[PUSH] ApiyeKaydet çağrılıyor");
+                Tani("ApiyeKaydet çağrılıyor");
                 await ApiyeKaydetAsync(token);
-                System.Diagnostics.Debug.WriteLine("[PUSH] ApiyeKaydet tamamlandı");
+                Tani("ApiyeKaydet tamamlandı");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine(
-                    $"[PUSH] LoginSonrasiKaydet exception type={ex.GetType().Name} msg={ex.Message}");
+                Tani($"LoginSonrasiKaydet exception type={ex.GetType().Name} msg={ex.Message}");
             }
         }
 
@@ -179,7 +195,9 @@ namespace OgrenciBilgiSistemi.Mobil.Services
 
             var response = await PostAsJsonAsync($"{BaseUrl}cihazlar/kaydet", govde);
             if (!response.IsSuccessStatusCode)
-                System.Diagnostics.Debug.WriteLine($"[PUSH] Cihaz kayıt hatası: {response.StatusCode}");
+                Tani($"Cihaz kayıt hatası: {(int)response.StatusCode} {response.StatusCode}");
+            else
+                Tani("Cihaz API'ye kaydedildi (2xx)");
         }
 
         private async Task ApiyeTokenYenileAsync(string eskiToken, string yeniToken)

@@ -130,10 +130,12 @@ namespace OgrenciBilgiSistemi.Mobil
                     {
                         CrossFirebase.Initialize(CreateCrossFirebaseSettings());
                         FirebaseCloudMessagingImplementation.Initialize();
+                        Console.WriteLine("[PUSH] Firebase init OK (iOS)");
                     }
                     catch (Exception ex)
                     {
-                        System.Diagnostics.Debug.WriteLine($"[Firebase init] {ex.Message}");
+                        // Console: Release build'de de görünsün (Console.app) — Debug.WriteLine derlenmez.
+                        Console.WriteLine($"[PUSH] Firebase init HATA: {ex.Message}");
                     }
                     return false;
                 }));
