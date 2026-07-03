@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:views="clr-namespace:OgrenciBilgiSistemi.Mobil.Views"
+             x:Class="OgrenciBilgiSistemi.Mobil.Views.PushTaniView"
+             Title="Bildirim Tanısı"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="#F0F2F5">
+
+    <Grid RowDefinitions="125, Auto, *, Auto">
+
+        <Border Grid.Row="0" StrokeThickness="0" BackgroundColor="#2C3E50" VerticalOptions="FillAndExpand">
+            <Border.Shadow>
+                <Shadow Brush="#2C3E50" Offset="0,4" Radius="15" Opacity="0.4" />
+            </Border.Shadow>
+            <Grid>
+                <views:AnaBaslikView x:Name="MyHeader" ShowBack="True" ShowProfile="False" />
+                <VerticalStackLayout Spacing="2" VerticalOptions="End" HorizontalOptions="Center" Margin="20,0,20,15">
+                    <Label Text="Bildirim Tanısı" FontSize="18" FontFamily="OpenSansSemibold" TextColor="White" HorizontalTextAlignment="Center" />
+                    <Label Text="{Binding SurumBilgisi}" FontSize="12" TextColor="White" Opacity="0.8" HorizontalTextAlignment="Center" />
+                </VerticalStackLayout>
+            </Grid>
+        </Border>
+
+        <Label Grid.Row="1" Text="{Binding GirisDurumu}" FontSize="13" TextColor="#7F8C8D"
+               HorizontalTextAlignment="Center" Margin="15,10,15,0" />
+
+        <Border Grid.Row="2" Margin="15,10" StrokeShape="RoundRectangle 14" StrokeThickness="0"
+                BackgroundColor="White" Padding="14">
+            <Border.Shadow>
+                <Shadow Brush="Black" Offset="0,2" Radius="6" Opacity="0.05" />
+            </Border.Shadow>
+            <ScrollView>
+                <Label Text="{Binding TaniMetni}" FontSize="12" FontFamily="Courier"
+                       TextColor="#2C3E50" LineBreakMode="WordWrap" />
+            </ScrollView>
+        </Border>
+
+        <Grid Grid.Row="3" ColumnDefinitions="*, *, *" ColumnSpacing="10" Margin="15,0,15,25">
+            <Button Grid.Column="0" Text="Yenile" FontSize="13" BackgroundColor="#7F8C8D" TextColor="White"
+                    CornerRadius="22" HeightRequest="44"
+                    Command="{Binding YenileCommand}" />
+            <Button Grid.Column="1" Text="Yeniden Kaydet" FontSize="13" BackgroundColor="#2C3E50" TextColor="White"
+                    CornerRadius="22" HeightRequest="44"
+                    Command="{Binding YenidenKaydetCommand}" />
+            <Button Grid.Column="2" Text="Kopyala" FontSize="13" BackgroundColor="#16A085" TextColor="White"
+                    CornerRadius="22" HeightRequest="44"
+                    Command="{Binding KopyalaCommand}" />
+        </Grid>
+    </Grid>
+</ContentPage>

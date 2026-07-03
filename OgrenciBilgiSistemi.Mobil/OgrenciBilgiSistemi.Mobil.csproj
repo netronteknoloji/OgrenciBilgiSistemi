@@ -11,8 +11,8 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<ApplicationTitle>OgrenciBilgiSistemi</ApplicationTitle>
-		<ApplicationDisplayVersion>3.9</ApplicationDisplayVersion>
-		<ApplicationVersion>64</ApplicationVersion>
+		<ApplicationDisplayVersion>3.9.1</ApplicationDisplayVersion>
+		<ApplicationVersion>65</ApplicationVersion>
 	</PropertyGroup>
 
 	<!-- Platform versiyonlari -->

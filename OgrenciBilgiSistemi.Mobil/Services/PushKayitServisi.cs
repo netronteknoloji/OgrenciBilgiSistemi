@@ -13,25 +13,10 @@ namespace OgrenciBilgiSistemi.Mobil.Services
     {
         private const string AnahtarFcmToken = "fcm_token";
 
-        /// <summary>Son teşhis durumu — sorun bildiriminde cihazdan okunabilir.</summary>
-        public const string AnahtarTaniDurumu = "push_tani_durumu";
-
         private bool _dinleyicilerBagli;
 
-        /// <summary>
-        /// Teşhis izi: Debug.WriteLine Release build'de derlenmediği için Console'a yazar
-        /// (iOS Console.app / adb logcat'te görünür) ve son durumu Preferences'a kaydeder.
-        /// Token değeri asla yazılmaz (yalnız uzunluk).
-        /// </summary>
-        private static void Tani(string mesaj)
-        {
-            Console.WriteLine($"[PUSH] {mesaj}");
-            try
-            {
-                Preferences.Default.Set(AnahtarTaniDurumu, $"{DateTime.Now:HH:mm:ss} {mesaj}");
-            }
-            catch { /* Preferences erişilemezse teşhis akışı kırılmasın */ }
-        }
+        /// <summary>Teşhis izi — ortak günlüğe yazar (Console + Preferences, PushTaniView'da görünür).</summary>
+        private static void Tani(string mesaj) => PushTaniGunlugu.Ekle(mesaj);
 
         public async Task DinleyicileriBaslatAsync()
         {

@@ -49,11 +49,16 @@ public partial class AnaBaslikView : ContentView
             "Vazgeç",
             null,
             "Şifre Değiştir",
+            "Bildirim Tanısı",
             "Çıkış Yap");
 
         if (action == "Şifre Değiştir")
         {
             await SifreDegistirAsync();
+        }
+        else if (action == "Bildirim Tanısı")
+        {
+            await Shell.Current.GoToAsync(nameof(PushTaniView));
         }
         else if (action == "Çıkış Yap")
         {

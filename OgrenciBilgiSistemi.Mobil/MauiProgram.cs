@@ -80,6 +80,7 @@ namespace OgrenciBilgiSistemi.Mobil
             builder.Services.AddTransient<RandevuListeGorunumModel>();
             builder.Services.AddTransient<VeliAnaSayfaGorunumModel>();
             builder.Services.AddTransient<RandevuOlusturGorunumModel>();
+            builder.Services.AddTransient<PushTaniGorunumModel>();
             // OgrenciDetayGorunumModel runtime parametre (ogrenciId) aldigi icin DI'a kaydedilmedi.
 
             // Sayfa kayitlari
@@ -96,6 +97,7 @@ namespace OgrenciBilgiSistemi.Mobil
             builder.Services.AddTransient<BildirimListeView>();
             builder.Services.AddTransient<OgretmenDuyuruOlusturView>();
             builder.Services.AddTransient<VeliDuyurularView>();
+            builder.Services.AddTransient<PushTaniView>();
             builder.Services.AddTransient<AdminAnaSayfaView>();
             builder.Services.AddTransient<AdminOgrenciListeView>();
             builder.Services.AddTransient<AdminOgretmenListeView>();
@@ -130,12 +132,11 @@ namespace OgrenciBilgiSistemi.Mobil
                     {
                         CrossFirebase.Initialize(CreateCrossFirebaseSettings());
                         FirebaseCloudMessagingImplementation.Initialize();
-                        Console.WriteLine("[PUSH] Firebase init OK (iOS)");
+                        Services.PushTaniGunlugu.Ekle("Firebase init OK (iOS)");
                     }
                     catch (Exception ex)
                     {
-                        // Console: Release build'de de görünsün (Console.app) — Debug.WriteLine derlenmez.
-                        Console.WriteLine($"[PUSH] Firebase init HATA: {ex.Message}");
+                        Services.PushTaniGunlugu.Ekle($"Firebase init HATA: {ex.Message}");
                     }
                     return false;
                 }));

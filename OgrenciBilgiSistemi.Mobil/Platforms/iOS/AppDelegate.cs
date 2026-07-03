@@ -24,7 +24,7 @@ namespace OgrenciBilgiSistemi.Mobil
                     UNAuthorizationOptions.Alert | UNAuthorizationOptions.Sound | UNAuthorizationOptions.Badge,
                     (granted, error) =>
                     {
-                        Console.WriteLine($"[PUSH] iOS bildirim izni granted={granted} error={error?.LocalizedDescription ?? "yok"}");
+                        PushTaniGunlugu.Ekle($"iOS bildirim izni granted={granted} error={error?.LocalizedDescription ?? "yok"}");
                         if (granted)
                         {
                             MainThread.BeginInvokeOnMainThread(() =>
@@ -95,18 +95,18 @@ namespace OgrenciBilgiSistemi.Mobil
             try
             {
                 Firebase.CloudMessaging.Messaging.SharedInstance.ApnsToken = deviceToken;
-                Console.WriteLine("[PUSH] APNs token Firebase'e aktarıldı");
+                PushTaniGunlugu.Ekle("APNs token Firebase'e aktarıldı");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[PUSH] APNs token aktarım hatası: {ex.Message}");
+                PushTaniGunlugu.Ekle($"APNs token aktarım hatası: {ex.Message}");
             }
         }
 
         [Export("application:didFailToRegisterForRemoteNotificationsWithError:")]
         public void FailedToRegisterForRemoteNotifications(UIApplication application, NSError error)
         {
-            Console.WriteLine($"[PUSH] APNs kayıt başarısız: {error.LocalizedDescription}");
+            PushTaniGunlugu.Ekle($"APNs kayıt başarısız: {error.LocalizedDescription}");
         }
     }
 
