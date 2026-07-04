@@ -153,26 +153,12 @@ namespace OgrenciBilgiSistemi.Mobil.Services
         /// <summary>
         /// Tüm oturum bilgilerini bellekten ve SecureStorage'dan temizler.
         /// Sunucu tarafında refresh token'ı geçersiz kılmak için logout API'sini çağırır.
+        /// Push cihaz kaydı BİLEREK silinmez — kullanıcı çıkış yapsa da cihaz bildirim almaya
+        /// devam eder. Token yalnızca sonraki girişte upsert ile ilgili kullanıcıya yeniden
+        /// eşlenir veya FCM geçersiz bildirince sunucuda düşer.
         /// </summary>
-        /// <param name="pushKaydiniSil">
-        /// Yalnızca kullanıcının ELLE yaptığı çıkışta true verilir → cihazın push kaydı
-        /// sunucudan silinir. Otomatik logout'ta (401 / oturum süresi dolması) false kalır;
-        /// böylece token korunur ve oturum yenilenene kadar bildirimler sessizce kesilmez.
-        /// </param>
-        public static async Task OturumTemizleAsync(bool pushKaydiniSil = false)
+        public static async Task OturumTemizleAsync()
         {
-            // Push cihaz kaydını yalnızca elle çıkışta sunucudan sil (oturum hâlâ varken)
-            if (pushKaydiniSil)
-            {
-                try
-                {
-                    var pushKayit = IPlatformApplication.Current?.Services.GetService<PushKayitServisi>();
-                    if (pushKayit != null)
-                        await pushKayit.LogoutOncesiAsync();
-                }
-                catch { /* sessizce yut */ }
-            }
-
             // Sunucudaki refresh token'ı geçersiz kıl
             await LogoutApiCagirAsync();
 

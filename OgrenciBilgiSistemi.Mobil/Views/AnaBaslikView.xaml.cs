@@ -121,8 +121,8 @@ public partial class AnaBaslikView : ContentView
         // Sadece oturum token/bilgilerini temizle.
         // "Beni Hatırla" kapsamındaki kayıtlı kimlik bilgileri korunur — kullanıcı
         // tekrar giriş ekranına geldiğinde alanların dolu gelmesi beklenir.
-        // Elle çıkış → cihazın push kaydı da sunucudan silinir (bu cihaza artık push gitmesin).
-        await KullaniciOturum.OturumTemizleAsync(pushKaydiniSil: true);
+        // Push kaydı korunur → çıkış yapılsa da cihaz bildirim almaya devam eder.
+        await KullaniciOturum.OturumTemizleAsync();
 
         // Giriş ekranına yönlendir (tüm navigasyon geçmişi temizlenir)
         await Shell.Current.GoToAsync("//GirisView");

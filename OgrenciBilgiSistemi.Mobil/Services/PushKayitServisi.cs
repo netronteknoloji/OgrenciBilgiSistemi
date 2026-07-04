@@ -91,26 +91,6 @@ namespace OgrenciBilgiSistemi.Mobil.Services
             }
         }
 
-        public async Task LogoutOncesiAsync()
-        {
-            try
-            {
-                var token = await SecureStorage.Default.GetAsync(AnahtarFcmToken);
-                if (!string.IsNullOrWhiteSpace(token) && KullaniciOturum.GirisYapildiMi)
-                {
-                    await ApidenSilAsync(token);
-                }
-
-                // Plugin.Firebase.CloudMessaging 3.x'te DeleteToken yok; FCM tarafı token cihazda
-                // kalır. Sunucuda IsDeleted=1 ile kayıt iptal edildiği için pratikte etkisi yok.
-                SecureStorage.Default.Remove(AnahtarFcmToken);
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[PUSH] Logout öncesi temizlik hatası: {ex.Message}");
-            }
-        }
-
         private async Task TokenYeniledigindeAsync(string yeniToken)
         {
             if (!KullaniciOturum.GirisYapildiMi || string.IsNullOrWhiteSpace(yeniToken))
@@ -199,20 +179,6 @@ namespace OgrenciBilgiSistemi.Mobil.Services
             var response = await PostAsJsonAsync($"{BaseUrl}cihazlar/token-yenile", govde);
             if (!response.IsSuccessStatusCode)
                 System.Diagnostics.Debug.WriteLine($"[PUSH] Token yenileme hatası: {response.StatusCode}");
-        }
-
-        private async Task ApidenSilAsync(string token)
-        {
-            try
-            {
-                var response = await DeleteAsJsonAsync($"{BaseUrl}cihazlar/kaydi-sil", new { FcmToken = token });
-                if (!response.IsSuccessStatusCode)
-                    System.Diagnostics.Debug.WriteLine($"[PUSH] Cihaz silme hatası: {response.StatusCode}");
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[PUSH] Cihaz silme istisnası: {ex.Message}");
-            }
         }
 
         private static int AlgilanaPlatform()
