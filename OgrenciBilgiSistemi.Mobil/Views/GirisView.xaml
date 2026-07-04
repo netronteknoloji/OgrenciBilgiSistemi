@@ -121,13 +121,19 @@
                                     BackgroundColor="#F8F9F9"
                                     HeightRequest="45">
 
-                                <Entry Placeholder="Kullanıcı adınızı giriniz"
+                                <Entry x:Name="TxtKullaniciAdi"
+                                       StyleId="kullaniciAdiEntry"
+                                       Placeholder="Kullanıcı adınızı giriniz"
                                        PlaceholderColor="#95A5A6"
                                        TextColor="#2C3E50"
                                        FontSize="14"
                                        BackgroundColor="Transparent"
                                        Margin="12,0"
                                        VerticalOptions="Center"
+                                       Keyboard="Text"
+                                       ReturnType="Next"
+                                       IsTextPredictionEnabled="False"
+                                       IsSpellCheckEnabled="False"
                                        Text="{Binding KullaniciAdi}" />
                             </Border>
 
@@ -137,12 +143,12 @@
                                     StrokeThickness="1"
                                     StrokeShape="RoundRectangle 8"
                                     BackgroundColor="White"
-                                    HeightRequest="150"
+                                    HeightRequest="{Binding OneriKutusuYuksekligi}"
                                     Margin="0,-5,0,0">
                                 <CollectionView SelectionMode="Single"
                                                 SelectionChanged="OnOneriSecildi"
                                                 ItemsSource="{Binding OneriListesi}"
-                                                HeightRequest="150"
+                                                HeightRequest="{Binding OneriKutusuYuksekligi}"
                                                 VerticalScrollBarVisibility="Always">
                                     <CollectionView.ItemsLayout>
                                         <LinearItemsLayout Orientation="Vertical" ItemSpacing="0" />

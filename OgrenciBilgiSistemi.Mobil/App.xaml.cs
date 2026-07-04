@@ -26,6 +26,14 @@ public partial class App : Application                                          
             handler.PlatformView.BackgroundTintList = Android.Content.Res.ColorStateList.ValueOf(Android.Graphics.Color.Transparent); // Android alt çizgi rengi gizlenir.
 #elif IOS || MACCATALYST                                                            // Apple platformları için derlenecek blok.
             handler.PlatformView.BorderStyle = UIKit.UITextBorderStyle.None;        // iOS üzerindeki standart çerçeve tipi 'Yok' yapılır.
+            // Kullanıcı adı alanında iOS'un kendi giriş yardımını (QuickType/AutoFill "mavi tik")
+            // kapat → kullanıcı doğrudan uygulamanın öneri listesinden seçim yapabilsin.
+            if (view is Entry kullaniciAdiEntry && kullaniciAdiEntry.StyleId == "kullaniciAdiEntry")
+            {
+                handler.PlatformView.AutocorrectionType = UIKit.UITextAutocorrectionType.No;   // Otomatik düzeltme kapalı.
+                handler.PlatformView.SpellCheckingType = UIKit.UITextSpellCheckingType.No;      // Yazım denetimi kapalı.
+                handler.PlatformView.TextContentType = new Foundation.NSString(string.Empty);   // AutoFill accessory devre dışı.
+            }
 #elif WINDOWS                                                                       // Windows masaüstü için derlenecek blok.
             handler.PlatformView.BorderThickness = new Microsoft.UI.Xaml.Thickness(0); // Windows çerçeve kalınlığı sıfıra indirilir.
             handler.PlatformView.Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent); // Windows arka planı saydamlaştırılır.

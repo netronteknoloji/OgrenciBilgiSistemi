@@ -29,6 +29,11 @@ namespace OgrenciBilgiSistemi.Mobil.ViewModels
 
         public string SifreIkonKaynagi => SifreGizli ? "eye_off.png" : "eye_on.png";
 
+        // Öneri kutusu yüksekliği öğe sayısına göre ayarlanır (altta boşluk kalmasın);
+        // en çok 4 satır görünür, fazlası kaydırılır.
+        private const double OneriSatirYuksekligi = 48;
+        public double OneriKutusuYuksekligi => Math.Min(OneriListesi.Count, 4) * OneriSatirYuksekligi;
+
         public GirisGorunumModel(
             GirisService girisService,
             OkulKayitServisi okulKayitServisi,
@@ -46,6 +51,8 @@ namespace OgrenciBilgiSistemi.Mobil.ViewModels
         }
 
         partial void OnSifreGizliChanged(bool value) => OnPropertyChanged(nameof(SifreIkonKaynagi));
+
+        partial void OnOneriListesiChanged(IReadOnlyList<string> value) => OnPropertyChanged(nameof(OneriKutusuYuksekligi));
 
         partial void OnKullaniciAdiChanged(string value)
         {
