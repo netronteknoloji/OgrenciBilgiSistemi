@@ -4,13 +4,12 @@ using Microsoft.Maui.LifecycleEvents;
 using OgrenciBilgiSistemi.Mobil.Services;
 using OgrenciBilgiSistemi.Mobil.ViewModels;
 using OgrenciBilgiSistemi.Mobil.Views;
-using Plugin.Firebase.Bundled.Shared;
 using Plugin.Firebase.CloudMessaging;
 using Plugin.LocalNotification;
 using System.Reflection;
 using System.Text.Json;
 #if IOS
-using Plugin.Firebase.Bundled.Platforms.iOS;
+using Plugin.Firebase.Core.Platforms.iOS;
 #endif
 
 namespace OgrenciBilgiSistemi.Mobil
@@ -116,10 +115,10 @@ namespace OgrenciBilgiSistemi.Mobil
         }
 
         /// <summary>
-        /// Plugin.Firebase platform-spesifik baslaticilarini cagirir.
-        /// iOS: CrossFirebase.Initialize(settings) + FirebaseCloudMessagingImplementation.Initialize().
+        /// Moduler Plugin.Firebase (Core + CloudMessaging) platform baslaticilarini cagirir.
+        /// iOS: CrossFirebase.Initialize(null, options) + FirebaseCloudMessagingImplementation.Initialize().
         /// UNUserNotificationCenter delegate'i AppDelegate'te baglanir.
-        /// Android: CrossFirebase.Initialize MainApplication / MainActivity'de cagrilir.
+        /// Android: CrossFirebase.Initialize MainActivity'de cagrilir.
         /// </summary>
         private static MauiAppBuilder RegisterFirebaseServices(this MauiAppBuilder builder)
         {
@@ -144,7 +143,7 @@ namespace OgrenciBilgiSistemi.Mobil
                             StorageBucket = "ogrencibilgisistemi-b0a52.firebasestorage.app"
                         };
 
-                        CrossFirebase.Initialize(CreateCrossFirebaseSettings(), firebaseOptions);
+                        CrossFirebase.Initialize(null, firebaseOptions);
                         FirebaseCloudMessagingImplementation.Initialize();
                         Services.PushTaniGunlugu.Ekle("Firebase init OK (iOS, explicit options)");
                     }
@@ -158,15 +157,6 @@ namespace OgrenciBilgiSistemi.Mobil
             });
 
             return builder;
-        }
-
-        /// <summary>
-        /// Plugin.Firebase 4.x icin CrossFirebaseSettings olusturur.
-        /// Yalnizca Cloud Messaging (push bildirim) etkin; diger servisler kapali.
-        /// </summary>
-        private static CrossFirebaseSettings CreateCrossFirebaseSettings()
-        {
-            return new CrossFirebaseSettings(isCloudMessagingEnabled: true);
         }
 
         /// <summary>

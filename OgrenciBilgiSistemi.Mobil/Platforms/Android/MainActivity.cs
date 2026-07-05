@@ -4,8 +4,6 @@ using Android.Content.PM;
 using Android.OS;
 using Android.Views;
 using OgrenciBilgiSistemi.Mobil.Services;
-using Plugin.Firebase.Bundled.Shared;
-using Plugin.Firebase.Core;
 
 namespace OgrenciBilgiSistemi.Mobil
 {
@@ -27,10 +25,11 @@ namespace OgrenciBilgiSistemi.Mobil
             // Plugin.Firebase Android başlatma — google-services.json'ı okur, FCM'i hazırlar.
             try
             {
-                Plugin.Firebase.Bundled.Platforms.Android.CrossFirebase.Initialize(
+                Plugin.Firebase.Core.Platforms.Android.CrossFirebase.Initialize(
                     this,
                     () => Microsoft.Maui.ApplicationModel.Platform.CurrentActivity ?? this,
-                    new CrossFirebaseSettings(isCloudMessagingEnabled: true));
+                    null,   // FirebaseOptions — google-services.json'dan otomatik okunur
+                    null);  // app adı (opsiyonel)
             }
             catch (Exception ex)
             {
