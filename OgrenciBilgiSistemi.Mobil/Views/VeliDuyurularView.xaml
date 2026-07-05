@@ -16,7 +16,7 @@
             </Border.Shadow>
             <Grid>
                 <views:AnaBaslikView x:Name="MyHeader" ShowBack="True" ShowProfile="False" VurguRenk="{StaticResource VeliRenk}" />
-                <VerticalStackLayout Spacing="2" VerticalOptions="End" HorizontalOptions="Center" Margin="20,0,20,15">
+                <VerticalStackLayout Spacing="2" VerticalOptions="End" HorizontalOptions="Center" Margin="20,0,20,35">
                     <Label Text="Duyurular" FontSize="18" FontFamily="OpenSansSemibold" TextColor="White" HorizontalTextAlignment="Center" />
                     <Label Text="{Binding AltBaslik}" FontSize="14" TextColor="White" Opacity="0.8" HorizontalTextAlignment="Center" />
                 </VerticalStackLayout>
@@ -24,7 +24,7 @@
         </Border>
 
         <!-- Tümünü okundu işaretle -->
-        <Border Grid.Row="1" Margin="15,12,15,10" HeightRequest="48" StrokeShape="RoundRectangle 24"
+        <Border Grid.Row="1" Margin="15,-28,15,10" HeightRequest="48" StrokeShape="RoundRectangle 24"
                 StrokeThickness="0" BackgroundColor="{StaticResource Kart}">
             <Border.Shadow>
                 <Shadow Brush="Black" Offset="0,8" Radius="24" Opacity="0.10" />

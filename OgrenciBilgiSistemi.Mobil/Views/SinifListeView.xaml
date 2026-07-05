@@ -27,7 +27,7 @@
                 <VerticalStackLayout Spacing="2"
                                      VerticalOptions="End"
                                      Margin="20,0,20,35">
-                    <Label Text="Öğretmen Paneli"
+                    <Label Text="{Binding KarsilamaMetni}"
                            FontSize="18"
                            FontFamily="OpenSansSemibold"
                            TextColor="White" />

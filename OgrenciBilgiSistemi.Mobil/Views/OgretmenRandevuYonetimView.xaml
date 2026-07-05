@@ -16,7 +16,7 @@
             </Border.Shadow>
             <Grid>
                 <views:AnaBaslikView x:Name="MyHeader" ShowBack="True" ShowProfile="False" VurguRenk="{StaticResource OgretmenRenk}" />
-                <VerticalStackLayout Spacing="2" VerticalOptions="End" HorizontalOptions="Center" Margin="20,0,20,15">
+                <VerticalStackLayout Spacing="2" VerticalOptions="End" HorizontalOptions="Center" Margin="20,0,20,35">
                     <Label Text="Randevu Takvimi" FontSize="18" FontFamily="OpenSansSemibold" TextColor="White" HorizontalTextAlignment="Center" />
                     <Label Text="Haftalık randevu saatleriniz" FontSize="14" TextColor="White" Opacity="0.8" HorizontalTextAlignment="Center" />
                 </VerticalStackLayout>
@@ -24,7 +24,7 @@
         </Border>
 
         <!-- Yeni randevu saati ekleme formu -->
-        <Border Grid.Row="1" Style="{StaticResource YuzenKart}" Margin="15,12,15,10" StrokeShape="RoundRectangle 20">
+        <Border Grid.Row="1" Style="{StaticResource YuzenKart}" Margin="15,-28,15,10" StrokeShape="RoundRectangle 20">
             <Border.Shadow>
                 <Shadow Brush="Black" Offset="0,8" Radius="24" Opacity="0.10" />
             </Border.Shadow>

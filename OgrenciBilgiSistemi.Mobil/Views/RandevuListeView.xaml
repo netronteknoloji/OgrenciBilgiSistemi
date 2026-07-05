@@ -16,7 +16,7 @@
             </Border.Shadow>
             <Grid>
                 <views:AnaBaslikView x:Name="MyHeader" ShowBack="True" ShowProfile="False" VurguRenk="{StaticResource Marka}" />
-                <VerticalStackLayout Spacing="2" VerticalOptions="End" HorizontalOptions="Center" Margin="20,0,20,15">
+                <VerticalStackLayout Spacing="2" VerticalOptions="End" HorizontalOptions="Center" Margin="20,0,20,35">
                     <Label Text="Randevularım" FontSize="18" FontFamily="OpenSansSemibold" TextColor="White" HorizontalTextAlignment="Center" />
                     <Label x:Name="AltBaslikLabel" Text="Tüm randevularınız" FontSize="14" TextColor="White" Opacity="0.8" HorizontalTextAlignment="Center" />
                 </VerticalStackLayout>
@@ -24,7 +24,7 @@
         </Border>
 
         <!-- Yeni randevu ve bildirim butonları -->
-        <Grid Grid.Row="1" ColumnDefinitions="*, *" Margin="15,12,15,10" HeightRequest="55">
+        <Grid Grid.Row="1" ColumnDefinitions="*, *" Margin="15,-28,15,10" HeightRequest="55">
             <Button Grid.Column="0" Text="+ Yeni Randevu" BackgroundColor="{StaticResource Marka}" TextColor="White"
                     FontFamily="OpenSansSemibold" FontSize="13" CornerRadius="28" Margin="0,0,5,0"
                     Command="{Binding YeniRandevuCommand}" />
