@@ -124,7 +124,7 @@
                                 CommandParameter="{Binding .}" />
                         </Border.GestureRecognizers>
                         <Grid ColumnDefinitions="8, 65, *, Auto" Padding="0,12">
-                            <BoxView Grid.Column="0" BackgroundColor="{StaticResource VeliRenk}" WidthRequest="8" HorizontalOptions="Start" />
+                            <BoxView Grid.Column="0" Color="{StaticResource VeliRenk}" WidthRequest="8" HorizontalOptions="Start" />
                             <Border Grid.Column="1" StrokeShape="RoundRectangle 25" StrokeThickness="0"
                                     WidthRequest="50" HeightRequest="50" Margin="8,0">
                                 <Image Source="{Binding OgrenciGorsel}" Aspect="AspectFill"

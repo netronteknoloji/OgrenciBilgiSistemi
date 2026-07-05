@@ -57,7 +57,7 @@
                                 CommandParameter="{Binding .}" />
                         </Border.GestureRecognizers>
                         <Grid ColumnDefinitions="4, *, Auto" ColumnSpacing="12">
-                            <BoxView Grid.Column="0" BackgroundColor="{Binding SolCizgiRenk}" WidthRequest="4"
+                            <BoxView Grid.Column="0" Color="{Binding SolCizgiRenk}" WidthRequest="4"
                                      VerticalOptions="Fill" HorizontalOptions="Center">
                                 <BoxView.Clip>
                                     <RoundRectangleGeometry CornerRadius="2" Rect="0,0,4,60" />

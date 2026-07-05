@@ -54,7 +54,7 @@
                             <Shadow Brush="Black" Offset="0,2" Radius="8" Opacity="0.06" />
                         </Border.Shadow>
                         <Grid ColumnDefinitions="8, *, Auto" Padding="0,12">
-                            <BoxView Grid.Column="0" BackgroundColor="{StaticResource OgretmenRenk}" WidthRequest="8" HorizontalOptions="Start" />
+                            <BoxView Grid.Column="0" Color="{StaticResource OgretmenRenk}" WidthRequest="8" HorizontalOptions="Start" />
                             <VerticalStackLayout Grid.Column="1" Spacing="3" Margin="12,0">
                                 <Label Text="{Binding TarihMetni}" FontSize="16" FontFamily="OpenSansSemibold" TextColor="{StaticResource MetinKoyu}" />
                                 <Label FontSize="13" TextColor="{StaticResource OgretmenRenk}">

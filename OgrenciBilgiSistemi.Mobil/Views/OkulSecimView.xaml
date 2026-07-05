@@ -48,7 +48,7 @@
                             CommandParameter="{Binding .}" />
                         </Border.GestureRecognizers>
                         <Grid ColumnDefinitions="4, *, Auto">
-                            <BoxView Grid.Column="0" BackgroundColor="{StaticResource Marka}" WidthRequest="4"
+                            <BoxView Grid.Column="0" Color="{StaticResource Marka}" WidthRequest="4"
                                      VerticalOptions="Fill" HorizontalOptions="Center">
                                 <BoxView.Clip>
                                     <RoundRectangleGeometry CornerRadius="2" Rect="0,0,4,60" />

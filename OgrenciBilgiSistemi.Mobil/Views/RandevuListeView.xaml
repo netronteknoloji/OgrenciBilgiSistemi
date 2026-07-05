@@ -57,7 +57,7 @@
                                     CommandParameter="{Binding .}" />
                             </Border.GestureRecognizers>
                             <Grid ColumnDefinitions="4, *, Auto" ColumnSpacing="14">
-                                <BoxView Grid.Column="0" BackgroundColor="{Binding DurumRenk}" WidthRequest="4"
+                                <BoxView Grid.Column="0" Color="{Binding DurumRenk}" WidthRequest="4"
                                          VerticalOptions="Fill" HorizontalOptions="Center">
                                     <BoxView.Clip>
                                         <RoundRectangleGeometry CornerRadius="2" Rect="0,0,4,80" />
