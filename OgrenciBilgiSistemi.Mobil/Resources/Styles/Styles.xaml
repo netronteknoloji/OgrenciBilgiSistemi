@@ -426,4 +426,103 @@
         <Setter Property="SelectedTabColor" Value="{AppThemeBinding Light={StaticResource Gray950}, Dark={StaticResource Gray200}}" />
     </Style>
 
+    <!-- ============================================================= -->
+    <!--  Modern tasarım sistemi — yeniden kullanılabilir bileşenler   -->
+    <!--  Tümü x:Key'li (implicit değil) → yalnızca uygulandıkları     -->
+    <!--  ekranları etkiler, diğer ~23 ekran bozulmaz.                 -->
+    <!-- ============================================================= -->
+
+    <!-- Kart yüzeyleri.
+         Not: Gölge (Shadow) bilerek stile konmadı — MAUI'de Shadow bir Element'tir
+         ve tek örneği birden çok karta paylaştırmak sorun çıkarabilir; bu yüzden
+         gölgeler kartlarda inline (<Border.Shadow>) tanımlanır. -->
+    <Style x:Key="KartCerceve" TargetType="Border">
+        <Setter Property="BackgroundColor" Value="{StaticResource Kart}" />
+        <Setter Property="StrokeThickness" Value="0" />
+        <Setter Property="StrokeShape" Value="RoundRectangle 16" />
+        <Setter Property="Padding" Value="14" />
+    </Style>
+
+    <Style x:Key="YuzenKart" TargetType="Border">
+        <Setter Property="BackgroundColor" Value="{StaticResource Kart}" />
+        <Setter Property="StrokeThickness" Value="0" />
+        <Setter Property="StrokeShape" Value="RoundRectangle 20" />
+    </Style>
+
+    <Style x:Key="KpiKart" TargetType="Border">
+        <Setter Property="BackgroundColor" Value="{StaticResource Kart}" />
+        <Setter Property="StrokeThickness" Value="0" />
+        <Setter Property="StrokeShape" Value="RoundRectangle 16" />
+        <Setter Property="HeightRequest" Value="120" />
+    </Style>
+
+    <!-- Girdi sarmalayıcı (Entry/Picker) -->
+    <Style x:Key="GirdiCerceve" TargetType="Border">
+        <Setter Property="BackgroundColor" Value="{StaticResource KartSoluk}" />
+        <Setter Property="Stroke" Value="{StaticResource CizgiBrush}" />
+        <Setter Property="StrokeThickness" Value="1" />
+        <Setter Property="StrokeShape" Value="RoundRectangle 12" />
+        <Setter Property="HeightRequest" Value="48" />
+    </Style>
+
+    <!-- Birincil buton -->
+    <Style x:Key="BirincilButon" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="{StaticResource Marka}" />
+        <Setter Property="TextColor" Value="{StaticResource White}" />
+        <Setter Property="FontFamily" Value="OpenSansSemibold" />
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="CornerRadius" Value="14" />
+        <Setter Property="HeightRequest" Value="54" />
+        <Setter Property="VisualStateManager.VisualStateGroups">
+            <VisualStateGroupList>
+                <VisualStateGroup x:Name="CommonStates">
+                    <VisualState x:Name="Normal" />
+                    <VisualState x:Name="Disabled">
+                        <VisualState.Setters>
+                            <Setter Property="BackgroundColor" Value="{StaticResource Cizgi}" />
+                            <Setter Property="TextColor" Value="{StaticResource MetinSoluk}" />
+                        </VisualState.Setters>
+                    </VisualState>
+                </VisualStateGroup>
+            </VisualStateGroupList>
+        </Setter>
+    </Style>
+
+    <!-- Tipografi -->
+    <Style x:Key="Baslik" TargetType="Label">
+        <Setter Property="TextColor" Value="{StaticResource MetinKoyu}" />
+        <Setter Property="FontFamily" Value="OpenSansSemibold" />
+        <Setter Property="FontSize" Value="20" />
+    </Style>
+
+    <Style x:Key="AltBaslik" TargetType="Label">
+        <Setter Property="TextColor" Value="{StaticResource MetinKoyu}" />
+        <Setter Property="FontFamily" Value="OpenSansSemibold" />
+        <Setter Property="FontSize" Value="18" />
+    </Style>
+
+    <Style x:Key="Govde" TargetType="Label">
+        <Setter Property="TextColor" Value="{StaticResource MetinGovde}" />
+        <Setter Property="FontFamily" Value="OpenSansRegular" />
+        <Setter Property="FontSize" Value="14" />
+    </Style>
+
+    <Style x:Key="Etiket" TargetType="Label">
+        <Setter Property="TextColor" Value="{StaticResource MetinSoluk}" />
+        <Setter Property="FontFamily" Value="OpenSansRegular" />
+        <Setter Property="FontSize" Value="13" />
+    </Style>
+
+    <Style x:Key="KpiSayi" TargetType="Label">
+        <Setter Property="TextColor" Value="{StaticResource MetinKoyu}" />
+        <Setter Property="FontFamily" Value="OpenSansSemibold" />
+        <Setter Property="FontSize" Value="28" />
+    </Style>
+
+    <Style x:Key="KpiEtiket" TargetType="Label">
+        <Setter Property="TextColor" Value="{StaticResource MetinSoluk}" />
+        <Setter Property="FontFamily" Value="OpenSansSemibold" />
+        <Setter Property="FontSize" Value="12" />
+    </Style>
+
 </ResourceDictionary>

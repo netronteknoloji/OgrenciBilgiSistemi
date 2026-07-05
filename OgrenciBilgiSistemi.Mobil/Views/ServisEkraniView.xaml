@@ -5,7 +5,7 @@
              x:Class="OgrenciBilgiSistemi.Mobil.Views.ServisEkraniView"
              Title="Servis Yoklama"
              Shell.NavBarIsVisible="False"
-             BackgroundColor="#F2F2F2">
+             BackgroundColor="{StaticResource UygulamaArkaPlan}">
 
     <ContentPage.Resources>
         <Style x:Key="ServisDurumBorderStyle" TargetType="Border">
@@ -13,8 +13,8 @@
             <Setter Property="StrokeThickness" Value="1" />
             <Setter Property="Padding" Value="14,8" />
             <Setter Property="Margin" Value="0,0,8,0" />
-            <Setter Property="BackgroundColor" Value="White" />
-            <Setter Property="Stroke" Value="#DCDDE1" />
+            <Setter Property="BackgroundColor" Value="{StaticResource Kart}" />
+            <Setter Property="Stroke" Value="{StaticResource CizgiBrush}" />
         </Style>
     </ContentPage.Resources>
 
@@ -22,16 +22,17 @@
 
         <Border Grid.Row="0"
                 StrokeThickness="0"
-                BackgroundColor="#2980B9"
+                Background="{StaticResource ServisBaslikGradyan}"
                 VerticalOptions="FillAndExpand">
             <Border.Shadow>
-                <Shadow Brush="#2980B9" Offset="0,4" Radius="15" Opacity="0.4" />
+                <Shadow Brush="{StaticResource ServisRenk}" Offset="0,4" Radius="15" Opacity="0.35" />
             </Border.Shadow>
 
             <Grid>
                 <views:AnaBaslikView x:Name="MyHeader"
                                       ShowBack="False"
-                                      ShowProfile="True" />
+                                      ShowProfile="True"
+                                      VurguRenk="{StaticResource ServisRenk}" />
 
                 <VerticalStackLayout Spacing="2"
                                      VerticalOptions="End"
@@ -43,25 +44,25 @@
                     <Label Text="{Binding PlakaMetni}"
                            FontSize="14"
                            FontFamily="OpenSansSemibold"
-                           TextColor="White" />
+                           TextColor="White"
+                           Opacity="0.8" />
                 </VerticalStackLayout>
             </Grid>
         </Border>
 
         <!-- Periyot seçici (Sabah / Akşam) -->
         <Border Grid.Row="1"
+                Style="{StaticResource YuzenKart}"
                 Margin="15,-28,15,10"
                 HeightRequest="55"
-                StrokeShape="RoundRectangle 28"
-                StrokeThickness="0"
-                BackgroundColor="White">
+                StrokeShape="RoundRectangle 28">
             <Border.Shadow>
-                <Shadow Brush="Black" Offset="0,10" Radius="20" Opacity="0.08" />
+                <Shadow Brush="Black" Offset="0,8" Radius="24" Opacity="0.10" />
             </Border.Shadow>
             <Grid ColumnDefinitions="55, *">
                 <Label Grid.Column="0" Text="🚌" VerticalOptions="Center" HorizontalOptions="Center" FontSize="22" />
-                <Picker Grid.Column="1" Title="Periyot Seçiniz" TitleColor="#95A5A6"
-                        TextColor="#2C3E50" VerticalOptions="Center" SelectedIndex="{Binding SecilenPeriyotIndex}">
+                <Picker Grid.Column="1" Title="Periyot Seçiniz" TitleColor="{StaticResource MetinSoluk}"
+                        TextColor="{StaticResource MetinKoyu}" VerticalOptions="Center" SelectedIndex="{Binding SecilenPeriyotIndex}">
                     <Picker.ItemsSource>
                         <x:Array Type="{x:Type x:String}">
                             <x:String>Sabah Servisi</x:String>
@@ -78,16 +79,16 @@
                 HeightRequest="45"
                 StrokeShape="RoundRectangle 22"
                 StrokeThickness="0"
-                BackgroundColor="White">
+                BackgroundColor="{StaticResource Kart}">
             <Border.Shadow>
                 <Shadow Brush="Black" Offset="0,4" Radius="10" Opacity="0.05" />
             </Border.Shadow>
             <Grid ColumnDefinitions="45, *, Auto">
-                <Label Grid.Column="0" Text="🔍" VerticalOptions="Center" HorizontalOptions="Center" FontSize="16" TextColor="#95A5A6" />
-                <Entry Grid.Column="1" Placeholder="Öğrenci ara..." PlaceholderColor="#95A5A6"
-                       TextColor="#2C3E50" FontSize="14" VerticalOptions="Center" Text="{Binding AramaMetni}" />
+                <Label Grid.Column="0" Text="🔍" VerticalOptions="Center" HorizontalOptions="Center" FontSize="16" TextColor="{StaticResource MetinSoluk}" />
+                <Entry Grid.Column="1" Placeholder="Öğrenci ara..." PlaceholderColor="{StaticResource MetinSoluk}"
+                       TextColor="{StaticResource MetinKoyu}" FontSize="14" VerticalOptions="Center" Text="{Binding AramaMetni}" />
                 <Label Grid.Column="2" Text="{Binding OgrenciSayisiMetni}"
-                       VerticalOptions="Center" FontSize="12" TextColor="#7F8C8D" Margin="0,0,15,0" />
+                       VerticalOptions="Center" FontSize="12" TextColor="{StaticResource MetinSoluk}" Margin="0,0,15,0" />
             </Grid>
         </Border>
 
@@ -105,21 +106,21 @@
             </CollectionView.ItemsLayout>
             <CollectionView.ItemTemplate>
                 <DataTemplate>
-                    <Border StrokeShape="RoundRectangle 15" StrokeThickness="0" BackgroundColor="White" Padding="15">
+                    <Border StrokeShape="RoundRectangle 16" StrokeThickness="0" BackgroundColor="{StaticResource Kart}" Padding="15">
                         <Border.Shadow>
-                            <Shadow Brush="Black" Offset="0,2" Radius="5" Opacity="0.05" />
+                            <Shadow Brush="Black" Offset="0,2" Radius="8" Opacity="0.06" />
                         </Border.Shadow>
                         <VerticalStackLayout Spacing="12">
                             <!-- Öğrenci bilgileri -->
                             <Grid ColumnDefinitions="Auto, *" ColumnSpacing="12" VerticalOptions="Center">
                                 <Border Grid.Column="0" StrokeShape="RoundRectangle 20" HeightRequest="40"
-                                        WidthRequest="40" StrokeThickness="0" BackgroundColor="#E0E0E0">
+                                        WidthRequest="40" StrokeThickness="0" BackgroundColor="{StaticResource KartSoluk}">
                                     <Image Aspect="AspectFill" Source="{Binding OgrenciData.OgrenciGorsel, TargetNullValue='user_icon.png', FallbackValue='user_icon.png'}" />
                                 </Border>
                                 <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="2">
                                     <Label Text="{Binding OgrenciData.OgrenciAdSoyad}" FontSize="16"
-                                           FontFamily="OpenSansSemibold" TextColor="#2C3E50" LineBreakMode="TailTruncation" />
-                                    <Label Text="{Binding OgrenciData.SinifAdi}" FontSize="11" TextColor="#7F8C8D" />
+                                           FontFamily="OpenSansSemibold" TextColor="{StaticResource MetinKoyu}" LineBreakMode="TailTruncation" />
+                                    <Label Text="{Binding OgrenciData.SinifAdi}" FontSize="11" TextColor="{StaticResource MetinSoluk}" />
                                 </VerticalStackLayout>
                             </Grid>
 
@@ -129,7 +130,7 @@
                                     <Border.GestureRecognizers>
                                         <TapGestureRecognizer Tapped="OnServisDurumTapped" CommandParameter="1" />
                                     </Border.GestureRecognizers>
-                                    <Label Text="Bindi" FontSize="13" TextColor="Black">
+                                    <Label Text="Bindi" FontSize="13" TextColor="{StaticResource MetinGovde}">
                                         <Label.Triggers>
                                             <DataTrigger TargetType="Label" Binding="{Binding ServisDurumId}" Value="1">
                                                 <Setter Property="TextColor" Value="White" />
@@ -138,8 +139,8 @@
                                     </Label>
                                     <Border.Triggers>
                                         <DataTrigger TargetType="Border" Binding="{Binding ServisDurumId}" Value="1">
-                                            <Setter Property="BackgroundColor" Value="#2ECC71" />
-                                            <Setter Property="Stroke" Value="#2ECC71" />
+                                            <Setter Property="BackgroundColor" Value="{StaticResource Basari}" />
+                                            <Setter Property="Stroke" Value="{StaticResource Basari}" />
                                         </DataTrigger>
                                     </Border.Triggers>
                                 </Border>
@@ -148,7 +149,7 @@
                                     <Border.GestureRecognizers>
                                         <TapGestureRecognizer Tapped="OnServisDurumTapped" CommandParameter="2" />
                                     </Border.GestureRecognizers>
-                                    <Label Text="Binmedi" FontSize="13" TextColor="Black">
+                                    <Label Text="Binmedi" FontSize="13" TextColor="{StaticResource MetinGovde}">
                                         <Label.Triggers>
                                             <DataTrigger TargetType="Label" Binding="{Binding ServisDurumId}" Value="2">
                                                 <Setter Property="TextColor" Value="White" />
@@ -157,8 +158,8 @@
                                     </Label>
                                     <Border.Triggers>
                                         <DataTrigger TargetType="Border" Binding="{Binding ServisDurumId}" Value="2">
-                                            <Setter Property="BackgroundColor" Value="#E74C3C" />
-                                            <Setter Property="Stroke" Value="#E74C3C" />
+                                            <Setter Property="BackgroundColor" Value="{StaticResource Tehlike}" />
+                                            <Setter Property="Stroke" Value="{StaticResource Tehlike}" />
                                         </DataTrigger>
                                     </Border.Triggers>
                                 </Border>
@@ -169,22 +170,24 @@
             </CollectionView.ItemTemplate>
             <CollectionView.EmptyView>
                 <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="10" Padding="20">
-                    <Label Text="Bu serviste öğrenci bulunmuyor." FontSize="16" TextColor="#95A5A6" HorizontalOptions="Center" />
+                    <Label Text="Bu serviste öğrenci bulunmuyor." FontSize="16" TextColor="{StaticResource MetinSoluk}" HorizontalOptions="Center" />
                 </VerticalStackLayout>
             </CollectionView.EmptyView>
         </CollectionView>
 
         <!-- Kaydet / Güncelle butonları -->
-        <Border Grid.Row="5" Padding="15,10,15,20" BackgroundColor="White" StrokeThickness="0">
+        <Border Grid.Row="5" Padding="15,10,15,20" BackgroundColor="{StaticResource Kart}" StrokeThickness="0">
             <Border.Shadow>
                 <Shadow Brush="Black" Offset="0,-5" Radius="10" Opacity="0.05" />
             </Border.Shadow>
             <Grid>
-                <Button Text="YOKLAMAYI KAYDET" HeightRequest="55" CornerRadius="12"
-                        BackgroundColor="#2980B9" TextColor="White"
+                <Button Text="YOKLAMAYI KAYDET" HeightRequest="54" CornerRadius="14"
+                        FontFamily="OpenSansSemibold"
+                        BackgroundColor="{StaticResource ServisRenk}" TextColor="White"
                         Command="{Binding KaydetCommand}" IsVisible="{Binding KaydetGorunur}" />
-                <Button Text="YOKLAMAYI GÜNCELLE" HeightRequest="55" CornerRadius="12"
-                        BackgroundColor="#2196F3" TextColor="White"
+                <Button Text="YOKLAMAYI GÜNCELLE" HeightRequest="54" CornerRadius="14"
+                        FontFamily="OpenSansSemibold"
+                        BackgroundColor="{StaticResource ServisKoyu}" TextColor="White"
                         Command="{Binding GuncelleCommand}" IsVisible="{Binding GuncelleGorunur}" />
             </Grid>
         </Border>

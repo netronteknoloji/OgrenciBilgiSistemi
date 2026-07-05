@@ -42,4 +42,78 @@
     <SolidColorBrush x:Key="Gray600Brush" Color="{StaticResource Gray600}"/>
     <SolidColorBrush x:Key="Gray900Brush" Color="{StaticResource Gray900}"/>
     <SolidColorBrush x:Key="Gray950Brush" Color="{StaticResource Gray950}"/>
+
+    <!-- ============================================================= -->
+    <!--  Modern tasarım sistemi (2026) — sade & renk uyumlu           -->
+    <!--  Nötr slate iskelet + aynı ton bandından uyumlu rol aksanları -->
+    <!--  Not: Yukarıdaki şablon anahtarları geriye uyumluluk için     -->
+    <!--  korunur; aşağıdakiler yeni tasarımda kullanılır.             -->
+    <!-- ============================================================= -->
+
+    <!-- Uyumlu rol renkleri (aynı doygunluk/parlaklık — analog aile) -->
+    <Color x:Key="Marka">#4C6EF5</Color>
+    <Color x:Key="MarkaKoyu">#3B4FC4</Color>
+    <Color x:Key="MarkaDerin">#2B3A8C</Color>
+    <Color x:Key="MarkaSoft">#EEF1FE</Color>
+
+    <Color x:Key="VeliRenk">#6E56CF</Color>
+    <Color x:Key="VeliKoyu">#5842B0</Color>
+    <Color x:Key="VeliSoft">#F0EDFB</Color>
+
+    <Color x:Key="AdminRenk">#4C6EF5</Color>
+    <Color x:Key="AdminKoyu">#3B4FC4</Color>
+    <Color x:Key="AdminSoft">#EEF1FE</Color>
+
+    <Color x:Key="OgretmenRenk">#0CA5A5</Color>
+    <Color x:Key="OgretmenKoyu">#0A7E7E</Color>
+    <Color x:Key="OgretmenSoft">#E3F6F6</Color>
+
+    <Color x:Key="ServisRenk">#2F9E44</Color>
+    <Color x:Key="ServisKoyu">#26803A</Color>
+    <Color x:Key="ServisSoft">#E7F5EB</Color>
+
+    <!-- Nötrler / yüzeyler (cool slate) -->
+    <Color x:Key="UygulamaArkaPlan">#F5F7FA</Color>
+    <Color x:Key="Kart">#FFFFFF</Color>
+    <Color x:Key="KartSoluk">#EEF1F6</Color>
+    <Color x:Key="Cizgi">#E3E8EF</Color>
+    <Color x:Key="MetinKoyu">#1F2733</Color>
+    <Color x:Key="MetinGovde">#4B5768</Color>
+    <Color x:Key="MetinSoluk">#8A96A8</Color>
+
+    <!-- İşlevsel aksanlar -->
+    <Color x:Key="Basari">#2F9E44</Color>
+    <Color x:Key="Uyari">#E8940C</Color>
+    <Color x:Key="Tehlike">#E5484D</Color>
+
+    <!-- Sık kullanılan fırçalar -->
+    <SolidColorBrush x:Key="MarkaBrush" Color="{StaticResource Marka}"/>
+    <SolidColorBrush x:Key="KartBrush" Color="{StaticResource Kart}"/>
+    <SolidColorBrush x:Key="CizgiBrush" Color="{StaticResource Cizgi}"/>
+
+    <!-- Rol başlık gradyanları (diagonal, hepsi aynı ton bandı → uyumlu) -->
+    <LinearGradientBrush x:Key="MarkaGradyan" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#5B7BF7" Offset="0.0" />
+        <GradientStop Color="#2B3A8C" Offset="1.0" />
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="VeliBaslikGradyan" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#8B5CF6" Offset="0.0" />
+        <GradientStop Color="#5842B0" Offset="1.0" />
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="AdminBaslikGradyan" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#5B7BF7" Offset="0.0" />
+        <GradientStop Color="#3B4FC4" Offset="1.0" />
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="OgretmenBaslikGradyan" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#14B8B8" Offset="0.0" />
+        <GradientStop Color="#0A7E7E" Offset="1.0" />
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="ServisBaslikGradyan" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#43B75C" Offset="0.0" />
+        <GradientStop Color="#26803A" Offset="1.0" />
+    </LinearGradientBrush>
 </ResourceDictionary>

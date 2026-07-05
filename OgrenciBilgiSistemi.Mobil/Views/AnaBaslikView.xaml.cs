@@ -15,9 +15,15 @@ public partial class AnaBaslikView : ContentView
     public static readonly BindableProperty UserInitialProperty =
         BindableProperty.Create(nameof(UserInitial), typeof(string), typeof(AnaBaslikView), string.Empty);
 
+    // Avatar baş harfinin rengi — bulunduğu sayfanın rol rengine göre ayarlanır.
+    // Varsayılan: marka rengi (#4C6EF5).
+    public static readonly BindableProperty VurguRenkProperty =
+        BindableProperty.Create(nameof(VurguRenk), typeof(Color), typeof(AnaBaslikView), Color.FromArgb("#4C6EF5"));
+
     public bool ShowBack { get => (bool)GetValue(ShowBackProperty); set => SetValue(ShowBackProperty, value); }
     public bool ShowProfile { get => (bool)GetValue(ShowProfileProperty); set => SetValue(ShowProfileProperty, value); }
     public string UserInitial { get => (string)GetValue(UserInitialProperty); set => SetValue(UserInitialProperty, value); }
+    public Color VurguRenk { get => (Color)GetValue(VurguRenkProperty); set => SetValue(VurguRenkProperty, value); }
     #endregion
 
     public AnaBaslikView()

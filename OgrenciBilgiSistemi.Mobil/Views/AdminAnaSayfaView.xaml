@@ -5,23 +5,24 @@
              x:Class="OgrenciBilgiSistemi.Mobil.Views.AdminAnaSayfaView"
              Title="Yönetici"
              Shell.NavBarIsVisible="False"
-             BackgroundColor="#F2F2F2">
+             BackgroundColor="{StaticResource UygulamaArkaPlan}">
 
     <ScrollView>
         <Grid RowDefinitions="125, Auto, Auto">
 
             <Border Grid.Row="0"
                     StrokeThickness="0"
-                    BackgroundColor="#1F4E79"
+                    Background="{StaticResource AdminBaslikGradyan}"
                     VerticalOptions="FillAndExpand">
                 <Border.Shadow>
-                    <Shadow Brush="#1F4E79" Offset="0,4" Radius="15" Opacity="0.4" />
+                    <Shadow Brush="{StaticResource AdminRenk}" Offset="0,4" Radius="15" Opacity="0.35" />
                 </Border.Shadow>
 
                 <Grid>
                     <views:AnaBaslikView x:Name="MyHeader"
                                           ShowBack="False"
-                                          ShowProfile="True" />
+                                          ShowProfile="True"
+                                          VurguRenk="{StaticResource AdminRenk}" />
 
                     <VerticalStackLayout Spacing="2"
                                          VerticalOptions="End"
@@ -41,13 +42,12 @@
 
             <!-- Okul adı bilgisi -->
             <Border Grid.Row="1"
+                    Style="{StaticResource YuzenKart}"
                     Margin="15,-28,15,10"
                     HeightRequest="55"
-                    StrokeShape="RoundRectangle 28"
-                    StrokeThickness="0"
-                    BackgroundColor="White">
+                    StrokeShape="RoundRectangle 28">
                 <Border.Shadow>
-                    <Shadow Brush="Black" Offset="0,10" Radius="20" Opacity="0.08" />
+                    <Shadow Brush="Black" Offset="0,8" Radius="24" Opacity="0.10" />
                 </Border.Shadow>
                 <Grid ColumnDefinitions="55, *">
                     <Label Grid.Column="0" Text="&#x1F3EB;"
@@ -57,7 +57,7 @@
                            VerticalOptions="Center"
                            FontSize="15"
                            FontFamily="OpenSansSemibold"
-                           TextColor="#2C3E50" />
+                           TextColor="{StaticResource MetinKoyu}" />
                 </Grid>
             </Border>
 
@@ -70,11 +70,7 @@
                   RowSpacing="10">
 
                 <!-- Toplam öğrenci -->
-                <Border Grid.Row="0" Grid.Column="0"
-                        StrokeShape="RoundRectangle 16"
-                        StrokeThickness="0"
-                        BackgroundColor="White"
-                        HeightRequest="120">
+                <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource KpiKart}">
                     <Border.Shadow>
                         <Shadow Brush="Black" Offset="0,2" Radius="8" Opacity="0.06" />
                     </Border.Shadow>
@@ -82,25 +78,18 @@
                         <TapGestureRecognizer Command="{Binding OgrencilereGitCommand}" />
                     </Border.GestureRecognizers>
                     <Grid Padding="14" RowDefinitions="Auto,*,Auto">
-                        <Label Grid.Row="0" Text="&#x1F468;&#x200D;&#x1F393;" FontSize="22" />
-                        <Label Grid.Row="1"
-                               Text="{Binding OgrenciSayisi}"
-                               FontSize="28"
-                               FontFamily="OpenSansSemibold"
-                               TextColor="#1F4E79"
-                               VerticalOptions="End" />
-                        <Label Grid.Row="2" Text="Toplam Öğrenci"
-                               FontSize="12" TextColor="#7F8C8D"
-                               FontFamily="OpenSansSemibold" />
+                        <Border Grid.Row="0" BackgroundColor="{StaticResource AdminSoft}" StrokeThickness="0"
+                                StrokeShape="RoundRectangle 12" WidthRequest="44" HeightRequest="44" HorizontalOptions="Start">
+                            <Label Text="&#x1F468;&#x200D;&#x1F393;" FontSize="20" HorizontalOptions="Center" VerticalOptions="Center" />
+                        </Border>
+                        <Label Grid.Row="1" Style="{StaticResource KpiSayi}"
+                               Text="{Binding OgrenciSayisi}" VerticalOptions="End" />
+                        <Label Grid.Row="2" Style="{StaticResource KpiEtiket}" Text="Toplam Öğrenci" />
                     </Grid>
                 </Border>
 
                 <!-- Toplam öğretmen -->
-                <Border Grid.Row="0" Grid.Column="1"
-                        StrokeShape="RoundRectangle 16"
-                        StrokeThickness="0"
-                        BackgroundColor="White"
-                        HeightRequest="120">
+                <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource KpiKart}">
                     <Border.Shadow>
                         <Shadow Brush="Black" Offset="0,2" Radius="8" Opacity="0.06" />
                     </Border.Shadow>
@@ -108,25 +97,18 @@
                         <TapGestureRecognizer Command="{Binding OgretmenlerGitCommand}" />
                     </Border.GestureRecognizers>
                     <Grid Padding="14" RowDefinitions="Auto,*,Auto">
-                        <Label Grid.Row="0" Text="&#x1F468;&#x200D;&#x1F3EB;" FontSize="22" />
-                        <Label Grid.Row="1"
-                               Text="{Binding OgretmenSayisi}"
-                               FontSize="28"
-                               FontFamily="OpenSansSemibold"
-                               TextColor="#16A085"
-                               VerticalOptions="End" />
-                        <Label Grid.Row="2" Text="Toplam Öğretmen"
-                               FontSize="12" TextColor="#7F8C8D"
-                               FontFamily="OpenSansSemibold" />
+                        <Border Grid.Row="0" BackgroundColor="{StaticResource AdminSoft}" StrokeThickness="0"
+                                StrokeShape="RoundRectangle 12" WidthRequest="44" HeightRequest="44" HorizontalOptions="Start">
+                            <Label Text="&#x1F468;&#x200D;&#x1F3EB;" FontSize="20" HorizontalOptions="Center" VerticalOptions="Center" />
+                        </Border>
+                        <Label Grid.Row="1" Style="{StaticResource KpiSayi}"
+                               Text="{Binding OgretmenSayisi}" VerticalOptions="End" />
+                        <Label Grid.Row="2" Style="{StaticResource KpiEtiket}" Text="Toplam Öğretmen" />
                     </Grid>
                 </Border>
 
                 <!-- Toplam sınıf -->
-                <Border Grid.Row="1" Grid.Column="0"
-                        StrokeShape="RoundRectangle 16"
-                        StrokeThickness="0"
-                        BackgroundColor="White"
-                        HeightRequest="120">
+                <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource KpiKart}">
                     <Border.Shadow>
                         <Shadow Brush="Black" Offset="0,2" Radius="8" Opacity="0.06" />
                     </Border.Shadow>
@@ -134,25 +116,18 @@
                         <TapGestureRecognizer Command="{Binding SiniflaraGitCommand}" />
                     </Border.GestureRecognizers>
                     <Grid Padding="14" RowDefinitions="Auto,*,Auto">
-                        <Label Grid.Row="0" Text="&#x1F3EB;" FontSize="22" />
-                        <Label Grid.Row="1"
-                               Text="{Binding SinifSayisi}"
-                               FontSize="28"
-                               FontFamily="OpenSansSemibold"
-                               TextColor="#8E44AD"
-                               VerticalOptions="End" />
-                        <Label Grid.Row="2" Text="Toplam Sınıf"
-                               FontSize="12" TextColor="#7F8C8D"
-                               FontFamily="OpenSansSemibold" />
+                        <Border Grid.Row="0" BackgroundColor="{StaticResource AdminSoft}" StrokeThickness="0"
+                                StrokeShape="RoundRectangle 12" WidthRequest="44" HeightRequest="44" HorizontalOptions="Start">
+                            <Label Text="&#x1F3EB;" FontSize="20" HorizontalOptions="Center" VerticalOptions="Center" />
+                        </Border>
+                        <Label Grid.Row="1" Style="{StaticResource KpiSayi}"
+                               Text="{Binding SinifSayisi}" VerticalOptions="End" />
+                        <Label Grid.Row="2" Style="{StaticResource KpiEtiket}" Text="Toplam Sınıf" />
                     </Grid>
                 </Border>
 
                 <!-- Toplam veli -->
-                <Border Grid.Row="1" Grid.Column="1"
-                        StrokeShape="RoundRectangle 16"
-                        StrokeThickness="0"
-                        BackgroundColor="White"
-                        HeightRequest="120">
+                <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource KpiKart}">
                     <Border.Shadow>
                         <Shadow Brush="Black" Offset="0,2" Radius="8" Opacity="0.06" />
                     </Border.Shadow>
@@ -160,25 +135,18 @@
                         <TapGestureRecognizer Command="{Binding VelilereGitCommand}" />
                     </Border.GestureRecognizers>
                     <Grid Padding="14" RowDefinitions="Auto,*,Auto">
-                        <Label Grid.Row="0" Text="&#x1F468;&#x200D;&#x1F467;&#x200D;&#x1F466;" FontSize="22" />
-                        <Label Grid.Row="1"
-                               Text="{Binding VeliSayisi}"
-                               FontSize="28"
-                               FontFamily="OpenSansSemibold"
-                               TextColor="#E67E22"
-                               VerticalOptions="End" />
-                        <Label Grid.Row="2" Text="Toplam Veli"
-                               FontSize="12" TextColor="#7F8C8D"
-                               FontFamily="OpenSansSemibold" />
+                        <Border Grid.Row="0" BackgroundColor="{StaticResource AdminSoft}" StrokeThickness="0"
+                                StrokeShape="RoundRectangle 12" WidthRequest="44" HeightRequest="44" HorizontalOptions="Start">
+                            <Label Text="&#x1F468;&#x200D;&#x1F467;&#x200D;&#x1F466;" FontSize="20" HorizontalOptions="Center" VerticalOptions="Center" />
+                        </Border>
+                        <Label Grid.Row="1" Style="{StaticResource KpiSayi}"
+                               Text="{Binding VeliSayisi}" VerticalOptions="End" />
+                        <Label Grid.Row="2" Style="{StaticResource KpiEtiket}" Text="Toplam Veli" />
                     </Grid>
                 </Border>
 
                 <!-- Bugün yemekhane giriş -->
-                <Border Grid.Row="2" Grid.Column="0"
-                        StrokeShape="RoundRectangle 16"
-                        StrokeThickness="0"
-                        BackgroundColor="White"
-                        HeightRequest="120">
+                <Border Grid.Row="2" Grid.Column="0" Style="{StaticResource KpiKart}">
                     <Border.Shadow>
                         <Shadow Brush="Black" Offset="0,2" Radius="8" Opacity="0.06" />
                     </Border.Shadow>
@@ -186,25 +154,18 @@
                         <TapGestureRecognizer Command="{Binding YemakhaneGitCommand}" />
                     </Border.GestureRecognizers>
                     <Grid Padding="14" RowDefinitions="Auto,*,Auto">
-                        <Label Grid.Row="0" Text="&#x1F37D;" FontSize="22" />
-                        <Label Grid.Row="1"
-                               Text="{Binding YemekhaneSayisi}"
-                               FontSize="28"
-                               FontFamily="OpenSansSemibold"
-                               TextColor="#C0392B"
-                               VerticalOptions="End" />
-                        <Label Grid.Row="2" Text="Bugün Yemekhane"
-                               FontSize="12" TextColor="#7F8C8D"
-                               FontFamily="OpenSansSemibold" />
+                        <Border Grid.Row="0" BackgroundColor="{StaticResource AdminSoft}" StrokeThickness="0"
+                                StrokeShape="RoundRectangle 12" WidthRequest="44" HeightRequest="44" HorizontalOptions="Start">
+                            <Label Text="&#x1F37D;" FontSize="20" HorizontalOptions="Center" VerticalOptions="Center" />
+                        </Border>
+                        <Label Grid.Row="1" Style="{StaticResource KpiSayi}"
+                               Text="{Binding YemekhaneSayisi}" VerticalOptions="End" />
+                        <Label Grid.Row="2" Style="{StaticResource KpiEtiket}" Text="Bugün Yemekhane" />
                     </Grid>
                 </Border>
 
                 <!-- Bugün anakapı çıkış -->
-                <Border Grid.Row="2" Grid.Column="1"
-                        StrokeShape="RoundRectangle 16"
-                        StrokeThickness="0"
-                        BackgroundColor="White"
-                        HeightRequest="120">
+                <Border Grid.Row="2" Grid.Column="1" Style="{StaticResource KpiKart}">
                     <Border.Shadow>
                         <Shadow Brush="Black" Offset="0,2" Radius="8" Opacity="0.06" />
                     </Border.Shadow>
@@ -212,25 +173,18 @@
                         <TapGestureRecognizer Command="{Binding AnakapiGitCommand}" />
                     </Border.GestureRecognizers>
                     <Grid Padding="14" RowDefinitions="Auto,*,Auto">
-                        <Label Grid.Row="0" Text="&#x1F6AA;" FontSize="22" />
-                        <Label Grid.Row="1"
-                               Text="{Binding AnakapiSayisi}"
-                               FontSize="28"
-                               FontFamily="OpenSansSemibold"
-                               TextColor="#2980B9"
-                               VerticalOptions="End" />
-                        <Label Grid.Row="2" Text="Bugün Anakapı Çıkış"
-                               FontSize="12" TextColor="#7F8C8D"
-                               FontFamily="OpenSansSemibold" />
+                        <Border Grid.Row="0" BackgroundColor="{StaticResource AdminSoft}" StrokeThickness="0"
+                                StrokeShape="RoundRectangle 12" WidthRequest="44" HeightRequest="44" HorizontalOptions="Start">
+                            <Label Text="&#x1F6AA;" FontSize="20" HorizontalOptions="Center" VerticalOptions="Center" />
+                        </Border>
+                        <Label Grid.Row="1" Style="{StaticResource KpiSayi}"
+                               Text="{Binding AnakapiSayisi}" VerticalOptions="End" />
+                        <Label Grid.Row="2" Style="{StaticResource KpiEtiket}" Text="Bugün Anakapı Çıkış" />
                     </Grid>
                 </Border>
 
                 <!-- Toplam servis -->
-                <Border Grid.Row="3" Grid.Column="0"
-                        StrokeShape="RoundRectangle 16"
-                        StrokeThickness="0"
-                        BackgroundColor="White"
-                        HeightRequest="120">
+                <Border Grid.Row="3" Grid.Column="0" Style="{StaticResource KpiKart}">
                     <Border.Shadow>
                         <Shadow Brush="Black" Offset="0,2" Radius="8" Opacity="0.06" />
                     </Border.Shadow>
@@ -238,25 +192,18 @@
                         <TapGestureRecognizer Command="{Binding ServisGitCommand}" />
                     </Border.GestureRecognizers>
                     <Grid Padding="14" RowDefinitions="Auto,*,Auto">
-                        <Label Grid.Row="0" Text="&#x1F68C;" FontSize="22" />
-                        <Label Grid.Row="1"
-                               Text="{Binding ServisSayisi}"
-                               FontSize="28"
-                               FontFamily="OpenSansSemibold"
-                               TextColor="#34495E"
-                               VerticalOptions="End" />
-                        <Label Grid.Row="2" Text="Toplam Servis"
-                               FontSize="12" TextColor="#7F8C8D"
-                               FontFamily="OpenSansSemibold" />
+                        <Border Grid.Row="0" BackgroundColor="{StaticResource AdminSoft}" StrokeThickness="0"
+                                StrokeShape="RoundRectangle 12" WidthRequest="44" HeightRequest="44" HorizontalOptions="Start">
+                            <Label Text="&#x1F68C;" FontSize="20" HorizontalOptions="Center" VerticalOptions="Center" />
+                        </Border>
+                        <Label Grid.Row="1" Style="{StaticResource KpiSayi}"
+                               Text="{Binding ServisSayisi}" VerticalOptions="End" />
+                        <Label Grid.Row="2" Style="{StaticResource KpiEtiket}" Text="Toplam Servis" />
                     </Grid>
                 </Border>
 
                 <!-- Boş kart (yer tutucu) -->
-                <Border Grid.Row="3" Grid.Column="1"
-                        StrokeShape="RoundRectangle 16"
-                        StrokeThickness="0"
-                        BackgroundColor="White"
-                        HeightRequest="120">
+                <Border Grid.Row="3" Grid.Column="1" Style="{StaticResource KpiKart}">
                     <Border.Shadow>
                         <Shadow Brush="Black" Offset="0,2" Radius="8" Opacity="0.06" />
                     </Border.Shadow>

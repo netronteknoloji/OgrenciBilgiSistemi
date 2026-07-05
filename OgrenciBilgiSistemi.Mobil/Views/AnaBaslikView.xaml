@@ -44,7 +44,7 @@
             <Label x:Name="InitialLabel"
                    InputTransparent="True"
                    Text="{Binding UserInitial, Source={x:Reference this}}"
-                   TextColor="#1ABC9C"
+                   TextColor="{Binding VurguRenk, Source={x:Reference this}}"
                    FontSize="16"
                    FontAttributes="Bold"
                    HorizontalOptions="Center"

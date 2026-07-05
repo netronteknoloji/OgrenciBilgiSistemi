@@ -7,17 +7,8 @@
              BackgroundColor="White">
 
     <Grid>
-        <BoxView Grid.RowSpan="2">
-            <BoxView.Background>
-                <LinearGradientBrush StartPoint="0,0"
-                                     EndPoint="1,1">
-                    <GradientStop Color="#1ABC9C"
-                                  Offset="0.1" />
-                    <GradientStop Color="#2C3E50"
-                                  Offset="1.0" />
-                </LinearGradientBrush>
-            </BoxView.Background>
-        </BoxView>
+        <BoxView Grid.RowSpan="2"
+                 Background="{StaticResource MarkaGradyan}" />
 
         <ScrollView VerticalOptions="Center">
 
@@ -57,12 +48,12 @@
 
                     <Label Text="Giriş Ekranı"
                            FontSize="14"
-                           TextColor="#BDC3C7"
+                           TextColor="#D5DCF7"
                            HorizontalOptions="Center" />
 
                 </VerticalStackLayout>
 
-                <Border BackgroundColor="White"
+                <Border BackgroundColor="{StaticResource Kart}"
                         StrokeThickness="0"
                         StrokeShape="RoundRectangle 20"
                         Padding="25">
@@ -71,34 +62,27 @@
                         <Shadow Brush="Black"
                                 Offset="0,20"
                                 Radius="30"
-                                Opacity="0.1" />
+                                Opacity="0.12" />
                     </Border.Shadow>
 
                     <VerticalStackLayout Spacing="20">
 
                         <Label Text="Hoş Geldiniz"
-                               FontSize="20"
-                               FontAttributes="Bold"
-                               TextColor="#2C3E50"
+                               Style="{StaticResource Baslik}"
                                Margin="0,0,0,10"/>
 
                         <!-- Okul seçimi -->
                         <VerticalStackLayout Spacing="5">
 
                             <Label Text="Okul"
-                                   FontSize="13"
-                                   TextColor="#7F8C8D"
+                                   Style="{StaticResource Etiket}"
                                    Margin="5,0"/>
 
-                            <Border Stroke="#E5E8E8"
-                                    StrokeThickness="1"
-                                    StrokeShape="RoundRectangle 10"
-                                    BackgroundColor="#F8F9F9"
-                                    HeightRequest="45">
+                            <Border Style="{StaticResource GirdiCerceve}">
 
                                 <Picker Title="Okul Seçiniz"
-                                        TextColor="#2C3E50"
-                                        TitleColor="#95A5A6"
+                                        TextColor="{StaticResource MetinKoyu}"
+                                        TitleColor="{StaticResource MetinSoluk}"
                                         BackgroundColor="Transparent"
                                         Margin="12,0"
                                         VerticalOptions="Center"
@@ -111,21 +95,16 @@
                         <VerticalStackLayout Spacing="5">
 
                             <Label Text="Kullanıcı Adı"
-                                   FontSize="13"
-                                   TextColor="#7F8C8D"
+                                   Style="{StaticResource Etiket}"
                                    Margin="5,0"/>
 
-                            <Border Stroke="#E5E8E8"
-                                    StrokeThickness="1"
-                                    StrokeShape="RoundRectangle 10"
-                                    BackgroundColor="#F8F9F9"
-                                    HeightRequest="45">
+                            <Border Style="{StaticResource GirdiCerceve}">
 
                                 <Entry x:Name="TxtKullaniciAdi"
                                        StyleId="kullaniciAdiEntry"
                                        Placeholder="Kullanıcı adınızı giriniz"
-                                       PlaceholderColor="#95A5A6"
-                                       TextColor="#2C3E50"
+                                       PlaceholderColor="{StaticResource MetinSoluk}"
+                                       TextColor="{StaticResource MetinKoyu}"
                                        FontSize="14"
                                        BackgroundColor="Transparent"
                                        Margin="12,0"
@@ -139,10 +118,10 @@
 
                             <!-- Kullanıcı adı öneri listesi -->
                             <Border IsVisible="{Binding OneriListesiGorunur}"
-                                    Stroke="#E5E8E8"
+                                    Stroke="{StaticResource CizgiBrush}"
                                     StrokeThickness="1"
                                     StrokeShape="RoundRectangle 8"
-                                    BackgroundColor="White"
+                                    BackgroundColor="{StaticResource Kart}"
                                     HeightRequest="{Binding OneriKutusuYuksekligi}"
                                     Margin="0,-5,0,0">
                                 <CollectionView SelectionMode="Single"
@@ -157,7 +136,7 @@
                                         <DataTemplate x:DataType="x:String">
                                             <Grid Padding="12,10">
                                                 <Label Text="{Binding .}"
-                                                       TextColor="#2C3E50"
+                                                       TextColor="{StaticResource MetinKoyu}"
                                                        FontSize="14" />
                                             </Grid>
                                         </DataTemplate>
@@ -170,15 +149,10 @@
                         <VerticalStackLayout Spacing="5">
 
                             <Label Text="Şifre"
-                                   FontSize="13"
-                                   TextColor="#7F8C8D"
+                                   Style="{StaticResource Etiket}"
                                    Margin="5,0"/>
 
-                            <Border Stroke="#E5E8E8"
-                                    StrokeThickness="1"
-                                    StrokeShape="RoundRectangle 10"
-                                    BackgroundColor="#F8F9F9"
-                                    HeightRequest="45">
+                            <Border Style="{StaticResource GirdiCerceve}">
 
                                 <Grid ColumnDefinitions="*, Auto">
 
@@ -186,8 +160,8 @@
                                            Grid.Column="0"
                                            Placeholder="••••••••"
                                            IsPassword="{Binding SifreGizli}"
-                                           PlaceholderColor="#95A5A6"
-                                           TextColor="#2C3E50"
+                                           PlaceholderColor="{StaticResource MetinSoluk}"
+                                           TextColor="{StaticResource MetinKoyu}"
                                            FontSize="14"
                                            BackgroundColor="Transparent"
                                            Margin="12,0"
@@ -211,11 +185,10 @@
                                                Margin="5,-10,0,0"
                                                VerticalOptions="Center">
 
-                            <CheckBox Color="#1ABC9C" IsChecked="{Binding BeniHatirla}" />
+                            <CheckBox Color="{StaticResource Marka}" IsChecked="{Binding BeniHatirla}" />
 
                             <Label Text="Beni Hatırla"
-                                   TextColor="#7F8C8D"
-                                   FontSize="14"
+                                   Style="{StaticResource Govde}"
                                    VerticalOptions="Center">
                                 <Label.GestureRecognizers>
                                     <TapGestureRecognizer Command="{Binding BeniHatirlaToggleCommand}" />
@@ -227,18 +200,14 @@
                         <Button Text="{Binding GirisButonMetni}"
                                 Command="{Binding GirisCommand}"
                                 IsEnabled="{Binding GirisButonEtkin}"
-                                HeightRequest="55"
-                                CornerRadius="12"
-                                Margin="0,10,0,0"
-                                FontAttributes="Bold"
-                                BackgroundColor="#1ABC9C"
-                                TextColor="White">
+                                Style="{StaticResource BirincilButon}"
+                                Margin="0,10,0,0">
 
                             <Button.Shadow>
-                                <Shadow Brush="#1ABC9C"
-                                        Offset="0,5"
-                                        Radius="10"
-                                        Opacity="0.3" />
+                                <Shadow Brush="{StaticResource Marka}"
+                                        Offset="0,6"
+                                        Radius="12"
+                                        Opacity="0.35" />
                             </Button.Shadow>
                         </Button>
 
@@ -246,7 +215,7 @@
                 </Border>
 
                 <Label Text="© 2026 | Developed by Netron Yazılım. Tüm hakları saklıdır."
-                       TextColor="#BDC3C7"
+                       TextColor="#C3CBE8"
                        FontSize="11"
                        HorizontalOptions="Center"
                        Margin="0,40,0,0" />
