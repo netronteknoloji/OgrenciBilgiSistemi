@@ -67,7 +67,7 @@
                 </Border>
                 <Grid Grid.Column="3" VerticalOptions="Center" Margin="0,0,10,0">
                     <Border StrokeShape="RoundRectangle 14" StrokeThickness="0"
-                            BackgroundColor="{StaticResource VeliKoyu}" Padding="10,5">
+                            BackgroundColor="{StaticResource VeliRenk}" Padding="10,5">
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer Command="{Binding BildirimlerCommand}" />
                         </Border.GestureRecognizers>

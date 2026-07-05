@@ -40,7 +40,7 @@
             <Button Grid.Column="0" Text="Yenile" FontSize="13" BackgroundColor="{StaticResource MetinSoluk}" TextColor="White"
                     CornerRadius="22" HeightRequest="44"
                     Command="{Binding YenileCommand}" />
-            <Button Grid.Column="1" Text="Yeniden Kaydet" FontSize="13" BackgroundColor="{StaticResource MarkaKoyu}" TextColor="White"
+            <Button Grid.Column="1" Text="Yeniden Kaydet" FontSize="13" BackgroundColor="{StaticResource Marka}" TextColor="White"
                     CornerRadius="22" HeightRequest="44"
                     Command="{Binding YenidenKaydetCommand}" />
             <Button Grid.Column="2" Text="Kopyala" FontSize="13" BackgroundColor="{StaticResource Marka}" TextColor="White"
