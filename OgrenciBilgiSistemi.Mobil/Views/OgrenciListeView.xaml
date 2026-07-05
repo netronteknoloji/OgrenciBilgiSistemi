@@ -6,7 +6,7 @@
              x:Name="SayfaKoku"
              Title="Yoklama Ekranı"
              Shell.NavBarIsVisible="False"
-             BackgroundColor="#F2F2F2">
+             BackgroundColor="{StaticResource UygulamaArkaPlan}">
 
     <ContentPage.Resources>
         <Style x:Key="StatusBorderStyle" TargetType="Border">
@@ -14,8 +14,8 @@
             <Setter Property="StrokeThickness" Value="1" />
             <Setter Property="Padding" Value="10,6" />
             <Setter Property="Margin" Value="0,0,6,6" />
-            <Setter Property="BackgroundColor" Value="White" />
-            <Setter Property="Stroke" Value="#DCDDE1" />
+            <Setter Property="BackgroundColor" Value="{StaticResource Kart}" />
+            <Setter Property="Stroke" Value="{StaticResource CizgiBrush}" />
         </Style>
     </ContentPage.Resources>
 
@@ -23,15 +23,16 @@
 
         <Border Grid.Row="0"
                 StrokeThickness="0"
-                BackgroundColor="#1ABC9C">
+                Background="{StaticResource OgretmenBaslikGradyan}">
             <Border.Shadow>
-                <Shadow Brush="#1ABC9C" Offset="0,4" Radius="15" Opacity="0.4" />
+                <Shadow Brush="{StaticResource OgretmenRenk}" Offset="0,4" Radius="15" Opacity="0.35" />
             </Border.Shadow>
 
             <Grid>
                 <views:AnaBaslikView x:Name="MyHeader"
                                       ShowBack="True"
-                                      ShowProfile="True" />
+                                      ShowProfile="True"
+                                      VurguRenk="{StaticResource OgretmenRenk}" />
 
                 <Label Text="{Binding BirimAd}"
                        FontSize="18"
@@ -44,18 +45,17 @@
         </Border>
 
         <Border Grid.Row="1"
+                Style="{StaticResource YuzenKart}"
                 Margin="15,-28,15,10"
                 HeightRequest="55"
-                StrokeShape="RoundRectangle 28"
-                StrokeThickness="0"
-                BackgroundColor="White">
+                StrokeShape="RoundRectangle 28">
             <Border.Shadow>
-                <Shadow Brush="Black" Offset="0,10" Radius="20" Opacity="0.08" />
+                <Shadow Brush="Black" Offset="0,8" Radius="24" Opacity="0.10" />
             </Border.Shadow>
             <Grid ColumnDefinitions="55, *">
                 <Label Grid.Column="0" Text="⏰" VerticalOptions="Center" HorizontalOptions="Center" FontSize="18" />
-                <Picker Grid.Column="1" Title="Ders Saati Seçiniz" TitleColor="#95A5A6"
-                        TextColor="#2C3E50" VerticalOptions="Center" SelectedIndex="{Binding SecilenPeriyotIndex}">
+                <Picker Grid.Column="1" Title="Ders Saati Seçiniz" TitleColor="{StaticResource MetinSoluk}"
+                        TextColor="{StaticResource MetinKoyu}" VerticalOptions="Center" SelectedIndex="{Binding SecilenPeriyotIndex}">
                     <Picker.ItemsSource>
                         <x:Array Type="{x:Type x:String}">
                             <x:String>1. Ders</x:String>
@@ -73,14 +73,14 @@
         </Border>
 
         <Border Grid.Row="2" Margin="15,0,15,5" HeightRequest="45"
-                StrokeShape="RoundRectangle 22" StrokeThickness="0" BackgroundColor="White">
+                StrokeShape="RoundRectangle 22" StrokeThickness="0" BackgroundColor="{StaticResource Kart}">
             <Border.Shadow>
                 <Shadow Brush="Black" Offset="0,2" Radius="6" Opacity="0.06" />
             </Border.Shadow>
             <Grid ColumnDefinitions="45, *">
                 <Label Grid.Column="0" Text="&#x1F50D;" VerticalOptions="Center" HorizontalOptions="Center" FontSize="16" />
                 <Entry Grid.Column="1" Placeholder="Ad Soyad veya No ile ara..."
-                       PlaceholderColor="#95A5A6" TextColor="#2C3E50" FontSize="14"
+                       PlaceholderColor="{StaticResource MetinSoluk}" TextColor="{StaticResource MetinKoyu}" FontSize="14"
                        VerticalOptions="Center" BackgroundColor="Transparent"
                        Text="{Binding AramaMetni}" />
             </Grid>
@@ -98,29 +98,29 @@
             </CollectionView.ItemsLayout>
             <CollectionView.ItemTemplate>
                 <DataTemplate>
-                    <Border StrokeShape="RoundRectangle 15" StrokeThickness="0" BackgroundColor="White" Padding="15">
+                    <Border StrokeShape="RoundRectangle 16" StrokeThickness="0" BackgroundColor="{StaticResource Kart}" Padding="15">
                         <Border.Shadow>
-                            <Shadow Brush="Black" Offset="0,2" Radius="5" Opacity="0.05" />
+                            <Shadow Brush="Black" Offset="0,2" Radius="8" Opacity="0.06" />
                         </Border.Shadow>
                         <VerticalStackLayout Spacing="12">
                             <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="12" VerticalOptions="Center">
-                                <Border Grid.Column="0" StrokeShape="RoundRectangle 20" HeightRequest="40" 
-                                        WidthRequest="40" StrokeThickness="0" BackgroundColor="#E0E0E0">
+                                <Border Grid.Column="0" StrokeShape="RoundRectangle 20" HeightRequest="40"
+                                        WidthRequest="40" StrokeThickness="0" BackgroundColor="{StaticResource KartSoluk}">
                                     <Image Aspect="AspectFill" Source="{Binding OgrenciData.OgrenciGorsel, TargetNullValue='user_icon.png', FallbackValue='user_icon.png'}" />
                                 </Border>
-                                <Label Grid.Column="1" Text="{Binding OgrenciData.OgrenciGorunenAd}" FontSize="16" 
-                                       FontFamily="OpenSansSemibold" TextColor="#2C3E50" VerticalOptions="Center" LineBreakMode="TailTruncation" />
-                                <Frame Grid.Column="2" Padding="0" HeightRequest="30" WidthRequest="30" CornerRadius="15" 
-                                       BackgroundColor="#007BFF" HasShadow="False" BorderColor="Transparent" HorizontalOptions="End" VerticalOptions="Center">
+                                <Label Grid.Column="1" Text="{Binding OgrenciData.OgrenciGorunenAd}" FontSize="16"
+                                       FontFamily="OpenSansSemibold" TextColor="{StaticResource MetinKoyu}" VerticalOptions="Center" LineBreakMode="TailTruncation" />
+                                <Frame Grid.Column="2" Padding="0" HeightRequest="30" WidthRequest="30" CornerRadius="15"
+                                       BackgroundColor="{StaticResource OgretmenRenk}" HasShadow="False" BorderColor="Transparent" HorizontalOptions="End" VerticalOptions="Center">
                                     <Frame.Shadow>
-                                        <Shadow Brush="#007BFF" Offset="0,2" Radius="5" Opacity="0.4" />
+                                        <Shadow Brush="{StaticResource OgretmenRenk}" Offset="0,2" Radius="5" Opacity="0.4" />
                                     </Frame.Shadow>
                                     <Frame.GestureRecognizers>
                                         <TapGestureRecognizer
                                             Command="{Binding BindingContext.OgrenciDetayCommand, Source={x:Reference SayfaKoku}}"
                                             CommandParameter="{Binding .}" />
                                     </Frame.GestureRecognizers>
-                                    <Label Text="i" TextColor="White" FontSize="15" FontAttributes="Bold" 
+                                    <Label Text="i" TextColor="White" FontSize="15" FontAttributes="Bold"
                                            HorizontalTextAlignment="Center" VerticalTextAlignment="Center" />
                                 </Frame>
                             </Grid>
@@ -130,7 +130,7 @@
                                     <Border.GestureRecognizers>
                                         <TapGestureRecognizer Tapped="OnStatusTapped" CommandParameter="1" />
                                     </Border.GestureRecognizers>
-                                    <Label Text="Geldi" FontSize="12" TextColor="Black">
+                                    <Label Text="Geldi" FontSize="12" TextColor="{StaticResource MetinGovde}">
                                         <Label.Triggers>
                                             <DataTrigger TargetType="Label" Binding="{Binding SecilenDurumId}" Value="1">
                                                 <Setter Property="TextColor" Value="White" />
@@ -139,8 +139,8 @@
                                     </Label>
                                     <Border.Triggers>
                                         <DataTrigger TargetType="Border" Binding="{Binding SecilenDurumId}" Value="1">
-                                            <Setter Property="BackgroundColor" Value="#1ABC9C" />
-                                            <Setter Property="Stroke" Value="#1ABC9C" />
+                                            <Setter Property="BackgroundColor" Value="{StaticResource Basari}" />
+                                            <Setter Property="Stroke" Value="{StaticResource Basari}" />
                                         </DataTrigger>
                                     </Border.Triggers>
                                 </Border>
@@ -149,7 +149,7 @@
                                     <Border.GestureRecognizers>
                                         <TapGestureRecognizer Tapped="OnStatusTapped" CommandParameter="2" />
                                     </Border.GestureRecognizers>
-                                    <Label Text="Gelmedi" FontSize="12" TextColor="Black">
+                                    <Label Text="Gelmedi" FontSize="12" TextColor="{StaticResource MetinGovde}">
                                         <Label.Triggers>
                                             <DataTrigger TargetType="Label" Binding="{Binding SecilenDurumId}" Value="2">
                                                 <Setter Property="TextColor" Value="White" />
@@ -158,8 +158,8 @@
                                     </Label>
                                     <Border.Triggers>
                                         <DataTrigger TargetType="Border" Binding="{Binding SecilenDurumId}" Value="2">
-                                            <Setter Property="BackgroundColor" Value="#E74C3C" />
-                                            <Setter Property="Stroke" Value="#E74C3C" />
+                                            <Setter Property="BackgroundColor" Value="{StaticResource Tehlike}" />
+                                            <Setter Property="Stroke" Value="{StaticResource Tehlike}" />
                                         </DataTrigger>
                                     </Border.Triggers>
                                 </Border>
@@ -168,7 +168,7 @@
                                     <Border.GestureRecognizers>
                                         <TapGestureRecognizer Tapped="OnStatusTapped" CommandParameter="3" />
                                     </Border.GestureRecognizers>
-                                    <Label Text="Geç Geldi" FontSize="12" TextColor="Black">
+                                    <Label Text="Geç Geldi" FontSize="12" TextColor="{StaticResource MetinGovde}">
                                         <Label.Triggers>
                                             <DataTrigger TargetType="Label" Binding="{Binding SecilenDurumId}" Value="3">
                                                 <Setter Property="TextColor" Value="White" />
@@ -177,8 +177,8 @@
                                     </Label>
                                     <Border.Triggers>
                                         <DataTrigger TargetType="Border" Binding="{Binding SecilenDurumId}" Value="3">
-                                            <Setter Property="BackgroundColor" Value="#F1C40F" />
-                                            <Setter Property="Stroke" Value="#F1C40F" />
+                                            <Setter Property="BackgroundColor" Value="{StaticResource Uyari}" />
+                                            <Setter Property="Stroke" Value="{StaticResource Uyari}" />
                                         </DataTrigger>
                                     </Border.Triggers>
                                 </Border>
@@ -187,7 +187,7 @@
                                     <Border.GestureRecognizers>
                                         <TapGestureRecognizer Tapped="OnStatusTapped" CommandParameter="4" />
                                     </Border.GestureRecognizers>
-                                    <Label Text="İzinli" FontSize="12" TextColor="Black">
+                                    <Label Text="İzinli" FontSize="12" TextColor="{StaticResource MetinGovde}">
                                         <Label.Triggers>
                                             <DataTrigger TargetType="Label" Binding="{Binding SecilenDurumId}" Value="4">
                                                 <Setter Property="TextColor" Value="White" />
@@ -196,8 +196,8 @@
                                     </Label>
                                     <Border.Triggers>
                                         <DataTrigger TargetType="Border" Binding="{Binding SecilenDurumId}" Value="4">
-                                            <Setter Property="BackgroundColor" Value="#3498DB" />
-                                            <Setter Property="Stroke" Value="#3498DB" />
+                                            <Setter Property="BackgroundColor" Value="{StaticResource Marka}" />
+                                            <Setter Property="Stroke" Value="{StaticResource Marka}" />
                                         </DataTrigger>
                                     </Border.Triggers>
                                 </Border>
@@ -206,7 +206,7 @@
                                     <Border.GestureRecognizers>
                                         <TapGestureRecognizer Tapped="OnStatusTapped" CommandParameter="5" />
                                     </Border.GestureRecognizers>
-                                    <Label Text="Raporlu" FontSize="12" TextColor="Black">
+                                    <Label Text="Raporlu" FontSize="12" TextColor="{StaticResource MetinGovde}">
                                         <Label.Triggers>
                                             <DataTrigger TargetType="Label" Binding="{Binding SecilenDurumId}" Value="5">
                                                 <Setter Property="TextColor" Value="White" />
@@ -215,8 +215,8 @@
                                     </Label>
                                     <Border.Triggers>
                                         <DataTrigger TargetType="Border" Binding="{Binding SecilenDurumId}" Value="5">
-                                            <Setter Property="BackgroundColor" Value="#9B59B6" />
-                                            <Setter Property="Stroke" Value="#9B59B6" />
+                                            <Setter Property="BackgroundColor" Value="{StaticResource VeliRenk}" />
+                                            <Setter Property="Stroke" Value="{StaticResource VeliRenk}" />
                                         </DataTrigger>
                                     </Border.Triggers>
                                 </Border>
@@ -225,7 +225,7 @@
                                     <Border.GestureRecognizers>
                                         <TapGestureRecognizer Tapped="OnStatusTapped" CommandParameter="6" />
                                     </Border.GestureRecognizers>
-                                    <Label Text="Nöbetçi" FontSize="12" TextColor="Black">
+                                    <Label Text="Nöbetçi" FontSize="12" TextColor="{StaticResource MetinGovde}">
                                         <Label.Triggers>
                                             <DataTrigger TargetType="Label" Binding="{Binding SecilenDurumId}" Value="6">
                                                 <Setter Property="TextColor" Value="White" />
@@ -234,8 +234,8 @@
                                     </Label>
                                     <Border.Triggers>
                                         <DataTrigger TargetType="Border" Binding="{Binding SecilenDurumId}" Value="6">
-                                            <Setter Property="BackgroundColor" Value="#34495E" />
-                                            <Setter Property="Stroke" Value="#34495E" />
+                                            <Setter Property="BackgroundColor" Value="{StaticResource MetinKoyu}" />
+                                            <Setter Property="Stroke" Value="{StaticResource MetinKoyu}" />
                                         </DataTrigger>
                                     </Border.Triggers>
                                 </Border>
@@ -244,7 +244,7 @@
                                     <Border.GestureRecognizers>
                                         <TapGestureRecognizer Tapped="OnStatusTapped" CommandParameter="7" />
                                     </Border.GestureRecognizers>
-                                    <Label Text="Görevli" FontSize="12" TextColor="Black">
+                                    <Label Text="Görevli" FontSize="12" TextColor="{StaticResource MetinGovde}">
                                         <Label.Triggers>
                                             <DataTrigger TargetType="Label" Binding="{Binding SecilenDurumId}" Value="7">
                                                 <Setter Property="TextColor" Value="White" />
@@ -253,8 +253,8 @@
                                     </Label>
                                     <Border.Triggers>
                                         <DataTrigger TargetType="Border" Binding="{Binding SecilenDurumId}" Value="7">
-                                            <Setter Property="BackgroundColor" Value="#95A5A6" />
-                                            <Setter Property="Stroke" Value="#95A5A6" />
+                                            <Setter Property="BackgroundColor" Value="{StaticResource MetinSoluk}" />
+                                            <Setter Property="Stroke" Value="{StaticResource MetinSoluk}" />
                                         </DataTrigger>
                                     </Border.Triggers>
                                 </Border>
@@ -265,16 +265,18 @@
             </CollectionView.ItemTemplate>
         </CollectionView>
 
-        <Border Grid.Row="5" Padding="15,10,15,20" BackgroundColor="White" StrokeThickness="0">
+        <Border Grid.Row="5" Padding="15,10,15,20" BackgroundColor="{StaticResource Kart}" StrokeThickness="0">
             <Border.Shadow>
                 <Shadow Brush="Black" Offset="0,-5" Radius="10" Opacity="0.05" />
             </Border.Shadow>
             <Grid>
-                <Button Text="YOKLAMAYI KAYDET" HeightRequest="55" CornerRadius="12"
-                        BackgroundColor="#1ABC9C" TextColor="White"
+                <Button Text="YOKLAMAYI KAYDET" HeightRequest="54" CornerRadius="14"
+                        FontFamily="OpenSansSemibold"
+                        BackgroundColor="{StaticResource OgretmenRenk}" TextColor="White"
                         Command="{Binding KaydetCommand}" IsVisible="{Binding KaydetGorunur}" />
-                <Button Text="YOKLAMAYI GÜNCELLE" HeightRequest="55" CornerRadius="12"
-                        BackgroundColor="#2196F3" TextColor="White"
+                <Button Text="YOKLAMAYI GÜNCELLE" HeightRequest="54" CornerRadius="14"
+                        FontFamily="OpenSansSemibold"
+                        BackgroundColor="{StaticResource OgretmenKoyu}" TextColor="White"
                         Command="{Binding GuncelleCommand}" IsVisible="{Binding GuncelleGorunur}" />
             </Grid>
         </Border>

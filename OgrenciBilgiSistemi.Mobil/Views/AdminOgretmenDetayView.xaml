@@ -5,16 +5,16 @@
              x:Class="OgrenciBilgiSistemi.Mobil.Views.AdminOgretmenDetayView"
              Title="Öğretmen Detayı"
              Shell.NavBarIsVisible="False"
-             BackgroundColor="#F0F2F5">
+             BackgroundColor="{StaticResource UygulamaArkaPlan}">
 
     <Grid RowDefinitions="125, *">
 
-        <Border Grid.Row="0" StrokeThickness="0" BackgroundColor="#16A085" VerticalOptions="FillAndExpand">
+        <Border Grid.Row="0" StrokeThickness="0" Background="{StaticResource AdminBaslikGradyan}" VerticalOptions="FillAndExpand">
             <Border.Shadow>
-                <Shadow Brush="#16A085" Offset="0,4" Radius="15" Opacity="0.4" />
+                <Shadow Brush="{StaticResource AdminRenk}" Offset="0,4" Radius="15" Opacity="0.35" />
             </Border.Shadow>
             <Grid>
-                <views:AnaBaslikView ShowBack="True" ShowProfile="False" />
+                <views:AnaBaslikView ShowBack="True" ShowProfile="False" VurguRenk="{StaticResource AdminRenk}" />
                 <VerticalStackLayout Spacing="2" VerticalOptions="End" HorizontalOptions="Center" Margin="20,0,20,15">
                     <Label Text="Öğretmen Detayı" FontSize="18" FontFamily="OpenSansSemibold" TextColor="White" HorizontalTextAlignment="Center" />
                 </VerticalStackLayout>
@@ -25,19 +25,19 @@
             <VerticalStackLayout Padding="15,15" Spacing="12">
 
                 <!-- Profil kartı -->
-                <Border StrokeShape="RoundRectangle 14" StrokeThickness="0" BackgroundColor="White" Padding="18">
+                <Border StrokeShape="RoundRectangle 16" StrokeThickness="0" BackgroundColor="{StaticResource Kart}" Padding="18">
                     <Border.Shadow>
-                        <Shadow Brush="Black" Offset="0,2" Radius="6" Opacity="0.05" />
+                        <Shadow Brush="Black" Offset="0,2" Radius="8" Opacity="0.06" />
                     </Border.Shadow>
                     <Grid ColumnDefinitions="80, *" ColumnSpacing="14">
                         <Border Grid.Column="0" WidthRequest="80" HeightRequest="80"
-                                StrokeShape="RoundRectangle 40" StrokeThickness="2" Stroke="#16A085"
-                                BackgroundColor="#F0F2F5">
+                                StrokeShape="RoundRectangle 40" StrokeThickness="2" Stroke="{StaticResource AdminRenk}"
+                                BackgroundColor="{StaticResource KartSoluk}">
                             <Image Source="{Binding GorselKaynak}" Aspect="AspectFill" />
                         </Border>
                         <VerticalStackLayout Grid.Column="1" Spacing="4" VerticalOptions="Center">
-                            <Label Text="{Binding AdSoyad}" FontSize="17" FontFamily="OpenSansSemibold" TextColor="#2C3E50" />
-                            <Label Text="{Binding Birim}" FontSize="13" TextColor="#7F8C8D" />
+                            <Label Text="{Binding AdSoyad}" FontSize="17" FontFamily="OpenSansSemibold" TextColor="{StaticResource MetinKoyu}" />
+                            <Label Text="{Binding Birim}" FontSize="13" TextColor="{StaticResource MetinSoluk}" />
                             <Border StrokeShape="RoundRectangle 6" StrokeThickness="0"
                                     BackgroundColor="{Binding DurumRenk}" Padding="8,3" HorizontalOptions="Start">
                                 <Label Text="{Binding DurumMetin}" FontSize="11" TextColor="White" FontFamily="OpenSansSemibold" />
@@ -47,16 +47,16 @@
                 </Border>
 
                 <!-- İletişim -->
-                <Border StrokeShape="RoundRectangle 14" StrokeThickness="0" BackgroundColor="White" Padding="18">
+                <Border StrokeShape="RoundRectangle 16" StrokeThickness="0" BackgroundColor="{StaticResource Kart}" Padding="18">
                     <Border.Shadow>
-                        <Shadow Brush="Black" Offset="0,2" Radius="6" Opacity="0.05" />
+                        <Shadow Brush="Black" Offset="0,2" Radius="8" Opacity="0.06" />
                     </Border.Shadow>
                     <VerticalStackLayout Spacing="14">
-                        <Label Text="İletişim" FontSize="14" FontFamily="OpenSansSemibold" TextColor="#16A085" />
+                        <Label Text="İletişim" FontSize="14" FontFamily="OpenSansSemibold" TextColor="{StaticResource AdminRenk}" />
 
                         <VerticalStackLayout Spacing="2">
-                            <Label Text="Telefon" FontSize="11" TextColor="#95A5A6" />
-                            <Label Text="{Binding Telefon}" FontSize="14" TextColor="#2C3E50" FontFamily="OpenSansSemibold">
+                            <Label Text="Telefon" FontSize="11" TextColor="{StaticResource MetinSoluk}" />
+                            <Label Text="{Binding Telefon}" FontSize="14" TextColor="{StaticResource MetinKoyu}" FontFamily="OpenSansSemibold">
                                 <Label.GestureRecognizers>
                                     <TapGestureRecognizer Command="{Binding TelefonAraCommand}" />
                                 </Label.GestureRecognizers>
@@ -64,13 +64,13 @@
                         </VerticalStackLayout>
 
                         <VerticalStackLayout Spacing="2">
-                            <Label Text="E-Posta" FontSize="11" TextColor="#95A5A6" />
-                            <Label Text="{Binding Email}" FontSize="14" TextColor="#2C3E50" />
+                            <Label Text="E-Posta" FontSize="11" TextColor="{StaticResource MetinSoluk}" />
+                            <Label Text="{Binding Email}" FontSize="14" TextColor="{StaticResource MetinKoyu}" />
                         </VerticalStackLayout>
                     </VerticalStackLayout>
                 </Border>
 
-                <Label Text="{Binding DurumYazisi}" FontSize="13" TextColor="#E74C3C" HorizontalTextAlignment="Center" />
+                <Label Text="{Binding DurumYazisi}" FontSize="13" TextColor="{StaticResource Tehlike}" HorizontalTextAlignment="Center" />
             </VerticalStackLayout>
         </ScrollView>
     </Grid>

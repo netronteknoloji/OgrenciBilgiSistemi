@@ -6,16 +6,16 @@
              x:Name="SayfaKoku"
              Title="Duyurular"
              Shell.NavBarIsVisible="False"
-             BackgroundColor="#F0F2F5">
+             BackgroundColor="{StaticResource UygulamaArkaPlan}">
 
     <Grid RowDefinitions="125, Auto, *">
 
-        <Border Grid.Row="0" StrokeThickness="0" BackgroundColor="#16A085" VerticalOptions="FillAndExpand">
+        <Border Grid.Row="0" StrokeThickness="0" Background="{StaticResource VeliBaslikGradyan}" VerticalOptions="FillAndExpand">
             <Border.Shadow>
-                <Shadow Brush="#16A085" Offset="0,4" Radius="15" Opacity="0.4" />
+                <Shadow Brush="{StaticResource VeliRenk}" Offset="0,4" Radius="15" Opacity="0.35" />
             </Border.Shadow>
             <Grid>
-                <views:AnaBaslikView x:Name="MyHeader" ShowBack="True" ShowProfile="False" />
+                <views:AnaBaslikView x:Name="MyHeader" ShowBack="True" ShowProfile="False" VurguRenk="{StaticResource VeliRenk}" />
                 <VerticalStackLayout Spacing="2" VerticalOptions="End" HorizontalOptions="Center" Margin="20,0,20,15">
                     <Label Text="Duyurular" FontSize="18" FontFamily="OpenSansSemibold" TextColor="White" HorizontalTextAlignment="Center" />
                     <Label Text="{Binding AltBaslik}" FontSize="14" TextColor="White" Opacity="0.8" HorizontalTextAlignment="Center" />
@@ -25,15 +25,15 @@
 
         <!-- Tümünü okundu işaretle -->
         <Border Grid.Row="1" Margin="15,-15,15,10" HeightRequest="48" StrokeShape="RoundRectangle 24"
-                StrokeThickness="0" BackgroundColor="White">
+                StrokeThickness="0" BackgroundColor="{StaticResource Kart}">
             <Border.Shadow>
-                <Shadow Brush="Black" Offset="0,10" Radius="20" Opacity="0.08" />
+                <Shadow Brush="Black" Offset="0,8" Radius="24" Opacity="0.10" />
             </Border.Shadow>
             <Border.GestureRecognizers>
                 <TapGestureRecognizer Command="{Binding TumunuOkunduCommand}" />
             </Border.GestureRecognizers>
             <HorizontalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="8">
-                <Label Text="Tümünü Okundu İşaretle" FontSize="14" FontFamily="OpenSansSemibold" TextColor="#16A085" VerticalOptions="Center" />
+                <Label Text="Tümünü Okundu İşaretle" FontSize="14" FontFamily="OpenSansSemibold" TextColor="{StaticResource VeliRenk}" VerticalOptions="Center" />
             </HorizontalStackLayout>
         </Border>
 
@@ -61,15 +61,15 @@
                                 </BoxView.Clip>
                             </BoxView>
                             <VerticalStackLayout Grid.Column="1" Spacing="6" VerticalOptions="Center">
-                                <Label Text="{Binding Duyuru.Baslik}" FontSize="16" FontFamily="OpenSansSemibold" TextColor="#2C3E50" />
+                                <Label Text="{Binding Duyuru.Baslik}" FontSize="16" FontFamily="OpenSansSemibold" TextColor="{StaticResource MetinKoyu}" />
                                 <Grid ColumnDefinitions="Auto, *, Auto">
-                                    <Label Grid.Column="0" Text="{Binding Duyuru.OlusturanAdSoyad}" FontSize="12" TextColor="#16A085" />
-                                    <Label Grid.Column="2" Text="{Binding Duyuru.TarihMetni}" FontSize="12" TextColor="#95A5A6" />
+                                    <Label Grid.Column="0" Text="{Binding Duyuru.OlusturanAdSoyad}" FontSize="12" TextColor="{StaticResource VeliRenk}" />
+                                    <Label Grid.Column="2" Text="{Binding Duyuru.TarihMetni}" FontSize="12" TextColor="{StaticResource MetinSoluk}" />
                                 </Grid>
-                                <Label Text="{Binding Duyuru.Icerik}" FontSize="13" TextColor="#34495E" LineBreakMode="WordWrap" />
+                                <Label Text="{Binding Duyuru.Icerik}" FontSize="13" TextColor="{StaticResource MetinGovde}" LineBreakMode="WordWrap" />
                             </VerticalStackLayout>
                             <BoxView Grid.Column="2" WidthRequest="10" HeightRequest="10" CornerRadius="5"
-                                     BackgroundColor="#E67E22" VerticalOptions="Center"
+                                     BackgroundColor="{StaticResource VeliRenk}" VerticalOptions="Center"
                                      IsVisible="{Binding OkunmadiMi}" />
                         </Grid>
                     </Border>
@@ -77,7 +77,7 @@
             </CollectionView.ItemTemplate>
             <CollectionView.EmptyView>
                 <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="10" Padding="20">
-                    <Label Text="Henüz duyuru bulunmuyor." FontSize="16" TextColor="#95A5A6" HorizontalOptions="Center" />
+                    <Label Text="Henüz duyuru bulunmuyor." FontSize="16" TextColor="{StaticResource MetinSoluk}" HorizontalOptions="Center" />
                 </VerticalStackLayout>
             </CollectionView.EmptyView>
         </CollectionView>

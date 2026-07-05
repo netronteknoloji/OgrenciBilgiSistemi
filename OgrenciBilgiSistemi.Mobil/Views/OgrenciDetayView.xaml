@@ -3,16 +3,16 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:views="clr-namespace:OgrenciBilgiSistemi.Mobil.Views"
              x:Class="OgrenciBilgiSistemi.Mobil.Views.OgrenciDetayView"
-             BackgroundColor="#F0F2F5"
+             BackgroundColor="{StaticResource UygulamaArkaPlan}"
              Shell.NavBarIsVisible="False">
 
     <Grid RowDefinitions="125, Auto, *">
 
-        <Border Grid.Row="0" StrokeThickness="0" BackgroundColor="#1ABC9C">
+        <Border Grid.Row="0" StrokeThickness="0" Background="{StaticResource MarkaGradyan}">
             <Border.Shadow>
-                <Shadow Brush="#1ABC9C" Offset="0,4" Radius="15" Opacity="0.4" />
+                <Shadow Brush="{StaticResource Marka}" Offset="0,4" Radius="15" Opacity="0.35" />
             </Border.Shadow>
-            <views:AnaBaslikView x:Name="MyHeader" ShowBack="True" ShowProfile="False" />
+            <views:AnaBaslikView x:Name="MyHeader" ShowBack="True" ShowProfile="False" VurguRenk="{StaticResource Marka}" />
         </Border>
 
         <VerticalStackLayout Grid.Row="1" HorizontalOptions="Center" Spacing="10" Margin="0,-70,0,10" ZIndex="1">
@@ -22,37 +22,37 @@
                 </Border.Shadow>
                 <Image Aspect="AspectFill" Source="{Binding OgrenciGorsel}" />
             </Border>
-            <Label Text="{Binding OgrenciAdSoyad}" FontSize="26" FontAttributes="Bold" TextColor="#2C3E50" HorizontalOptions="Center" />
-            <Label Text="{Binding BirimAd}" FontSize="16" TextColor="#7F8C8D" HorizontalOptions="Center" />
+            <Label Text="{Binding OgrenciAdSoyad}" FontSize="26" FontAttributes="Bold" TextColor="{StaticResource MetinKoyu}" HorizontalOptions="Center" />
+            <Label Text="{Binding BirimAd}" FontSize="16" TextColor="{StaticResource MetinSoluk}" HorizontalOptions="Center" />
         </VerticalStackLayout>
 
         <ScrollView Grid.Row="2">
             <VerticalStackLayout Padding="20,10,20,40" Spacing="15">
 
-                <Border StrokeShape="RoundRectangle 20" Padding="0" BackgroundColor="White" StrokeThickness="0">
+                <Border StrokeShape="RoundRectangle 20" Padding="0" BackgroundColor="{StaticResource Kart}" StrokeThickness="0">
                     <Grid ColumnDefinitions="*, *" Padding="20">
                         <VerticalStackLayout Grid.Column="0" Spacing="5" HorizontalOptions="Center">
-                            <Label Text="Öğrenci No" FontSize="12" TextColor="#95A5A6" HorizontalOptions="Center"/>
-                            <Label Text="{Binding OgrenciNo}" FontSize="18" FontAttributes="Bold" TextColor="#1ABC9C" HorizontalOptions="Center"/>
+                            <Label Text="Öğrenci No" FontSize="12" TextColor="{StaticResource MetinSoluk}" HorizontalOptions="Center"/>
+                            <Label Text="{Binding OgrenciNo}" FontSize="18" FontAttributes="Bold" TextColor="{StaticResource Marka}" HorizontalOptions="Center"/>
                         </VerticalStackLayout>
-                        <BoxView Grid.Column="0" WidthRequest="1" BackgroundColor="#ECF0F1" HorizontalOptions="End" Margin="0,5"/>
+                        <BoxView Grid.Column="0" WidthRequest="1" BackgroundColor="{StaticResource Cizgi}" HorizontalOptions="End" Margin="0,5"/>
                         <VerticalStackLayout Grid.Column="1" Spacing="5" HorizontalOptions="Center">
-                            <Label Text="Kart No" FontSize="12" TextColor="#95A5A6" HorizontalOptions="Center"/>
-                            <Label Text="{Binding OgrenciKartNo}" FontSize="18" FontAttributes="Bold" TextColor="#34495E" HorizontalOptions="Center"/>
+                            <Label Text="Kart No" FontSize="12" TextColor="{StaticResource MetinSoluk}" HorizontalOptions="Center"/>
+                            <Label Text="{Binding OgrenciKartNo}" FontSize="18" FontAttributes="Bold" TextColor="{StaticResource MetinKoyu}" HorizontalOptions="Center"/>
                         </VerticalStackLayout>
                     </Grid>
                 </Border>
 
-                <Border StrokeShape="RoundRectangle 20" Padding="20" BackgroundColor="White" StrokeThickness="0">
+                <Border StrokeShape="RoundRectangle 20" Padding="20" BackgroundColor="{StaticResource Kart}" StrokeThickness="0">
                     <VerticalStackLayout Spacing="15">
-                        <Label Text="Veli İletişim Bilgileri" FontSize="13" FontAttributes="Bold" TextColor="#7F8C8D" CharacterSpacing="1"/>
-                        <BoxView HeightRequest="1" Color="#F5F6FA" />
+                        <Label Text="Veli İletişim Bilgileri" FontSize="13" FontAttributes="Bold" TextColor="{StaticResource MetinSoluk}" CharacterSpacing="1"/>
+                        <BoxView HeightRequest="1" Color="{StaticResource Cizgi}" />
 
                         <VerticalStackLayout Spacing="5">
-                            <Label Text="{Binding VeliAdSoyad}" FontSize="20" FontAttributes="Bold" TextColor="#2C3E50" />
+                            <Label Text="{Binding VeliAdSoyad}" FontSize="20" FontAttributes="Bold" TextColor="{StaticResource MetinKoyu}" />
                             <HorizontalStackLayout Spacing="8">
                                 <Label Text="📞" FontSize="14" VerticalOptions="Center"/>
-                                <Label x:Name="LblParentPhone" Text="{Binding VeliTelefon}" FontSize="16" FontAttributes="Bold" TextColor="#2980B9" VerticalOptions="Center">
+                                <Label x:Name="LblParentPhone" Text="{Binding VeliTelefon}" FontSize="16" FontAttributes="Bold" TextColor="{StaticResource Marka}" VerticalOptions="Center">
                                     <Label.GestureRecognizers>
                                         <TapGestureRecognizer Tapped="OnPhoneTapped" />
                                     </Label.GestureRecognizers>
@@ -62,61 +62,61 @@
 
                         <Grid ColumnDefinitions="*, *" RowDefinitions="Auto, Auto" ColumnSpacing="10" RowSpacing="20" Padding="0,10">
                             <VerticalStackLayout Grid.Row="0" Grid.Column="0" Spacing="5">
-                                <Label Text="📧 E-Posta" FontSize="11" TextColor="#95A5A6" FontAttributes="Bold"/>
-                                <Label Text="{Binding VeliEmail}" FontSize="13" TextColor="#34495E" LineBreakMode="TailTruncation"/>
+                                <Label Text="📧 E-Posta" FontSize="11" TextColor="{StaticResource MetinSoluk}" FontAttributes="Bold"/>
+                                <Label Text="{Binding VeliEmail}" FontSize="13" TextColor="{StaticResource MetinKoyu}" LineBreakMode="TailTruncation"/>
                             </VerticalStackLayout>
 
                             <VerticalStackLayout Grid.Row="0" Grid.Column="1" Spacing="5">
-                                <Label Text="📍 Adres" FontSize="11" TextColor="#95A5A6" FontAttributes="Bold"/>
-                                <Label Text="{Binding VeliAdres}" FontSize="12" TextColor="#34495E" LineBreakMode="WordWrap"/>
+                                <Label Text="📍 Adres" FontSize="11" TextColor="{StaticResource MetinSoluk}" FontAttributes="Bold"/>
+                                <Label Text="{Binding VeliAdres}" FontSize="12" TextColor="{StaticResource MetinKoyu}" LineBreakMode="WordWrap"/>
                             </VerticalStackLayout>
 
                             <VerticalStackLayout Grid.Row="1" Grid.Column="0" Spacing="5">
-                                <Label Text="💼 Meslek" FontSize="11" TextColor="#95A5A6" FontAttributes="Bold"/>
-                                <Label Text="{Binding VeliMeslek}" FontSize="13" TextColor="#34495E" />
+                                <Label Text="💼 Meslek" FontSize="11" TextColor="{StaticResource MetinSoluk}" FontAttributes="Bold"/>
+                                <Label Text="{Binding VeliMeslek}" FontSize="13" TextColor="{StaticResource MetinKoyu}" />
                             </VerticalStackLayout>
 
                             <VerticalStackLayout Grid.Row="1" Grid.Column="1" Spacing="5">
-                                <Label Text="🏢 İş Yeri" FontSize="11" TextColor="#95A5A6" FontAttributes="Bold"/>
-                                <Label Text="{Binding VeliIsYeri}" FontSize="13" TextColor="#34495E" />
+                                <Label Text="🏢 İş Yeri" FontSize="11" TextColor="{StaticResource MetinSoluk}" FontAttributes="Bold"/>
+                                <Label Text="{Binding VeliIsYeri}" FontSize="13" TextColor="{StaticResource MetinKoyu}" />
                             </VerticalStackLayout>
                         </Grid>
                     </VerticalStackLayout>
                 </Border>
 
-                <Border StrokeShape="RoundRectangle 20" Padding="20" StrokeThickness="0" BackgroundColor="White">
+                <Border StrokeShape="RoundRectangle 20" Padding="20" StrokeThickness="0" BackgroundColor="{StaticResource Kart}">
                     <HorizontalStackLayout Spacing="20">
                         <Label Text="🚌" FontSize="24" VerticalOptions="Center" />
                         <VerticalStackLayout VerticalOptions="Center">
-                            <Label Text="Okul Servis Plakası" FontSize="13" TextColor="#7F8C8D" FontAttributes="Bold" />
-                            <Label Text="{Binding Plaka}" FontSize="16" TextColor="#2980B9" FontAttributes="Bold" />
+                            <Label Text="Okul Servis Plakası" FontSize="13" TextColor="{StaticResource MetinSoluk}" FontAttributes="Bold" />
+                            <Label Text="{Binding Plaka}" FontSize="16" TextColor="{StaticResource Marka}" FontAttributes="Bold" />
                         </VerticalStackLayout>
                     </HorizontalStackLayout>
                 </Border>
 
-                <Border StrokeShape="RoundRectangle 20" Padding="20" StrokeThickness="0" BackgroundColor="White">
+                <Border StrokeShape="RoundRectangle 20" Padding="20" StrokeThickness="0" BackgroundColor="{StaticResource Kart}">
                     <HorizontalStackLayout Spacing="20">
                         <Label Text="👨‍🏫" FontSize="24" VerticalOptions="Center" />
                         <VerticalStackLayout VerticalOptions="Center">
-                            <Label Text="Sınıf Öğretmeni" FontSize="13" TextColor="#7F8C8D" FontAttributes="Bold" />
-                            <Label Text="{Binding OgretmenAdSoyad}" FontSize="13" TextColor="#2C3E50" FontAttributes="Bold" />
+                            <Label Text="Sınıf Öğretmeni" FontSize="13" TextColor="{StaticResource MetinSoluk}" FontAttributes="Bold" />
+                            <Label Text="{Binding OgretmenAdSoyad}" FontSize="13" TextColor="{StaticResource MetinKoyu}" FontAttributes="Bold" />
                         </VerticalStackLayout>
                     </HorizontalStackLayout>
                 </Border>
 
-                <Border StrokeShape="RoundRectangle 20" Padding="15" BackgroundColor="White" StrokeThickness="0">
+                <Border StrokeShape="RoundRectangle 20" Padding="15" BackgroundColor="{StaticResource Kart}" StrokeThickness="0">
                     <VerticalStackLayout Spacing="15">
-                        <Label Text="Haftalık Yoklama Analizi" FontSize="13" FontAttributes="Bold" TextColor="#7F8C8D" CharacterSpacing="1"/>
+                        <Label Text="Haftalık Yoklama Analizi" FontSize="13" FontAttributes="Bold" TextColor="{StaticResource MetinSoluk}" CharacterSpacing="1"/>
 
-                        <Border StrokeShape="RoundRectangle 10" BackgroundColor="#F8F9FA" StrokeThickness="0" HeightRequest="50">
+                        <Border StrokeShape="RoundRectangle 10" BackgroundColor="{StaticResource KartSoluk}" StrokeThickness="0" HeightRequest="50">
                             <Grid ColumnDefinitions="50, *, 50">
-                                <Label Grid.Column="0" Text="◀" TextColor="#1ABC9C" FontSize="22" HorizontalOptions="Center" VerticalOptions="Center" FontAttributes="Bold">
+                                <Label Grid.Column="0" Text="◀" TextColor="{StaticResource Marka}" FontSize="22" HorizontalOptions="Center" VerticalOptions="Center" FontAttributes="Bold">
                                     <Label.GestureRecognizers>
                                         <TapGestureRecognizer Command="{Binding OncekiHaftaCommand}" />
                                     </Label.GestureRecognizers>
                                 </Label>
-                                <Label Grid.Column="1" Text="{Binding HaftaMetni}" HorizontalOptions="Center" VerticalOptions="Center" FontAttributes="Bold" TextColor="#2C3E50" FontSize="13"/>
-                                <Label Grid.Column="2" Text="▶" TextColor="#1ABC9C" FontSize="22" HorizontalOptions="Center" VerticalOptions="Center" FontAttributes="Bold">
+                                <Label Grid.Column="1" Text="{Binding HaftaMetni}" HorizontalOptions="Center" VerticalOptions="Center" FontAttributes="Bold" TextColor="{StaticResource MetinKoyu}" FontSize="13"/>
+                                <Label Grid.Column="2" Text="▶" TextColor="{StaticResource Marka}" FontSize="22" HorizontalOptions="Center" VerticalOptions="Center" FontAttributes="Bold">
                                     <Label.GestureRecognizers>
                                         <TapGestureRecognizer Command="{Binding SonrakiHaftaCommand}" />
                                     </Label.GestureRecognizers>
@@ -126,102 +126,104 @@
 
                         <Grid ColumnDefinitions="*, *" Margin="0,5">
                             <HorizontalStackLayout Grid.Column="0" Spacing="5" HorizontalOptions="Center">
-                                <Label Text="{Binding YoklamaOraniMetni}" FontSize="20" FontAttributes="Bold" TextColor="#1ABC9C"/>
-                                <Label Text="Katılım" FontSize="11" TextColor="#95A5A6" VerticalOptions="Center"/>
+                                <Label Text="{Binding YoklamaOraniMetni}" FontSize="20" FontAttributes="Bold" TextColor="{StaticResource Basari}"/>
+                                <Label Text="Katılım" FontSize="11" TextColor="{StaticResource MetinSoluk}" VerticalOptions="Center"/>
                             </HorizontalStackLayout>
                             <HorizontalStackLayout Grid.Column="1" Spacing="5" HorizontalOptions="Center">
-                                <Label Text="{Binding DevamsizlikMetni}" FontSize="20" FontAttributes="Bold" TextColor="#E74C3C"/>
-                                <Label Text="Gelmedi" FontSize="11" TextColor="#95A5A6" VerticalOptions="Center"/>
+                                <Label Text="{Binding DevamsizlikMetni}" FontSize="20" FontAttributes="Bold" TextColor="{StaticResource Tehlike}"/>
+                                <Label Text="Gelmedi" FontSize="11" TextColor="{StaticResource MetinSoluk}" VerticalOptions="Center"/>
                             </HorizontalStackLayout>
                         </Grid>
 
                         <Grid x:Name="GridAttendanceMatrix" ColumnDefinitions="20, *, *, *, *, *, *, *" RowDefinitions="25, 30, 30, 30, 30, 30, 30, 30, 30" ColumnSpacing="3" RowSpacing="3">
-                            <Label Grid.Row="0" Grid.Column="1" Text="Pzt" HorizontalOptions="Center" FontSize="10" FontAttributes="Bold" TextColor="#95A5A6"/>
-                            <Label Grid.Row="0" Grid.Column="2" Text="Sal" HorizontalOptions="Center" FontSize="10" FontAttributes="Bold" TextColor="#95A5A6"/>
-                            <Label Grid.Row="0" Grid.Column="3" Text="Çar" HorizontalOptions="Center" FontSize="10" FontAttributes="Bold" TextColor="#95A5A6"/>
-                            <Label Grid.Row="0" Grid.Column="4" Text="Per" HorizontalOptions="Center" FontSize="10" FontAttributes="Bold" TextColor="#95A5A6"/>
-                            <Label Grid.Row="0" Grid.Column="5" Text="Cum" HorizontalOptions="Center" FontSize="10" FontAttributes="Bold" TextColor="#95A5A6"/>
-                            <Label Grid.Row="0" Grid.Column="6" Text="Cts" HorizontalOptions="Center" FontSize="10" FontAttributes="Bold" TextColor="#BDC3C7"/>
-                            <Label Grid.Row="0" Grid.Column="7" Text="Paz" HorizontalOptions="Center" FontSize="10" FontAttributes="Bold" TextColor="#BDC3C7"/>
+                            <Label Grid.Row="0" Grid.Column="1" Text="Pzt" HorizontalOptions="Center" FontSize="10" FontAttributes="Bold" TextColor="{StaticResource MetinSoluk}"/>
+                            <Label Grid.Row="0" Grid.Column="2" Text="Sal" HorizontalOptions="Center" FontSize="10" FontAttributes="Bold" TextColor="{StaticResource MetinSoluk}"/>
+                            <Label Grid.Row="0" Grid.Column="3" Text="Çar" HorizontalOptions="Center" FontSize="10" FontAttributes="Bold" TextColor="{StaticResource MetinSoluk}"/>
+                            <Label Grid.Row="0" Grid.Column="4" Text="Per" HorizontalOptions="Center" FontSize="10" FontAttributes="Bold" TextColor="{StaticResource MetinSoluk}"/>
+                            <Label Grid.Row="0" Grid.Column="5" Text="Cum" HorizontalOptions="Center" FontSize="10" FontAttributes="Bold" TextColor="{StaticResource MetinSoluk}"/>
+                            <Label Grid.Row="0" Grid.Column="6" Text="Cts" HorizontalOptions="Center" FontSize="10" FontAttributes="Bold" TextColor="{StaticResource MetinSoluk}"/>
+                            <Label Grid.Row="0" Grid.Column="7" Text="Paz" HorizontalOptions="Center" FontSize="10" FontAttributes="Bold" TextColor="{StaticResource MetinSoluk}"/>
 
-                            <Label Grid.Row="1" Grid.Column="0" Text="1" VerticalOptions="Center" HorizontalOptions="Center" FontSize="10" TextColor="#BDC3C7"/>
-                            <Label Grid.Row="2" Grid.Column="0" Text="2" VerticalOptions="Center" HorizontalOptions="Center" FontSize="10" TextColor="#BDC3C7"/>
-                            <Label Grid.Row="3" Grid.Column="0" Text="3" VerticalOptions="Center" HorizontalOptions="Center" FontSize="10" TextColor="#BDC3C7"/>
-                            <Label Grid.Row="4" Grid.Column="0" Text="4" VerticalOptions="Center" HorizontalOptions="Center" FontSize="10" TextColor="#BDC3C7"/>
-                            <Label Grid.Row="5" Grid.Column="0" Text="5" VerticalOptions="Center" HorizontalOptions="Center" FontSize="10" TextColor="#BDC3C7"/>
-                            <Label Grid.Row="6" Grid.Column="0" Text="6" VerticalOptions="Center" HorizontalOptions="Center" FontSize="10" TextColor="#BDC3C7"/>
-                            <Label Grid.Row="7" Grid.Column="0" Text="7" VerticalOptions="Center" HorizontalOptions="Center" FontSize="10" TextColor="#BDC3C7"/>
-                            <Label Grid.Row="8" Grid.Column="0" Text="8" VerticalOptions="Center" HorizontalOptions="Center" FontSize="10" TextColor="#BDC3C7"/>
+                            <Label Grid.Row="1" Grid.Column="0" Text="1" VerticalOptions="Center" HorizontalOptions="Center" FontSize="10" TextColor="{StaticResource MetinSoluk}"/>
+                            <Label Grid.Row="2" Grid.Column="0" Text="2" VerticalOptions="Center" HorizontalOptions="Center" FontSize="10" TextColor="{StaticResource MetinSoluk}"/>
+                            <Label Grid.Row="3" Grid.Column="0" Text="3" VerticalOptions="Center" HorizontalOptions="Center" FontSize="10" TextColor="{StaticResource MetinSoluk}"/>
+                            <Label Grid.Row="4" Grid.Column="0" Text="4" VerticalOptions="Center" HorizontalOptions="Center" FontSize="10" TextColor="{StaticResource MetinSoluk}"/>
+                            <Label Grid.Row="5" Grid.Column="0" Text="5" VerticalOptions="Center" HorizontalOptions="Center" FontSize="10" TextColor="{StaticResource MetinSoluk}"/>
+                            <Label Grid.Row="6" Grid.Column="0" Text="6" VerticalOptions="Center" HorizontalOptions="Center" FontSize="10" TextColor="{StaticResource MetinSoluk}"/>
+                            <Label Grid.Row="7" Grid.Column="0" Text="7" VerticalOptions="Center" HorizontalOptions="Center" FontSize="10" TextColor="{StaticResource MetinSoluk}"/>
+                            <Label Grid.Row="8" Grid.Column="0" Text="8" VerticalOptions="Center" HorizontalOptions="Center" FontSize="10" TextColor="{StaticResource MetinSoluk}"/>
 
-                            <Border Grid.Row="1" Grid.RowSpan="8" Grid.Column="6" BackgroundColor="#F8F9FA" StrokeShape="RoundRectangle 4" StrokeThickness="0">
-                                <Label Text="Hafta sonu tatili." Rotation="-90" VerticalOptions="Center" HorizontalOptions="Center" FontSize="8" TextColor="#DCDDE1" FontAttributes="Bold"/>
+                            <Border Grid.Row="1" Grid.RowSpan="8" Grid.Column="6" BackgroundColor="{StaticResource KartSoluk}" StrokeShape="RoundRectangle 4" StrokeThickness="0">
+                                <Label Text="Hafta sonu tatili." Rotation="-90" VerticalOptions="Center" HorizontalOptions="Center" FontSize="8" TextColor="{StaticResource MetinSoluk}" FontAttributes="Bold"/>
                             </Border>
-                            <Border Grid.Row="1" Grid.RowSpan="8" Grid.Column="7" BackgroundColor="#F8F9FA" StrokeShape="RoundRectangle 4" StrokeThickness="0">
-                                <Label Text="Hafta sonu tatili." Rotation="-90" VerticalOptions="Center" HorizontalOptions="Center" FontSize="8" TextColor="#DCDDE1" FontAttributes="Bold"/>
+                            <Border Grid.Row="1" Grid.RowSpan="8" Grid.Column="7" BackgroundColor="{StaticResource KartSoluk}" StrokeShape="RoundRectangle 4" StrokeThickness="0">
+                                <Label Text="Hafta sonu tatili." Rotation="-90" VerticalOptions="Center" HorizontalOptions="Center" FontSize="8" TextColor="{StaticResource MetinSoluk}" FontAttributes="Bold"/>
                             </Border>
                         </Grid>
 
-                        <BoxView HeightRequest="1" Color="#F5F6FA" Margin="0,5" />
+                        <BoxView HeightRequest="1" Color="{StaticResource Cizgi}" Margin="0,5" />
 
                         <FlexLayout Wrap="Wrap" JustifyContent="SpaceEvenly" AlignItems="Center" AlignContent="Center">
+                            <!-- Lejant renkleri Shared/Constants/YoklamaRenkleri.cs ile eşleşir
+                                 (matris hücreleri o sınıftan boyanır) -->
                             <HorizontalStackLayout Spacing="4" Margin="4">
-                                <BoxView Color="#1ABC9C" WidthRequest="10" HeightRequest="10" CornerRadius="2"/>
-                                <Label Text="Geldi" FontSize="10" TextColor="#7F8C8D"/>
+                                <BoxView Color="#198754" WidthRequest="10" HeightRequest="10" CornerRadius="2"/>
+                                <Label Text="Geldi" FontSize="10" TextColor="{StaticResource MetinSoluk}"/>
                             </HorizontalStackLayout>
                             <HorizontalStackLayout Spacing="4" Margin="4">
-                                <BoxView Color="#E74C3C" WidthRequest="10" HeightRequest="10" CornerRadius="2"/>
-                                <Label Text="Gelmedi" FontSize="10" TextColor="#7F8C8D"/>
+                                <BoxView Color="#DC3545" WidthRequest="10" HeightRequest="10" CornerRadius="2"/>
+                                <Label Text="Gelmedi" FontSize="10" TextColor="{StaticResource MetinSoluk}"/>
                             </HorizontalStackLayout>
                             <HorizontalStackLayout Spacing="4" Margin="4">
-                                <BoxView Color="#F1C40F" WidthRequest="10" HeightRequest="10" CornerRadius="2"/>
-                                <Label Text="Geç Geldi" FontSize="10" TextColor="#7F8C8D"/>
+                                <BoxView Color="#FFC107" WidthRequest="10" HeightRequest="10" CornerRadius="2"/>
+                                <Label Text="Geç Geldi" FontSize="10" TextColor="{StaticResource MetinSoluk}"/>
                             </HorizontalStackLayout>
                             <HorizontalStackLayout Spacing="4" Margin="4">
-                                <BoxView Color="#3498DB" WidthRequest="10" HeightRequest="10" CornerRadius="2"/>
-                                <Label Text="İzinli" FontSize="10" TextColor="#7F8C8D"/>
+                                <BoxView Color="#0D6EFD" WidthRequest="10" HeightRequest="10" CornerRadius="2"/>
+                                <Label Text="İzinli" FontSize="10" TextColor="{StaticResource MetinSoluk}"/>
                             </HorizontalStackLayout>
                             <HorizontalStackLayout Spacing="4" Margin="4">
-                                <BoxView Color="#9B59B6" WidthRequest="10" HeightRequest="10" CornerRadius="2"/>
-                                <Label Text="Raporlu" FontSize="10" TextColor="#7F8C8D"/>
+                                <BoxView Color="#6F42C1" WidthRequest="10" HeightRequest="10" CornerRadius="2"/>
+                                <Label Text="Raporlu" FontSize="10" TextColor="{StaticResource MetinSoluk}"/>
                             </HorizontalStackLayout>
                             <HorizontalStackLayout Spacing="4" Margin="4">
-                                <BoxView Color="#34495E" WidthRequest="10" HeightRequest="10" CornerRadius="2"/>
-                                <Label Text="Nöbetçi" FontSize="10" TextColor="#7F8C8D"/>
+                                <BoxView Color="#212529" WidthRequest="10" HeightRequest="10" CornerRadius="2"/>
+                                <Label Text="Nöbetçi" FontSize="10" TextColor="{StaticResource MetinSoluk}"/>
                             </HorizontalStackLayout>
                             <HorizontalStackLayout Spacing="4" Margin="4">
-                                <BoxView Color="#95A5A6" WidthRequest="10" HeightRequest="10" CornerRadius="2"/>
-                                <Label Text="Görevli" FontSize="10" TextColor="#7F8C8D"/>
+                                <BoxView Color="#6C757D" WidthRequest="10" HeightRequest="10" CornerRadius="2"/>
+                                <Label Text="Görevli" FontSize="10" TextColor="{StaticResource MetinSoluk}"/>
                             </HorizontalStackLayout>
                         </FlexLayout>
                     </VerticalStackLayout>
                 </Border>
 
-                <Border StrokeShape="RoundRectangle 20" Padding="15" BackgroundColor="White" StrokeThickness="0">
+                <Border StrokeShape="RoundRectangle 20" Padding="15" BackgroundColor="{StaticResource Kart}" StrokeThickness="0">
                     <VerticalStackLayout Spacing="10">
-                        <Label Text="Haftalık Giriş/Çıkış" FontSize="13" FontAttributes="Bold" TextColor="#7F8C8D" CharacterSpacing="1"/>
-                        <BoxView HeightRequest="1" Color="#F5F6FA" />
+                        <Label Text="Haftalık Giriş/Çıkış" FontSize="13" FontAttributes="Bold" TextColor="{StaticResource MetinSoluk}" CharacterSpacing="1"/>
+                        <BoxView HeightRequest="1" Color="{StaticResource Cizgi}" />
                         <VerticalStackLayout x:Name="LayoutGirisCikis" Spacing="8">
-                            <Label Text="Yükleniyor..." FontSize="12" TextColor="#BDC3C7" HorizontalOptions="Center" />
+                            <Label Text="Yükleniyor..." FontSize="12" TextColor="{StaticResource MetinSoluk}" HorizontalOptions="Center" />
                         </VerticalStackLayout>
                     </VerticalStackLayout>
                 </Border>
 
-                <Border StrokeShape="RoundRectangle 20" Padding="15" BackgroundColor="White" StrokeThickness="0">
+                <Border StrokeShape="RoundRectangle 20" Padding="15" BackgroundColor="{StaticResource Kart}" StrokeThickness="0">
                     <VerticalStackLayout Spacing="10">
-                        <Label Text="Haftalık Yemekhane" FontSize="13" FontAttributes="Bold" TextColor="#7F8C8D" CharacterSpacing="1"/>
-                        <BoxView HeightRequest="1" Color="#F5F6FA" />
+                        <Label Text="Haftalık Yemekhane" FontSize="13" FontAttributes="Bold" TextColor="{StaticResource MetinSoluk}" CharacterSpacing="1"/>
+                        <BoxView HeightRequest="1" Color="{StaticResource Cizgi}" />
                         <VerticalStackLayout x:Name="LayoutYemekhane" Spacing="8">
-                            <Label Text="Yükleniyor..." FontSize="12" TextColor="#BDC3C7" HorizontalOptions="Center" />
+                            <Label Text="Yükleniyor..." FontSize="12" TextColor="{StaticResource MetinSoluk}" HorizontalOptions="Center" />
                         </VerticalStackLayout>
                     </VerticalStackLayout>
                 </Border>
 
-                <Border StrokeShape="RoundRectangle 20" Padding="15" BackgroundColor="White" StrokeThickness="0">
+                <Border StrokeShape="RoundRectangle 20" Padding="15" BackgroundColor="{StaticResource Kart}" StrokeThickness="0">
                     <VerticalStackLayout Spacing="10">
-                        <Label Text="Haftalık Servis Yoklaması" FontSize="13" FontAttributes="Bold" TextColor="#7F8C8D" CharacterSpacing="1"/>
-                        <BoxView HeightRequest="1" Color="#F5F6FA" />
+                        <Label Text="Haftalık Servis Yoklaması" FontSize="13" FontAttributes="Bold" TextColor="{StaticResource MetinSoluk}" CharacterSpacing="1"/>
+                        <BoxView HeightRequest="1" Color="{StaticResource Cizgi}" />
                         <VerticalStackLayout x:Name="LayoutServisYoklama" Spacing="8">
-                            <Label Text="Yükleniyor..." FontSize="12" TextColor="#BDC3C7" HorizontalOptions="Center" />
+                            <Label Text="Yükleniyor..." FontSize="12" TextColor="{StaticResource MetinSoluk}" HorizontalOptions="Center" />
                         </VerticalStackLayout>
                     </VerticalStackLayout>
                 </Border>

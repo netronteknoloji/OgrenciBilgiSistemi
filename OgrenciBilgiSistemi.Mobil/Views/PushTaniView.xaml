@@ -5,16 +5,16 @@
              x:Class="OgrenciBilgiSistemi.Mobil.Views.PushTaniView"
              Title="Bildirim Tanısı"
              Shell.NavBarIsVisible="False"
-             BackgroundColor="#F0F2F5">
+             BackgroundColor="{StaticResource UygulamaArkaPlan}">
 
     <Grid RowDefinitions="125, Auto, *, Auto">
 
-        <Border Grid.Row="0" StrokeThickness="0" BackgroundColor="#2C3E50" VerticalOptions="FillAndExpand">
+        <Border Grid.Row="0" StrokeThickness="0" Background="{StaticResource MarkaGradyan}" VerticalOptions="FillAndExpand">
             <Border.Shadow>
-                <Shadow Brush="#2C3E50" Offset="0,4" Radius="15" Opacity="0.4" />
+                <Shadow Brush="{StaticResource Marka}" Offset="0,4" Radius="15" Opacity="0.35" />
             </Border.Shadow>
             <Grid>
-                <views:AnaBaslikView x:Name="MyHeader" ShowBack="True" ShowProfile="False" />
+                <views:AnaBaslikView x:Name="MyHeader" ShowBack="True" ShowProfile="False" VurguRenk="{StaticResource Marka}" />
                 <VerticalStackLayout Spacing="2" VerticalOptions="End" HorizontalOptions="Center" Margin="20,0,20,15">
                     <Label Text="Bildirim Tanısı" FontSize="18" FontFamily="OpenSansSemibold" TextColor="White" HorizontalTextAlignment="Center" />
                     <Label Text="{Binding SurumBilgisi}" FontSize="12" TextColor="White" Opacity="0.8" HorizontalTextAlignment="Center" />
@@ -22,28 +22,28 @@
             </Grid>
         </Border>
 
-        <Label Grid.Row="1" Text="{Binding GirisDurumu}" FontSize="13" TextColor="#7F8C8D"
+        <Label Grid.Row="1" Text="{Binding GirisDurumu}" FontSize="13" TextColor="{StaticResource MetinSoluk}"
                HorizontalTextAlignment="Center" Margin="15,10,15,0" />
 
         <Border Grid.Row="2" Margin="15,10" StrokeShape="RoundRectangle 14" StrokeThickness="0"
-                BackgroundColor="White" Padding="14">
+                BackgroundColor="{StaticResource Kart}" Padding="14">
             <Border.Shadow>
-                <Shadow Brush="Black" Offset="0,2" Radius="6" Opacity="0.05" />
+                <Shadow Brush="Black" Offset="0,2" Radius="8" Opacity="0.06" />
             </Border.Shadow>
             <ScrollView>
                 <Label Text="{Binding TaniMetni}" FontSize="12" FontFamily="Courier"
-                       TextColor="#2C3E50" LineBreakMode="WordWrap" />
+                       TextColor="{StaticResource MetinKoyu}" LineBreakMode="WordWrap" />
             </ScrollView>
         </Border>
 
         <Grid Grid.Row="3" ColumnDefinitions="*, *, *" ColumnSpacing="10" Margin="15,0,15,25">
-            <Button Grid.Column="0" Text="Yenile" FontSize="13" BackgroundColor="#7F8C8D" TextColor="White"
+            <Button Grid.Column="0" Text="Yenile" FontSize="13" BackgroundColor="{StaticResource MetinSoluk}" TextColor="White"
                     CornerRadius="22" HeightRequest="44"
                     Command="{Binding YenileCommand}" />
-            <Button Grid.Column="1" Text="Yeniden Kaydet" FontSize="13" BackgroundColor="#2C3E50" TextColor="White"
+            <Button Grid.Column="1" Text="Yeniden Kaydet" FontSize="13" BackgroundColor="{StaticResource MarkaKoyu}" TextColor="White"
                     CornerRadius="22" HeightRequest="44"
                     Command="{Binding YenidenKaydetCommand}" />
-            <Button Grid.Column="2" Text="Kopyala" FontSize="13" BackgroundColor="#16A085" TextColor="White"
+            <Button Grid.Column="2" Text="Kopyala" FontSize="13" BackgroundColor="{StaticResource Marka}" TextColor="White"
                     CornerRadius="22" HeightRequest="44"
                     Command="{Binding KopyalaCommand}" />
         </Grid>

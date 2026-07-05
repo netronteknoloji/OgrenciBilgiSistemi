@@ -6,16 +6,16 @@
              x:Name="SayfaKoku"
              Title="Randevu Takvimi"
              Shell.NavBarIsVisible="False"
-             BackgroundColor="#F0F2F5">
+             BackgroundColor="{StaticResource UygulamaArkaPlan}">
 
     <Grid RowDefinitions="125, Auto, *">
 
-        <Border Grid.Row="0" StrokeThickness="0" BackgroundColor="#8E44AD" VerticalOptions="FillAndExpand">
+        <Border Grid.Row="0" StrokeThickness="0" Background="{StaticResource OgretmenBaslikGradyan}" VerticalOptions="FillAndExpand">
             <Border.Shadow>
-                <Shadow Brush="#8E44AD" Offset="0,4" Radius="15" Opacity="0.4" />
+                <Shadow Brush="{StaticResource OgretmenRenk}" Offset="0,4" Radius="15" Opacity="0.35" />
             </Border.Shadow>
             <Grid>
-                <views:AnaBaslikView x:Name="MyHeader" ShowBack="True" ShowProfile="False" />
+                <views:AnaBaslikView x:Name="MyHeader" ShowBack="True" ShowProfile="False" VurguRenk="{StaticResource OgretmenRenk}" />
                 <VerticalStackLayout Spacing="2" VerticalOptions="End" HorizontalOptions="Center" Margin="20,0,20,15">
                     <Label Text="Randevu Takvimi" FontSize="18" FontFamily="OpenSansSemibold" TextColor="White" HorizontalTextAlignment="Center" />
                     <Label Text="Haftalık randevu saatleriniz" FontSize="14" TextColor="White" Opacity="0.8" HorizontalTextAlignment="Center" />
@@ -24,21 +24,21 @@
         </Border>
 
         <!-- Yeni randevu saati ekleme formu -->
-        <Border Grid.Row="1" Margin="15,-15,15,10" StrokeShape="RoundRectangle 20" StrokeThickness="0" BackgroundColor="White">
+        <Border Grid.Row="1" Style="{StaticResource YuzenKart}" Margin="15,-15,15,10" StrokeShape="RoundRectangle 20">
             <Border.Shadow>
-                <Shadow Brush="Black" Offset="0,10" Radius="20" Opacity="0.08" />
+                <Shadow Brush="Black" Offset="0,8" Radius="24" Opacity="0.10" />
             </Border.Shadow>
             <VerticalStackLayout Padding="15" Spacing="10">
-                <Label Text="Yeni Randevu Saati Ekle" FontSize="13" FontAttributes="Bold" TextColor="#7F8C8D" />
+                <Label Text="Yeni Randevu Saati Ekle" FontSize="13" FontAttributes="Bold" TextColor="{StaticResource MetinSoluk}" />
                 <DatePicker Date="{Binding SecilenTarih}" MinimumDate="{Binding MinimumTarih}"
-                            FontSize="14" TextColor="#2C3E50" />
+                            FontSize="14" TextColor="{StaticResource MetinKoyu}" />
                 <Grid ColumnDefinitions="*, Auto, *" ColumnSpacing="10">
-                    <TimePicker Grid.Column="0" Time="{Binding SecilenBaslangicSaati}" FontSize="14" TextColor="#2C3E50" />
-                    <Label Grid.Column="1" Text="-" FontSize="18" TextColor="#95A5A6" VerticalOptions="Center" />
-                    <TimePicker Grid.Column="2" Time="{Binding SecilenBitisSaati}" FontSize="14" TextColor="#2C3E50" />
+                    <TimePicker Grid.Column="0" Time="{Binding SecilenBaslangicSaati}" FontSize="14" TextColor="{StaticResource MetinKoyu}" />
+                    <Label Grid.Column="1" Text="-" FontSize="18" TextColor="{StaticResource MetinSoluk}" VerticalOptions="Center" />
+                    <TimePicker Grid.Column="2" Time="{Binding SecilenBitisSaati}" FontSize="14" TextColor="{StaticResource MetinKoyu}" />
                 </Grid>
-                <Button Text="Ekle" BackgroundColor="#8E44AD" TextColor="White" FontFamily="OpenSansSemibold"
-                        FontSize="14" CornerRadius="10" HeightRequest="42" Command="{Binding EkleCommand}" />
+                <Button Text="Ekle" BackgroundColor="{StaticResource OgretmenRenk}" TextColor="White" FontFamily="OpenSansSemibold"
+                        FontSize="14" CornerRadius="12" HeightRequest="46" Command="{Binding EkleCommand}" />
             </VerticalStackLayout>
         </Border>
 
@@ -49,15 +49,15 @@
             </CollectionView.ItemsLayout>
             <CollectionView.ItemTemplate>
                 <DataTemplate>
-                    <Border StrokeShape="RoundRectangle 14" StrokeThickness="0" BackgroundColor="White" Padding="0">
+                    <Border StrokeShape="RoundRectangle 16" StrokeThickness="0" BackgroundColor="{StaticResource Kart}" Padding="0">
                         <Border.Shadow>
-                            <Shadow Brush="Black" Offset="0,2" Radius="6" Opacity="0.05" />
+                            <Shadow Brush="Black" Offset="0,2" Radius="8" Opacity="0.06" />
                         </Border.Shadow>
                         <Grid ColumnDefinitions="8, *, Auto" Padding="0,12">
-                            <BoxView Grid.Column="0" BackgroundColor="#8E44AD" WidthRequest="8" HorizontalOptions="Start" />
+                            <BoxView Grid.Column="0" BackgroundColor="{StaticResource OgretmenRenk}" WidthRequest="8" HorizontalOptions="Start" />
                             <VerticalStackLayout Grid.Column="1" Spacing="3" Margin="12,0">
-                                <Label Text="{Binding TarihMetni}" FontSize="16" FontFamily="OpenSansSemibold" TextColor="#2C3E50" />
-                                <Label FontSize="13" TextColor="#2980B9">
+                                <Label Text="{Binding TarihMetni}" FontSize="16" FontFamily="OpenSansSemibold" TextColor="{StaticResource MetinKoyu}" />
+                                <Label FontSize="13" TextColor="{StaticResource OgretmenRenk}">
                                     <Label.Text>
                                         <MultiBinding StringFormat="{}{0} - {1}">
                                             <Binding Path="BaslangicSaati" />
@@ -66,7 +66,7 @@
                                     </Label.Text>
                                 </Label>
                             </VerticalStackLayout>
-                            <Button Grid.Column="2" Text="Sil" BackgroundColor="#E74C3C" TextColor="White"
+                            <Button Grid.Column="2" Text="Sil" BackgroundColor="{StaticResource Tehlike}" TextColor="White"
                                     FontSize="12" CornerRadius="8" Padding="12,6" Margin="0,0,12,0"
                                     VerticalOptions="Center"
                                     Command="{Binding BindingContext.SilCommand, Source={x:Reference SayfaKoku}}"
@@ -77,7 +77,7 @@
             </CollectionView.ItemTemplate>
             <CollectionView.EmptyView>
                 <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="10" Padding="20">
-                    <Label Text="Henüz randevu saati tanımlanmadı." FontSize="16" TextColor="#95A5A6" HorizontalOptions="Center" />
+                    <Label Text="Henüz randevu saati tanımlanmadı." FontSize="16" TextColor="{StaticResource MetinSoluk}" HorizontalOptions="Center" />
                 </VerticalStackLayout>
             </CollectionView.EmptyView>
         </CollectionView>

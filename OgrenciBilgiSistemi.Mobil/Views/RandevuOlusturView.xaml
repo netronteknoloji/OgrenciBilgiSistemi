@@ -6,16 +6,16 @@
              x:Class="OgrenciBilgiSistemi.Mobil.Views.RandevuOlusturView"
              Title="Randevu Oluştur"
              Shell.NavBarIsVisible="False"
-             BackgroundColor="#F0F2F5">
+             BackgroundColor="{StaticResource UygulamaArkaPlan}">
 
     <Grid RowDefinitions="125, *">
 
-        <Border Grid.Row="0" StrokeThickness="0" BackgroundColor="#27AE60">
+        <Border Grid.Row="0" StrokeThickness="0" Background="{StaticResource VeliBaslikGradyan}">
             <Border.Shadow>
-                <Shadow Brush="#27AE60" Offset="0,4" Radius="15" Opacity="0.4" />
+                <Shadow Brush="{StaticResource VeliRenk}" Offset="0,4" Radius="15" Opacity="0.35" />
             </Border.Shadow>
             <Grid>
-                <views:AnaBaslikView x:Name="MyHeader" ShowBack="True" ShowProfile="False" />
+                <views:AnaBaslikView x:Name="MyHeader" ShowBack="True" ShowProfile="False" VurguRenk="{StaticResource VeliRenk}" />
                 <VerticalStackLayout Spacing="2" VerticalOptions="End" HorizontalOptions="Center" Margin="20,0,20,15">
                     <Label Text="Yeni Randevu" FontSize="18" FontFamily="OpenSansSemibold" TextColor="White" HorizontalTextAlignment="Center" />
                     <Label Text="{Binding AltBaslikMetni}" FontSize="14" TextColor="White" Opacity="0.8" HorizontalTextAlignment="Center" />
@@ -28,10 +28,10 @@
 
                 <!-- Öğrenci seçimi (Veli için) -->
                 <Border StrokeShape="RoundRectangle 16" StrokeThickness="0"
-                        BackgroundColor="White" Padding="20" IsVisible="{Binding VeliModuGorunur}">
+                        BackgroundColor="{StaticResource Kart}" Padding="20" IsVisible="{Binding VeliModuGorunur}">
                     <VerticalStackLayout Spacing="10">
-                        <Label Text="Öğrenci Seçin" FontSize="13" FontAttributes="Bold" TextColor="#7F8C8D" />
-                        <Picker Title="Öğrenci seçiniz..." FontSize="14" TextColor="#2C3E50"
+                        <Label Text="Öğrenci Seçin" FontSize="13" FontAttributes="Bold" TextColor="{StaticResource MetinSoluk}" />
+                        <Picker Title="Öğrenci seçiniz..." FontSize="14" TextColor="{StaticResource MetinKoyu}"
                                 ItemsSource="{Binding CocukAdlari}"
                                 SelectedIndex="{Binding SecilenCocukIndex}"
                                 IsEnabled="{Binding CocukPickerEtkin}" />
@@ -40,40 +40,40 @@
 
                 <!-- Öğretmen seçimi (Veli için — öğrenci seçildikten sonra görünür) -->
                 <Border StrokeShape="RoundRectangle 16" StrokeThickness="0"
-                        BackgroundColor="White" Padding="20" IsVisible="{Binding OgretmenPickerGorunur}">
+                        BackgroundColor="{StaticResource Kart}" Padding="20" IsVisible="{Binding OgretmenPickerGorunur}">
                     <VerticalStackLayout Spacing="10">
-                        <Label Text="Öğretmen Seçin" FontSize="13" FontAttributes="Bold" TextColor="#7F8C8D" />
-                        <Picker Title="Öğretmen seçiniz..." FontSize="14" TextColor="#2C3E50"
+                        <Label Text="Öğretmen Seçin" FontSize="13" FontAttributes="Bold" TextColor="{StaticResource MetinSoluk}" />
+                        <Picker Title="Öğretmen seçiniz..." FontSize="14" TextColor="{StaticResource MetinKoyu}"
                                 ItemsSource="{Binding OgretmenAdlari}"
                                 SelectedIndex="{Binding SecilenOgretmenIndex}" />
-                        <Label Text="{Binding SinifOgretmeniBilgisi}" FontSize="12" TextColor="#27AE60"
+                        <Label Text="{Binding SinifOgretmeniBilgisi}" FontSize="12" TextColor="{StaticResource VeliRenk}"
                                IsVisible="{Binding SinifOgretmeniBilgisiGorunur}" />
                     </VerticalStackLayout>
                 </Border>
 
                 <!-- Veli seçimi (Öğretmen için) -->
                 <Border StrokeShape="RoundRectangle 16" StrokeThickness="0"
-                        BackgroundColor="White" Padding="20" IsVisible="{Binding OgretmenModuGorunur}">
+                        BackgroundColor="{StaticResource Kart}" Padding="20" IsVisible="{Binding OgretmenModuGorunur}">
                     <VerticalStackLayout Spacing="10">
-                        <Label Text="Öğrenci Seçin" FontSize="13" FontAttributes="Bold" TextColor="#7F8C8D" />
+                        <Label Text="Öğrenci Seçin" FontSize="13" FontAttributes="Bold" TextColor="{StaticResource MetinSoluk}" />
                         <Border HeightRequest="40" StrokeShape="RoundRectangle 20"
-                                Stroke="#E5E7EB" StrokeThickness="1" BackgroundColor="#F8F9FA">
+                                Stroke="{StaticResource CizgiBrush}" StrokeThickness="1" BackgroundColor="{StaticResource KartSoluk}">
                             <Grid ColumnDefinitions="40, *">
                                 <Label Grid.Column="0" Text="&#x1F50D;" FontSize="14"
-                                       HorizontalOptions="Center" VerticalOptions="Center" TextColor="#7F8C8D" />
+                                       HorizontalOptions="Center" VerticalOptions="Center" TextColor="{StaticResource MetinSoluk}" />
                                 <Entry Grid.Column="1"
-                                       Placeholder="Sınıf veya öğrenci ara" PlaceholderColor="#95A5A6"
-                                       FontSize="13" TextColor="#2C3E50"
+                                       Placeholder="Sınıf veya öğrenci ara" PlaceholderColor="{StaticResource MetinSoluk}"
+                                       FontSize="13" TextColor="{StaticResource MetinKoyu}"
                                        Text="{Binding SinifAramaMetni}" />
                             </Grid>
                         </Border>
                         <HorizontalStackLayout Spacing="8" IsVisible="{Binding BenimSinifimGorunur}">
                             <CheckBox IsChecked="{Binding BenimSinifimSecili}"
-                                      Color="#27AE60" VerticalOptions="Center" />
+                                      Color="{StaticResource VeliRenk}" VerticalOptions="Center" />
                             <Label Text="Benim Sınıfım" FontSize="14" FontAttributes="Bold"
-                                   TextColor="#2C3E50" VerticalOptions="Center" />
+                                   TextColor="{StaticResource MetinKoyu}" VerticalOptions="Center" />
                         </HorizontalStackLayout>
-                        <Border StrokeShape="RoundRectangle 8" Stroke="#E5E7EB" StrokeThickness="1" Padding="0">
+                        <Border StrokeShape="RoundRectangle 8" Stroke="{StaticResource CizgiBrush}" StrokeThickness="1" Padding="0">
                             <CollectionView IsGrouped="True"
                                             SelectionMode="Single"
                                             SelectionChanged="OnVeliOgrenciSecildi"
@@ -81,33 +81,33 @@
                                             HeightRequest="320">
                                 <CollectionView.GroupHeaderTemplate>
                                     <DataTemplate x:DataType="models:OgrenciGrubu">
-                                        <Grid Padding="12,10" BackgroundColor="#F1F5F9">
-                                            <Label Text="{Binding BaslikAdi}" FontSize="14" FontAttributes="Bold" TextColor="#2C3E50" />
+                                        <Grid Padding="12,10" BackgroundColor="{StaticResource KartSoluk}">
+                                            <Label Text="{Binding BaslikAdi}" FontSize="14" FontAttributes="Bold" TextColor="{StaticResource MetinKoyu}" />
                                         </Grid>
                                     </DataTemplate>
                                 </CollectionView.GroupHeaderTemplate>
                                 <CollectionView.ItemTemplate>
                                     <DataTemplate x:DataType="models:Ogrenci">
                                         <Grid Padding="16,10">
-                                            <Label Text="{Binding OgrenciAdSoyad}" FontSize="14" TextColor="#2C3E50" />
+                                            <Label Text="{Binding OgrenciAdSoyad}" FontSize="14" TextColor="{StaticResource MetinKoyu}" />
                                         </Grid>
                                     </DataTemplate>
                                 </CollectionView.ItemTemplate>
                                 <CollectionView.EmptyView>
-                                    <Label Text="Öğrenci bulunamadı" HorizontalOptions="Center" Padding="20" TextColor="#7F8C8D" />
+                                    <Label Text="Öğrenci bulunamadı" HorizontalOptions="Center" Padding="20" TextColor="{StaticResource MetinSoluk}" />
                                 </CollectionView.EmptyView>
                             </CollectionView>
                         </Border>
-                        <Label Text="{Binding SeciliOgrenciMetni}" FontSize="13" TextColor="#16A34A"
+                        <Label Text="{Binding SeciliOgrenciMetni}" FontSize="13" TextColor="{StaticResource Basari}"
                                IsVisible="{Binding SeciliOgrenciGorunur}" />
                     </VerticalStackLayout>
                 </Border>
 
                 <!-- Müsait slot seçimi (Veli için) -->
                 <Border StrokeShape="RoundRectangle 16" StrokeThickness="0"
-                        BackgroundColor="White" Padding="20" IsVisible="{Binding VeliModuGorunur}">
+                        BackgroundColor="{StaticResource Kart}" Padding="20" IsVisible="{Binding VeliModuGorunur}">
                     <VerticalStackLayout Spacing="10">
-                        <Label Text="Randevu Saati Seçin" FontSize="13" FontAttributes="Bold" TextColor="#7F8C8D" />
+                        <Label Text="Randevu Saati Seçin" FontSize="13" FontAttributes="Bold" TextColor="{StaticResource MetinSoluk}" />
                         <CollectionView SelectionMode="Single" HeightRequest="200"
                                         ItemsSource="{Binding SlotListesi}"
                                         SelectionChanged="OnSlotSecildi">
@@ -116,14 +116,14 @@
                             </CollectionView.ItemsLayout>
                             <CollectionView.ItemTemplate>
                                 <DataTemplate>
-                                    <Border StrokeShape="RoundRectangle 10" StrokeThickness="1" Stroke="#E0E0E0"
-                                            BackgroundColor="#F8F9FA" Padding="12,8">
-                                        <Label Text="{Binding GosterimMetni}" FontSize="14" TextColor="#2C3E50" />
+                                    <Border StrokeShape="RoundRectangle 10" StrokeThickness="1" Stroke="{StaticResource CizgiBrush}"
+                                            BackgroundColor="{StaticResource KartSoluk}" Padding="12,8">
+                                        <Label Text="{Binding GosterimMetni}" FontSize="14" TextColor="{StaticResource MetinKoyu}" />
                                     </Border>
                                 </DataTemplate>
                             </CollectionView.ItemTemplate>
                             <CollectionView.EmptyView>
-                                <Label Text="Randevu saati bulunamadı." FontSize="13" TextColor="#95A5A6" HorizontalOptions="Center" Margin="0,20" />
+                                <Label Text="Randevu saati bulunamadı." FontSize="13" TextColor="{StaticResource MetinSoluk}" HorizontalOptions="Center" Margin="0,20" />
                             </CollectionView.EmptyView>
                         </CollectionView>
                     </VerticalStackLayout>
@@ -131,16 +131,16 @@
 
                 <!-- Tarih ve saat seçimi (Öğretmen için) -->
                 <Border StrokeShape="RoundRectangle 16" StrokeThickness="0"
-                        BackgroundColor="White" Padding="20" IsVisible="{Binding OgretmenModuGorunur}">
+                        BackgroundColor="{StaticResource Kart}" Padding="20" IsVisible="{Binding OgretmenModuGorunur}">
                     <VerticalStackLayout Spacing="10">
-                        <Label Text="Tarih ve Saat" FontSize="13" FontAttributes="Bold" TextColor="#7F8C8D" />
-                        <DatePicker x:Name="TarihSecici" FontSize="14" TextColor="#2C3E50"
+                        <Label Text="Tarih ve Saat" FontSize="13" FontAttributes="Bold" TextColor="{StaticResource MetinSoluk}" />
+                        <DatePicker x:Name="TarihSecici" FontSize="14" TextColor="{StaticResource MetinKoyu}"
                                     Date="{Binding SecilenTarih}" />
                         <Grid ColumnDefinitions="*, Auto, *" ColumnSpacing="10">
-                            <TimePicker Grid.Column="0" FontSize="14" TextColor="#2C3E50"
+                            <TimePicker Grid.Column="0" FontSize="14" TextColor="{StaticResource MetinKoyu}"
                                         Time="{Binding BaslangicSaatiSecilen}" />
-                            <Label Grid.Column="1" Text="-" FontSize="18" TextColor="#95A5A6" VerticalOptions="Center" />
-                            <TimePicker Grid.Column="2" FontSize="14" TextColor="#2C3E50"
+                            <Label Grid.Column="1" Text="-" FontSize="18" TextColor="{StaticResource MetinSoluk}" VerticalOptions="Center" />
+                            <TimePicker Grid.Column="2" FontSize="14" TextColor="{StaticResource MetinKoyu}"
                                         Time="{Binding BitisSaatiSecilen}" />
                         </Grid>
                     </VerticalStackLayout>
@@ -149,15 +149,15 @@
                 <!-- Not -->
                 <Border StrokeShape="RoundRectangle 16" StrokeThickness="0" BackgroundColor="White" Padding="20">
                     <VerticalStackLayout Spacing="10">
-                        <Label Text="Not (opsiyonel)" FontSize="13" FontAttributes="Bold" TextColor="#7F8C8D" />
+                        <Label Text="Not (opsiyonel)" FontSize="13" FontAttributes="Bold" TextColor="{StaticResource MetinSoluk}" />
                         <Editor Placeholder="Randevu hakkında not ekleyin..." FontSize="14"
-                                TextColor="#2C3E50" HeightRequest="80" Text="{Binding Not}" />
+                                TextColor="{StaticResource MetinKoyu}" HeightRequest="80" Text="{Binding Not}" />
                     </VerticalStackLayout>
                 </Border>
 
                 <!-- Oluştur butonu -->
-                <Button Text="Randevu Oluştur" BackgroundColor="#27AE60" TextColor="White"
-                        FontFamily="OpenSansSemibold" FontSize="16" CornerRadius="12" HeightRequest="52"
+                <Button Text="Randevu Oluştur" BackgroundColor="{StaticResource VeliRenk}" TextColor="White"
+                        FontFamily="OpenSansSemibold" FontSize="16" CornerRadius="14" HeightRequest="54"
                         Command="{Binding OlusturCommand}" IsEnabled="{Binding OlusturButonEtkin}" />
 
             </VerticalStackLayout>

@@ -6,16 +6,16 @@
              x:Name="SayfaKoku"
              Title="Randevularım"
              Shell.NavBarIsVisible="False"
-             BackgroundColor="#F0F2F5">
+             BackgroundColor="{StaticResource UygulamaArkaPlan}">
 
     <Grid RowDefinitions="125, Auto, *">
 
-        <Border Grid.Row="0" StrokeThickness="0" BackgroundColor="#2980B9" VerticalOptions="FillAndExpand">
+        <Border Grid.Row="0" StrokeThickness="0" Background="{StaticResource MarkaGradyan}" VerticalOptions="FillAndExpand">
             <Border.Shadow>
-                <Shadow Brush="#2980B9" Offset="0,4" Radius="15" Opacity="0.4" />
+                <Shadow Brush="{StaticResource Marka}" Offset="0,4" Radius="15" Opacity="0.35" />
             </Border.Shadow>
             <Grid>
-                <views:AnaBaslikView x:Name="MyHeader" ShowBack="True" ShowProfile="False" />
+                <views:AnaBaslikView x:Name="MyHeader" ShowBack="True" ShowProfile="False" VurguRenk="{StaticResource Marka}" />
                 <VerticalStackLayout Spacing="2" VerticalOptions="End" HorizontalOptions="Center" Margin="20,0,20,15">
                     <Label Text="Randevularım" FontSize="18" FontFamily="OpenSansSemibold" TextColor="White" HorizontalTextAlignment="Center" />
                     <Label x:Name="AltBaslikLabel" Text="Tüm randevularınız" FontSize="14" TextColor="White" Opacity="0.8" HorizontalTextAlignment="Center" />
@@ -25,10 +25,10 @@
 
         <!-- Yeni randevu ve bildirim butonları -->
         <Grid Grid.Row="1" ColumnDefinitions="*, *" Margin="15,-15,15,10" HeightRequest="55">
-            <Button Grid.Column="0" Text="+ Yeni Randevu" BackgroundColor="#27AE60" TextColor="White"
+            <Button Grid.Column="0" Text="+ Yeni Randevu" BackgroundColor="{StaticResource Marka}" TextColor="White"
                     FontFamily="OpenSansSemibold" FontSize="13" CornerRadius="28" Margin="0,0,5,0"
                     Command="{Binding YeniRandevuCommand}" />
-            <Button Grid.Column="1" Text="Bildirimler" BackgroundColor="White" TextColor="#2980B9"
+            <Button Grid.Column="1" Text="Bildirimler" BackgroundColor="{StaticResource Kart}" TextColor="{StaticResource Marka}"
                     FontFamily="OpenSansSemibold" FontSize="13" CornerRadius="28" Margin="5,0,0,0"
                     Command="{Binding BildirimlerCommand}">
                 <Button.Shadow>
@@ -47,7 +47,7 @@
                 </CollectionView.ItemsLayout>
                 <CollectionView.ItemTemplate>
                     <DataTemplate>
-                        <Border StrokeShape="RoundRectangle 16" StrokeThickness="0" BackgroundColor="White" Padding="16">
+                        <Border StrokeShape="RoundRectangle 16" StrokeThickness="0" BackgroundColor="{StaticResource Kart}" Padding="16">
                             <Border.Shadow>
                                 <Shadow Brush="Black" Offset="0,2" Radius="8" Opacity="0.06" />
                             </Border.Shadow>
@@ -64,11 +64,11 @@
                                     </BoxView.Clip>
                                 </BoxView>
                                 <VerticalStackLayout Grid.Column="1" Spacing="5" VerticalOptions="Center">
-                                    <Label Text="{Binding KarsiTarafAdi}" FontSize="16" FontFamily="OpenSansSemibold" TextColor="#2C3E50" />
-                                    <Label Text="{Binding OgrenciAdSoyad}" FontSize="12" TextColor="#7F8C8D" IsVisible="{Binding OgrenciGosterilsinMi}" />
+                                    <Label Text="{Binding KarsiTarafAdi}" FontSize="16" FontFamily="OpenSansSemibold" TextColor="{StaticResource MetinKoyu}" />
+                                    <Label Text="{Binding OgrenciAdSoyad}" FontSize="12" TextColor="{StaticResource MetinSoluk}" IsVisible="{Binding OgrenciGosterilsinMi}" />
                                     <HorizontalStackLayout Spacing="8">
-                                        <Label Text="{Binding TarihMetni}" FontSize="12" TextColor="#2980B9" />
-                                        <Label Text="{Binding SureMetni}" FontSize="12" TextColor="#95A5A6" />
+                                        <Label Text="{Binding TarihMetni}" FontSize="12" TextColor="{StaticResource Marka}" />
+                                        <Label Text="{Binding SureMetni}" FontSize="12" TextColor="{StaticResource MetinSoluk}" />
                                     </HorizontalStackLayout>
                                 </VerticalStackLayout>
                                 <Border Grid.Column="2" StrokeShape="RoundRectangle 12" StrokeThickness="0"
@@ -82,7 +82,7 @@
                 </CollectionView.ItemTemplate>
                 <CollectionView.EmptyView>
                     <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="10" Padding="20">
-                        <Label Text="Henüz randevunuz bulunmuyor." FontSize="16" TextColor="#95A5A6" HorizontalOptions="Center" />
+                        <Label Text="Henüz randevunuz bulunmuyor." FontSize="16" TextColor="{StaticResource MetinSoluk}" HorizontalOptions="Center" />
                     </VerticalStackLayout>
                 </CollectionView.EmptyView>
             </CollectionView>

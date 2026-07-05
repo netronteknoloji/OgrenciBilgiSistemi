@@ -6,16 +6,16 @@
              x:Name="SayfaKoku"
              Title="Sınıflar"
              Shell.NavBarIsVisible="False"
-             BackgroundColor="#F0F2F5">
+             BackgroundColor="{StaticResource UygulamaArkaPlan}">
 
     <Grid RowDefinitions="125, *">
 
-        <Border Grid.Row="0" StrokeThickness="0" BackgroundColor="#8E44AD" VerticalOptions="FillAndExpand">
+        <Border Grid.Row="0" StrokeThickness="0" Background="{StaticResource AdminBaslikGradyan}" VerticalOptions="FillAndExpand">
             <Border.Shadow>
-                <Shadow Brush="#8E44AD" Offset="0,4" Radius="15" Opacity="0.4" />
+                <Shadow Brush="{StaticResource AdminRenk}" Offset="0,4" Radius="15" Opacity="0.35" />
             </Border.Shadow>
             <Grid>
-                <views:AnaBaslikView ShowBack="True" ShowProfile="False" />
+                <views:AnaBaslikView ShowBack="True" ShowProfile="False" VurguRenk="{StaticResource AdminRenk}" />
                 <VerticalStackLayout Spacing="2" VerticalOptions="End" HorizontalOptions="Center" Margin="20,0,20,15">
                     <Label Text="Sınıflar" FontSize="18" FontFamily="OpenSansSemibold" TextColor="White" HorizontalTextAlignment="Center" />
                     <Label Text="{Binding AltBaslik}" FontSize="14" TextColor="White" Opacity="0.8" HorizontalTextAlignment="Center" />
@@ -32,10 +32,10 @@
             </CollectionView.ItemsLayout>
             <CollectionView.ItemTemplate>
                 <DataTemplate>
-                    <Border StrokeShape="RoundRectangle 14" StrokeThickness="0" Padding="14"
-                            BackgroundColor="White">
+                    <Border StrokeShape="RoundRectangle 16" StrokeThickness="0" Padding="14"
+                            BackgroundColor="{StaticResource Kart}">
                         <Border.Shadow>
-                            <Shadow Brush="Black" Offset="0,2" Radius="6" Opacity="0.05" />
+                            <Shadow Brush="Black" Offset="0,2" Radius="8" Opacity="0.06" />
                         </Border.Shadow>
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer
@@ -43,19 +43,19 @@
                                 CommandParameter="{Binding .}" />
                         </Border.GestureRecognizers>
                         <Grid ColumnDefinitions="4, *, Auto" ColumnSpacing="12">
-                            <BoxView Grid.Column="0" BackgroundColor="#8E44AD" WidthRequest="4"
+                            <BoxView Grid.Column="0" BackgroundColor="{StaticResource AdminRenk}" WidthRequest="4"
                                      VerticalOptions="Fill" HorizontalOptions="Center">
                                 <BoxView.Clip>
                                     <RoundRectangleGeometry CornerRadius="2" Rect="0,0,4,60" />
                                 </BoxView.Clip>
                             </BoxView>
                             <Label Grid.Column="1" Text="{Binding SinifVerisi.BirimAd}"
-                                   FontSize="15" FontFamily="OpenSansSemibold" TextColor="#2C3E50"
+                                   FontSize="15" FontFamily="OpenSansSemibold" TextColor="{StaticResource MetinKoyu}"
                                    VerticalOptions="Center" />
                             <Border Grid.Column="2" StrokeShape="RoundRectangle 12" StrokeThickness="0"
-                                    BackgroundColor="#F4ECF7" Padding="10,4" VerticalOptions="Center">
+                                    BackgroundColor="{StaticResource AdminSoft}" Padding="10,4" VerticalOptions="Center">
                                 <Label Text="{Binding OgrenciSayisi, StringFormat='{0} öğrenci'}"
-                                       FontSize="12" TextColor="#8E44AD"
+                                       FontSize="12" TextColor="{StaticResource AdminRenk}"
                                        FontFamily="OpenSansSemibold" />
                             </Border>
                         </Grid>
@@ -64,7 +64,7 @@
             </CollectionView.ItemTemplate>
             <CollectionView.EmptyView>
                 <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="10" Padding="20">
-                    <Label Text="{Binding BosDurum}" FontSize="16" TextColor="#95A5A6" HorizontalOptions="Center" />
+                    <Label Text="{Binding BosDurum}" FontSize="16" TextColor="{StaticResource MetinSoluk}" HorizontalOptions="Center" />
                 </VerticalStackLayout>
             </CollectionView.EmptyView>
         </CollectionView>
