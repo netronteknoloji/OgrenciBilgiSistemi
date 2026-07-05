@@ -12,7 +12,7 @@
 
         <Border Grid.Row="0" StrokeThickness="0" Background="{StaticResource AdminBaslikGradyan}" VerticalOptions="FillAndExpand">
             <Border.Shadow>
-                <Shadow Brush="{StaticResource AdminRenk}" Offset="0,4" Radius="15" Opacity="0.35" />
+                <Shadow Brush="Black" Offset="0,4" Radius="15" Opacity="0.18" />
             </Border.Shadow>
             <Grid>
                 <views:AnaBaslikView ShowBack="True" ShowProfile="False" VurguRenk="{StaticResource AdminRenk}" />

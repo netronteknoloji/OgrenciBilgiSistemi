@@ -25,7 +25,7 @@
                 Background="{StaticResource ServisBaslikGradyan}"
                 VerticalOptions="FillAndExpand">
             <Border.Shadow>
-                <Shadow Brush="{StaticResource ServisRenk}" Offset="0,4" Radius="15" Opacity="0.35" />
+                <Shadow Brush="Black" Offset="0,4" Radius="15" Opacity="0.18" />
             </Border.Shadow>
 
             <Grid>
@@ -94,9 +94,9 @@
 
         <!-- Uyarı: Daha önce kaydedilmiş yoklama -->
         <Border Grid.Row="3" IsVisible="{Binding StatusUyariGorunur}" Margin="15,0,15,10"
-                StrokeShape="RoundRectangle 10" StrokeThickness="0" BackgroundColor="#FFF3CD">
+                StrokeShape="RoundRectangle 10" StrokeThickness="0" BackgroundColor="{StaticResource UyariSoft}">
             <Label Text="Bu periyodun yoklaması daha önce kaydedilmiştir." Padding="12"
-                   TextColor="#856404" HorizontalOptions="Center" FontSize="13" />
+                   TextColor="{StaticResource UyariKoyu}" HorizontalOptions="Center" FontSize="13" />
         </Border>
 
         <!-- Öğrenci listesi (yoklama kartları) -->

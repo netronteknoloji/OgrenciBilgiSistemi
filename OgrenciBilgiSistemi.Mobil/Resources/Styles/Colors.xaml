@@ -64,7 +64,7 @@
     <Color x:Key="AdminKoyu">#3B4FC4</Color>
     <Color x:Key="AdminSoft">#EEF1FE</Color>
 
-    <Color x:Key="OgretmenRenk">#0CA5A5</Color>
+    <Color x:Key="OgretmenRenk">#0B9494</Color>
     <Color x:Key="OgretmenKoyu">#0A7E7E</Color>
     <Color x:Key="OgretmenSoft">#E3F6F6</Color>
 
@@ -84,7 +84,13 @@
     <!-- İşlevsel aksanlar -->
     <Color x:Key="Basari">#2F9E44</Color>
     <Color x:Key="Uyari">#E8940C</Color>
+    <Color x:Key="UyariSoft">#FDF3E3</Color>
+    <Color x:Key="UyariKoyu">#B4720A</Color>
     <Color x:Key="Tehlike">#E5484D</Color>
+
+    <!-- Yoklama durum renkleri — Shared/Constants/YoklamaRenkleri.cs ile eşleşir, DEĞERLERİ DEĞİŞTİRME -->
+    <Color x:Key="DurumIzinli">#0D6EFD</Color>
+    <Color x:Key="DurumRaporlu">#6F42C1</Color>
 
     <!-- Sık kullanılan fırçalar -->
     <SolidColorBrush x:Key="MarkaBrush" Color="{StaticResource Marka}"/>
@@ -108,7 +114,7 @@
     </LinearGradientBrush>
 
     <LinearGradientBrush x:Key="OgretmenBaslikGradyan" StartPoint="0,0" EndPoint="1,1">
-        <GradientStop Color="#14B8B8" Offset="0.0" />
+        <GradientStop Color="#12AEAE" Offset="0.0" />
         <GradientStop Color="#0A7E7E" Offset="1.0" />
     </LinearGradientBrush>
 

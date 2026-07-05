@@ -10,12 +10,12 @@
 
     <Grid RowDefinitions="125, *">
 
-        <Border Grid.Row="0" StrokeThickness="0" Background="{StaticResource VeliBaslikGradyan}">
+        <Border Grid.Row="0" StrokeThickness="0" Background="{StaticResource MarkaGradyan}">
             <Border.Shadow>
-                <Shadow Brush="{StaticResource VeliRenk}" Offset="0,4" Radius="15" Opacity="0.35" />
+                <Shadow Brush="Black" Offset="0,4" Radius="15" Opacity="0.18" />
             </Border.Shadow>
             <Grid>
-                <views:AnaBaslikView x:Name="MyHeader" ShowBack="True" ShowProfile="False" VurguRenk="{StaticResource VeliRenk}" />
+                <views:AnaBaslikView x:Name="MyHeader" ShowBack="True" ShowProfile="False" VurguRenk="{StaticResource Marka}" />
                 <VerticalStackLayout Spacing="2" VerticalOptions="End" HorizontalOptions="Center" Margin="20,0,20,15">
                     <Label Text="Yeni Randevu" FontSize="18" FontFamily="OpenSansSemibold" TextColor="White" HorizontalTextAlignment="Center" />
                     <Label Text="{Binding AltBaslikMetni}" FontSize="14" TextColor="White" Opacity="0.8" HorizontalTextAlignment="Center" />
@@ -46,7 +46,7 @@
                         <Picker Title="Öğretmen seçiniz..." FontSize="14" TextColor="{StaticResource MetinKoyu}"
                                 ItemsSource="{Binding OgretmenAdlari}"
                                 SelectedIndex="{Binding SecilenOgretmenIndex}" />
-                        <Label Text="{Binding SinifOgretmeniBilgisi}" FontSize="12" TextColor="{StaticResource VeliRenk}"
+                        <Label Text="{Binding SinifOgretmeniBilgisi}" FontSize="12" TextColor="{StaticResource Marka}"
                                IsVisible="{Binding SinifOgretmeniBilgisiGorunur}" />
                     </VerticalStackLayout>
                 </Border>
@@ -69,7 +69,7 @@
                         </Border>
                         <HorizontalStackLayout Spacing="8" IsVisible="{Binding BenimSinifimGorunur}">
                             <CheckBox IsChecked="{Binding BenimSinifimSecili}"
-                                      Color="{StaticResource VeliRenk}" VerticalOptions="Center" />
+                                      Color="{StaticResource Marka}" VerticalOptions="Center" />
                             <Label Text="Benim Sınıfım" FontSize="14" FontAttributes="Bold"
                                    TextColor="{StaticResource MetinKoyu}" VerticalOptions="Center" />
                         </HorizontalStackLayout>
@@ -156,7 +156,7 @@
                 </Border>
 
                 <!-- Oluştur butonu -->
-                <Button Text="Randevu Oluştur" BackgroundColor="{StaticResource VeliRenk}" TextColor="White"
+                <Button Text="Randevu Oluştur" BackgroundColor="{StaticResource Marka}" TextColor="White"
                         FontFamily="OpenSansSemibold" FontSize="16" CornerRadius="14" HeightRequest="54"
                         Command="{Binding OlusturCommand}" IsEnabled="{Binding OlusturButonEtkin}" />
 

@@ -25,7 +25,7 @@
                 StrokeThickness="0"
                 Background="{StaticResource OgretmenBaslikGradyan}">
             <Border.Shadow>
-                <Shadow Brush="{StaticResource OgretmenRenk}" Offset="0,4" Radius="15" Opacity="0.35" />
+                <Shadow Brush="Black" Offset="0,4" Radius="15" Opacity="0.18" />
             </Border.Shadow>
 
             <Grid>
@@ -87,9 +87,9 @@
         </Border>
 
         <Border Grid.Row="3" IsVisible="{Binding StatusUyariGorunur}" Margin="15,5,15,10"
-                StrokeShape="RoundRectangle 10" StrokeThickness="0" BackgroundColor="#FFF3CD">
+                StrokeShape="RoundRectangle 10" StrokeThickness="0" BackgroundColor="{StaticResource UyariSoft}">
             <Label Text="&#x26A0;&#xFE0F; Bu dersin yoklaması daha önce kaydedilmiştir." Padding="12"
-                   TextColor="#856404" HorizontalOptions="Center" FontSize="13" />
+                   TextColor="{StaticResource UyariKoyu}" HorizontalOptions="Center" FontSize="13" />
         </Border>
 
         <CollectionView Grid.Row="4" Margin="15,5" ItemsSource="{Binding FiltreliOgrenciler}">
@@ -113,7 +113,7 @@
                                 <Frame Grid.Column="2" Padding="0" HeightRequest="30" WidthRequest="30" CornerRadius="15"
                                        BackgroundColor="{StaticResource OgretmenRenk}" HasShadow="False" BorderColor="Transparent" HorizontalOptions="End" VerticalOptions="Center">
                                     <Frame.Shadow>
-                                        <Shadow Brush="{StaticResource OgretmenRenk}" Offset="0,2" Radius="5" Opacity="0.4" />
+                                        <Shadow Brush="Black" Offset="0,2" Radius="5" Opacity="0.15" />
                                     </Frame.Shadow>
                                     <Frame.GestureRecognizers>
                                         <TapGestureRecognizer
@@ -196,8 +196,8 @@
                                     </Label>
                                     <Border.Triggers>
                                         <DataTrigger TargetType="Border" Binding="{Binding SecilenDurumId}" Value="4">
-                                            <Setter Property="BackgroundColor" Value="{StaticResource Marka}" />
-                                            <Setter Property="Stroke" Value="{StaticResource Marka}" />
+                                            <Setter Property="BackgroundColor" Value="{StaticResource DurumIzinli}" />
+                                            <Setter Property="Stroke" Value="{StaticResource DurumIzinli}" />
                                         </DataTrigger>
                                     </Border.Triggers>
                                 </Border>
@@ -215,8 +215,8 @@
                                     </Label>
                                     <Border.Triggers>
                                         <DataTrigger TargetType="Border" Binding="{Binding SecilenDurumId}" Value="5">
-                                            <Setter Property="BackgroundColor" Value="{StaticResource VeliRenk}" />
-                                            <Setter Property="Stroke" Value="{StaticResource VeliRenk}" />
+                                            <Setter Property="BackgroundColor" Value="{StaticResource DurumRaporlu}" />
+                                            <Setter Property="Stroke" Value="{StaticResource DurumRaporlu}" />
                                         </DataTrigger>
                                     </Border.Triggers>
                                 </Border>
