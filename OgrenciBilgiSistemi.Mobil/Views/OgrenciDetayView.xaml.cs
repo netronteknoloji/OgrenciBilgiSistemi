@@ -67,7 +67,7 @@ namespace OgrenciBilgiSistemi.Mobil.Views
                 LayoutGirisCikis.Children.Add(new Label
                 {
                     Text = "Bu hafta giriş/çıkış kaydı bulunmuyor.",
-                    FontSize = 12, TextColor = Color.FromArgb("#BDC3C7"), HorizontalOptions = LayoutOptions.Center
+                    FontSize = 12, TextColor = Color.FromArgb("#8A96A8"), HorizontalOptions = LayoutOptions.Center
                 });
             }
             else
@@ -77,7 +77,7 @@ namespace OgrenciBilgiSistemi.Mobil.Views
                     LayoutGirisCikis.Children.Add(new Label
                     {
                         Text = $"{OgrenciDetayGorunumModel.GunAdi(gun.Gun)}, {gun.Gun:dd.MM.yyyy}",
-                        FontSize = 12, FontAttributes = FontAttributes.Bold, TextColor = Color.FromArgb("#2C3E50")
+                        FontSize = 12, FontAttributes = FontAttributes.Bold, TextColor = Color.FromArgb("#1F2733")
                     });
 
                     foreach (var kayit in gun.Kayitlar)
@@ -106,7 +106,7 @@ namespace OgrenciBilgiSistemi.Mobil.Views
                 LayoutYemekhane.Children.Add(new Label
                 {
                     Text = "Bu hafta yemekhane kaydı bulunmuyor.",
-                    FontSize = 12, TextColor = Color.FromArgb("#BDC3C7"), HorizontalOptions = LayoutOptions.Center
+                    FontSize = 12, TextColor = Color.FromArgb("#8A96A8"), HorizontalOptions = LayoutOptions.Center
                 });
             }
             else
@@ -117,13 +117,13 @@ namespace OgrenciBilgiSistemi.Mobil.Views
                     satir.Children.Add(new Label
                     {
                         Text = $"{OgrenciDetayGorunumModel.GunAdi(gun.Gun)}, {gun.Gun:dd.MM.yyyy}",
-                        FontSize = 12, FontAttributes = FontAttributes.Bold, TextColor = Color.FromArgb("#2C3E50")
+                        FontSize = 12, FontAttributes = FontAttributes.Bold, TextColor = Color.FromArgb("#1F2733")
                     });
                     if (gun.IlkGiris.HasValue)
                         satir.Children.Add(new Label
                         {
                             Text = $"— {gun.IlkGiris.Value:HH:mm}",
-                            FontSize = 13, TextColor = Color.FromArgb("#E67E22"), FontAttributes = FontAttributes.Bold
+                            FontSize = 13, TextColor = Color.FromArgb("#E8940C"), FontAttributes = FontAttributes.Bold
                         });
                     LayoutYemekhane.Children.Add(satir);
                 }
@@ -138,7 +138,7 @@ namespace OgrenciBilgiSistemi.Mobil.Views
                 LayoutServisYoklama.Children.Add(new Label
                 {
                     Text = "Bu hafta servis yoklama kaydı bulunmuyor.",
-                    FontSize = 12, TextColor = Color.FromArgb("#BDC3C7"), HorizontalOptions = LayoutOptions.Center
+                    FontSize = 12, TextColor = Color.FromArgb("#8A96A8"), HorizontalOptions = LayoutOptions.Center
                 });
                 return;
             }
@@ -148,7 +148,7 @@ namespace OgrenciBilgiSistemi.Mobil.Views
                 LayoutServisYoklama.Children.Add(new Label
                 {
                     Text = $"{OgrenciDetayGorunumModel.GunAdi(gun.Gun)}, {gun.Gun:dd.MM.yyyy}",
-                    FontSize = 12, FontAttributes = FontAttributes.Bold, TextColor = Color.FromArgb("#2C3E50")
+                    FontSize = 12, FontAttributes = FontAttributes.Bold, TextColor = Color.FromArgb("#1F2733")
                 });
 
                 var satir = new HorizontalStackLayout { Spacing = 12, Margin = new Thickness(10, 2, 0, 0) };
@@ -162,7 +162,7 @@ namespace OgrenciBilgiSistemi.Mobil.Views
         {
             string isaret;
             string renk;
-            if (!kayitVar) { isaret = "—"; renk = "#BDC3C7"; }
+            if (!kayitVar) { isaret = "—"; renk = "#8A96A8"; }
             else if (durumId == 1) { isaret = "✓"; renk = YoklamaRenkleri.GirisHex; }
             else { isaret = "✗"; renk = YoklamaRenkleri.CikisHex; }
 

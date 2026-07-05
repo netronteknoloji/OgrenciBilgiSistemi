@@ -113,38 +113,39 @@
                 </VerticalStackLayout>
             </CollectionView.EmptyView>
             <CollectionView.Footer>
-                <!-- Renk açıklaması -->
+                <!-- Renk açıklaması — Shared/Constants/YoklamaRenkleri.cs paletiyle eşleşir
+                     (çipler SinifYoklamaOzet üzerinden o paletle boyanır) -->
                 <Grid ColumnDefinitions="*,*,*,*" RowDefinitions="Auto,Auto" RowSpacing="6" ColumnSpacing="6" Margin="0,12,0,0">
                     <HorizontalStackLayout Grid.Row="0" Grid.Column="0" Spacing="4">
-                        <Border WidthRequest="14" HeightRequest="14" StrokeShape="RoundRectangle 3" StrokeThickness="0" BackgroundColor="#27AE60" />
+                        <Border WidthRequest="14" HeightRequest="14" StrokeShape="RoundRectangle 3" StrokeThickness="0" BackgroundColor="#198754" />
                         <Label Text="Geldi" FontSize="10" TextColor="{StaticResource MetinSoluk}" VerticalOptions="Center" />
                     </HorizontalStackLayout>
                     <HorizontalStackLayout Grid.Row="0" Grid.Column="1" Spacing="4">
-                        <Border WidthRequest="14" HeightRequest="14" StrokeShape="RoundRectangle 3" StrokeThickness="0" BackgroundColor="#E74C3C" />
+                        <Border WidthRequest="14" HeightRequest="14" StrokeShape="RoundRectangle 3" StrokeThickness="0" BackgroundColor="#DC3545" />
                         <Label Text="Gelmedi" FontSize="10" TextColor="{StaticResource MetinSoluk}" VerticalOptions="Center" />
                     </HorizontalStackLayout>
                     <HorizontalStackLayout Grid.Row="0" Grid.Column="2" Spacing="4">
-                        <Border WidthRequest="14" HeightRequest="14" StrokeShape="RoundRectangle 3" StrokeThickness="0" BackgroundColor="#F39C12" />
+                        <Border WidthRequest="14" HeightRequest="14" StrokeShape="RoundRectangle 3" StrokeThickness="0" BackgroundColor="#FFC107" />
                         <Label Text="Geç" FontSize="10" TextColor="{StaticResource MetinSoluk}" VerticalOptions="Center" />
                     </HorizontalStackLayout>
                     <HorizontalStackLayout Grid.Row="0" Grid.Column="3" Spacing="4">
-                        <Border WidthRequest="14" HeightRequest="14" StrokeShape="RoundRectangle 3" StrokeThickness="0" BackgroundColor="#3498DB" />
+                        <Border WidthRequest="14" HeightRequest="14" StrokeShape="RoundRectangle 3" StrokeThickness="0" BackgroundColor="#0D6EFD" />
                         <Label Text="İzinli" FontSize="10" TextColor="{StaticResource MetinSoluk}" VerticalOptions="Center" />
                     </HorizontalStackLayout>
                     <HorizontalStackLayout Grid.Row="1" Grid.Column="0" Spacing="4">
-                        <Border WidthRequest="14" HeightRequest="14" StrokeShape="RoundRectangle 3" StrokeThickness="0" BackgroundColor="#9B59B6" />
+                        <Border WidthRequest="14" HeightRequest="14" StrokeShape="RoundRectangle 3" StrokeThickness="0" BackgroundColor="#6F42C1" />
                         <Label Text="Raporlu" FontSize="10" TextColor="{StaticResource MetinSoluk}" VerticalOptions="Center" />
                     </HorizontalStackLayout>
                     <HorizontalStackLayout Grid.Row="1" Grid.Column="1" Spacing="4">
-                        <Border WidthRequest="14" HeightRequest="14" StrokeShape="RoundRectangle 3" StrokeThickness="0" BackgroundColor="#7F8C8D" />
+                        <Border WidthRequest="14" HeightRequest="14" StrokeShape="RoundRectangle 3" StrokeThickness="0" BackgroundColor="#212529" />
                         <Label Text="Nöbetçi" FontSize="10" TextColor="{StaticResource MetinSoluk}" VerticalOptions="Center" />
                     </HorizontalStackLayout>
                     <HorizontalStackLayout Grid.Row="1" Grid.Column="2" Spacing="4">
-                        <Border WidthRequest="14" HeightRequest="14" StrokeShape="RoundRectangle 3" StrokeThickness="0" BackgroundColor="#34495E" />
+                        <Border WidthRequest="14" HeightRequest="14" StrokeShape="RoundRectangle 3" StrokeThickness="0" BackgroundColor="#6C757D" />
                         <Label Text="Görevli" FontSize="10" TextColor="{StaticResource MetinSoluk}" VerticalOptions="Center" />
                     </HorizontalStackLayout>
                     <HorizontalStackLayout Grid.Row="1" Grid.Column="3" Spacing="4">
-                        <Border WidthRequest="14" HeightRequest="14" StrokeShape="RoundRectangle 3" StrokeThickness="0" BackgroundColor="#ECF0F1" />
+                        <Border WidthRequest="14" HeightRequest="14" StrokeShape="RoundRectangle 3" StrokeThickness="0" BackgroundColor="#F8F9FA" />
                         <Label Text="Yok" FontSize="10" TextColor="{StaticResource MetinSoluk}" VerticalOptions="Center" />
                     </HorizontalStackLayout>
                 </Grid>

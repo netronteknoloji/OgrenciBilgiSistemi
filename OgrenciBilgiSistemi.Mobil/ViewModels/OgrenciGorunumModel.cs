@@ -25,11 +25,12 @@ namespace OgrenciBilgiSistemi.Mobil.ViewModels
             _ => "?"
         };
 
+        // Tasarım sistemi semantik renkleri: Basari / Tehlike / MetinSoluk
         public Color DurumRenk => ServisDurumId switch
         {
-            1 => Color.FromArgb("#2ECC71"),
-            2 => Color.FromArgb("#E74C3C"),
-            _ => Color.FromArgb("#BDC3C7")
+            1 => Color.FromArgb("#2F9E44"),
+            2 => Color.FromArgb("#E5484D"),
+            _ => Color.FromArgb("#8A96A8")
         };
 
         public string DurumMetin => ServisDurumId switch

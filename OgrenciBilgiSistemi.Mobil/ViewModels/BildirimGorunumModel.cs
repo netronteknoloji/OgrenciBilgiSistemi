@@ -20,8 +20,9 @@ namespace OgrenciBilgiSistemi.Mobil.ViewModels
         }
 
         public bool OkunmadiMi => !Okundu;
-        public Color ArkaplanRenk => Okundu ? Colors.White : Color.FromArgb("#FFF8F0");
-        public Color SolCizgiRenk => Okundu ? Color.FromArgb("#ECF0F1") : Color.FromArgb("#E67E22");
+        // Okunmamış vurgusu: MarkaSoft zemin + Marka şerit; okunduysa nötr Cizgi (Colors.xaml değerleri)
+        public Color ArkaplanRenk => Okundu ? Colors.White : Color.FromArgb("#EEF1FE");
+        public Color SolCizgiRenk => Okundu ? Color.FromArgb("#E3E8EF") : Color.FromArgb("#4C6EF5");
 
         public void IsaretleOkundu()
         {

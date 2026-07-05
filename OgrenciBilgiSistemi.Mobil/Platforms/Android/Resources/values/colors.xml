@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#512BD4</color>
-    <color name="colorPrimaryDark">#2B0B98</color>
-    <color name="colorAccent">#2B0B98</color>
+    <!-- Marka renkleri — Resources/Styles/Colors.xaml (Marka / MarkaDerin) ile eşleşir -->
+    <color name="colorPrimary">#4C6EF5</color>
+    <color name="colorPrimaryDark">#2B3A8C</color>
+    <color name="colorAccent">#4C6EF5</color>
     <!-- FCM bildirim ikonu tint rengi (Android resource isimleri lowercase olmalı, aapt2 referansları normalize ediyor) -->
-    <color name="notification_color">#2B0B98</color>
+    <color name="notification_color">#4C6EF5</color>
 </resources>

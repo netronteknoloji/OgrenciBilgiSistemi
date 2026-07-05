@@ -4,7 +4,7 @@
              x:Class="OgrenciBilgiSistemi.Mobil.Views.GirisView"
              Title="Giriş"
              Shell.NavBarIsVisible="False"
-             BackgroundColor="White">
+             BackgroundColor="{StaticResource UygulamaArkaPlan}">
 
     <Grid>
         <BoxView Grid.RowSpan="2"
@@ -48,7 +48,8 @@
 
                     <Label Text="Giriş Ekranı"
                            FontSize="14"
-                           TextColor="#D5DCF7"
+                           TextColor="White"
+                           Opacity="0.8"
                            HorizontalOptions="Center" />
 
                 </VerticalStackLayout>
@@ -215,7 +216,8 @@
                 </Border>
 
                 <Label Text="© 2026 | Developed by Netron Yazılım. Tüm hakları saklıdır."
-                       TextColor="#C3CBE8"
+                       TextColor="White"
+                       Opacity="0.6"
                        FontSize="11"
                        HorizontalOptions="Center"
                        Margin="0,40,0,0" />

@@ -81,13 +81,13 @@
                 <!-- Aksiyon butonları -->
                 <VerticalStackLayout Spacing="10" IsVisible="{Binding AksiyonGorunur}">
                     <Button Text="Onayla" BackgroundColor="{StaticResource Basari}" TextColor="White"
-                            FontFamily="OpenSansSemibold" CornerRadius="12" HeightRequest="48"
+                            FontFamily="OpenSansSemibold" CornerRadius="14" HeightRequest="48"
                             Command="{Binding OnaylaCommand}" IsVisible="{Binding OnaylaGorunur}" />
                     <Button Text="Reddet" BackgroundColor="{StaticResource Tehlike}" TextColor="White"
-                            FontFamily="OpenSansSemibold" CornerRadius="12" HeightRequest="48"
+                            FontFamily="OpenSansSemibold" CornerRadius="14" HeightRequest="48"
                             Command="{Binding ReddetCommand}" IsVisible="{Binding ReddetGorunur}" />
                     <Button Text="İptal Et" BackgroundColor="{StaticResource MetinSoluk}" TextColor="White"
-                            FontFamily="OpenSansSemibold" CornerRadius="12" HeightRequest="48"
+                            FontFamily="OpenSansSemibold" CornerRadius="14" HeightRequest="48"
                             Command="{Binding IptalCommand}" IsVisible="{Binding IptalGorunur}" />
                 </VerticalStackLayout>
 

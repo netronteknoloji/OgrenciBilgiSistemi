@@ -24,7 +24,7 @@
         </Border>
 
         <!-- Yeni randevu saati ekleme formu -->
-        <Border Grid.Row="1" Style="{StaticResource YuzenKart}" Margin="15,-15,15,10" StrokeShape="RoundRectangle 20">
+        <Border Grid.Row="1" Style="{StaticResource YuzenKart}" Margin="15,12,15,10" StrokeShape="RoundRectangle 20">
             <Border.Shadow>
                 <Shadow Brush="Black" Offset="0,8" Radius="24" Opacity="0.10" />
             </Border.Shadow>

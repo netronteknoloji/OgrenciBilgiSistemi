@@ -19,24 +19,26 @@ namespace OgrenciBilgiSistemi.Mobil.ViewModels
         public string SureMetni => $"{Randevu.SureDakika} dk";
         public string DurumAdi => Randevu.DurumAdi;
 
+        // Tasarım sistemi semantik renkleri: Uyari / Basari / Tehlike / MetinSoluk / Marka
+        // (Resources/Styles/Colors.xaml ile aynı değerler)
         public Color DurumRenk => Randevu.Durum switch
         {
-            0 => Color.FromArgb("#F39C12"),
-            1 => Color.FromArgb("#27AE60"),
-            2 => Color.FromArgb("#E74C3C"),
-            3 => Color.FromArgb("#95A5A6"),
-            4 => Color.FromArgb("#3498DB"),
-            _ => Color.FromArgb("#95A5A6")
+            0 => Color.FromArgb("#E8940C"), // Beklemede - Uyari
+            1 => Color.FromArgb("#2F9E44"), // Onaylandı - Basari
+            2 => Color.FromArgb("#E5484D"), // Reddedildi - Tehlike
+            3 => Color.FromArgb("#8A96A8"), // İptal - MetinSoluk
+            4 => Color.FromArgb("#4C6EF5"), // Tamamlandı - Marka
+            _ => Color.FromArgb("#8A96A8")
         };
 
         public Color DurumArkaplanRenk => Randevu.Durum switch
         {
-            0 => Color.FromArgb("#FEF9E7"),
-            1 => Color.FromArgb("#EAFAF1"),
-            2 => Color.FromArgb("#FDEDEC"),
-            3 => Color.FromArgb("#F2F3F4"),
-            4 => Color.FromArgb("#EBF5FB"),
-            _ => Color.FromArgb("#F2F3F4")
+            0 => Color.FromArgb("#FCF3E3"),
+            1 => Color.FromArgb("#E7F5EB"),
+            2 => Color.FromArgb("#FCE9EA"),
+            3 => Color.FromArgb("#EEF1F6"),
+            4 => Color.FromArgb("#EEF1FE"),
+            _ => Color.FromArgb("#EEF1F6")
         };
     }
 }

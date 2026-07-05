@@ -120,14 +120,15 @@ namespace OgrenciBilgiSistemi.Mobil.ViewModels
             NotMetni = r.Not ?? string.Empty;
             NotGorunur = !string.IsNullOrEmpty(r.Not);
 
+            // Tasarım sistemi semantik renkleri (Colors.xaml ile aynı değerler)
             (DurumIkon, DurumAdi, DurumRenk, DurumAciklama) = r.Durum switch
             {
-                0 => ("⏳", "Beklemede", Color.FromArgb("#F39C12"),
+                0 => ("⏳", "Beklemede", Color.FromArgb("#E8940C"),
                       r.OgretmenTarafindanOlusturuldu ? "Veli onayı bekleniyor" : "Öğretmen onayı bekleniyor"),
-                1 => ("✅", "Onaylandı", Color.FromArgb("#27AE60"), "Randevu onaylandı"),
-                2 => ("❌", "Reddedildi", Color.FromArgb("#E74C3C"), "Randevu reddedildi"),
-                3 => ("⛔", "İptal Edildi", Color.FromArgb("#95A5A6"), "Randevu iptal edildi"),
-                4 => ("✔", "Tamamlandı", Color.FromArgb("#3498DB"), "Randevu tamamlandı"),
+                1 => ("✅", "Onaylandı", Color.FromArgb("#2F9E44"), "Randevu onaylandı"),
+                2 => ("❌", "Reddedildi", Color.FromArgb("#E5484D"), "Randevu reddedildi"),
+                3 => ("⛔", "İptal Edildi", Color.FromArgb("#8A96A8"), "Randevu iptal edildi"),
+                4 => ("✔", "Tamamlandı", Color.FromArgb("#4C6EF5"), "Randevu tamamlandı"),
                 _ => (string.Empty, string.Empty, Colors.Gray, string.Empty)
             };
 

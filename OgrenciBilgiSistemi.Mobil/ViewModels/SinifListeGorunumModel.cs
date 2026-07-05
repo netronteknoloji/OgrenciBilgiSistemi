@@ -18,7 +18,6 @@ namespace OgrenciBilgiSistemi.Mobil.ViewModels
 
         [ObservableProperty] private IReadOnlyList<SinifGorunumModel> filtreliSiniflar = [];
         [ObservableProperty] private string aramaMetni = string.Empty;
-        [ObservableProperty] private string karsilamaMetni = "Merhaba";
         [ObservableProperty] private bool bildirimBadgeGorunur;
         [ObservableProperty] private string bildirimSayiMetni = string.Empty;
 
@@ -52,9 +51,6 @@ namespace OgrenciBilgiSistemi.Mobil.ViewModels
         [RelayCommand]
         async Task YukleAsync()
         {
-            string displayName = string.IsNullOrWhiteSpace(KullaniciOturum.AdSoyad) ? "Kullanıcı" : KullaniciOturum.AdSoyad;
-            KarsilamaMetni = $"Merhaba {displayName} 👋";
-
             try
             {
                 var classes = await _sinifService.TumSiniflariOgrenciSayisiIleGetirAsync();

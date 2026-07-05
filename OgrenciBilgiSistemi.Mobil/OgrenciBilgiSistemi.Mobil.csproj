@@ -11,8 +11,8 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<ApplicationTitle>OgrenciBilgiSistemi</ApplicationTitle>
-		<ApplicationDisplayVersion>3.9.7</ApplicationDisplayVersion>
-		<ApplicationVersion>71</ApplicationVersion>
+		<ApplicationDisplayVersion>3.9.8</ApplicationDisplayVersion>
+		<ApplicationVersion>72</ApplicationVersion>
 	</PropertyGroup>
 
 	<!-- Platform versiyonlari -->
@@ -29,6 +29,9 @@
 
 	<ItemGroup>
 		<MauiIcon Include="Resources/AppIcon/appicon.png" />
+		<!-- Splash zemin rengi = UygulamaArkaPlan (Colors.xaml); SVG logo korunur.
+		     Update: SDK varsayılan glob'unun dahil ettiği öğeye renk ekler. -->
+		<MauiSplashScreen Update="Resources\Splash\splash.svg" Color="#F5F7FA" />
 	</ItemGroup>
 
 	<ItemGroup>

@@ -147,7 +147,7 @@
                 </Border>
 
                 <!-- Not -->
-                <Border StrokeShape="RoundRectangle 16" StrokeThickness="0" BackgroundColor="White" Padding="20">
+                <Border StrokeShape="RoundRectangle 16" StrokeThickness="0" BackgroundColor="{StaticResource Kart}" Padding="20">
                     <VerticalStackLayout Spacing="10">
                         <Label Text="Not (opsiyonel)" FontSize="13" FontAttributes="Bold" TextColor="{StaticResource MetinSoluk}" />
                         <Editor Placeholder="Randevu hakkında not ekleyin..." FontSize="14"

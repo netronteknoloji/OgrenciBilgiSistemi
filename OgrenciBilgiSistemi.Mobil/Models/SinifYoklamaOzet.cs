@@ -1,4 +1,5 @@
 using Microsoft.Maui.Graphics;
+using OgrenciBilgiSistemi.Shared.Constants;
 
 namespace OgrenciBilgiSistemi.Mobil.Models
 {
@@ -35,16 +36,9 @@ namespace OgrenciBilgiSistemi.Mobil.Models
 
         // YoklamaDurumu enum (Shared): 1=Geldi, 2=Gelmedi, 3=GecGeldi, 4=Izinli,
         // 5=Raporlu, 6=Nobetci, 7=Gorevli. NULL = yoklama hiç alınmamış.
-        private static Color DurumRengi(int? durum) => durum switch
-        {
-            1 => Color.FromArgb("#27AE60"), // Geldi - yeşil
-            2 => Color.FromArgb("#E74C3C"), // Gelmedi - kırmızı
-            3 => Color.FromArgb("#F39C12"), // GeçGeldi - turuncu
-            4 => Color.FromArgb("#3498DB"), // İzinli - mavi
-            5 => Color.FromArgb("#9B59B6"), // Raporlu - mor
-            6 => Color.FromArgb("#7F8C8D"), // Nöbetçi - gri
-            7 => Color.FromArgb("#34495E"), // Görevli - lacivert
-            _ => Color.FromArgb("#ECF0F1")  // Yoklama yok - açık gri
-        };
+        // Renkler Shared YoklamaRenkleri'nden gelir — öğrenci detay matrisi ve web
+        // ile aynı palet (AdminSinifOgrenciListeView lejantı da bu palete bakar).
+        private static Color DurumRengi(int? durum) =>
+            Color.FromArgb(YoklamaRenkleri.HexGetir(durum ?? 0));
     }
 }

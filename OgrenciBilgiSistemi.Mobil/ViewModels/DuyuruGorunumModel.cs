@@ -20,8 +20,10 @@ namespace OgrenciBilgiSistemi.Mobil.ViewModels
         }
 
         public bool OkunmadiMi => !Okundu;
-        public Color ArkaplanRenk => Okundu ? Colors.White : Color.FromArgb("#FFF8F0");
-        public Color SolCizgiRenk => Okundu ? Color.FromArgb("#ECF0F1") : Color.FromArgb("#E67E22");
+        // Okunmamış vurgusu: VeliSoft zemin + VeliRenk şerit (Veli duyuru ekranının kimliği);
+        // okunduysa nötr Cizgi (Colors.xaml değerleri)
+        public Color ArkaplanRenk => Okundu ? Colors.White : Color.FromArgb("#F0EDFB");
+        public Color SolCizgiRenk => Okundu ? Color.FromArgb("#E3E8EF") : Color.FromArgb("#6E56CF");
 
         public void IsaretleOkundu()
         {

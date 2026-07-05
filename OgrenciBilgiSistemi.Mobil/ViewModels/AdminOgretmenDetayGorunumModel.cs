@@ -14,7 +14,7 @@ namespace OgrenciBilgiSistemi.Mobil.ViewModels
         [ObservableProperty] private string telefon = "-";
         [ObservableProperty] private string email = "-";
         [ObservableProperty] private ImageSource gorselKaynak = ImageSource.FromFile("ogretmen_default.png");
-        [ObservableProperty] private Color durumRenk = Color.FromArgb("#27AE60");
+        [ObservableProperty] private Color durumRenk = Color.FromArgb("#2F9E44"); // Basari
         [ObservableProperty] private string durumMetin = "Aktif";
         [ObservableProperty] private string durumYazisi = string.Empty;
 
@@ -41,7 +41,7 @@ namespace OgrenciBilgiSistemi.Mobil.ViewModels
                 Telefon = string.IsNullOrWhiteSpace(detay.Telefon) ? "-" : detay.Telefon;
                 Email = string.IsNullOrWhiteSpace(detay.Email) ? "-" : detay.Email;
                 GorselKaynak = Constants.GorselUrl(detay.GorselPath);
-                DurumRenk = !detay.IsDeleted ? Color.FromArgb("#27AE60") : Color.FromArgb("#95A5A6");
+                DurumRenk = !detay.IsDeleted ? Color.FromArgb("#2F9E44") : Color.FromArgb("#8A96A8"); // Basari / MetinSoluk
                 DurumMetin = !detay.IsDeleted ? "Aktif" : "Pasif";
             }
             catch (Exception ex)

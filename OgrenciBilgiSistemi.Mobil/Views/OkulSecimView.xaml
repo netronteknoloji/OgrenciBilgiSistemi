@@ -14,7 +14,8 @@
         <VerticalStackLayout Grid.Row="0" Spacing="6" VerticalOptions="Center" HorizontalOptions="Center" Padding="20">
             <Label Text="Genel Yönetici"
                    FontSize="14"
-                   TextColor="#D5DCF7"
+                   TextColor="White"
+                   Opacity="0.8"
                    HorizontalOptions="Center" />
             <Label Text="Okul Seçin"
                    FontSize="24"
@@ -23,7 +24,8 @@
                    HorizontalOptions="Center" />
             <Label Text="Yönetmek istediğiniz okulu seçiniz"
                    FontSize="13"
-                   TextColor="#D5DCF7"
+                   TextColor="White"
+                   Opacity="0.8"
                    HorizontalOptions="Center" />
         </VerticalStackLayout>
 

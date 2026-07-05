@@ -24,7 +24,7 @@
         </Border>
 
         <!-- Tümünü okundu işaretle -->
-        <Border Grid.Row="1" Margin="15,-15,15,10" HeightRequest="48" StrokeShape="RoundRectangle 24"
+        <Border Grid.Row="1" Margin="15,12,15,10" HeightRequest="48" StrokeShape="RoundRectangle 24"
                 StrokeThickness="0" BackgroundColor="{StaticResource Kart}">
             <Border.Shadow>
                 <Shadow Brush="Black" Offset="0,8" Radius="24" Opacity="0.10" />
