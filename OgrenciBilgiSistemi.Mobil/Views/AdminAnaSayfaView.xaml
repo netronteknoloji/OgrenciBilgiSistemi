@@ -202,12 +202,6 @@
                     </Grid>
                 </Border>
 
-                <!-- Boş kart (yer tutucu) -->
-                <Border Grid.Row="3" Grid.Column="1" Style="{StaticResource KpiKart}">
-                    <Border.Shadow>
-                        <Shadow Brush="Black" Offset="0,2" Radius="8" Opacity="0.06" />
-                    </Border.Shadow>
-                </Border>
             </Grid>
         </Grid>
     </ScrollView>
