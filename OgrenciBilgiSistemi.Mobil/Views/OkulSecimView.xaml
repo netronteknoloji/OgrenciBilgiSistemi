@@ -9,7 +9,11 @@
 
     <Grid RowDefinitions="220, *">
 
-        <BoxView Grid.Row="0" Background="{StaticResource MarkaGradyan}" />
+        <Border Grid.Row="0" StrokeThickness="0" Background="{StaticResource MarkaGradyan}">
+            <Border.Shadow>
+                <Shadow Brush="Black" Offset="0,4" Radius="15" Opacity="0.18" />
+            </Border.Shadow>
+        </Border>
 
         <VerticalStackLayout Grid.Row="0" Spacing="6" VerticalOptions="Center" HorizontalOptions="Center" Padding="20">
             <Label Text="Genel Yönetici"

@@ -6,9 +6,7 @@
              Shell.NavBarIsVisible="False"
              BackgroundColor="{StaticResource UygulamaArkaPlan}">
 
-    <Grid>
-        <BoxView Grid.RowSpan="2"
-                 Background="{StaticResource MarkaGradyan}" />
+    <Grid Background="{StaticResource MarkaGradyan}">
 
         <ScrollView VerticalOptions="Center">
 
