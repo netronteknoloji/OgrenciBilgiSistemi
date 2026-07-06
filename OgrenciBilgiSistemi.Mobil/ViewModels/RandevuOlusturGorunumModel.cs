@@ -23,6 +23,10 @@ namespace OgrenciBilgiSistemi.Mobil.ViewModels
         private int? _karsiTarafId;
         private int? _sinifOgretmenId;
 
+        // Rol paylaşımlı ekran: giren rolün tema rengiyle boyanır (rol login sonrası değişmez)
+        public Color TemaRenk => RolTema.VurguRenk;
+        public Brush TemaGradyan => RolTema.BaslikGradyan;
+
         [ObservableProperty] private bool veliModuGorunur;
         [ObservableProperty] private bool ogretmenModuGorunur;
         [ObservableProperty] private string altBaslikMetni = string.Empty;

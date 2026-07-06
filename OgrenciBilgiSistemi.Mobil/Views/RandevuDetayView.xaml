@@ -9,12 +9,12 @@
 
     <Grid RowDefinitions="125, *">
 
-        <Border Grid.Row="0" StrokeThickness="0" Background="{StaticResource MarkaGradyan}">
+        <Border Grid.Row="0" StrokeThickness="0" Background="{Binding TemaGradyan}">
             <Border.Shadow>
                 <Shadow Brush="Black" Offset="0,4" Radius="15" Opacity="0.18" />
             </Border.Shadow>
             <Grid>
-                <views:AnaBaslikView x:Name="MyHeader" ShowBack="True" ShowProfile="False" VurguRenk="{StaticResource Marka}" />
+                <views:AnaBaslikView x:Name="MyHeader" ShowBack="True" ShowProfile="False" VurguRenk="{Binding TemaRenk}" />
                 <VerticalStackLayout Spacing="2" VerticalOptions="End" HorizontalOptions="Center" Margin="20,0,20,15">
                     <Label Text="Randevu Detayı" FontSize="18" FontFamily="OpenSansSemibold" TextColor="White" HorizontalTextAlignment="Center" />
                 </VerticalStackLayout>
@@ -41,7 +41,7 @@
                     <Grid ColumnDefinitions="*, *">
                         <VerticalStackLayout Grid.Column="0" Spacing="5" HorizontalOptions="Center">
                             <Label Text="Tarih / Saat" FontSize="12" TextColor="{StaticResource MetinSoluk}" HorizontalOptions="Center" />
-                            <Label Text="{Binding TarihMetni}" FontSize="16" FontAttributes="Bold" TextColor="{StaticResource Marka}" HorizontalOptions="Center" />
+                            <Label Text="{Binding TarihMetni}" FontSize="16" FontAttributes="Bold" TextColor="{Binding TemaRenk}" HorizontalOptions="Center" />
                         </VerticalStackLayout>
                         <BoxView Grid.Column="0" WidthRequest="1" BackgroundColor="{StaticResource Cizgi}" HorizontalOptions="End" Margin="0,5" />
                         <VerticalStackLayout Grid.Column="1" Spacing="5" HorizontalOptions="Center">

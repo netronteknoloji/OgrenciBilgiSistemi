@@ -11,6 +11,10 @@ namespace OgrenciBilgiSistemi.Mobil.ViewModels
         private readonly int _randevuId;
         private bool _veriYuklendi;
 
+        // Rol paylaşımlı ekran: giren rolün tema rengiyle boyanır (rol login sonrası değişmez)
+        public Color TemaRenk => RolTema.VurguRenk;
+        public Brush TemaGradyan => RolTema.BaslikGradyan;
+
         [ObservableProperty] private string durumIkon = string.Empty;
         [ObservableProperty] private string durumAdi = string.Empty;
         [ObservableProperty] private Color durumRenk = Colors.Gray;
