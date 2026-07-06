@@ -17,6 +17,10 @@ namespace OgrenciBilgiSistemi.Mobil.ViewModels
         [ObservableProperty] private ObservableCollection<RandevuGorunumModel> randevular = [];
         [ObservableProperty] private bool yenileniyor;
 
+        // Rol paylaşımlı ekran: giren rolün tema rengiyle boyanır (rol login sonrası değişmez)
+        public Color TemaRenk => RolTema.VurguRenk;
+        public Brush TemaGradyan => RolTema.BaslikGradyan;
+
         public RandevuListeGorunumModel(RandevuService randevuService, BildirimService bildirimService)
         {
             _randevuService = randevuService;

@@ -15,6 +15,10 @@ namespace OgrenciBilgiSistemi.Mobil.ViewModels
         [ObservableProperty] private ObservableCollection<BildirimGorunumModel> bildirimler = [];
         [ObservableProperty] private string altBaslik = string.Empty;
         [ObservableProperty] private bool dahaFazlaVar = true;
+
+        // Rol paylaşımlı ekran: giren rolün tema rengiyle boyanır (rol login sonrası değişmez)
+        public Color TemaRenk => RolTema.VurguRenk;
+        public Brush TemaGradyan => RolTema.BaslikGradyan;
         private bool _yukleniyor;
 
         public BildirimListeGorunumModel(BildirimService bildirimService, RandevuService randevuService)

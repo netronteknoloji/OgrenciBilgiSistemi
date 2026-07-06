@@ -20,9 +20,9 @@ namespace OgrenciBilgiSistemi.Mobil.ViewModels
         }
 
         public bool OkunmadiMi => !Okundu;
-        // Okunmamış vurgusu: MarkaSoft zemin + Marka şerit; okunduysa nötr Cizgi (Colors.xaml değerleri)
-        public Color ArkaplanRenk => Okundu ? Colors.White : Color.FromArgb("#EEF1FE");
-        public Color SolCizgiRenk => Okundu ? Color.FromArgb("#E3E8EF") : Color.FromArgb("#4C6EF5");
+        // Okunmamış vurgusu: rolün soft zemini + rol rengi şerit; okunduysa nötr Cizgi (Colors.xaml değerleri)
+        public Color ArkaplanRenk => Okundu ? Colors.White : Services.RolTema.SoftRenk;
+        public Color SolCizgiRenk => Okundu ? Color.FromArgb("#E3E8EF") : Services.RolTema.VurguRenk;
 
         public void IsaretleOkundu()
         {

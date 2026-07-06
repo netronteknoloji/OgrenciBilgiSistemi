@@ -10,25 +10,25 @@
 
     <Grid RowDefinitions="125, Auto, *">
 
-        <Border Grid.Row="0" StrokeThickness="0" Background="{StaticResource MarkaGradyan}" VerticalOptions="FillAndExpand">
+        <Border Grid.Row="0" StrokeThickness="0" Background="{Binding TemaGradyan}" VerticalOptions="FillAndExpand">
             <Border.Shadow>
                 <Shadow Brush="Black" Offset="0,4" Radius="15" Opacity="0.18" />
             </Border.Shadow>
             <Grid>
-                <views:AnaBaslikView x:Name="MyHeader" ShowBack="True" ShowProfile="False" VurguRenk="{StaticResource Marka}" />
+                <views:AnaBaslikView x:Name="MyHeader" ShowBack="True" ShowProfile="False" VurguRenk="{Binding TemaRenk}" />
                 <VerticalStackLayout Spacing="2" VerticalOptions="End" HorizontalOptions="Center" Margin="20,0,20,35">
                     <Label Text="Randevularım" FontSize="18" FontFamily="OpenSansSemibold" TextColor="White" HorizontalTextAlignment="Center" />
-                    <Label x:Name="AltBaslikLabel" Text="Tüm randevularınız" FontSize="14" TextColor="White" Opacity="0.8" HorizontalTextAlignment="Center" />
+                    <Label Text="Tüm randevularınız" FontSize="14" TextColor="White" Opacity="0.8" HorizontalTextAlignment="Center" />
                 </VerticalStackLayout>
             </Grid>
         </Border>
 
         <!-- Yeni randevu ve bildirim butonları -->
         <Grid Grid.Row="1" ColumnDefinitions="*, *" Margin="15,-28,15,10" HeightRequest="55">
-            <Button Grid.Column="0" Text="+ Yeni Randevu" BackgroundColor="{StaticResource Marka}" TextColor="White"
+            <Button Grid.Column="0" Text="+ Yeni Randevu" BackgroundColor="{Binding TemaRenk}" TextColor="White"
                     FontFamily="OpenSansSemibold" FontSize="13" CornerRadius="28" Margin="0,0,5,0"
                     Command="{Binding YeniRandevuCommand}" />
-            <Button Grid.Column="1" Text="Bildirimler" BackgroundColor="{StaticResource Kart}" TextColor="{StaticResource Marka}"
+            <Button Grid.Column="1" Text="Bildirimler" BackgroundColor="{StaticResource Kart}" TextColor="{Binding TemaRenk}"
                     FontFamily="OpenSansSemibold" FontSize="13" CornerRadius="28" Margin="5,0,0,0"
                     Command="{Binding BildirimlerCommand}">
                 <Button.Shadow>
@@ -64,7 +64,7 @@
                                     <Label Text="{Binding KarsiTarafAdi}" FontSize="16" FontFamily="OpenSansSemibold" TextColor="{StaticResource MetinKoyu}" />
                                     <Label Text="{Binding OgrenciAdSoyad}" FontSize="12" TextColor="{StaticResource MetinSoluk}" IsVisible="{Binding OgrenciGosterilsinMi}" />
                                     <HorizontalStackLayout Spacing="8">
-                                        <Label Text="{Binding TarihMetni}" FontSize="12" TextColor="{StaticResource Marka}" />
+                                        <Label Text="{Binding TarihMetni}" FontSize="12" TextColor="{Binding BindingContext.TemaRenk, Source={x:Reference SayfaKoku}}" />
                                         <Label Text="{Binding SureMetni}" FontSize="12" TextColor="{StaticResource MetinSoluk}" />
                                     </HorizontalStackLayout>
                                 </VerticalStackLayout>
