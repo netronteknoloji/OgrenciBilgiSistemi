@@ -54,12 +54,9 @@
                                 CommandParameter="{Binding .}" />
                         </Border.GestureRecognizers>
                         <Grid ColumnDefinitions="4, *, Auto" ColumnSpacing="12">
-                            <BoxView Grid.Column="0" Color="{Binding SolCizgiRenk}" WidthRequest="4"
-                                     VerticalOptions="Fill" HorizontalOptions="Center">
-                                <BoxView.Clip>
-                                    <RoundRectangleGeometry CornerRadius="2" Rect="0,0,4,80" />
-                                </BoxView.Clip>
-                            </BoxView>
+                            <Border Grid.Column="0" StrokeThickness="0" StrokeShape="RoundRectangle 2"
+                                    BackgroundColor="{Binding SolCizgiRenk}" WidthRequest="4"
+                                    VerticalOptions="Fill" HorizontalOptions="Center" />
                             <VerticalStackLayout Grid.Column="1" Spacing="6" VerticalOptions="Center">
                                 <Label Text="{Binding Duyuru.Baslik}" FontSize="16" FontFamily="OpenSansSemibold" TextColor="{StaticResource MetinKoyu}" />
                                 <Grid ColumnDefinitions="Auto, *, Auto">
@@ -68,9 +65,10 @@
                                 </Grid>
                                 <Label Text="{Binding Duyuru.Icerik}" FontSize="13" TextColor="{StaticResource MetinGovde}" LineBreakMode="WordWrap" />
                             </VerticalStackLayout>
-                            <BoxView Grid.Column="2" WidthRequest="10" HeightRequest="10" CornerRadius="5"
-                                     BackgroundColor="{StaticResource VeliRenk}" VerticalOptions="Center"
-                                     IsVisible="{Binding OkunmadiMi}" />
+                            <Border Grid.Column="2" StrokeThickness="0" StrokeShape="RoundRectangle 5"
+                                    WidthRequest="10" HeightRequest="10"
+                                    BackgroundColor="{StaticResource VeliRenk}" VerticalOptions="Center"
+                                    IsVisible="{Binding OkunmadiMi}" />
                         </Grid>
                     </Border>
                 </DataTemplate>

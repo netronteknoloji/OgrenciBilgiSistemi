@@ -43,14 +43,9 @@
                                 CommandParameter="{Binding .}" />
                         </Border.GestureRecognizers>
                         <Grid ColumnDefinitions="4,*,Auto" ColumnSpacing="12">
-                            <BoxView Grid.Column="0"
-                                     BackgroundColor="{StaticResource AdminRenk}"
-                                     WidthRequest="4"
-                                     VerticalOptions="Fill" HorizontalOptions="Center">
-                                <BoxView.Clip>
-                                    <RoundRectangleGeometry CornerRadius="2" Rect="0,0,4,60" />
-                                </BoxView.Clip>
-                            </BoxView>
+                            <Border Grid.Column="0" StrokeThickness="0" StrokeShape="RoundRectangle 2"
+                                    BackgroundColor="{StaticResource AdminRenk}" WidthRequest="4"
+                                    VerticalOptions="Fill" HorizontalOptions="Center" />
                             <VerticalStackLayout Grid.Column="1" Spacing="3" VerticalOptions="Center">
                                 <Label Text="{Binding PlakaGosterim}"
                                        FontSize="16"

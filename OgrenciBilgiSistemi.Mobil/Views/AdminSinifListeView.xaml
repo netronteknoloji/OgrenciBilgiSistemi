@@ -43,12 +43,9 @@
                                 CommandParameter="{Binding .}" />
                         </Border.GestureRecognizers>
                         <Grid ColumnDefinitions="4, *, Auto" ColumnSpacing="12">
-                            <BoxView Grid.Column="0" Color="{StaticResource AdminRenk}" WidthRequest="4"
-                                     VerticalOptions="Fill" HorizontalOptions="Center">
-                                <BoxView.Clip>
-                                    <RoundRectangleGeometry CornerRadius="2" Rect="0,0,4,60" />
-                                </BoxView.Clip>
-                            </BoxView>
+                            <Border Grid.Column="0" StrokeThickness="0" StrokeShape="RoundRectangle 2"
+                                    BackgroundColor="{StaticResource AdminRenk}" WidthRequest="4"
+                                    VerticalOptions="Fill" HorizontalOptions="Center" />
                             <Label Grid.Column="1" Text="{Binding SinifVerisi.BirimAd}"
                                    FontSize="15" FontFamily="OpenSansSemibold" TextColor="{StaticResource MetinKoyu}"
                                    VerticalOptions="Center" />

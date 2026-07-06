@@ -119,7 +119,7 @@
                             CommandParameter="{Binding .}" />
                         </Border.GestureRecognizers>
                         <Grid ColumnDefinitions="8, *, Auto">
-                            <BoxView Grid.Column="0" Color="{StaticResource OgretmenRenk}" WidthRequest="8" HorizontalOptions="Start"/>
+                            <Border Grid.Column="0" StrokeThickness="0" BackgroundColor="{StaticResource OgretmenRenk}" WidthRequest="8" HorizontalOptions="Start"/>
                             <HorizontalStackLayout Grid.Column="1" Spacing="15" Padding="15,12">
                                 <Image Source="classroom.png" WidthRequest="30" HeightRequest="30" VerticalOptions="Center" />
                                 <VerticalStackLayout VerticalOptions="Center">

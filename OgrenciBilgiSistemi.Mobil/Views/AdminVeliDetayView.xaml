@@ -105,12 +105,9 @@
                                                 CommandParameter="{Binding .}" />
                                         </Border.GestureRecognizers>
                                         <Grid ColumnDefinitions="4, *, Auto" ColumnSpacing="10">
-                                            <BoxView Grid.Column="0" Color="{StaticResource AdminRenk}" WidthRequest="4"
-                                                     VerticalOptions="Fill" HorizontalOptions="Center">
-                                                <BoxView.Clip>
-                                                    <RoundRectangleGeometry CornerRadius="2" Rect="0,0,4,40" />
-                                                </BoxView.Clip>
-                                            </BoxView>
+                                            <Border Grid.Column="0" StrokeThickness="0" StrokeShape="RoundRectangle 2"
+                                                    BackgroundColor="{StaticResource AdminRenk}" WidthRequest="4"
+                                                    VerticalOptions="Fill" HorizontalOptions="Center" />
                                             <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
                                                 <Label Text="{Binding OgrenciAdSoyad}" FontSize="14" FontFamily="OpenSansSemibold" TextColor="{StaticResource MetinKoyu}" />
                                                 <Label Text="{Binding BirimAd}" FontSize="11" TextColor="{StaticResource MetinSoluk}" />

@@ -57,20 +57,18 @@
                                 CommandParameter="{Binding .}" />
                         </Border.GestureRecognizers>
                         <Grid ColumnDefinitions="4, *, Auto" ColumnSpacing="12">
-                            <BoxView Grid.Column="0" Color="{Binding SolCizgiRenk}" WidthRequest="4"
-                                     VerticalOptions="Fill" HorizontalOptions="Center">
-                                <BoxView.Clip>
-                                    <RoundRectangleGeometry CornerRadius="2" Rect="0,0,4,60" />
-                                </BoxView.Clip>
-                            </BoxView>
+                            <Border Grid.Column="0" StrokeThickness="0" StrokeShape="RoundRectangle 2"
+                                    BackgroundColor="{Binding SolCizgiRenk}" WidthRequest="4"
+                                    VerticalOptions="Fill" HorizontalOptions="Center" />
                             <VerticalStackLayout Grid.Column="1" Spacing="4" VerticalOptions="Center">
                                 <Label Text="{Binding Bildirim.Mesaj}" FontSize="14" TextColor="{StaticResource MetinKoyu}"
                                        LineBreakMode="WordWrap" MaxLines="3" />
                                 <Label Text="{Binding Bildirim.TarihMetni}" FontSize="11" TextColor="{StaticResource MetinSoluk}" />
                             </VerticalStackLayout>
-                            <BoxView Grid.Column="2" WidthRequest="10" HeightRequest="10" CornerRadius="5"
-                                     BackgroundColor="{StaticResource Marka}" VerticalOptions="Center"
-                                     IsVisible="{Binding OkunmadiMi}" />
+                            <Border Grid.Column="2" StrokeThickness="0" StrokeShape="RoundRectangle 5"
+                                    WidthRequest="10" HeightRequest="10"
+                                    BackgroundColor="{StaticResource Marka}" VerticalOptions="Center"
+                                    IsVisible="{Binding OkunmadiMi}" />
                         </Grid>
                     </Border>
                 </DataTemplate>
