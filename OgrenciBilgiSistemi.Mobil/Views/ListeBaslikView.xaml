@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:views="clr-namespace:OgrenciBilgiSistemi.Mobil.Views"
+             x:Class="OgrenciBilgiSistemi.Mobil.Views.ListeBaslikView"
+             x:Name="this">
+
+    <Grid RowDefinitions="125, Auto">
+
+        <Border Grid.Row="0" StrokeThickness="0" Background="{Binding BaslikGradyan, Source={x:Reference this}}" VerticalOptions="FillAndExpand">
+            <Border.Shadow>
+                <Shadow Brush="Black" Offset="0,4" Radius="15" Opacity="0.18" />
+            </Border.Shadow>
+            <Grid>
+                <views:AnaBaslikView ShowBack="{Binding ShowBack, Source={x:Reference this}}"
+                                     ShowProfile="{Binding ShowProfile, Source={x:Reference this}}"
+                                     VurguRenk="{Binding VurguRenk, Source={x:Reference this}}" />
+                <!-- Alt boşluk 35: alt yazı, üste binen arama kartının (-28) üstünde kalır -->
+                <VerticalStackLayout Spacing="2" VerticalOptions="End" HorizontalOptions="Center" Margin="20,0,20,35">
+                    <Label Text="{Binding Baslik, Source={x:Reference this}}" FontSize="18" FontFamily="OpenSansSemibold" TextColor="White" HorizontalTextAlignment="Center" />
+                    <Label Text="{Binding AltBaslik, Source={x:Reference this}}" FontSize="14" TextColor="White" Opacity="0.8" HorizontalTextAlignment="Center" />
+                </VerticalStackLayout>
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="1"
+                Margin="15,-28,15,0"
+                HeightRequest="55"
+                StrokeShape="RoundRectangle 28"
+                StrokeThickness="0"
+                BackgroundColor="{StaticResource Kart}"
+                IsVisible="{Binding AramaGoster, Source={x:Reference this}}">
+            <Border.Shadow>
+                <Shadow Brush="Black" Offset="0,8" Radius="24" Opacity="0.10" />
+            </Border.Shadow>
+            <Grid ColumnDefinitions="55, *">
+                <Label Grid.Column="0" Text="🔍"
+                       VerticalOptions="Center" HorizontalOptions="Center"
+                       FontSize="18" TextColor="{StaticResource MetinSoluk}" />
+                <Entry Grid.Column="1"
+                       Text="{Binding AramaMetni, Source={x:Reference this}}"
+                       Placeholder="{Binding AramaPlaceholder, Source={x:Reference this}}"
+                       PlaceholderColor="{StaticResource MetinSoluk}"
+                       TextColor="{StaticResource MetinKoyu}"
+                       FontSize="15"
+                       VerticalOptions="Center" />
+            </Grid>
+        </Border>
+    </Grid>
+</ContentView>

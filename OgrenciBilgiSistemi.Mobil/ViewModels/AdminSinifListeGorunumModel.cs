@@ -9,8 +9,10 @@ namespace OgrenciBilgiSistemi.Mobil.ViewModels
     {
         private readonly SinifService _sinifService;
         private readonly IServiceProvider _serviceProvider;
+        private List<SinifGorunumModel> _tumSiniflar = [];
 
-        [ObservableProperty] private IReadOnlyList<SinifGorunumModel> siniflar = [];
+        [ObservableProperty] private IReadOnlyList<SinifGorunumModel> filtreliSiniflar = [];
+        [ObservableProperty] private string aramaMetni = string.Empty;
         [ObservableProperty] private string altBaslik = string.Empty;
         [ObservableProperty] private string bosDurum = "Yükleniyor...";
 
@@ -20,15 +22,15 @@ namespace OgrenciBilgiSistemi.Mobil.ViewModels
             _serviceProvider = serviceProvider;
         }
 
+        partial void OnAramaMetniChanged(string value) => Filtrele(value);
+
         [RelayCommand]
         async Task YukleAsync()
         {
             try
             {
-                var liste = await _sinifService.TumSiniflariOgrenciSayisiIleGetirAsync();
-                Siniflar = liste;
-                AltBaslik = $"Toplam {liste.Count} sınıf";
-                BosDurum = liste.Count == 0 ? "Kayıtlı sınıf bulunamadı." : "";
+                _tumSiniflar = await _sinifService.TumSiniflariOgrenciSayisiIleGetirAsync();
+                Filtrele(AramaMetni);
             }
             catch (Exception ex)
             {
@@ -50,6 +52,21 @@ namespace OgrenciBilgiSistemi.Mobil.ViewModels
             {
                 System.Diagnostics.Debug.WriteLine($"AdminSinifListe Sınıf Tıklama Hatası: {ex.Message}");
             }
+        }
+
+        private void Filtrele(string? arama)
+        {
+            var temiz = arama?.Trim() ?? string.Empty;
+            IReadOnlyList<SinifGorunumModel> sonuc = string.IsNullOrEmpty(temiz)
+                ? _tumSiniflar
+                : _tumSiniflar.Where(s => s.Ad.Contains(temiz, StringComparison.OrdinalIgnoreCase)).ToList();
+            FiltreliSiniflar = sonuc;
+            AltBaslik = string.IsNullOrEmpty(temiz)
+                ? $"Toplam {_tumSiniflar.Count} sınıf"
+                : $"{sonuc.Count} / {_tumSiniflar.Count} sınıf";
+            BosDurum = _tumSiniflar.Count == 0
+                ? "Kayıtlı sınıf bulunamadı."
+                : sonuc.Count == 0 ? "Aramanızla eşleşen sınıf yok." : "";
         }
     }
 }

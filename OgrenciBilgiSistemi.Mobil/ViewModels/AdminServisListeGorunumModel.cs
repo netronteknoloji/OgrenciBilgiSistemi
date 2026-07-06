@@ -10,8 +10,10 @@ namespace OgrenciBilgiSistemi.Mobil.ViewModels
     {
         private readonly AdminService _adminService;
         private readonly IServiceProvider _serviceProvider;
+        private List<ServisListeOgesi> _tumServisler = [];
 
-        [ObservableProperty] private IReadOnlyList<ServisListeOgesi> servisler = [];
+        [ObservableProperty] private IReadOnlyList<ServisListeOgesi> filtreliServisler = [];
+        [ObservableProperty] private string aramaMetni = string.Empty;
         [ObservableProperty] private string altBaslik = string.Empty;
         [ObservableProperty] private string bosDurum = "Yükleniyor...";
 
@@ -21,6 +23,8 @@ namespace OgrenciBilgiSistemi.Mobil.ViewModels
             _serviceProvider = serviceProvider;
         }
 
+        partial void OnAramaMetniChanged(string value) => Filtrele(value);
+
         [RelayCommand]
         async Task YukleAsync()
         {
@@ -29,13 +33,13 @@ namespace OgrenciBilgiSistemi.Mobil.ViewModels
                 var liste = await _adminService.ServisListesiGetir();
                 if (liste is null)
                 {
-                    Servisler = [];
+                    _tumServisler = [];
+                    FiltreliServisler = [];
                     BosDurum = "Liste alınamadı. Sunucuya ulaşılamıyor olabilir.";
                     return;
                 }
-                Servisler = liste;
-                AltBaslik = $"{liste.Count} servis";
-                BosDurum = liste.Count == 0 ? "Kayıtlı servis bulunamadı." : "";
+                _tumServisler = liste;
+                Filtrele(AramaMetni);
             }
             catch (Exception ex)
             {
@@ -50,6 +54,30 @@ namespace OgrenciBilgiSistemi.Mobil.ViewModels
             var vm = _serviceProvider.GetRequiredService<AdminServisDetayGorunumModel>();
             vm.Initialize(servis);
             await Shell.Current.Navigation.PushAsync(new AdminServisDetayView(vm));
+        }
+
+        private void Filtrele(string? arama)
+        {
+            var temiz = arama?.Trim() ?? string.Empty;
+            IReadOnlyList<ServisListeOgesi> sonuc = string.IsNullOrEmpty(temiz)
+                ? _tumServisler
+                : _tumServisler.Where(s => Eslesir(s, temiz)).ToList();
+            FiltreliServisler = sonuc;
+            AltBaslik = string.IsNullOrEmpty(temiz)
+                ? $"Toplam {_tumServisler.Count} servis"
+                : $"{sonuc.Count} / {_tumServisler.Count} servis";
+            BosDurum = _tumServisler.Count == 0
+                ? "Kayıtlı servis bulunamadı."
+                : sonuc.Count == 0 ? "Aramanızla eşleşen servis yok." : "";
+        }
+
+        private static bool Eslesir(ServisListeOgesi s, string arama)
+        {
+            if (!string.IsNullOrEmpty(s.Plaka) &&
+                s.Plaka.Contains(arama, StringComparison.OrdinalIgnoreCase))
+                return true;
+            return !string.IsNullOrEmpty(s.KullaniciAdi) &&
+                   s.KullaniciAdi.Contains(arama, StringComparison.OrdinalIgnoreCase);
         }
     }
 }

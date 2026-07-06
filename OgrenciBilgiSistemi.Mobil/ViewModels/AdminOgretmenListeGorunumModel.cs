@@ -10,8 +10,10 @@ namespace OgrenciBilgiSistemi.Mobil.ViewModels
     {
         private readonly OgretmenListeService _ogretmenListeService;
         private readonly IServiceProvider _serviceProvider;
+        private List<OgretmenBilgi> _tumOgretmenler = [];
 
-        [ObservableProperty] private IReadOnlyList<OgretmenBilgi> ogretmenler = [];
+        [ObservableProperty] private IReadOnlyList<OgretmenBilgi> filtreliOgretmenler = [];
+        [ObservableProperty] private string aramaMetni = string.Empty;
         [ObservableProperty] private string altBaslik = string.Empty;
         [ObservableProperty] private string bosDurum = "Yükleniyor...";
 
@@ -21,15 +23,15 @@ namespace OgrenciBilgiSistemi.Mobil.ViewModels
             _serviceProvider = serviceProvider;
         }
 
+        partial void OnAramaMetniChanged(string value) => Filtrele(value);
+
         [RelayCommand]
         async Task YukleAsync()
         {
             try
             {
-                var liste = await _ogretmenListeService.AktifOgretmenleriGetir();
-                Ogretmenler = liste;
-                AltBaslik = $"Toplam {liste.Count} öğretmen";
-                BosDurum = liste.Count == 0 ? "Kayıtlı öğretmen bulunamadı." : "";
+                _tumOgretmenler = await _ogretmenListeService.AktifOgretmenleriGetir();
+                Filtrele(AramaMetni);
             }
             catch (Exception ex)
             {
@@ -45,5 +47,24 @@ namespace OgrenciBilgiSistemi.Mobil.ViewModels
             vm.Initialize(ogretmen.KullaniciId);
             await Shell.Current.Navigation.PushAsync(new AdminOgretmenDetayView(vm));
         }
+
+        private void Filtrele(string? arama)
+        {
+            var temiz = arama?.Trim() ?? string.Empty;
+            IReadOnlyList<OgretmenBilgi> sonuc = string.IsNullOrEmpty(temiz)
+                ? _tumOgretmenler
+                : _tumOgretmenler.Where(o => Eslesir(o, temiz)).ToList();
+            FiltreliOgretmenler = sonuc;
+            AltBaslik = string.IsNullOrEmpty(temiz)
+                ? $"Toplam {_tumOgretmenler.Count} öğretmen"
+                : $"{sonuc.Count} / {_tumOgretmenler.Count} öğretmen";
+            BosDurum = _tumOgretmenler.Count == 0
+                ? "Kayıtlı öğretmen bulunamadı."
+                : sonuc.Count == 0 ? "Aramanızla eşleşen öğretmen yok." : "";
+        }
+
+        private static bool Eslesir(OgretmenBilgi o, string arama)
+            => !string.IsNullOrEmpty(o.KullaniciAdi) &&
+               o.KullaniciAdi.Contains(arama, StringComparison.OrdinalIgnoreCase);
     }
 }

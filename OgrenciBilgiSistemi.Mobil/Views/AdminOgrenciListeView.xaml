@@ -8,45 +8,20 @@
              Shell.NavBarIsVisible="False"
              BackgroundColor="{StaticResource UygulamaArkaPlan}">
 
-    <Grid RowDefinitions="125, Auto, *">
+    <Grid RowDefinitions="Auto, *">
 
-        <Border Grid.Row="0" StrokeThickness="0" Background="{StaticResource AdminBaslikGradyan}" VerticalOptions="FillAndExpand">
-            <Border.Shadow>
-                <Shadow Brush="Black" Offset="0,4" Radius="15" Opacity="0.18" />
-            </Border.Shadow>
-            <Grid>
-                <views:AnaBaslikView ShowBack="True" ShowProfile="False" VurguRenk="{StaticResource AdminRenk}" />
-                <VerticalStackLayout Spacing="2" VerticalOptions="End" HorizontalOptions="Center" Margin="20,0,20,15">
-                    <Label Text="Öğrenciler" FontSize="18" FontFamily="OpenSansSemibold" TextColor="White" HorizontalTextAlignment="Center" />
-                    <Label Text="{Binding AltBaslik}" FontSize="14" TextColor="White" Opacity="0.8" HorizontalTextAlignment="Center" />
-                </VerticalStackLayout>
-            </Grid>
-        </Border>
+        <views:ListeBaslikView Grid.Row="0"
+                               Baslik="Öğrenciler"
+                               AltBaslik="{Binding AltBaslik}"
+                               AramaGoster="True"
+                               AramaMetni="{Binding AramaMetni}"
+                               AramaPlaceholder="İsim veya öğrenci no ile ara..."
+                               BaslikGradyan="{StaticResource AdminBaslikGradyan}"
+                               VurguRenk="{StaticResource AdminRenk}"
+                               ShowBack="True"
+                               ShowProfile="False" />
 
-        <Border Grid.Row="1"
-                Margin="15,-28,15,0"
-                HeightRequest="55"
-                StrokeShape="RoundRectangle 28"
-                StrokeThickness="0"
-                BackgroundColor="{StaticResource Kart}">
-            <Border.Shadow>
-                <Shadow Brush="Black" Offset="0,8" Radius="24" Opacity="0.10" />
-            </Border.Shadow>
-            <Grid ColumnDefinitions="55, *">
-                <Label Grid.Column="0" Text="🔍"
-                       VerticalOptions="Center" HorizontalOptions="Center"
-                       FontSize="18" TextColor="{StaticResource MetinSoluk}" />
-                <Entry Grid.Column="1"
-                       Text="{Binding AramaMetni}"
-                       Placeholder="İsim veya öğrenci no ile ara..."
-                       PlaceholderColor="{StaticResource MetinSoluk}"
-                       TextColor="{StaticResource MetinKoyu}"
-                       FontSize="15"
-                       VerticalOptions="Center" />
-            </Grid>
-        </Border>
-
-        <CollectionView Grid.Row="2"
+        <CollectionView Grid.Row="1"
                         ItemsSource="{Binding FiltreliOgrenciler}"
                         Margin="15,10"
                         SelectionMode="None">

@@ -8,23 +8,21 @@
              Shell.NavBarIsVisible="False"
              BackgroundColor="{StaticResource UygulamaArkaPlan}">
 
-    <Grid RowDefinitions="125, *">
+    <Grid RowDefinitions="Auto, *">
 
-        <Border Grid.Row="0" StrokeThickness="0" Background="{StaticResource AdminBaslikGradyan}" VerticalOptions="FillAndExpand">
-            <Border.Shadow>
-                <Shadow Brush="Black" Offset="0,4" Radius="15" Opacity="0.18" />
-            </Border.Shadow>
-            <Grid>
-                <views:AnaBaslikView ShowBack="True" ShowProfile="False" VurguRenk="{StaticResource AdminRenk}" />
-                <VerticalStackLayout Spacing="2" VerticalOptions="End" HorizontalOptions="Center" Margin="20,0,20,15">
-                    <Label Text="Sınıflar" FontSize="18" FontFamily="OpenSansSemibold" TextColor="White" HorizontalTextAlignment="Center" />
-                    <Label Text="{Binding AltBaslik}" FontSize="14" TextColor="White" Opacity="0.8" HorizontalTextAlignment="Center" />
-                </VerticalStackLayout>
-            </Grid>
-        </Border>
+        <views:ListeBaslikView Grid.Row="0"
+                               Baslik="Sınıflar"
+                               AltBaslik="{Binding AltBaslik}"
+                               AramaGoster="True"
+                               AramaMetni="{Binding AramaMetni}"
+                               AramaPlaceholder="Sınıf adı ile ara..."
+                               BaslikGradyan="{StaticResource AdminBaslikGradyan}"
+                               VurguRenk="{StaticResource AdminRenk}"
+                               ShowBack="True"
+                               ShowProfile="False" />
 
         <CollectionView Grid.Row="1"
-                        ItemsSource="{Binding Siniflar}"
+                        ItemsSource="{Binding FiltreliSiniflar}"
                         Margin="15,10"
                         SelectionMode="None">
             <CollectionView.ItemsLayout>
