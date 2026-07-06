@@ -133,7 +133,7 @@ namespace OgrenciBilgiSistemi.Mobil.Services
                     ReturningData = System.Text.Json.JsonSerializer.Serialize(veri),
                     Android = new Plugin.LocalNotification.Core.Models.AndroidOption.AndroidOptions
                     {
-                        ChannelId = "obs_default",
+                        ChannelId = "obs_default_v2",
                         Priority = Plugin.LocalNotification.Core.Models.AndroidOption.AndroidPriority.High
                     }
                 });

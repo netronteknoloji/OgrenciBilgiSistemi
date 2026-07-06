@@ -24,16 +24,20 @@ namespace OgrenciBilgiSistemi.Mobil
             // Bildirim kanalı (Android 8+ — Oreo zorunlu)
             if (Build.VERSION.SdkInt >= BuildVersionCodes.O)
             {
+                // v2: LockscreenVisibility eklendi. Android mevcut kanalın ayarını sonradan
+                // değiştirmeye izin vermediği için yeni ID açılıp eski kanal siliniyor.
                 var kanal = new NotificationChannel(
-                    "obs_default",
+                    "obs_default_v2",
                     "Genel Bildirimler",
                     NotificationImportance.High)
                 {
-                    Description = "Randevu, duyuru ve hatırlatma bildirimleri"
+                    Description = "Randevu, duyuru ve hatırlatma bildirimleri",
+                    LockscreenVisibility = NotificationVisibility.Public
                 };
 
                 var manager = (NotificationManager?)GetSystemService(NotificationService);
                 manager?.CreateNotificationChannel(kanal);
+                manager?.DeleteNotificationChannel("obs_default");
             }
         }
     }

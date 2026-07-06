@@ -9,7 +9,7 @@
 		<!-- FCM varsayılan bildirim kanalı (uygulama açık değilken sistem bildirim göstermek için) -->
 		<meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
-            android:value="obs_default" />
+            android:value="obs_default_v2" />
 		<!-- FCM bildirim status bar ikonu (Android 8+: launcher icon yerine bu kullanılır; yoksa siyah kare gözükür) -->
 		<meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
