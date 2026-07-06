@@ -110,19 +110,20 @@
                                 </Border>
                                 <Label Grid.Column="1" Text="{Binding OgrenciData.OgrenciGorunenAd}" FontSize="16"
                                        FontFamily="OpenSansSemibold" TextColor="{StaticResource MetinKoyu}" VerticalOptions="Center" LineBreakMode="TailTruncation" />
-                                <Frame Grid.Column="2" Padding="0" HeightRequest="30" WidthRequest="30" CornerRadius="15"
-                                       BackgroundColor="{StaticResource OgretmenRenk}" HasShadow="False" BorderColor="Transparent" HorizontalOptions="End" VerticalOptions="Center">
-                                    <Frame.Shadow>
+                                <Border Grid.Column="2" Padding="0" HeightRequest="30" WidthRequest="30"
+                                        StrokeShape="RoundRectangle 15" StrokeThickness="0"
+                                        BackgroundColor="{StaticResource OgretmenRenk}" HorizontalOptions="End" VerticalOptions="Center">
+                                    <Border.Shadow>
                                         <Shadow Brush="Black" Offset="0,2" Radius="5" Opacity="0.15" />
-                                    </Frame.Shadow>
-                                    <Frame.GestureRecognizers>
+                                    </Border.Shadow>
+                                    <Border.GestureRecognizers>
                                         <TapGestureRecognizer
                                             Command="{Binding BindingContext.OgrenciDetayCommand, Source={x:Reference SayfaKoku}}"
                                             CommandParameter="{Binding .}" />
-                                    </Frame.GestureRecognizers>
+                                    </Border.GestureRecognizers>
                                     <Label Text="i" TextColor="White" FontSize="15" FontAttributes="Bold"
                                            HorizontalTextAlignment="Center" VerticalTextAlignment="Center" />
-                                </Frame>
+                                </Border>
                             </Grid>
 
                             <FlexLayout Wrap="Wrap" Direction="Row" JustifyContent="Start">
