@@ -12,6 +12,10 @@ namespace OgrenciBilgiSistemi.Mobil.ViewModels
     {
         private readonly PushKayitServisi _pushKayitServisi;
 
+        // Rol paylaşımlı ekran: giren rolün tema rengiyle boyanır (rol login sonrası değişmez)
+        public Color TemaRenk => RolTema.VurguRenk;
+        public Brush TemaGradyan => RolTema.BaslikGradyan;
+
         [ObservableProperty] private string taniMetni = string.Empty;
         [ObservableProperty] private string surumBilgisi = string.Empty;
         [ObservableProperty] private string girisDurumu = string.Empty;

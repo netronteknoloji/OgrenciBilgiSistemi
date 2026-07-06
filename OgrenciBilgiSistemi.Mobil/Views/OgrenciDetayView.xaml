@@ -8,11 +8,11 @@
 
     <Grid RowDefinitions="125, Auto, *">
 
-        <Border Grid.Row="0" StrokeThickness="0" Background="{StaticResource OgretmenBaslikGradyan}">
+        <Border Grid.Row="0" StrokeThickness="0" Background="{Binding TemaGradyan}">
             <Border.Shadow>
                 <Shadow Brush="Black" Offset="0,4" Radius="15" Opacity="0.18" />
             </Border.Shadow>
-            <views:AnaBaslikView x:Name="MyHeader" ShowBack="True" ShowProfile="False" VurguRenk="{StaticResource OgretmenRenk}" />
+            <views:AnaBaslikView x:Name="MyHeader" ShowBack="True" ShowProfile="False" VurguRenk="{Binding TemaRenk}" />
         </Border>
 
         <VerticalStackLayout Grid.Row="1" HorizontalOptions="Center" Spacing="10" Margin="0,-70,0,10" ZIndex="1">
@@ -33,7 +33,7 @@
                     <Grid ColumnDefinitions="*, *" Padding="20">
                         <VerticalStackLayout Grid.Column="0" Spacing="5" HorizontalOptions="Center">
                             <Label Text="Öğrenci No" FontSize="12" TextColor="{StaticResource MetinSoluk}" HorizontalOptions="Center"/>
-                            <Label Text="{Binding OgrenciNo}" FontSize="18" FontAttributes="Bold" TextColor="{StaticResource OgretmenRenk}" HorizontalOptions="Center"/>
+                            <Label Text="{Binding OgrenciNo}" FontSize="18" FontAttributes="Bold" TextColor="{Binding TemaRenk}" HorizontalOptions="Center"/>
                         </VerticalStackLayout>
                         <BoxView Grid.Column="0" WidthRequest="1" BackgroundColor="{StaticResource Cizgi}" HorizontalOptions="End" Margin="0,5"/>
                         <VerticalStackLayout Grid.Column="1" Spacing="5" HorizontalOptions="Center">
@@ -52,7 +52,7 @@
                             <Label Text="{Binding VeliAdSoyad}" FontSize="20" FontAttributes="Bold" TextColor="{StaticResource MetinKoyu}" />
                             <HorizontalStackLayout Spacing="8">
                                 <Label Text="📞" FontSize="14" VerticalOptions="Center"/>
-                                <Label x:Name="LblParentPhone" Text="{Binding VeliTelefon}" FontSize="16" FontAttributes="Bold" TextColor="{StaticResource OgretmenRenk}" VerticalOptions="Center">
+                                <Label x:Name="LblParentPhone" Text="{Binding VeliTelefon}" FontSize="16" FontAttributes="Bold" TextColor="{Binding TemaRenk}" VerticalOptions="Center">
                                     <Label.GestureRecognizers>
                                         <TapGestureRecognizer Tapped="OnPhoneTapped" />
                                     </Label.GestureRecognizers>
@@ -89,7 +89,7 @@
                         <Label Text="🚌" FontSize="24" VerticalOptions="Center" />
                         <VerticalStackLayout VerticalOptions="Center">
                             <Label Text="Okul Servis Plakası" FontSize="13" TextColor="{StaticResource MetinSoluk}" FontAttributes="Bold" />
-                            <Label Text="{Binding Plaka}" FontSize="16" TextColor="{StaticResource OgretmenRenk}" FontAttributes="Bold" />
+                            <Label Text="{Binding Plaka}" FontSize="16" TextColor="{Binding TemaRenk}" FontAttributes="Bold" />
                         </VerticalStackLayout>
                     </HorizontalStackLayout>
                 </Border>
@@ -110,13 +110,13 @@
 
                         <Border StrokeShape="RoundRectangle 10" BackgroundColor="{StaticResource KartSoluk}" StrokeThickness="0" HeightRequest="50">
                             <Grid ColumnDefinitions="50, *, 50">
-                                <Label Grid.Column="0" Text="◀" TextColor="{StaticResource OgretmenRenk}" FontSize="22" HorizontalOptions="Center" VerticalOptions="Center" FontAttributes="Bold">
+                                <Label Grid.Column="0" Text="◀" TextColor="{Binding TemaRenk}" FontSize="22" HorizontalOptions="Center" VerticalOptions="Center" FontAttributes="Bold">
                                     <Label.GestureRecognizers>
                                         <TapGestureRecognizer Command="{Binding OncekiHaftaCommand}" />
                                     </Label.GestureRecognizers>
                                 </Label>
                                 <Label Grid.Column="1" Text="{Binding HaftaMetni}" HorizontalOptions="Center" VerticalOptions="Center" FontAttributes="Bold" TextColor="{StaticResource MetinKoyu}" FontSize="13"/>
-                                <Label Grid.Column="2" Text="▶" TextColor="{StaticResource OgretmenRenk}" FontSize="22" HorizontalOptions="Center" VerticalOptions="Center" FontAttributes="Bold">
+                                <Label Grid.Column="2" Text="▶" TextColor="{Binding TemaRenk}" FontSize="22" HorizontalOptions="Center" VerticalOptions="Center" FontAttributes="Bold">
                                     <Label.GestureRecognizers>
                                         <TapGestureRecognizer Command="{Binding SonrakiHaftaCommand}" />
                                     </Label.GestureRecognizers>
