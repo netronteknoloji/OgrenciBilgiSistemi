@@ -58,21 +58,12 @@
                                     </Label.FormattedText>
                                 </Label>
                             </VerticalStackLayout>
-                            <Border Grid.Column="2"
-                                    StrokeThickness="0"
-                                    BackgroundColor="{StaticResource AdminSoft}"
-                                    StrokeShape="RoundRectangle 10"
-                                    Padding="8,2"
-                                    VerticalOptions="Center"
-                                    HorizontalOptions="End">
-                                <Label FontSize="12" TextColor="{StaticResource AdminRenk}">
-                                    <Label.FormattedText>
-                                        <FormattedString>
-                                            <Span Text="{Binding OgrenciSayisi}" FontFamily="OpenSansSemibold" />
-                                            <Span Text=" öğrenci" />
-                                        </FormattedString>
-                                    </Label.FormattedText>
-                                </Label>
+                            <Border Grid.Column="2" StrokeShape="RoundRectangle 12" StrokeThickness="0"
+                                    BackgroundColor="{StaticResource AdminSoft}" Padding="10,4"
+                                    VerticalOptions="Center" HorizontalOptions="End">
+                                <Label Text="{Binding OgrenciSayisi, StringFormat='{0} öğrenci'}"
+                                       FontSize="12" TextColor="{StaticResource AdminRenk}"
+                                       FontFamily="OpenSansSemibold" />
                             </Border>
                         </Grid>
                     </Border>
