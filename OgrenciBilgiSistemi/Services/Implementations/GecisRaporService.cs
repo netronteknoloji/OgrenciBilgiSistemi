@@ -142,7 +142,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 OgrenciGTarih = h.OgrenciGTarih,
                 OgrenciCTarih = h.OgrenciCTarih,
                 OgrenciGecisTipi = h.OgrenciGecisTipi ?? string.Empty,
-                CihazAdi = h.Cihaz != null ? h.Cihaz.CihazAdi : "Bilinmiyor"
+                IstasyonTipi = h.IstasyonTipi
             });
 
             return await SayfalanmisListeModel<OgrenciGirisCikisVm>.CreateAsync(proj, page, 25, ct);

@@ -11,7 +11,7 @@ namespace OgrenciBilgiSistemi.ViewModels
         public DateTime? OgrenciGTarih { get; set; }
         public DateTime? OgrenciCTarih { get; set; }
         public string OgrenciGecisTipi { get; set; } = string.Empty;
-        public string CihazAdi { get; set; } = string.Empty;
+        public IstasyonTipi IstasyonTipi { get; set; }
     }
 
     // Wrapper model: Öğrenci bilgilerini ve hareketlerinin sayfalı listesini içerir

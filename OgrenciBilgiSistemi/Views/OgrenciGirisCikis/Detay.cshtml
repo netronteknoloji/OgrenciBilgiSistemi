@@ -18,18 +18,7 @@
     bool gosterSinif = rt == RaporTipi.SinifYoklamasi;
     bool gosterServis = rt == RaporTipi.ServisYoklamasi;
 
-    string SinifDurumMetni(int? d) => d switch
-    {
-        1 => "Geldi",
-        2 => "Gelmedi",
-        3 => "Geç Geldi",
-        4 => "İzinli",
-        5 => "Raporlu",
-        6 => "Nöbetçi",
-        7 => "Görevli",
-        null => "-",
-        _ => d.ToString()!
-    };
+    string SinifDurumMetni(int? d) => YoklamaMetinleri.MetinGetir(d);
 
     string SinifDurumBadge(int? d) => YoklamaRenkleri.CssSinifGetir(d);
 }
@@ -127,8 +116,8 @@
                                 <th>Kart No</th>
                                 <th>Giriş</th>
                                 <th>Çıkış</th>
-                                <th>Tip</th>
-                                <th>Cihaz</th>
+                                <th>Geçiş Tipi</th>
+                                <th>İstasyon</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -141,8 +130,10 @@
                                     <td>@x.Ogrenci?.OgrenciKartNo</td>
                                     <td>@(x.OgrenciGTarih?.ToString("g", culture))</td>
                                     <td>@(x.OgrenciCTarih?.ToString("g", culture))</td>
-                                    <td>@x.IstasyonTipi</td>
-                                    <td>@x.Cihaz?.CihazAdi</td>
+                                    <td>
+                                        <span class="badge @YoklamaRenkleri.CssGecisGetir(x.OgrenciGecisTipi)">@YoklamaMetinleri.GecisMetinGetir(x.OgrenciGecisTipi)</span>
+                                    </td>
+                                    <td>@x.IstasyonTipi.GetDisplayName()</td>
                                 </tr>
                             }
                         </tbody>
@@ -192,7 +183,6 @@
                                 <th>Tarih</th>
                                 <th>Periyot</th>
                                 <th>Durum</th>
-                                <th>SMS</th>
                                 <th>Şoför</th>
                             </tr>
                         </thead>
@@ -205,20 +195,8 @@
                                     <td>@sv.OlusturulmaTarihi.ToString("dd.MM.yyyy HH:mm")</td>
                                     <td>@(sv.Periyot == 1 ? "Sabah" : (sv.Periyot == 2 ? "Akşam" : sv.Periyot.ToString()))</td>
                                     <td>
-                                        @if (sv.DurumId == 1)
-                                        {
-                                            <span class="badge bg-success">Bindi</span>
-                                        }
-                                        else if (sv.DurumId == 2)
-                                        {
-                                            <span class="badge bg-danger">Binmedi</span>
-                                        }
-                                        else
-                                        {
-                                            @sv.DurumId
-                                        }
+                                        <span class="badge @YoklamaRenkleri.CssServisGetir(sv.DurumId)">@YoklamaMetinleri.ServisMetinGetir(sv.DurumId)</span>
                                     </td>
-                                    <td>@(sv.SmsGonderildi ? "Evet" : "Hayır")</td>
                                     <td>@(sv.Kullanici?.KullaniciAdi ?? "-")</td>
                                 </tr>
                             }

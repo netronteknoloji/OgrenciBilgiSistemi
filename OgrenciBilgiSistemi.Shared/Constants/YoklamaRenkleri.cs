@@ -39,6 +39,22 @@ public static class YoklamaRenkleri
         return CssSinifGetir((YoklamaDurumu)durumDegeri.Value);
     }
 
+    // ServisYoklamaModel.DurumId: 1 = Bindi, 2 = Binmedi.
+    public static string CssServisGetir(int durumId) => durumId switch
+    {
+        1 => "bg-success",
+        2 => "bg-danger",
+        _ => "bg-light text-dark"
+    };
+
+    // OgrenciDetayModel.OgrenciGecisTipi DB'de büyük harf tutuluyor: "GİRİŞ" / "ÇIKIŞ".
+    public static string CssGecisGetir(string? gecisTipi) => gecisTipi switch
+    {
+        "GİRİŞ" => "bg-success",
+        "ÇIKIŞ" => "bg-danger",
+        _ => "bg-light text-dark"
+    };
+
     public const string GirisHex = "#198754";
     public const string CikisHex = "#DC3545";
 }

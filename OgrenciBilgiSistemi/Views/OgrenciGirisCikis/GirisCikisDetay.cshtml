@@ -1,4 +1,5 @@
 @model OgrenciBilgiSistemi.ViewModels.OgrenciGirisCikisListViewModel
+@using OgrenciBilgiSistemi.Shared.Constants
 
 @{
     ViewData["Title"] = "Öğrenci Giriş-Çıkış Listesi";
@@ -115,7 +116,7 @@
                                 <th>Giriş Tarihi</th>
                                 <th>Çıkış Tarihi</th>
                                 <th>Geçiş Tipi</th>
-                                <th>Cihaz Adı</th>
+                                <th>İstasyon</th>
                             </tr>
                         </thead>
                         <tbody class="bg-white">
@@ -137,8 +138,10 @@
                                         <td>@log.OgrenciDetayId</td>
                                         <td>@(log.OgrenciGTarih?.ToString("dd.MM.yyyy HH:mm") ?? "-")</td>
                                         <td>@(log.OgrenciCTarih?.ToString("dd.MM.yyyy HH:mm") ?? "-")</td>
-                                        <td>@log.OgrenciGecisTipi</td>
-                                        <td>@log.CihazAdi</td>
+                                        <td>
+                                            <span class="badge @YoklamaRenkleri.CssGecisGetir(log.OgrenciGecisTipi)">@YoklamaMetinleri.GecisMetinGetir(log.OgrenciGecisTipi)</span>
+                                        </td>
+                                        <td>@log.IstasyonTipi.GetDisplayName()</td>
                                     </tr>
                                 }
                             }
@@ -194,12 +197,14 @@
                                         @for (int i = 0; i < 8; i++)
                                         {
                                             var d = dersler[i];
-                                            var smsBit = (sy.SmsDurumu & (1 << i)) != 0;
                                             <td>
-                                                @(d?.ToString() ?? "-")
-                                                @if (smsBit)
+                                                @if (d.HasValue)
                                                 {
-                                                    <span class="badge bg-info ms-1" title="SMS gönderildi">SMS</span>
+                                                    <span class="badge @YoklamaRenkleri.CssSinifGetir(d)">@YoklamaMetinleri.MetinGetir(d)</span>
+                                                }
+                                                else
+                                                {
+                                                    <text>-</text>
                                                 }
                                             </td>
                                         }
@@ -227,7 +232,6 @@
                                 <th>Tarih</th>
                                 <th>Periyot</th>
                                 <th>Durum</th>
-                                <th>SMS</th>
                                 <th>Şoför</th>
                             </tr>
                         </thead>
@@ -235,7 +239,7 @@
                             @if (Model.ServisYoklamalar == null || !Model.ServisYoklamalar.Any())
                             {
                                 <tr>
-                                    <td colspan="6" class="p-3">
+                                    <td colspan="5" class="p-3">
                                         <div class="alert alert-warning text-center m-0">
                                             <i class="bi bi-exclamation-triangle-fill"></i> Servis yoklaması kaydı bulunmamaktadır.
                                         </div>
@@ -251,28 +255,7 @@
                                         <td>@sv.OlusturulmaTarihi.ToString("dd.MM.yyyy HH:mm")</td>
                                         <td>@(sv.Periyot == 1 ? "Sabah" : (sv.Periyot == 2 ? "Akşam" : sv.Periyot.ToString()))</td>
                                         <td>
-                                            @if (sv.DurumId == 1)
-                                            {
-                                                <span class="badge bg-success">Bindi</span>
-                                            }
-                                            else if (sv.DurumId == 2)
-                                            {
-                                                <span class="badge bg-danger">Binmedi</span>
-                                            }
-                                            else
-                                            {
-                                                @sv.DurumId
-                                            }
-                                        </td>
-                                        <td>
-                                            @if (sv.SmsGonderildi)
-                                            {
-                                                <span class="badge bg-info">Evet</span>
-                                            }
-                                            else
-                                            {
-                                                <span class="text-muted">Hayır</span>
-                                            }
+                                            <span class="badge @YoklamaRenkleri.CssServisGetir(sv.DurumId)">@YoklamaMetinleri.ServisMetinGetir(sv.DurumId)</span>
                                         </td>
                                         <td>@(sv.Kullanici?.KullaniciAdi ?? "-")</td>
                                     </tr>

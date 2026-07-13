@@ -2,6 +2,7 @@ using ClosedXML.Excel;
 using Microsoft.AspNetCore.Mvc;
 using OgrenciBilgiSistemi.Models;
 using OgrenciBilgiSistemi.Services.Interfaces;
+using OgrenciBilgiSistemi.Shared.Constants;
 using OgrenciBilgiSistemi.ViewModels;
 
 namespace OgrenciBilgiSistemi.Controllers
@@ -171,7 +172,7 @@ namespace OgrenciBilgiSistemi.Controllers
                     var c3 = ws1.Cell(r, 3);
                     if (g.OgrenciCTarih.HasValue) { c3.Value = g.OgrenciCTarih.Value; c3.Style.DateFormat.Format = "dd.MM.yyyy HH:mm"; }
                     else c3.Value = "-";
-                    ws1.Cell(r, 4).Value = g.OgrenciGecisTipi ?? "-";
+                    ws1.Cell(r, 4).Value = YoklamaMetinleri.GecisMetinGetir(g.OgrenciGecisTipi);
                     ws1.Cell(r, 5).Value = g.Cihaz?.CihazAdi ?? "-";
                     r++;
                 }
@@ -192,14 +193,14 @@ namespace OgrenciBilgiSistemi.Controllers
                     var ct2 = ws2.Cell(r, 1);
                     ct2.Value = sy.OlusturulmaTarihi;
                     ct2.Style.DateFormat.Format = "dd.MM.yyyy HH:mm";
-                    ws2.Cell(r, 2).Value = SinifDurumMetni(sy.Ders1);
-                    ws2.Cell(r, 3).Value = SinifDurumMetni(sy.Ders2);
-                    ws2.Cell(r, 4).Value = SinifDurumMetni(sy.Ders3);
-                    ws2.Cell(r, 5).Value = SinifDurumMetni(sy.Ders4);
-                    ws2.Cell(r, 6).Value = SinifDurumMetni(sy.Ders5);
-                    ws2.Cell(r, 7).Value = SinifDurumMetni(sy.Ders6);
-                    ws2.Cell(r, 8).Value = SinifDurumMetni(sy.Ders7);
-                    ws2.Cell(r, 9).Value = SinifDurumMetni(sy.Ders8);
+                    ws2.Cell(r, 2).Value = YoklamaMetinleri.MetinGetir(sy.Ders1);
+                    ws2.Cell(r, 3).Value = YoklamaMetinleri.MetinGetir(sy.Ders2);
+                    ws2.Cell(r, 4).Value = YoklamaMetinleri.MetinGetir(sy.Ders3);
+                    ws2.Cell(r, 5).Value = YoklamaMetinleri.MetinGetir(sy.Ders4);
+                    ws2.Cell(r, 6).Value = YoklamaMetinleri.MetinGetir(sy.Ders5);
+                    ws2.Cell(r, 7).Value = YoklamaMetinleri.MetinGetir(sy.Ders6);
+                    ws2.Cell(r, 8).Value = YoklamaMetinleri.MetinGetir(sy.Ders7);
+                    ws2.Cell(r, 9).Value = YoklamaMetinleri.MetinGetir(sy.Ders8);
                     ws2.Cell(r, 10).Value = sy.Kullanici?.KullaniciAdi ?? "-";
                     r++;
                 }
@@ -212,9 +213,8 @@ namespace OgrenciBilgiSistemi.Controllers
                 ws3.Cell(1, 1).Value = "Tarih";
                 ws3.Cell(1, 2).Value = "Periyot";
                 ws3.Cell(1, 3).Value = "Durum";
-                ws3.Cell(1, 4).Value = "SMS";
-                ws3.Cell(1, 5).Value = "Şoför";
-                BasligiBicimle(ws3.Range(1, 1, 1, 5));
+                ws3.Cell(1, 4).Value = "Şoför";
+                BasligiBicimle(ws3.Range(1, 1, 1, 4));
 
                 int r = 2;
                 foreach (var sv in servisList)
@@ -223,12 +223,11 @@ namespace OgrenciBilgiSistemi.Controllers
                     ct3.Value = sv.OlusturulmaTarihi;
                     ct3.Style.DateFormat.Format = "dd.MM.yyyy HH:mm";
                     ws3.Cell(r, 2).Value = sv.Periyot == 1 ? "Sabah" : (sv.Periyot == 2 ? "Akşam" : sv.Periyot.ToString());
-                    ws3.Cell(r, 3).Value = sv.DurumId == 1 ? "Bindi" : (sv.DurumId == 2 ? "Binmedi" : sv.DurumId.ToString());
-                    ws3.Cell(r, 4).Value = sv.SmsGonderildi ? "Evet" : "Hayır";
-                    ws3.Cell(r, 5).Value = sv.Kullanici?.KullaniciAdi ?? "-";
+                    ws3.Cell(r, 3).Value = YoklamaMetinleri.ServisMetinGetir(sv.DurumId);
+                    ws3.Cell(r, 4).Value = sv.Kullanici?.KullaniciAdi ?? "-";
                     r++;
                 }
-                SayfayiSonlandir(ws3, 5, r, $"Toplam {servisList.Count} kayıt");
+                SayfayiSonlandir(ws3, 4, r, $"Toplam {servisList.Count} kayıt");
             }
 
             if (workbook.Worksheets.Count == 0)
@@ -280,14 +279,14 @@ namespace OgrenciBilgiSistemi.Controllers
                     var ct2 = ws2.Cell(r, 3);
                     ct2.Value = sy.OlusturulmaTarihi;
                     ct2.Style.DateFormat.Format = "dd.MM.yyyy HH:mm";
-                    ws2.Cell(r, 4).Value = SinifDurumMetni(sy.Ders1);
-                    ws2.Cell(r, 5).Value = SinifDurumMetni(sy.Ders2);
-                    ws2.Cell(r, 6).Value = SinifDurumMetni(sy.Ders3);
-                    ws2.Cell(r, 7).Value = SinifDurumMetni(sy.Ders4);
-                    ws2.Cell(r, 8).Value = SinifDurumMetni(sy.Ders5);
-                    ws2.Cell(r, 9).Value = SinifDurumMetni(sy.Ders6);
-                    ws2.Cell(r, 10).Value = SinifDurumMetni(sy.Ders7);
-                    ws2.Cell(r, 11).Value = SinifDurumMetni(sy.Ders8);
+                    ws2.Cell(r, 4).Value = YoklamaMetinleri.MetinGetir(sy.Ders1);
+                    ws2.Cell(r, 5).Value = YoklamaMetinleri.MetinGetir(sy.Ders2);
+                    ws2.Cell(r, 6).Value = YoklamaMetinleri.MetinGetir(sy.Ders3);
+                    ws2.Cell(r, 7).Value = YoklamaMetinleri.MetinGetir(sy.Ders4);
+                    ws2.Cell(r, 8).Value = YoklamaMetinleri.MetinGetir(sy.Ders5);
+                    ws2.Cell(r, 9).Value = YoklamaMetinleri.MetinGetir(sy.Ders6);
+                    ws2.Cell(r, 10).Value = YoklamaMetinleri.MetinGetir(sy.Ders7);
+                    ws2.Cell(r, 11).Value = YoklamaMetinleri.MetinGetir(sy.Ders8);
                     ws2.Cell(r, 12).Value = sy.Kullanici?.KullaniciAdi ?? "-";
                     r++;
                 }
@@ -310,9 +309,8 @@ namespace OgrenciBilgiSistemi.Controllers
                 ws3.Cell(1, 3).Value = "Tarih";
                 ws3.Cell(1, 4).Value = "Periyot";
                 ws3.Cell(1, 5).Value = "Durum";
-                ws3.Cell(1, 6).Value = "SMS";
-                ws3.Cell(1, 7).Value = "Şoför";
-                BasligiBicimle(ws3.Range(1, 1, 1, 7));
+                ws3.Cell(1, 6).Value = "Şoför";
+                BasligiBicimle(ws3.Range(1, 1, 1, 6));
 
                 int r = 2;
                 foreach (var sv in liste)
@@ -323,12 +321,11 @@ namespace OgrenciBilgiSistemi.Controllers
                     ct3.Value = sv.OlusturulmaTarihi;
                     ct3.Style.DateFormat.Format = "dd.MM.yyyy HH:mm";
                     ws3.Cell(r, 4).Value = sv.Periyot == 1 ? "Sabah" : (sv.Periyot == 2 ? "Akşam" : sv.Periyot.ToString());
-                    ws3.Cell(r, 5).Value = sv.DurumId == 1 ? "Bindi" : (sv.DurumId == 2 ? "Binmedi" : sv.DurumId.ToString());
-                    ws3.Cell(r, 6).Value = sv.SmsGonderildi ? "Evet" : "Hayır";
-                    ws3.Cell(r, 7).Value = sv.Kullanici?.KullaniciAdi ?? "-";
+                    ws3.Cell(r, 5).Value = YoklamaMetinleri.ServisMetinGetir(sv.DurumId);
+                    ws3.Cell(r, 6).Value = sv.Kullanici?.KullaniciAdi ?? "-";
                     r++;
                 }
-                SayfayiSonlandir(ws3, 7, r, $"Toplam {liste.Count} kayıt");
+                SayfayiSonlandir(ws3, 6, r, $"Toplam {liste.Count} kayıt");
 
                 using var ms = new MemoryStream();
                 workbook.SaveAs(ms);
@@ -380,7 +377,7 @@ namespace OgrenciBilgiSistemi.Controllers
                 if (log.OgrenciCTarih.HasValue) { cCikis.Value = log.OgrenciCTarih.Value; cCikis.Style.DateFormat.Format = "dd.MM.yyyy HH:mm"; }
                 else cCikis.Value = "-";
 
-                ws.Cell(row, 7).Value = log.OgrenciGecisTipi?.ToString() ?? "-";
+                ws.Cell(row, 7).Value = YoklamaMetinleri.GecisMetinGetir(log.OgrenciGecisTipi);
                 ws.Cell(row, 8).Value = log.Cihaz?.CihazAdi ?? "-";
                 row++;
             }
@@ -406,19 +403,6 @@ namespace OgrenciBilgiSistemi.Controllers
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 "OgrenciGirisCikis.xlsx");
         }
-
-        private static string SinifDurumMetni(int? d) => d switch
-        {
-            1 => "Geldi",
-            2 => "Gelmedi",
-            3 => "Geç Geldi",
-            4 => "İzinli",
-            5 => "Raporlu",
-            6 => "Nöbetçi",
-            7 => "Görevli",
-            null => "-",
-            _ => d.ToString()!
-        };
 
         private static void BasligiBicimle(IXLRange headerRange)
         {
