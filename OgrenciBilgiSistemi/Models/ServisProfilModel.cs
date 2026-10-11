@@ -15,6 +15,31 @@ namespace OgrenciBilgiSistemi.Models
         [Display(Name = "Plaka")]
         public string Plaka { get; set; } = string.Empty;
 
+        // Şoför bilgileri (telefon Kullanici.Telefon'da tutulur)
+        [StringLength(100)]
+        [Display(Name = "Şoför Adı Soyadı")]
+        public string? SoforAdSoyad { get; set; }
+
+        [StringLength(11)]
+        [RegularExpression(@"^\d{11}$", ErrorMessage = "T.C. Kimlik No 11 haneli rakamlardan oluşmalıdır!")]
+        [Display(Name = "Şoför T.C. Kimlik No")]
+        public string? SoforTcKimlikNo { get; set; }
+
+        // Hostes bilgileri
+        [StringLength(100)]
+        [Display(Name = "Hostes Adı Soyadı")]
+        public string? HostesAdSoyad { get; set; }
+
+        [StringLength(11)]
+        [RegularExpression(@"^\d{11}$", ErrorMessage = "T.C. Kimlik No 11 haneli rakamlardan oluşmalıdır!")]
+        [Display(Name = "Hostes T.C. Kimlik No")]
+        public string? HostesTcKimlikNo { get; set; }
+
+        [StringLength(15)]
+        [RegularExpression(@"^\d{10,15}$", ErrorMessage = "Telefon numarası yalnızca rakamlardan oluşmalıdır!")]
+        [Display(Name = "Hostes Telefon")]
+        public string? HostesTelefon { get; set; }
+
         // true = silinmiş (soft delete). Eski ServisDurum (aktif/pasif) IsDeleted'a birleştirildi.
         [Display(Name = "Durum")]
         public bool IsDeleted { get; set; } = false;

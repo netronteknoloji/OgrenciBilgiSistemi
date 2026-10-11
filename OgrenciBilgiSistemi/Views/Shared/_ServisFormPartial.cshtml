@@ -10,7 +10,7 @@
     <div class="fixed-canvas">
         <div class="container py-4">
             <div class="row justify-content-center">
-                <div class="col-5">
+                <div class="col-6">
                     <div class="card rounded-3 border">
                         <div class="card-header bg-primary text-white text-center">
                             <h4 class="fw-bold mb-0">
@@ -54,20 +54,61 @@
                                     <span asp-validation-for="Sifre" class="text-danger"></span>
                                 </div>
 
-                                <!-- Telefon -->
-                                <div class="mb-3">
-                                    <label asp-for="Telefon" class="form-label fw-semibold"></label>
-                                    <input asp-for="Telefon" class="form-control" placeholder="5XXXXXXXXX" />
-                                    <span asp-validation-for="Telefon" class="text-danger"></span>
-                                </div>
-
-                                <hr class="my-3" />
-
                                 <!-- Plaka -->
                                 <div class="mb-3">
                                     <label asp-for="Plaka" class="form-label fw-semibold"></label>
                                     <input asp-for="Plaka" class="form-control" required placeholder="34 ABC 123" />
                                     <span asp-validation-for="Plaka" class="text-danger"></span>
+                                </div>
+
+                                <hr class="my-3" />
+                                <h6 class="fw-bold text-primary mb-3"><i class="bi bi-person-badge"></i> Şoför Bilgileri</h6>
+
+                                <!-- Şoför Adı Soyadı -->
+                                <div class="mb-3">
+                                    <label asp-for="SoforAdSoyad" class="form-label fw-semibold"></label>
+                                    <input asp-for="SoforAdSoyad" class="form-control" maxlength="100" placeholder="Şoför adı soyadı" />
+                                    <span asp-validation-for="SoforAdSoyad" class="text-danger"></span>
+                                </div>
+
+                                <div class="row g-2 mb-3">
+                                    <!-- Şoför TC -->
+                                    <div class="col-sm-6">
+                                        <label asp-for="SoforTcKimlikNo" class="form-label fw-semibold"></label>
+                                        <input asp-for="SoforTcKimlikNo" class="form-control" maxlength="11" inputmode="numeric" placeholder="11 haneli" />
+                                        <span asp-validation-for="SoforTcKimlikNo" class="text-danger"></span>
+                                    </div>
+                                    <!-- Şoför Telefon -->
+                                    <div class="col-sm-6">
+                                        <label asp-for="Telefon" class="form-label fw-semibold"></label>
+                                        <input asp-for="Telefon" class="form-control" inputmode="numeric" placeholder="5XXXXXXXXX" />
+                                        <span asp-validation-for="Telefon" class="text-danger"></span>
+                                    </div>
+                                </div>
+
+                                <hr class="my-3" />
+                                <h6 class="fw-bold text-primary mb-3"><i class="bi bi-person-heart"></i> Hostes Bilgileri</h6>
+
+                                <!-- Hostes Adı Soyadı -->
+                                <div class="mb-3">
+                                    <label asp-for="HostesAdSoyad" class="form-label fw-semibold"></label>
+                                    <input asp-for="HostesAdSoyad" class="form-control" maxlength="100" placeholder="Hostes adı soyadı" />
+                                    <span asp-validation-for="HostesAdSoyad" class="text-danger"></span>
+                                </div>
+
+                                <div class="row g-2 mb-3">
+                                    <!-- Hostes TC -->
+                                    <div class="col-sm-6">
+                                        <label asp-for="HostesTcKimlikNo" class="form-label fw-semibold"></label>
+                                        <input asp-for="HostesTcKimlikNo" class="form-control" maxlength="11" inputmode="numeric" placeholder="11 haneli" />
+                                        <span asp-validation-for="HostesTcKimlikNo" class="text-danger"></span>
+                                    </div>
+                                    <!-- Hostes Telefon -->
+                                    <div class="col-sm-6">
+                                        <label asp-for="HostesTelefon" class="form-label fw-semibold"></label>
+                                        <input asp-for="HostesTelefon" class="form-control" inputmode="numeric" placeholder="5XXXXXXXXX" />
+                                        <span asp-validation-for="HostesTelefon" class="text-danger"></span>
+                                    </div>
                                 </div>
 
                                 @if (!isEkle)

@@ -1117,6 +1117,18 @@ namespace OgrenciBilgiSistemi.Migrations
                     b.Property<int>("KullaniciId")
                         .HasColumnType("int");
 
+                    b.Property<string>("HostesAdSoyad")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("HostesTcKimlikNo")
+                        .HasMaxLength(11)
+                        .HasColumnType("nvarchar(11)");
+
+                    b.Property<string>("HostesTelefon")
+                        .HasMaxLength(15)
+                        .HasColumnType("nvarchar(15)");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
@@ -1124,6 +1136,14 @@ namespace OgrenciBilgiSistemi.Migrations
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("SoforAdSoyad")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("SoforTcKimlikNo")
+                        .HasMaxLength(11)
+                        .HasColumnType("nvarchar(11)");
 
                     b.HasKey("KullaniciId");
 

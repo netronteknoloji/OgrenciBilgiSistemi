@@ -31,7 +31,9 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             {
                 var s = searchString.Trim();
                 query = query.Where(sp => sp.Plaka.Contains(s) ||
-                    sp.Kullanici.KullaniciAdi.Contains(s));
+                    sp.Kullanici.KullaniciAdi.Contains(s) ||
+                    (sp.SoforAdSoyad != null && sp.SoforAdSoyad.Contains(s)) ||
+                    (sp.HostesAdSoyad != null && sp.HostesAdSoyad.Contains(s)));
             }
 
             var paged = await SayfalanmisListeModel<ServisProfilModel>
@@ -62,6 +64,11 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 ServisProfil = new ServisProfilModel
                 {
                     Plaka = vm.Plaka,
+                    SoforAdSoyad = BosIseNull(vm.SoforAdSoyad),
+                    SoforTcKimlikNo = BosIseNull(vm.SoforTcKimlikNo),
+                    HostesAdSoyad = BosIseNull(vm.HostesAdSoyad),
+                    HostesTcKimlikNo = BosIseNull(vm.HostesTcKimlikNo),
+                    HostesTelefon = BosIseNull(vm.HostesTelefon),
                     IsDeleted = false
                 }
             };
@@ -87,6 +94,11 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 ?? throw new KeyNotFoundException("Servis profili bulunamadı.");
 
             mevcut.Plaka = model.Plaka;
+            mevcut.SoforAdSoyad = BosIseNull(model.SoforAdSoyad);
+            mevcut.SoforTcKimlikNo = BosIseNull(model.SoforTcKimlikNo);
+            mevcut.HostesAdSoyad = BosIseNull(model.HostesAdSoyad);
+            mevcut.HostesTcKimlikNo = BosIseNull(model.HostesTcKimlikNo);
+            mevcut.HostesTelefon = BosIseNull(model.HostesTelefon);
             mevcut.IsDeleted = model.IsDeleted;
 
             var kullanici = await _db.Kullanicilar.FindAsync([model.KullaniciId], ct);
@@ -179,5 +191,8 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             ogrenci.ServisId = null;
             await _db.SaveChangesAsync(ct);
         }
+
+        private static string? BosIseNull(string? deger)
+            => string.IsNullOrWhiteSpace(deger) ? null : deger.Trim();
     }
 }

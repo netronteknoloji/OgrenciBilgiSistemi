@@ -21,6 +21,28 @@
 
             <div class="card-body p-4">
 
+                <!-- Şoför / Hostes -->
+                <div class="d-flex flex-wrap gap-4 mb-3 small">
+                    <div>
+                        <i class="bi bi-person-badge text-primary"></i>
+                        <span class="fw-semibold">Şoför:</span>
+                        @(Model.Servis.SoforAdSoyad ?? "-")
+                        @if (!string.IsNullOrEmpty(Model.Servis.Kullanici?.Telefon))
+                        {
+                            <span class="text-muted">(@Model.Servis.Kullanici.Telefon)</span>
+                        }
+                    </div>
+                    <div>
+                        <i class="bi bi-person-heart text-primary"></i>
+                        <span class="fw-semibold">Hostes:</span>
+                        @(Model.Servis.HostesAdSoyad ?? "-")
+                        @if (!string.IsNullOrEmpty(Model.Servis.HostesTelefon))
+                        {
+                            <span class="text-muted">(@Model.Servis.HostesTelefon)</span>
+                        }
+                    </div>
+                </div>
+
                 <!-- Öğrenci Ekleme -->
                 <div class="bg-body-tertiary border rounded-3 p-3 mb-3">
                     <div class="d-flex align-items-end gap-3 flex-nowrap no-wrap-scroll position-relative">

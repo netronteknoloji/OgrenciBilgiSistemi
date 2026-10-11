@@ -25,5 +25,11 @@ namespace OgrenciBilgiSistemi.ViewModels
         [StringLength(20)]
         [Display(Name = "Plaka")]
         public string Plaka { get; set; } = string.Empty;
+
+        public string? SoforAdSoyad { get; set; }
+        public string? SoforTcKimlikNo { get; set; }
+        public string? HostesAdSoyad { get; set; }
+        public string? HostesTcKimlikNo { get; set; }
+        public string? HostesTelefon { get; set; }
     }
 }
