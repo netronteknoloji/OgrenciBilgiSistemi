@@ -25,6 +25,7 @@ if (okullar is null || okullar.Count == 0)
     throw new InvalidOperationException("Okullar yapılandırılmamış. appsettings.json içinde Okullar bölümünü ekleyin.");
 
 builder.Services.Configure<List<OkulBilgiAyari>>(builder.Configuration.GetSection("Okullar"));
+builder.Services.Configure<OgrenciBilgiSistemi.Models.KartOkumaAyarlari>(builder.Configuration.GetSection("KartOkuma"));
 builder.Services.AddSingleton<OkulYapilandirmaServisi>();
 builder.Services.AddScoped<TenantBaglami>();
 

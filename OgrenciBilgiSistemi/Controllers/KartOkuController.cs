@@ -1,9 +1,12 @@
+using System.Collections.Concurrent;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Options;
 using OgrenciBilgiSistemi.Dtos;
 using OgrenciBilgiSistemi.Hubs;
 using OgrenciBilgiSistemi.Models;
 using OgrenciBilgiSistemi.Services.Interfaces;
+using OgrenciBilgiSistemi.Shared.Services;
 using OgrenciBilgiSistemi.ViewModels;
 
 namespace OgrenciBilgiSistemi.Controllers
@@ -17,6 +20,13 @@ namespace OgrenciBilgiSistemi.Controllers
         private readonly IHubContext<KartOkuHub> _hub;
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly ILogger<KartOkuController> _logger;
+        private readonly TenantBaglami _tenant;
+        private readonly KartOkumaAyarlari _ayar;
+
+        // Aynı öğrencinin eşzamanlı okutmaları (okuyucunun kartı iki kez göndermesi) sırayla işlenir;
+        // aksi halde iki istek de "bugün çıkış yok" görüp iki ÇIKIŞ + iki SMS yazabilir.
+        // Tek süreçli IIS app pool varsayımıyla bellek içi kilit yeterlidir.
+        private static readonly ConcurrentDictionary<string, SemaphoreSlim> _ogrenciKilitleri = new();
 
         public KartOkuController(
             IGecisService gecisService,
@@ -24,7 +34,9 @@ namespace OgrenciBilgiSistemi.Controllers
             IKartOkuService kartOkuService,
             IHubContext<KartOkuHub> hub,
             IServiceScopeFactory scopeFactory,
-            ILogger<KartOkuController> logger)
+            ILogger<KartOkuController> logger,
+            TenantBaglami tenant,
+            IOptions<KartOkumaAyarlari> ayar)
         {
             _gecisService = gecisService;
             _cihazService = cihazService;
@@ -32,6 +44,20 @@ namespace OgrenciBilgiSistemi.Controllers
             _hub = hub;
             _scopeFactory = scopeFactory;
             _logger = logger;
+            _tenant = tenant;
+            _ayar = ayar.Value;
+        }
+
+        private sealed class KilitSerbestBirakici(SemaphoreSlim kilit) : IDisposable
+        {
+            public void Dispose() => kilit.Release();
+        }
+
+        private async Task<IDisposable> OgrenciKilidiAlAsync(int ogrenciId, CancellationToken ct)
+        {
+            var kilit = _ogrenciKilitleri.GetOrAdd($"{_tenant.OkulKodu}:{ogrenciId}", _ => new SemaphoreSlim(1, 1));
+            await kilit.WaitAsync(ct);
+            return new KilitSerbestBirakici(kilit);
         }
 
         // Yavaş/ölü client'ın kart okumayı blocklamasını engellemek için
@@ -71,9 +97,6 @@ namespace OgrenciBilgiSistemi.Controllers
             public const string InfoOgleDonusOk = "ÖĞLE DÖNÜŞÜ ONAYLANDI.";
             public const string ErrKartTanimsiz = "KART TANIMSIZ!";
         }
-
-        // Öğle çıkışından sonra bu süre dolmadan yapılan okutma dönüş sayılmaz (yanlışlıkla çift okutma).
-        private static readonly TimeSpan OgleDonusMinSure = TimeSpan.FromMinutes(10);
 
         [HttpGet("")]
         public async Task<IActionResult> Index(string? cihazKodu, CancellationToken ct)
@@ -141,6 +164,9 @@ namespace OgrenciBilgiSistemi.Controllers
 
                     return NotFound("Kart tanımsız.");
                 }
+
+                // Kontrol + kayıt bu öğrenci için tek seferde (istek sonunda serbest bırakılır)
+                using var ogrenciKilidi = await OgrenciKilidiAlAsync(ogrenci.OgrenciId, ct);
 
                 var ogrenciSinif = ogrenci.Birim?.BirimAd ?? "-";
                 var now = DateTime.Now;
@@ -234,11 +260,33 @@ namespace OgrenciBilgiSistemi.Controllers
                     var (cikisVarMi, girisVarMi, cikisZamani) = await _kartOkuService.BugunAnaKapiHareketleriAsync(
                         ogrenci.OgrenciId, today, tomorrow, ct);
 
-                    if (!cikisVarMi)
+                    if (!cikisVarMi && !_ayar.OgleCikisSaatiMi(now))
+                    {
+                        // Öğle çıkış saati dışında: kayıt/SMS yok
+                        await GuvenliYayinAsync(_hub, new OgrenciBilgisiDto
+                        {
+                            OgrenciAdSoyad = ogrenci.OgrenciAdSoyad,
+                            OgrenciNo = ogrenci.OgrenciNo,
+                            OgrenciSinif = ogrenciSinif,
+                            OgrenciGorsel = ogrenci.OgrenciGorsel,
+                            OgrenciGirisSaati = "-",
+                            OgrenciCikisSaati = "-",
+                            OglenCikisDurumu = ogrenci.OgrenciCikisDurumu,
+                            GecisTipi = "Reddedildi",
+                            Istasyon = cihaz.IstasyonTipi.ToString(),
+                            CihazAdi = cihaz.CihazAdi,
+                            CihazKodu = cihaz.CihazKodu,
+                            Reason = "ANA_KAPI_OGLE_SAAT_DISI",
+                            Error = $"ÖĞLE ÇIKIŞ SAATİ DEĞİL ({_ayar.OgleCikisAraligiMetni})!"
+                        }, ct);
+
+                        return Ok(new { durum = "YOK_SAYILDI", gerekce = "Öğle çıkış saati dışında.", reason = "ANA_KAPI_OGLE_SAAT_DISI" });
+                    }
+                    else if (!cikisVarMi)
                     {
                         forcedGecisTipi = "Çıkış";
                     }
-                    else if (!girisVarMi && cikisZamani.HasValue && now - cikisZamani.Value < OgleDonusMinSure)
+                    else if (!girisVarMi && cikisZamani.HasValue && now - cikisZamani.Value < _ayar.OgleDonusMinSure)
                     {
                         // Çıkıştan hemen sonra tekrar okutma: dönüş sayma, kayıt/SMS yok
                         await GuvenliYayinAsync(_hub, new OgrenciBilgisiDto

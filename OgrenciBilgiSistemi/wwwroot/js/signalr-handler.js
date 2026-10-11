@@ -226,6 +226,12 @@ function getReasonSpec(reason, ctx) {
         text: errMsg || "Öğle çıkışı zaten yapıldı!",
         beep: true,
       };
+    case "ANA_KAPI_OGLE_SAAT_DISI":
+      return {
+        fullBg: "#dc2626",
+        text: errMsg || "ÖĞLE ÇIKIŞ SAATİ DEĞİL!",
+        beep: true,
+      };
     case "KART_TANIMSIZ":
       return {
         fullBg: "#dc2626",
@@ -330,6 +336,7 @@ function renderStudentFragment(o, lunch) {
     reasonStr === "ANA_KAPI_OGLE_LIMIT" ||
     reasonStr === "ANA_KAPI_OGLE_DONUS_LIMIT" ||
     reasonStr === "ANA_KAPI_OGLE_CIKIS_YAPILDI" ||
+    reasonStr === "ANA_KAPI_OGLE_SAAT_DISI" ||
     (o.gecisTipi || o.GecisTipi || "").toString().toLowerCase() ===
       "reddedildi";
 
@@ -358,6 +365,9 @@ function renderStudentFragment(o, lunch) {
       badge.style.color = "#16a34a";
     } else if (reasonStr === "ANA_KAPI_OGLE_CIKIS_YAPILDI") {
       badge.textContent = "Öğle Çıkış: Zaten Yapıldı!";
+      badge.style.color = "#dc2626";
+    } else if (reasonStr === "ANA_KAPI_OGLE_SAAT_DISI") {
+      badge.textContent = "Öğle Çıkış: Saat Dışı!";
       badge.style.color = "#dc2626";
     } else if (reasonStr === "ANA_KAPI_OGLE_RED") {
       badge.textContent = "Öğle Çıkış: İzin Yok!";
