@@ -55,6 +55,9 @@ namespace OgrenciBilgiSistemi.Infrastructure
             if (muafControllerlar.Contains(controllerName))
                 return;
 
+            // Rapor menüsü yalnızca raporu açar; işlem action'ları işlem menüsünü ister
+            var gerekenMenuler = MenuIslemHaritasi.GerekenMenuler(controllerName, actionName)?.ToList();
+
             // GenelAdmin: DB'deki menü atamalarına göre kontrol
             if (user.IsInRole(RolAdlari.GenelAdmin))
             {
@@ -72,7 +75,8 @@ namespace OgrenciBilgiSistemi.Infrastructure
                     .AsNoTracking()
                     .AnyAsync(km =>
                         km.KullaniciId == genelAdminKullanici.KullaniciId &&
-                        km.MenuOge.Controller == controllerName);
+                        km.MenuOge.Controller == controllerName &&
+                        (gerekenMenuler == null || gerekenMenuler.Contains(km.MenuOge.Action!)));
 
                 if (!genelYetkiVarMi)
                     context.Result = new RedirectToActionResult("YetkisizGiris", "Hesaplar", null);
@@ -102,12 +106,13 @@ namespace OgrenciBilgiSistemi.Infrastructure
                 return;
             }
 
-            // Kullanıcının bu controller'a erişim izni var mı
+            // Kullanıcının bu controller'a (çok menülü controller'da bu action'ın menüsüne) izni var mı
             var yetkiVarMi = await _db.KullaniciMenuOgeler
                 .AsNoTracking()
                 .AnyAsync(km =>
                     km.KullaniciId == kullaniciId &&
-                    km.MenuOge.Controller == controllerName);
+                    km.MenuOge.Controller == controllerName &&
+                    (gerekenMenuler == null || gerekenMenuler.Contains(km.MenuOge.Action!)));
 
             if (!yetkiVarMi)
             {
