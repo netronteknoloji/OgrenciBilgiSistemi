@@ -89,8 +89,10 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                               .ToListAsync(ct);
             }
 
+            // Veli profili pasif olanlar hariç (API'deki Hedef=1 kuralıyla aynı)
             return await _db.Kullanicilar
-                .Where(k => k.Rol == KullaniciRolu.Veli && !k.IsDeleted)
+                .Where(k => k.Rol == KullaniciRolu.Veli && !k.IsDeleted
+                            && k.VeliProfil != null && !k.VeliProfil.IsDeleted)
                 .Select(k => k.KullaniciId)
                 .ToListAsync(ct);
         }

@@ -197,6 +197,14 @@ namespace OgrenciBilgiSistemi.Api.Controllers
                 return Forbid();
             }
 
+            // Karşı taraf yalnızca uygun roldeki aktif kullanıcı olabilir (rastgele kullanıcının takvimi sorgulanamaz)
+            if (karsiTarafKullaniciId is { } karsiId && karsiId != 0)
+            {
+                var beklenenRol = rol == "Ogretmen" ? KullaniciRolu.Veli : KullaniciRolu.Ogretmen;
+                if (!await _randevuService.AktifKullaniciRoluMu(karsiId, beklenenRol))
+                    return BadRequest(new { mesaj = "Karşı taraf geçersiz." });
+            }
+
             var mesaj = await _randevuService.CakismaMesajiAl(ogretmenId, veliId, tarih, sureDakika);
             return Ok(new { cakismaVar = mesaj is not null, mesaj });
         }

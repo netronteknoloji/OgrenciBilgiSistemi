@@ -129,6 +129,11 @@ namespace OgrenciBilgiSistemi.Controllers
                 await _randevuService.IptalEt(id, ct);
                 return RedirectToAction(nameof(Index));
             }
+            catch (InvalidOperationException ex)
+            {
+                TempData["Hata"] = ex.Message;
+                return RedirectToAction(nameof(Index));
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Randevu iptal edilemedi. Id={Id}", id);

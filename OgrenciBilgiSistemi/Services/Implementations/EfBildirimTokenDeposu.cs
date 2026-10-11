@@ -47,6 +47,16 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             await _db.SaveChangesAsync(ct);
         }
 
+        public async Task KullaniciTokeniIptalAsync(int kullaniciId, string fcmToken, CancellationToken ct = default)
+        {
+            var simdi = DateTime.Now;
+            await _db.BildirimCihazlari
+                .Where(c => c.FcmToken == fcmToken && c.KullaniciId == kullaniciId && !c.IsDeleted)
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(c => c.IsDeleted, true)
+                    .SetProperty(c => c.SonGuncelleme, simdi), ct);
+        }
+
         public async Task IptalAsync(IEnumerable<string> tokenlar, CancellationToken ct = default)
         {
             var liste = tokenlar.ToList();

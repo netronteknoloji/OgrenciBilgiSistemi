@@ -36,7 +36,8 @@ namespace OgrenciBilgiSistemi.Api.Controllers
         [HttpDelete("kaydi-sil")]
         public async Task<IActionResult> KaydiSil([FromBody] CihazSilIstegiDto istek, CancellationToken ct)
         {
-            await _tokenDeposu.IptalAsync(new[] { istek.FcmToken }, ct);
+            // Yalnızca kendi cihaz kaydı silinebilir
+            await _tokenDeposu.KullaniciTokeniIptalAsync(KullaniciId, istek.FcmToken, ct);
             return Ok(new { mesaj = "Cihaz kaydı silindi." });
         }
 
@@ -44,7 +45,7 @@ namespace OgrenciBilgiSistemi.Api.Controllers
         public async Task<IActionResult> TokenYenile([FromBody] CihazTokenYenileIstegiDto istek, CancellationToken ct)
         {
             if (!string.IsNullOrWhiteSpace(istek.EskiToken) && istek.EskiToken != istek.YeniToken)
-                await _tokenDeposu.IptalAsync(new[] { istek.EskiToken }, ct);
+                await _tokenDeposu.KullaniciTokeniIptalAsync(KullaniciId, istek.EskiToken, ct);
 
             await _tokenDeposu.UpsertAsync(new BildirimCihazKaydi(
                 KullaniciId,

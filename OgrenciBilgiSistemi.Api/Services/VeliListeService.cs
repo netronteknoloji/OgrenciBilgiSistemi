@@ -27,7 +27,7 @@ namespace OgrenciBilgiSistemi.Api.Services
                 SELECT k.KullaniciId, k.KullaniciAdi, k.Telefon
                 FROM Kullanicilar k
                 INNER JOIN VeliProfiller vp ON k.KullaniciId = vp.KullaniciId
-                WHERE vp.IsDeleted = 0
+                WHERE vp.IsDeleted = 0 AND k.IsDeleted = 0
                 ORDER BY k.KullaniciAdi";
 
             try

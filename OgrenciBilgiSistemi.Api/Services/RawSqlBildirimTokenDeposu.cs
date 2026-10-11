@@ -42,6 +42,20 @@ namespace OgrenciBilgiSistemi.Api.Services
             await cmd.ExecuteNonQueryAsync(ct);
         }
 
+        public async Task KullaniciTokeniIptalAsync(int kullaniciId, string fcmToken, CancellationToken ct = default)
+        {
+            const string sql = @"
+                UPDATE BildirimCihazlari SET IsDeleted = 1, SonGuncelleme = GETDATE()
+                WHERE IsDeleted = 0 AND FcmToken = @token AND KullaniciId = @kullaniciId";
+
+            await using var conn = new SqlConnection(ConnectionString);
+            await using var cmd = new SqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("@token", fcmToken);
+            cmd.Parameters.AddWithValue("@kullaniciId", kullaniciId);
+            await conn.OpenAsync(ct);
+            await cmd.ExecuteNonQueryAsync(ct);
+        }
+
         public async Task IptalAsync(IEnumerable<string> tokenlar, CancellationToken ct = default)
         {
             var liste = tokenlar.ToList();

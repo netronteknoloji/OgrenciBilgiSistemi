@@ -235,6 +235,9 @@ namespace OgrenciBilgiSistemi.Api.Controllers
             if (!int.TryParse(kullaniciIdStr, out var kullaniciId))
                 return Unauthorized("Oturum bilgileri eksik.");
 
+            if (kullaniciId == 0)
+                return BadRequest(new { error = "Genel Yönetici şifresi sunucu yapılandırmasından değiştirilir." });
+
             try
             {
                 var sonuc = await _girisService.SifreDegistirAsync(kullaniciId, istek.YeniSifre);

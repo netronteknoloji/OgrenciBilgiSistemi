@@ -1,3 +1,4 @@
+using OgrenciBilgiSistemi.Shared.Kurallar;
 using Microsoft.Data.SqlClient;
 using OgrenciBilgiSistemi.Api.Services.Interfaces;
 using OgrenciBilgiSistemi.Shared.Enums;
@@ -222,6 +223,18 @@ namespace OgrenciBilgiSistemi.Api.Services
             };
         }
 
+        // Çakışma sorgusunda karşı taraf rol olarak uygun mu (öğretmen ↔ veli, aktif)
+        public async Task<bool> AktifKullaniciRoluMu(int kullaniciId, KullaniciRolu rol)
+        {
+            const string query = "SELECT COUNT(1) FROM Kullanicilar WHERE KullaniciId = @id AND Rol = @rol AND IsDeleted = 0";
+            await using var conn = new SqlConnection(ConnectionString);
+            await using var cmd = new SqlCommand(query, conn);
+            cmd.Parameters.AddWithValue("@id", kullaniciId);
+            cmd.Parameters.AddWithValue("@rol", (int)rol);
+            await conn.OpenAsync();
+            return Convert.ToInt32(await cmd.ExecuteScalarAsync()) > 0;
+        }
+
         // Mobil ve diğer servislerin POST öncesi kontrol için kullanabileceği public sarmalayıcı.
         public Task<string?> CakismaMesajiAl(int ogretmenId, int veliId, DateTime tarih, int sureDakika)
             => CakismaMesaji(ogretmenId, veliId, tarih, sureDakika);
@@ -233,9 +246,10 @@ namespace OgrenciBilgiSistemi.Api.Services
         {
             await TaraflarAktifMiKontrolEt(randevuId);
 
+            // Yalnızca beklemedeki randevu yanıtlanır (RandevuDurumKurallari)
             const string query = @"
                 UPDATE Randevular SET Durum = @durum, GuncellenmeTarihi = GETDATE()
-                WHERE RandevuId = @id AND IsDeleted = 0
+                WHERE RandevuId = @id AND IsDeleted = 0 AND " + RandevuDurumKurallari.YanitlanabilirSqlKosulu + @"
                   AND ((@rol = 'Ogretmen' AND OgretmenKullaniciId = @kullaniciId AND OgretmenTarafindanOlusturuldu = 0)
                     OR (@rol = 'Veli' AND VeliKullaniciId = @kullaniciId AND OgretmenTarafindanOlusturuldu = 1))";
 
@@ -253,9 +267,10 @@ namespace OgrenciBilgiSistemi.Api.Services
         {
             await TaraflarAktifMiKontrolEt(randevuId);
 
+            // Yalnızca beklemede veya onaylanmış randevu iptal edilir (RandevuDurumKurallari)
             const string query = @"
                 UPDATE Randevular SET Durum = @durum, GuncellenmeTarihi = GETDATE()
-                WHERE RandevuId = @id AND IsDeleted = 0
+                WHERE RandevuId = @id AND IsDeleted = 0 AND " + RandevuDurumKurallari.IptalEdilebilirSqlKosulu + @"
                   AND (OgretmenKullaniciId = @kullaniciId OR VeliKullaniciId = @kullaniciId)";
 
             await using var conn = new SqlConnection(ConnectionString);

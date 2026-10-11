@@ -10,6 +10,7 @@ namespace OgrenciBilgiSistemi.Api.Services.Interfaces
         Task<int> VeliRandevuOlustur(int veliId, int ogretmenId, int? ogrenciId, DateTime tarih, int sureDakika, string? not);
         Task<bool> DurumGuncelle(int randevuId, int kullaniciId, string rol, RandevuDurumu yeniDurum);
         Task<bool> IptalEt(int randevuId, int kullaniciId);
+        Task<bool> AktifKullaniciRoluMu(int kullaniciId, KullaniciRolu rol);
         Task<string?> CakismaMesajiAl(int ogretmenId, int veliId, DateTime tarih, int sureDakika);
     }
 }

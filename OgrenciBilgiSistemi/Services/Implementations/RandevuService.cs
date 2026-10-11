@@ -1,3 +1,4 @@
+using OgrenciBilgiSistemi.Shared.Kurallar;
 using Microsoft.EntityFrameworkCore;
 using OgrenciBilgiSistemi.Data;
 using OgrenciBilgiSistemi.Models;
@@ -41,6 +42,9 @@ namespace OgrenciBilgiSistemi.Services.Implementations
         {
             var randevu = await _db.Randevular.FindAsync(new object[] { randevuId }, ct)
                           ?? throw new KeyNotFoundException("Randevu bulunamadı.");
+
+            if (!RandevuDurumKurallari.IptalEdilebilirMi(randevu.Durum))
+                throw new InvalidOperationException("Yalnızca beklemede veya onaylanmış randevu iptal edilebilir.");
 
             randevu.Durum = RandevuDurumu.IptalEdildi;
             randevu.GuncellenmeTarihi = _timeProvider.GetLocalNow().DateTime;
