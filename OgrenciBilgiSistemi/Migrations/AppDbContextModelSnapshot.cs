@@ -1112,6 +1112,13 @@ namespace OgrenciBilgiSistemi.Migrations
                     b.Property<int>("KullaniciId")
                         .HasColumnType("int");
 
+                    b.Property<string>("EksikEvraklar")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool>("EvrakTamMi")
+                        .HasColumnType("bit");
+
                     b.Property<string>("HostesAdSoyad")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");

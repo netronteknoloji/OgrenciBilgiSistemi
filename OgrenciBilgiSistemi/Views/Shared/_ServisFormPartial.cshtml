@@ -111,6 +111,23 @@
                                     </div>
                                 </div>
 
+                                <hr class="my-3" />
+                                <h6 class="fw-bold text-primary mb-3"><i class="bi bi-folder-check"></i> Evrak Durumu</h6>
+
+                                <!-- Evrak Tam mı -->
+                                <div class="form-check mb-2">
+                                    <input asp-for="EvrakTamMi" class="form-check-input" id="evrakTamMi" />
+                                    <label asp-for="EvrakTamMi" class="form-check-label fw-semibold" for="evrakTamMi"></label>
+                                </div>
+
+                                <!-- Eksik Evraklar -->
+                                <div class="mb-3" id="eksikEvraklarAlani">
+                                    <label asp-for="EksikEvraklar" class="form-label fw-semibold"></label>
+                                    <textarea asp-for="EksikEvraklar" class="form-control" rows="3" maxlength="500"
+                                              placeholder="Örn: Ruhsat fotokopisi, sabıka kaydı, sigorta poliçesi"></textarea>
+                                    <span asp-validation-for="EksikEvraklar" class="text-danger"></span>
+                                </div>
+
                                 @if (!isEkle)
                                 {
                                     <!-- Durum -->
@@ -141,3 +158,13 @@
         </div>
     </div>
 </div>
+
+<script>
+    (function () {
+        var chk = document.getElementById('evrakTamMi');
+        var alan = document.getElementById('eksikEvraklarAlani');
+        function guncelle() { alan.style.display = chk.checked ? 'none' : ''; }
+        chk.addEventListener('change', guncelle);
+        guncelle();
+    })();
+</script>

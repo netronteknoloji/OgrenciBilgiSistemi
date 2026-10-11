@@ -40,6 +40,14 @@ namespace OgrenciBilgiSistemi.Models
         [Display(Name = "Hostes Telefon")]
         public string? HostesTelefon { get; set; }
 
+        // Evrak takibi: tam değilse eksik evraklar not olarak tutulur
+        [Display(Name = "Evraklar tam ve eksiksiz teslim edildi")]
+        public bool EvrakTamMi { get; set; } = false;
+
+        [StringLength(500)]
+        [Display(Name = "Eksik Evraklar")]
+        public string? EksikEvraklar { get; set; }
+
         // true = silinmiş (soft delete). Eski ServisDurum (aktif/pasif) IsDeleted'a birleştirildi.
         [Display(Name = "Durum")]
         public bool IsDeleted { get; set; } = false;

@@ -6,5 +6,6 @@ namespace OgrenciBilgiSistemi.ViewModels
     {
         public SayfalanmisListeModel<ServisProfilModel> Servisler { get; init; } = default!;
         public string? AramaMetni { get; init; }
+        public bool? EvrakTam { get; init; }
     }
 }

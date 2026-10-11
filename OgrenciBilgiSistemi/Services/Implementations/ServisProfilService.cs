@@ -20,7 +20,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
         }
 
         public async Task<SayfalanmisListeModel<ServisProfilModel>> SearchPagedAsync(
-            string? searchString, int page, int pageSize = 20, CancellationToken ct = default)
+            string? searchString, int page, int pageSize = 20, bool? evrakTam = null, CancellationToken ct = default)
         {
             var query = _db.ServisProfiller
                 .Include(s => s.Kullanici)
@@ -35,6 +35,9 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                     (sp.SoforAdSoyad != null && sp.SoforAdSoyad.Contains(s)) ||
                     (sp.HostesAdSoyad != null && sp.HostesAdSoyad.Contains(s)));
             }
+
+            if (evrakTam.HasValue)
+                query = query.Where(sp => sp.EvrakTamMi == evrakTam.Value);
 
             var paged = await SayfalanmisListeModel<ServisProfilModel>
                 .CreateAsync(query.OrderBy(s => s.Plaka), page, pageSize, ct);
@@ -69,6 +72,8 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                     HostesAdSoyad = BosIseNull(vm.HostesAdSoyad),
                     HostesTcKimlikNo = BosIseNull(vm.HostesTcKimlikNo),
                     HostesTelefon = BosIseNull(vm.HostesTelefon),
+                    EvrakTamMi = vm.EvrakTamMi,
+                    EksikEvraklar = vm.EvrakTamMi ? null : BosIseNull(vm.EksikEvraklar),
                     IsDeleted = false
                 }
             };
@@ -99,6 +104,8 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             mevcut.HostesAdSoyad = BosIseNull(model.HostesAdSoyad);
             mevcut.HostesTcKimlikNo = BosIseNull(model.HostesTcKimlikNo);
             mevcut.HostesTelefon = BosIseNull(model.HostesTelefon);
+            mevcut.EvrakTamMi = model.EvrakTamMi;
+            mevcut.EksikEvraklar = model.EvrakTamMi ? null : BosIseNull(model.EksikEvraklar);
             mevcut.IsDeleted = model.IsDeleted;
 
             var kullanici = await _db.Kullanicilar.FindAsync([model.KullaniciId], ct);

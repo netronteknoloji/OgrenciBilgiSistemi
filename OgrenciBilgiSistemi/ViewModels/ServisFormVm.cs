@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace OgrenciBilgiSistemi.ViewModels
 {
-    public class ServisFormVm
+    public class ServisFormVm : IValidatableObject
     {
         public int KullaniciId { get; set; }
 
@@ -43,6 +43,13 @@ namespace OgrenciBilgiSistemi.ViewModels
         [Display(Name = "Hostes Telefon")]
         public string? HostesTelefon { get; set; }
 
+        [Display(Name = "Evraklar tam ve eksiksiz teslim edildi")]
+        public bool EvrakTamMi { get; set; }
+
+        [StringLength(500)]
+        [Display(Name = "Eksik Evraklar")]
+        public string? EksikEvraklar { get; set; }
+
         [Required(ErrorMessage = "Plaka gereklidir.")]
         [StringLength(20)]
         [Display(Name = "Plaka")]
@@ -64,6 +71,8 @@ namespace OgrenciBilgiSistemi.ViewModels
             HostesAdSoyad = m.HostesAdSoyad,
             HostesTcKimlikNo = m.HostesTcKimlikNo,
             HostesTelefon = m.HostesTelefon,
+            EvrakTamMi = m.EvrakTamMi,
+            EksikEvraklar = m.EksikEvraklar,
             Plaka = m.Plaka,
             IsDeleted = m.IsDeleted,
             FormAction = "Guncelle",
@@ -81,6 +90,8 @@ namespace OgrenciBilgiSistemi.ViewModels
             HostesAdSoyad = HostesAdSoyad,
             HostesTcKimlikNo = HostesTcKimlikNo,
             HostesTelefon = HostesTelefon,
+            EvrakTamMi = EvrakTamMi,
+            EksikEvraklar = EksikEvraklar,
         };
 
         public ServisProfilModel ToProfilModel() => new()
@@ -92,7 +103,15 @@ namespace OgrenciBilgiSistemi.ViewModels
             HostesAdSoyad = HostesAdSoyad,
             HostesTcKimlikNo = HostesTcKimlikNo,
             HostesTelefon = HostesTelefon,
+            EvrakTamMi = EvrakTamMi,
+            EksikEvraklar = EksikEvraklar,
             IsDeleted = this.IsDeleted,
         };
+
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            if (!EvrakTamMi && string.IsNullOrWhiteSpace(EksikEvraklar))
+                yield return new ValidationResult("Evraklar tam değilse eksik evrakları yazınız.", [nameof(EksikEvraklar)]);
+        }
     }
 }

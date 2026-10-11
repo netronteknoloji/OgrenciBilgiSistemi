@@ -20,10 +20,10 @@ namespace OgrenciBilgiSistemi.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Index(string searchString, int page = 1, CancellationToken ct = default)
+        public async Task<IActionResult> Index(string searchString, bool? evrakTam, int page = 1, CancellationToken ct = default)
         {
-            var paged = await _servisProfilService.SearchPagedAsync(searchString, page, 50, ct);
-            return View(new ServisIndexVm { Servisler = paged, AramaMetni = searchString });
+            var paged = await _servisProfilService.SearchPagedAsync(searchString, page, 50, evrakTam, ct);
+            return View(new ServisIndexVm { Servisler = paged, AramaMetni = searchString, EvrakTam = evrakTam });
         }
 
         [HttpGet]

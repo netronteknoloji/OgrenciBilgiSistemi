@@ -31,5 +31,7 @@ namespace OgrenciBilgiSistemi.ViewModels
         public string? HostesAdSoyad { get; set; }
         public string? HostesTcKimlikNo { get; set; }
         public string? HostesTelefon { get; set; }
+        public bool EvrakTamMi { get; set; }
+        public string? EksikEvraklar { get; set; }
     }
 }

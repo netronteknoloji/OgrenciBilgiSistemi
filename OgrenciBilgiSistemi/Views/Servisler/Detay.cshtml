@@ -41,7 +41,27 @@
                             <span class="text-muted">(@Model.Servis.HostesTelefon)</span>
                         }
                     </div>
+                    <div>
+                        <i class="bi bi-folder-check text-primary"></i>
+                        <span class="fw-semibold">Evrak:</span>
+                        @if (Model.Servis.EvrakTamMi)
+                        {
+                            <span class="badge bg-success">Tam</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-warning text-dark">Eksik</span>
+                        }
+                    </div>
                 </div>
+
+                @if (!Model.Servis.EvrakTamMi && !string.IsNullOrWhiteSpace(Model.Servis.EksikEvraklar))
+                {
+                    <div class="alert alert-warning py-2 small mb-3">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        <span class="fw-semibold">Eksik evraklar:</span> @Model.Servis.EksikEvraklar
+                    </div>
+                }
 
                 <!-- Öğrenci Ekleme -->
                 <div class="bg-body-tertiary border rounded-3 p-3 mb-3">

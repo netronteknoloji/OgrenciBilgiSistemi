@@ -3,6 +3,7 @@
 @{
     ViewData["Title"] = "Servis İşlemleri";
     var q = Model.AramaMetni;
+    var evrakTam = Model.EvrakTam;
 }
 
 <div class="viewport-scroller">
@@ -32,6 +33,14 @@
                                value="@q" style="width:280px;" />
                     </div>
                 </div>
+                <div>
+                    <label for="evrakTam" class="visually-hidden">Evrak Durumu</label>
+                    <select id="evrakTam" name="evrakTam" class="form-select" style="width:180px;">
+                        <option value="" selected="@(evrakTam == null)">Tüm Evraklar</option>
+                        <option value="true" selected="@(evrakTam == true)">Evrakı Tam</option>
+                        <option value="false" selected="@(evrakTam == false)">Evrakı Eksik</option>
+                    </select>
+                </div>
                 <div class="ms-auto">
                     <button class="btn btn-primary px-3 text-nowrap" type="submit">
                         <i class="bi bi-search me-1"></i> Ara
@@ -57,6 +66,7 @@
                                 <th>Şoför</th>
                                 <th>Hostes</th>
                                 <th>Öğrenci Sayısı</th>
+                                <th>Evrak</th>
                                 <th>Durum</th>
                                 <th>İşlem</th>
                             </tr>
@@ -71,6 +81,18 @@
                                     <td>@(s.HostesAdSoyad ?? "-")</td>
                                     <td>
                                         <span class="badge bg-info">@s.OgrenciSayisi</span>
+                                    </td>
+                                    <td>
+                                        @if (s.EvrakTamMi)
+                                        {
+                                            <span class="badge bg-success"><i class="bi bi-check-lg"></i> Tam</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning text-dark" title="@s.EksikEvraklar">
+                                                <i class="bi bi-exclamation-triangle"></i> Eksik
+                                            </span>
+                                        }
                                     </td>
                                     <td>
                                         <span class="badge @(!s.IsDeleted ? "bg-success" : "bg-danger")">
@@ -103,7 +125,7 @@
                 </div>
 
                 @await Html.PartialAsync("_SayfalamaFormPartial", OgrenciBilgiSistemi.ViewModels.SayfalamaVm.Olustur(Model.Servisler,
-                    routeValues: new Dictionary<string, string?> { ["searchString"] = q }))
+                    routeValues: new Dictionary<string, string?> { ["searchString"] = q, ["evrakTam"] = evrakTam?.ToString().ToLowerInvariant() }))
             }
         </div>
     </div>

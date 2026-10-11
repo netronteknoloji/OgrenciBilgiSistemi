@@ -6,7 +6,7 @@ namespace OgrenciBilgiSistemi.Services.Interfaces
     public interface IServisProfilService
     {
         Task<SayfalanmisListeModel<ServisProfilModel>> SearchPagedAsync(
-            string? searchString, int page, int pageSize = 20, CancellationToken ct = default);
+            string? searchString, int page, int pageSize = 20, bool? evrakTam = null, CancellationToken ct = default);
 
         Task<int> EkleKullaniciVeProfilAsync(ServisEkleVm vm, CancellationToken ct = default);
         Task GuncelleAsync(ServisProfilModel model, string? kullaniciAdi, string? telefon, string? sifre, CancellationToken ct = default);
