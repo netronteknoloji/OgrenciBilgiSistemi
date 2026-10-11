@@ -2,10 +2,10 @@ using System.Data;
 using System.Globalization;
 using System.Runtime.InteropServices;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using OgrenciBilgiSistemi.Data;
 using OgrenciBilgiSistemi.Models;
-using OgrenciBilgiSistemi.Sms;
+using OgrenciBilgiSistemi.Services.Implementations;
+using OgrenciBilgiSistemi.Services.Interfaces;
 using zkemkeeper;
 using OgrenciBilgiSistemi.Shared.Services;
 
@@ -19,20 +19,21 @@ public sealed class YemekhanePollingService : BackgroundService
 {
     private const int MACHINE_NUMBER = 1;
     private const int MAX_DEGREE_OF_PARALLELISM = 3;
-    private const string SMS_TIP = "Yemekhane";
-    private const int MAX_DENEME = 10;
     private static readonly TimeSpan POLL_INTERVAL = TimeSpan.FromMinutes(1);
 
     private static readonly CultureInfo Tr = CultureInfo.GetCultureInfo("tr-TR");
 
     private readonly TenantKapsamFabrikasi _tenantKapsam;
+    private readonly KuyrukTetikleyici _tetikleyici;
     private readonly ILogger<YemekhanePollingService> _logger;
 
     public YemekhanePollingService(
         TenantKapsamFabrikasi tenantKapsam,
+        KuyrukTetikleyici tetikleyici,
         ILogger<YemekhanePollingService> logger)
     {
         _tenantKapsam = tenantKapsam;
+        _tetikleyici = tetikleyici;
         _logger = logger;
     }
 
@@ -45,7 +46,6 @@ public sealed class YemekhanePollingService : BackgroundService
             try
             {
                 await _tenantKapsam.HerOkulIcinAsync("Yemekhane log işleme", YemekhaneLogIsle, stoppingToken);
-                await _tenantKapsam.HerOkulIcinAsync("Yemekhane SMS retry", BekleyenSmsGonder, stoppingToken);
             }
             catch (OperationCanceledException) { break; }
             catch (Exception ex)
@@ -142,6 +142,13 @@ public sealed class YemekhanePollingService : BackgroundService
             {
                 _logger.LogError(ex, "Yemekhane tekil ekleme hatası: OgrId={O}", log.OgrenciId);
             }
+        }
+
+        // Yeni yemekhane girişlerinin SMS'leri kuyruğa alınır ve gönderici uyandırılır
+        if (dedup.Count > 0)
+        {
+            await sp.GetRequiredService<IGonderimKuyruguService>().GecisSmsleriniKuyrugaAlAsync(null, ct);
+            _tetikleyici.Tetikle();
         }
 
         // Bugün logu olmayan cihazların loglarını temizle
@@ -343,122 +350,5 @@ public sealed class YemekhanePollingService : BackgroundService
                 finally { try { Marshal.FinalReleaseComObject(z); } catch { } }
             }
         }
-    }
-
-    // -------------------------------------------------------
-    // 2) Bekleyen SMS'leri gönder
-    // -------------------------------------------------------
-    private async Task BekleyenSmsGonder(IServiceProvider sp, CancellationToken ct)
-    {
-        var db = sp.GetRequiredService<AppDbContext>();
-        var smsService = sp.GetRequiredService<ISmsService>();
-        var smsAyar = sp.GetRequiredService<IOptions<SmsAyarlari>>().Value;
-
-        if (!smsAyar.Aktif) return;
-
-        var today = DateTime.Now.Date;
-
-        // Bugünkü SMS gönderilmemiş yemekhane kayıtları
-        var bekleyenler = await db.OgrenciDetaylar
-            .Where(x => x.IstasyonTipi == IstasyonTipi.Yemekhane
-                        && x.OgrenciSmsGonderildi != true
-                        && x.OgrenciGTarih.HasValue
-                        && x.OgrenciGTarih.Value.Date == today)
-            .ToListAsync(ct);
-
-        if (bekleyenler.Count == 0) return;
-
-        // Öğrenci bilgilerini toplu çek
-        var ogrIdler = bekleyenler.Select(p => p.OgrenciId).Distinct().ToList();
-
-        var tomorrow = today.AddDays(1);
-        var bilgiVeDenemeler = await db.Ogrenciler.AsNoTracking()
-            .Where(o => ogrIdler.Contains(o.OgrenciId) && o.VeliId != null)
-            .Select(o => new
-            {
-                o.OgrenciId,
-                o.OgrenciAdSoyad,
-                VeliTelefon = o.Veli!.Telefon,
-                OncekiDenemeSayisi = db.SmsGonderimGecmisleri
-                    .Count(g => g.Tip == SMS_TIP
-                             && g.GonderimZamani >= today
-                             && g.GonderimZamani < tomorrow
-                             && g.OgrenciId == o.OgrenciId)
-            })
-            .ToDictionaryAsync(o => o.OgrenciId, ct);
-
-        // Önce eligible kayıtları topla; giveup edilenleri burada işaretle
-        var gonderilecekler = new List<(OgrenciDetayModel Log, string Telefon, string Mesaj, int OncekiSayi)>();
-
-        foreach (var log in bekleyenler)
-        {
-            ct.ThrowIfCancellationRequested();
-
-            if (!bilgiVeDenemeler.TryGetValue(log.OgrenciId, out var bilgi)) continue;
-            if (string.IsNullOrWhiteSpace(bilgi.VeliTelefon)) continue;
-
-            var oncekiSayi = bilgi.OncekiDenemeSayisi;
-
-            // Emniyet: çok fazla denenmişse vazgeç
-            if (oncekiSayi >= MAX_DENEME)
-            {
-                log.OgrenciSmsGonderildi = true;
-                _logger.LogWarning("[SMS GIVEUP][Yemekhane] OgrId:{OgrId} {Sayi} deneme sonrası vazgeçildi.",
-                    log.OgrenciId, oncekiSayi);
-                continue;
-            }
-
-            var ts = log.OgrenciGTarih ?? DateTime.Now;
-            var mesaj = SmsMesajSablonlari.YemekhaneGiris(bilgi.OgrenciAdSoyad, ts);
-            gonderilecekler.Add((log, bilgi.VeliTelefon!, mesaj, oncekiSayi));
-        }
-
-        if (gonderilecekler.Count > 0)
-        {
-            // Paralel SMS gönder (SemaphoreSlim ile sınırlı)
-            var sonuclar = await SmsParalelGonderici.GonderHerBiri(
-                smsService,
-                gonderilecekler,
-                g => (g.Telefon, g.Mesaj),
-                smsAyar.MaxParalelGonderim,
-                ct);
-
-            // Sıralı işle: log yaz + bayrak güncelle (DbContext thread-safe değil)
-            foreach (var (g, sonuc) in sonuclar)
-            {
-                db.SmsGonderimGecmisleri.Add(new SmsGonderimGecmisiModel
-                {
-                    OgrenciId = g.Log.OgrenciId,
-                    Telefon = g.Telefon,
-                    Mesaj = g.Mesaj,
-                    Tip = SMS_TIP,
-                    GonderimZamani = DateTime.Now,
-                    Basarili = sonuc.Basarili,
-                    HataKategorisi = (int)sonuc.HataKategorisi,
-                    Hata = sonuc.Hata,
-                    HamCevap = sonuc.HamCevap,
-                    HttpDurumKodu = sonuc.HttpDurumKodu,
-                    DenemeNumarasi = g.OncekiSayi + 1
-                });
-
-                if (sonuc.Basarili)
-                {
-                    g.Log.OgrenciSmsGonderildi = true;
-                    _logger.LogInformation("[SMS OK][Yemekhane] OgrId:{OgrId} Deneme:{D}", g.Log.OgrenciId, g.OncekiSayi + 1);
-                }
-                else if (sonuc.HataKategorisi == SmsHataKategorisi.Kalici)
-                {
-                    g.Log.OgrenciSmsGonderildi = true;
-                    _logger.LogWarning("[SMS KALICI][Yemekhane] OgrId:{OgrId} Hata:{Hata}", g.Log.OgrenciId, sonuc.Hata);
-                }
-                else
-                {
-                    _logger.LogWarning("[SMS FAIL][Yemekhane] OgrId:{OgrId} Hata:{Hata} Deneme:{D}",
-                        g.Log.OgrenciId, sonuc.Hata, g.OncekiSayi + 1);
-                }
-            }
-        }
-
-        await db.SaveChangesAsync(ct);
     }
 }

@@ -13,17 +13,20 @@ public class KartOkumaOlayIsleyiciService : IHostedService
 {
     private readonly IZKTecoService _zkTecoService;
     private readonly TenantKapsamFabrikasi _tenantKapsam;
+    private readonly KuyrukTetikleyici _tetikleyici;
     private readonly IHubContext<KartOkuHub> _hub;
     private readonly ILogger<KartOkumaOlayIsleyiciService> _logger;
 
     public KartOkumaOlayIsleyiciService(
         IZKTecoService zkTecoService,
         TenantKapsamFabrikasi tenantKapsam,
+        KuyrukTetikleyici tetikleyici,
         IHubContext<KartOkuHub> hub,
         ILogger<KartOkumaOlayIsleyiciService> logger)
     {
         _zkTecoService = zkTecoService;
         _tenantKapsam = tenantKapsam;
+        _tetikleyici = tetikleyici;
         _hub = hub;
         _logger = logger;
     }
@@ -107,23 +110,17 @@ public class KartOkumaOlayIsleyiciService : IHostedService
             var girisMi = string.Equals(sonuc.GecisTipi, GecisKurallari.Giris, StringComparison.OrdinalIgnoreCase);
             var cikisMi = string.Equals(sonuc.GecisTipi, GecisKurallari.Cikis, StringComparison.OrdinalIgnoreCase);
 
-            // 5) SMS bildirimi - sadece Ana Kapı geçişlerinde (Yemekhane SMS'i ayrı serviste).
-            // Fire-and-forget: SMS gönderimi kart okuma akışını bloklamaz.
-            if (cihaz.IstasyonTipi == IstasyonTipi.AnaKapi && (girisMi || cikisMi))
+            // 5) Veli SMS'i kuyruğa alınır; gönderimi GonderimKuyruguIsleyici yapar
+            try
             {
-                _ = Task.Run(async () =>
-                {
-                    try
-                    {
-                        await using var smsScope = _tenantKapsam.Olustur(okulKodu);
-                        var smsSvc = smsScope.ServiceProvider.GetRequiredService<ISmsGonderimService>();
-                        await smsSvc.GecisSmsBildir(ogr.OgrenciId, ogr.OgrenciAdSoyad, sonuc.GecisTipi, now);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, "SMS gönderim hatası. Öğrenci: {OgrId}", ogr.OgrenciId);
-                    }
-                });
+                await scope.ServiceProvider.GetRequiredService<IGonderimKuyruguService>()
+                    .GecisSmsleriniKuyrugaAlAsync(ogr.OgrenciId);
+                _tetikleyici.Tetikle();
+            }
+            catch (Exception ex)
+            {
+                // Geçiş kaydı yazıldı; SMS, işleyicinin periyodik taramasıyla yine kuyruğa alınır
+                _logger.LogError(ex, "Geçiş SMS'i kuyruğa alınamadı. Öğrenci: {OgrId}", ogr.OgrenciId);
             }
 
             // 6) Kart okuma ekranına sonuç

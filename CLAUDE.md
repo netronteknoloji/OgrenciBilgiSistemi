@@ -103,7 +103,7 @@ dotnet ef migrations script --idempotent --project OgrenciBilgiSistemi/OgrenciBi
 - **Menu seed**: 35 menü (Id 1-35), yeni eklerken Id 36'dan başla.
 - **Elle SQL betiği** (`OgrenciBilgiSistemi/Scripts/`) yazılırsa `__EFMigrationsHistory` kaydını da eklemeli; yoksa sonraki idempotent migration betiği aynı adımı tekrar dener.
 - **CI**: `.github/workflows/backend-ci.yml` → MVC + API build ve güvenlik açıklı paket kapısı (Mobil: `codemagic.yaml`).
-- **SMS retry** her iki backend'de de bağımsız hosted service olarak var.
+- **SMS + push = outbox (`GonderimKuyrugu` tablosu).** Üretici yalnızca kuyruğa ekler (kaynak bayrağıyla aynı transaction'da, `TekilAnahtar` unique); doğrudan `ISmsService.Gonder` / `IPushBildirimGonderici` çağırma, `Task.Run` ile gönderme. MVC: `IGonderimKuyruguService` + `KuyrukTetikleyici`; API: `IYoklamaSmsBildirimService` (yoklama), `BildirimService` (push). Gönderim/tekrar deneme yalnızca MVC'deki `GonderimKuyruguIsleyici`'de (API'nin eklediği satırlar dahil) → MVC app pool çalışır olmalı (AlwaysRunning). Kurallar: `Shared/Kurallar/GonderimKuyruguKurallari`.
 - **Kart okuma kuralları** (öğle çıkışı/dönüşü, yemekhane izni/limiti) tek yerde: `Shared/Kurallar/GecisKurallari` (saf, testli). USB (`KartOkuController`) ve ZKTeco (`KartOkumaOlayIsleyiciService`) yolu `IGecisKarariService` + `GecisKilidi` üzerinden aynı kararı kullanır; kural değişikliği yalnızca orada ve testlerde yapılır.
 - **Kart no** kaydederken ve okuturken `Shared/Helpers/KartNo.Normalize` (MVC + API).
 

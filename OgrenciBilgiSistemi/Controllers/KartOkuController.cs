@@ -20,7 +20,8 @@ namespace OgrenciBilgiSistemi.Controllers
         private readonly IKartOkuService _kartOkuService;
         private readonly IGecisKarariService _gecisKarari;
         private readonly IHubContext<KartOkuHub> _hub;
-        private readonly TenantKapsamFabrikasi _tenantKapsam;
+        private readonly IGonderimKuyruguService _kuyruk;
+        private readonly KuyrukTetikleyici _tetikleyici;
         private readonly ILogger<KartOkuController> _logger;
         private readonly TenantBaglami _tenant;
 
@@ -30,7 +31,8 @@ namespace OgrenciBilgiSistemi.Controllers
             IKartOkuService kartOkuService,
             IGecisKarariService gecisKarari,
             IHubContext<KartOkuHub> hub,
-            TenantKapsamFabrikasi tenantKapsam,
+            IGonderimKuyruguService kuyruk,
+            KuyrukTetikleyici tetikleyici,
             ILogger<KartOkuController> logger,
             TenantBaglami tenant)
         {
@@ -39,7 +41,8 @@ namespace OgrenciBilgiSistemi.Controllers
             _kartOkuService = kartOkuService;
             _gecisKarari = gecisKarari;
             _hub = hub;
-            _tenantKapsam = tenantKapsam;
+            _kuyruk = kuyruk;
+            _tetikleyici = tetikleyici;
             _logger = logger;
             _tenant = tenant;
         }
@@ -139,29 +142,16 @@ namespace OgrenciBilgiSistemi.Controllers
                         girisSaati: girisMi ? now.ToString("HH:mm") : "-",
                         cikisSaati: cikisMi ? now.ToString("HH:mm") : "-"), ct);
 
-                // Ana Kapı geçişlerinde veliye SMS bildirimi (fire-and-forget)
-                if (cihaz.IstasyonTipi == IstasyonTipi.AnaKapi && (girisMi || cikisMi))
+                // Veli SMS'i kuyruğa alınır (ana kapı + yemekhane); gönderimi GonderimKuyruguIsleyici yapar
+                try
                 {
-                    var ogrId = ogrenci.OgrenciId;
-                    var ogrAdSoyad = ogrenci.OgrenciAdSoyad;
-                    var gecisTipiKopya = sonuc.GecisTipi;
-                    var anlikZaman = now;
-                    var okulKodu = _tenant.OkulKodu;
-
-                    _ = Task.Run(async () =>
-                    {
-                        try
-                        {
-                            // İstek kapsamı bitmiş olabilir; SMS aynı okulun kapsamında gönderilir
-                            await using var smsScope = _tenantKapsam.Olustur(okulKodu);
-                            var smsSvc = smsScope.ServiceProvider.GetRequiredService<ISmsGonderimService>();
-                            await smsSvc.GecisSmsBildir(ogrId, ogrAdSoyad, gecisTipiKopya, anlikZaman);
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogError(ex, "SMS gönderim hatası. Öğrenci: {OgrId}", ogrId);
-                        }
-                    });
+                    await _kuyruk.GecisSmsleriniKuyrugaAlAsync(ogrenci.OgrenciId, ct);
+                    _tetikleyici.Tetikle();
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                {
+                    // Geçiş kaydı yazıldı; SMS, işleyicinin periyodik taramasıyla yine kuyruğa alınır
+                    _logger.LogError(ex, "Geçiş SMS'i kuyruğa alınamadı. Öğrenci: {OgrId}", ogrenci.OgrenciId);
                 }
 
                 return Ok(new

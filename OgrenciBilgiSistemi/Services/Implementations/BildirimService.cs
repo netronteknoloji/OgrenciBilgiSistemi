@@ -1,31 +1,25 @@
-using Microsoft.EntityFrameworkCore;
 using OgrenciBilgiSistemi.Data;
 using OgrenciBilgiSistemi.Models;
-using OgrenciBilgiSistemi.Push;
 using OgrenciBilgiSistemi.Services.Interfaces;
-using OgrenciBilgiSistemi.Shared.Services;
 
 namespace OgrenciBilgiSistemi.Services.Implementations
 {
     public class BildirimService : IBildirimService
     {
         private readonly AppDbContext _db;
-        private readonly IPushBildirimGonderici _pushGonderici;
-        private readonly TenantBaglami _tenantBaglami;
-        private readonly ILogger<BildirimService> _logger;
+        private readonly IGonderimKuyruguService _kuyruk;
+        private readonly KuyrukTetikleyici _tetikleyici;
         private readonly TimeProvider _timeProvider;
 
         public BildirimService(
             AppDbContext db,
-            IPushBildirimGonderici pushGonderici,
-            TenantBaglami tenantBaglami,
-            ILogger<BildirimService> logger,
+            IGonderimKuyruguService kuyruk,
+            KuyrukTetikleyici tetikleyici,
             TimeProvider timeProvider)
         {
             _db = db;
-            _pushGonderici = pushGonderici;
-            _tenantBaglami = tenantBaglami;
-            _logger = logger;
+            _kuyruk = kuyruk;
+            _tetikleyici = tetikleyici;
             _timeProvider = timeProvider;
         }
 
@@ -41,29 +35,11 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 OlusturulmaTarihi = _timeProvider.GetLocalNow().DateTime
             };
 
+            // Bildirim ve push kuyruk satırı tek SaveChanges'te yazılır; push'u GonderimKuyruguIsleyici gönderir
             _db.Bildirimler.Add(bildirim);
+            _kuyruk.PushEkle(bildirim);
             await _db.SaveChangesAsync(ct);
-
-            try
-            {
-                var yuk = new PushBildirimYuku(
-                    BildirimTuruBaslikHelper.BasligaCevir((int)tur),
-                    mesaj,
-                    new Dictionary<string, string>
-                    {
-                        ["bildirimId"] = bildirim.BildirimId.ToString(),
-                        ["tur"] = ((int)tur).ToString(),
-                        ["randevuId"] = randevuId?.ToString() ?? string.Empty,
-                        ["okulKodu"] = _tenantBaglami.OkulKodu
-                    });
-
-                await _pushGonderici.GonderAsync(aliciKullaniciId, yuk, ct);
-            }
-            catch (Exception ex)
-            {
-                // Push hatası bildirimin DB kaydını invalide etmemeli
-                _logger.LogError(ex, "Push gönderimi başarısız. BildirimId: {id}", bildirim.BildirimId);
-            }
+            _tetikleyici.Tetikle();
         }
 
     }

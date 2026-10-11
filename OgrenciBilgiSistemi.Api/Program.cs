@@ -120,7 +120,7 @@ builder.Services.AddRateLimiter(options =>
 // SMS
 builder.Services.AddSmsAltyapisi(builder.Configuration);
 builder.Services.AddScoped<IYoklamaSmsBildirimService, YoklamaSmsBildirimService>();
-builder.Services.AddHostedService<BekleyenYoklamaSmsRetryService>();
+builder.Services.AddHostedService<YoklamaSmsKuyrukTarayici>();
 
 // Push (FCM)
 builder.Services.AddPushAltyapisi(builder.Configuration);

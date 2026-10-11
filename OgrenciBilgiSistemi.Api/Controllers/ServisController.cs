@@ -13,16 +13,14 @@ namespace OgrenciBilgiSistemi.Api.Controllers
     {
         private readonly IServisService _servisService;
         private readonly IOgrenciService _ogrenciService;
-        private readonly TenantKapsamFabrikasi _tenantKapsam;
-        private readonly TenantBaglami _tenantBaglami;
+        private readonly IYoklamaSmsBildirimService _yoklamaSms;
         private readonly ILogger<ServisController> _logger;
 
-        public ServisController(IServisService servisService, IOgrenciService ogrenciService, TenantKapsamFabrikasi tenantKapsam, TenantBaglami tenantBaglami, ILogger<ServisController> logger)
+        public ServisController(IServisService servisService, IOgrenciService ogrenciService, IYoklamaSmsBildirimService yoklamaSms, ILogger<ServisController> logger)
         {
             _servisService = servisService;
             _ogrenciService = ogrenciService;
-            _tenantKapsam = tenantKapsam;
-            _tenantBaglami = tenantBaglami;
+            _yoklamaSms = yoklamaSms;
             _logger = logger;
         }
 
@@ -108,24 +106,16 @@ namespace OgrenciBilgiSistemi.Api.Controllers
                     model.Periyot
                 );
 
-                // SMS bildirimini arka planda gönder
-                // İstek kapsamı bitmiş olabilir; SMS aynı okulun kapsamında gönderilir
-                var okulKodu = _tenantBaglami.OkulKodu;
-
-                _ = Task.Run(async () =>
+                // Veli SMS'leri kuyruğa alınır (hızlı DB yazımı); gönderim kuyruk işleyicisinde.
+                // Burada hata olursa yoklama yine kayıtlıdır; SMS'i tarayıcı servis kuyruğa alır.
+                try
                 {
-                    try
-                    {
-                        await using var scope = _tenantKapsam.Olustur(okulKodu);
-
-                        var smsBildirim = scope.ServiceProvider.GetRequiredService<IYoklamaSmsBildirimService>();
-                        await smsBildirim.ServisYoklamaBildir(kayitlar, model.Periyot);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, "Servis yoklama SMS gönderim hatası.");
-                    }
-                });
+                    await _yoklamaSms.ServisYoklamaBildir(kayitlar, model.Periyot);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Servis yoklama SMS'leri kuyruğa alınamadı.");
+                }
 
                 return Ok(new { message = "Servis yoklaması başarıyla kaydedildi." });
             }

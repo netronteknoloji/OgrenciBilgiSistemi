@@ -1,6 +1,7 @@
 using Microsoft.Data.SqlClient;
 using OgrenciBilgiSistemi.Api.Services.Interfaces;
-using OgrenciBilgiSistemi.Push;
+using OgrenciBilgiSistemi.Shared.Enums;
+using OgrenciBilgiSistemi.Shared.Kurallar;
 using OgrenciBilgiSistemi.Shared.Services;
 
 namespace OgrenciBilgiSistemi.Api.Services
@@ -8,56 +9,43 @@ namespace OgrenciBilgiSistemi.Api.Services
     public class BildirimService : IBildirimService
     {
         private readonly TenantBaglami _tenantBaglami;
-        private readonly IPushBildirimGonderici _pushGonderici;
-        private readonly ILogger<BildirimService> _logger;
+        private readonly TimeProvider _saat;
         private string ConnectionString => _tenantBaglami.ConnectionString;
 
-        public BildirimService(
-            TenantBaglami tenantBaglami,
-            IPushBildirimGonderici pushGonderici,
-            ILogger<BildirimService> logger)
+        public BildirimService(TenantBaglami tenantBaglami, TimeProvider saat)
         {
             _tenantBaglami = tenantBaglami;
-            _pushGonderici = pushGonderici;
-            _logger = logger;
+            _saat = saat;
         }
 
+        // Bildirim ve push kuyruk satırı tek transaction'da yazılır; push'u MVC'deki GonderimKuyruguIsleyici gönderir
         public async Task Olustur(int aliciKullaniciId, int tur, string mesaj, int? randevuId, CancellationToken ct = default)
         {
             const string query = @"
+                SET XACT_ABORT ON;
+                BEGIN TRANSACTION;
+                DECLARE @bildirimId int;
                 INSERT INTO Bildirimler (AliciKullaniciId, Tur, Mesaj, RandevuId, Okundu, OlusturulmaTarihi, IsDeleted)
-                OUTPUT INSERTED.BildirimId
-                VALUES (@aliciId, @tur, @mesaj, @randevuId, 0, GETDATE(), 0)";
+                VALUES (@aliciId, @tur, @mesaj, @randevuId, 0, GETDATE(), 0);
+                SET @bildirimId = SCOPE_IDENTITY();
+                INSERT INTO GonderimKuyrugu
+                    (Kanal, Tip, AliciKullaniciId, BildirimId, Durum, DenemeSayisi, SonrakiDeneme, GecerlilikBitis, OlusturmaZamani)
+                VALUES (@kanal, 'Bildirim', @aliciId, @bildirimId, @durum, 0, @simdi, @gecerlilik, @simdi);
+                COMMIT TRANSACTION;";
 
+            var simdi = _saat.GetLocalNow().DateTime;
             await using var conn = new SqlConnection(ConnectionString);
             await using var cmd = new SqlCommand(query, conn);
             cmd.Parameters.AddWithValue("@aliciId", aliciKullaniciId);
             cmd.Parameters.AddWithValue("@tur", tur);
             cmd.Parameters.AddWithValue("@mesaj", mesaj);
             cmd.Parameters.AddWithValue("@randevuId", (object?)randevuId ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@kanal", (byte)GonderimKanali.Push);
+            cmd.Parameters.AddWithValue("@durum", (byte)GonderimDurumu.Bekliyor);
+            cmd.Parameters.AddWithValue("@simdi", simdi);
+            cmd.Parameters.AddWithValue("@gecerlilik", GonderimKuyruguKurallari.PushGecerlilikBitis(simdi));
             await conn.OpenAsync(ct);
-            var bildirimIdObj = await cmd.ExecuteScalarAsync(ct);
-            var bildirimId = bildirimIdObj is null ? 0 : Convert.ToInt32(bildirimIdObj);
-
-            try
-            {
-                var yuk = new PushBildirimYuku(
-                    BildirimTuruBaslikHelper.BasligaCevir(tur),
-                    mesaj,
-                    new Dictionary<string, string>
-                    {
-                        ["bildirimId"] = bildirimId.ToString(),
-                        ["tur"] = tur.ToString(),
-                        ["randevuId"] = randevuId?.ToString() ?? string.Empty,
-                        ["okulKodu"] = _tenantBaglami.OkulKodu
-                    });
-
-                await _pushGonderici.GonderAsync(aliciKullaniciId, yuk, ct);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Push gönderimi başarısız. BildirimId: {id}", bildirimId);
-            }
+            await cmd.ExecuteNonQueryAsync(ct);
         }
 
         public async Task<List<BildirimModel>> KullanicininBildirimleriniGetir(int kullaniciId, int sayfaNo = 1, int sayfaBoyutu = 20)

@@ -40,6 +40,7 @@ namespace OgrenciBilgiSistemi.Data
         public DbSet<DuyuruOkumaModel> DuyuruOkumalari { get; set; }
         public DbSet<SmsGonderimGecmisiModel> SmsGonderimGecmisleri { get; set; }
         public DbSet<BildirimCihaziModel> BildirimCihazlari { get; set; }
+        public DbSet<GonderimKuyruguModel> GonderimKuyrugu { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -512,6 +513,37 @@ namespace OgrenciBilgiSistemi.Data
                 // Tip + tarih bazlı raporlama
                 e.HasIndex(g => new { g.Tip, g.GonderimZamani })
                  .HasDatabaseName("IX_SmsGonderimGecmisi_Tip_Zaman");
+            });
+
+            // =========================
+            // GONDERIM KUYRUGU (SMS + push outbox)
+            // =========================
+            modelBuilder.Entity<GonderimKuyruguModel>(e =>
+            {
+                e.Property(k => k.Kanal).HasConversion<byte>();
+                e.Property(k => k.Durum).HasConversion<byte>();
+
+                e.HasOne(k => k.Bildirim)
+                 .WithMany()
+                 .HasForeignKey(k => k.BildirimId)
+                 .OnDelete(DeleteBehavior.NoAction)
+                 .IsRequired(false);
+
+                // Aynı kaynak (geçiş/yoklama) ikinci kez kuyruğa alınamaz
+                e.HasIndex(k => k.TekilAnahtar)
+                 .IsUnique()
+                 .HasFilter("[TekilAnahtar] IS NOT NULL")
+                 .HasDatabaseName("UX_GonderimKuyrugu_TekilAnahtar");
+
+                // Bir bildirimin push'u tek kez kuyruğa alınır
+                e.HasIndex(k => k.BildirimId)
+                 .IsUnique()
+                 .HasFilter("[BildirimId] IS NOT NULL")
+                 .HasDatabaseName("UX_GonderimKuyrugu_BildirimId");
+
+                // Gönderici: bekleyen/kilidi düşmüş satırları alır
+                e.HasIndex(k => new { k.Durum, k.SonrakiDeneme })
+                 .HasDatabaseName("IX_GonderimKuyrugu_Durum_SonrakiDeneme");
             });
 
             // =========================

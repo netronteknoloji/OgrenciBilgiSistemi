@@ -106,7 +106,8 @@ builder.Services.AddScoped<IServisRaporService, ServisRaporService>();
 
 // SMS
 builder.Services.AddSmsAltyapisi(builder.Configuration);
-builder.Services.AddScoped<ISmsGonderimService, SmsGonderimService>();
+builder.Services.AddScoped<IGonderimKuyruguService, GonderimKuyruguService>();
+builder.Services.AddSingleton<KuyrukTetikleyici>();
 
 // Push (FCM)
 builder.Services.AddPushAltyapisi(builder.Configuration);
@@ -116,7 +117,7 @@ builder.Services.AddScoped<IBildirimTokenDeposu, EfBildirimTokenDeposu>();
 builder.Services.AddHostedService<KartOkumaOlayIsleyiciService>();
 builder.Services.AddHostedService<ZkBaglantiIzleyiciHostedService>();
 builder.Services.AddHostedService<YemekhanePollingService>();
-builder.Services.AddHostedService<BekleyenSmsRetryService>();
+builder.Services.AddHostedService<GonderimKuyruguIsleyici>();
 builder.Services.AddHostedService<RandevuArkaPlanService>();
 builder.Services.AddHostedService<BildirimCihaziTemizlemeService>();
 
