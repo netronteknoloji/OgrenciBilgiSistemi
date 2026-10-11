@@ -13,12 +13,12 @@ OgrenciBilgiSistemi.Sms/     → SMS (ilksms.com)
 OgrenciBilgiSistemi.Push/    → FCM push bildirimleri
 ```
 
-Her projenin **kendi CLAUDE.md**'si vardır — detaylar oradadır.
+Her projenin (Push hariç) **kendi CLAUDE.md**'si vardır — detaylar oradadır.
 
 ## Bağımlılık Grafiği
 
 ```
-MVC, Api  → Shared, Sms
+MVC, Api  → Shared, Sms, Push
 Mobil     → Shared (HTTP üzerinden Api'ye)
 ```
 
@@ -32,7 +32,7 @@ Mobil     → Shared (HTTP üzerinden Api'ye)
 | Tenant | Cookie/Session | JWT `okulKodu` claim |
 | DB | EF Core | Raw `SqlClient` |
 | Authorize | Global FallbackPolicy | Manuel `[Authorize]` |
-| Background svc | 5 | 1 |
+| Background svc | 6 | 1 |
 
 ## Multi-Tenancy
 
@@ -65,6 +65,10 @@ Mobil     → Shared (HTTP üzerinden Api'ye)
 ## Komutlar
 
 ```bash
+# Derle (MVC dahil; zkemkeeper interop Lib/ altında, COM kaydı gerekmez)
+dotnet build OgrenciBilgiSistemi/OgrenciBilgiSistemi.csproj
+dotnet build OgrenciBilgiSistemi.Api/OgrenciBilgiSistemi.Api.csproj
+
 # Çalıştır
 dotnet run --project OgrenciBilgiSistemi/OgrenciBilgiSistemi.csproj
 dotnet run --project OgrenciBilgiSistemi.Api/OgrenciBilgiSistemi.Api.csproj
@@ -92,12 +96,14 @@ dotnet ef migrations script --idempotent --project OgrenciBilgiSistemi/OgrenciBi
 
 - **`AppDbContext.IncludeDeleted`** flag'i çoğu entity'de global query filter'ı kontrol eder. Pasif öğrenci raporu için `true` yap.
 - **Profil tabloları** (`VeliProfilModel`, `ServisProfilModel`, `OgretmenProfilModel`): PK = `KullaniciId`.
-- **Menu seed**: 34 menü (Id 1-34), yeni eklerken Id 35'ten başla.
+- **Menu seed**: 35 menü (Id 1-35), yeni eklerken Id 36'dan başla.
+- **Elle SQL betiği** (`OgrenciBilgiSistemi/Scripts/`) yazılırsa `__EFMigrationsHistory` kaydını da eklemeli; yoksa sonraki idempotent migration betiği aynı adımı tekrar dener.
+- **CI**: `.github/workflows/backend-ci.yml` → MVC + API build ve güvenlik açıklı paket kapısı (Mobil: `codemagic.yaml`).
 - **SMS retry** her iki backend'de de bağımsız hosted service olarak var.
 
 ## İlk Bakış Sırası
 
-1. `ANALIZ_RAPORU.md`
+1. `docs/audit/AUDIT.md`
 2. `OgrenciBilgiSistemi/Data/AppDbContext.cs`
 3. Her iki `Program.cs`
 4. İlgili projenin `CLAUDE.md`'si
