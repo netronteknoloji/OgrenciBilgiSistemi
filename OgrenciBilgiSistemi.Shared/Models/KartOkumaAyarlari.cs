@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace OgrenciBilgiSistemi.Models
+namespace OgrenciBilgiSistemi.Shared.Models
 {
     /// <summary>
     /// appsettings.json → "KartOkuma". Ana kapı öğle çıkış kuralları.

@@ -25,7 +25,7 @@ if (okullar is null || okullar.Count == 0)
     throw new InvalidOperationException("Okullar yapılandırılmamış. appsettings.json içinde Okullar bölümünü ekleyin.");
 
 builder.Services.Configure<List<OkulBilgiAyari>>(builder.Configuration.GetSection("Okullar"));
-builder.Services.Configure<OgrenciBilgiSistemi.Models.KartOkumaAyarlari>(builder.Configuration.GetSection("KartOkuma"));
+builder.Services.Configure<KartOkumaAyarlari>(builder.Configuration.GetSection("KartOkuma"));
 builder.Services.AddSingleton<OkulYapilandirmaServisi>();
 builder.Services.AddScoped<TenantBaglami>();
 builder.Services.AddSingleton<TenantKapsamFabrikasi>();
@@ -81,6 +81,7 @@ builder.Services.AddScoped<IAidatService, AidatService>();
 builder.Services.AddScoped<IGecisService, GecisService>();
 builder.Services.AddSingleton<IZKTecoService, ZKTecoService>();
 builder.Services.AddScoped<IKartOkuService, KartOkuService>();
+builder.Services.AddScoped<IGecisKarariService, GecisKarariService>();
 builder.Services.AddScoped<IYemekhaneService, YemekhaneService>();
 builder.Services.AddScoped<ICihazService, CihazService>();
 builder.Services.AddScoped<IOgrenciService, OgrenciService>();

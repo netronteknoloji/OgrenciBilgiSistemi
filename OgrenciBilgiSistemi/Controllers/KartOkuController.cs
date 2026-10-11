@@ -1,11 +1,12 @@
-using System.Collections.Concurrent;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.Extensions.Options;
 using OgrenciBilgiSistemi.Dtos;
 using OgrenciBilgiSistemi.Hubs;
 using OgrenciBilgiSistemi.Models;
+using OgrenciBilgiSistemi.Services.Implementations;
 using OgrenciBilgiSistemi.Services.Interfaces;
+using OgrenciBilgiSistemi.Shared.Helpers;
+using OgrenciBilgiSistemi.Shared.Kurallar;
 using OgrenciBilgiSistemi.Shared.Services;
 using OgrenciBilgiSistemi.ViewModels;
 
@@ -17,85 +18,30 @@ namespace OgrenciBilgiSistemi.Controllers
         private readonly IGecisService _gecisService;
         private readonly ICihazService _cihazService;
         private readonly IKartOkuService _kartOkuService;
+        private readonly IGecisKarariService _gecisKarari;
         private readonly IHubContext<KartOkuHub> _hub;
         private readonly TenantKapsamFabrikasi _tenantKapsam;
         private readonly ILogger<KartOkuController> _logger;
         private readonly TenantBaglami _tenant;
-        private readonly KartOkumaAyarlari _ayar;
-
-        // Aynı öğrencinin eşzamanlı okutmaları (okuyucunun kartı iki kez göndermesi) sırayla işlenir;
-        // aksi halde iki istek de "bugün çıkış yok" görüp iki ÇIKIŞ + iki SMS yazabilir.
-        // Tek süreçli IIS app pool varsayımıyla bellek içi kilit yeterlidir.
-        private static readonly ConcurrentDictionary<string, SemaphoreSlim> _ogrenciKilitleri = new();
 
         public KartOkuController(
             IGecisService gecisService,
             ICihazService cihazService,
             IKartOkuService kartOkuService,
+            IGecisKarariService gecisKarari,
             IHubContext<KartOkuHub> hub,
             TenantKapsamFabrikasi tenantKapsam,
             ILogger<KartOkuController> logger,
-            TenantBaglami tenant,
-            IOptions<KartOkumaAyarlari> ayar)
+            TenantBaglami tenant)
         {
             _gecisService = gecisService;
             _cihazService = cihazService;
             _kartOkuService = kartOkuService;
+            _gecisKarari = gecisKarari;
             _hub = hub;
             _tenantKapsam = tenantKapsam;
             _logger = logger;
             _tenant = tenant;
-            _ayar = ayar.Value;
-        }
-
-        private sealed class KilitSerbestBirakici(SemaphoreSlim kilit) : IDisposable
-        {
-            public void Dispose() => kilit.Release();
-        }
-
-        private async Task<IDisposable> OgrenciKilidiAlAsync(int ogrenciId, CancellationToken ct)
-        {
-            var kilit = _ogrenciKilitleri.GetOrAdd($"{_tenant.OkulKodu}:{ogrenciId}", _ => new SemaphoreSlim(1, 1));
-            await kilit.WaitAsync(ct);
-            return new KilitSerbestBirakici(kilit);
-        }
-
-        // Yavaş/ölü client'ın kart okumayı blocklamasını engellemek için
-        // SignalR yayınlarını kısa bir timeout ile sarmalar.
-        private static async Task GuvenliYayinAsync<T>(
-            IHubContext<KartOkuHub> hub, string okulKodu, T dto, CancellationToken ct, int timeoutMs = 3000)
-        {
-            using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-            cts.CancelAfter(timeoutMs);
-            try
-            {
-                await hub.Clients.Group(KartOkuHub.OkulGrubu(okulKodu)).SendAsync("OgrenciBilgisiAl", dto, cts.Token);
-            }
-            catch (OperationCanceledException) when (cts.IsCancellationRequested && !ct.IsCancellationRequested)
-            {
-                // Sessiz: client cevap vermedi, kart akışını blocklamayalım
-            }
-        }
-
-        private static string NormalizeKartNo(string? kartNo)
-        {
-            if (string.IsNullOrWhiteSpace(kartNo)) return string.Empty;
-            var s = kartNo.Trim();
-            var trimmed = s.TrimStart('0');
-            return trimmed.Length == 0 ? "0" : trimmed;
-        }
-
-        private static class Msg
-        {
-            public const string ErrOglenYok = "ÖĞRENCİNİN ÖĞLE ÇIKIŞ İZNİ YOK!";
-            public const string ErrOglenLimit = "Bugün için öğle çıkış hakkı kullanıldı!";
-            public const string ErrYemekYok = "ÖĞRENCİNİN YEMEKHANE GEÇİŞ İZNİ YOK!";
-            public const string ErrYemekLimit = "Bugün için yemekhane geçiş hakkı kullanıldı!";
-            public const string InfoOglenOk = "ÖĞLE ÇIKIŞI ONAYLANDI.";
-            public const string InfoYemekOk = "YEMEKHANE GEÇİŞİ ONAYLANDI.";
-            public const string InfoGenelOk = "Geçiş başarılı.";
-            public const string InfoOgleDonusOk = "ÖĞLE DÖNÜŞÜ ONAYLANDI.";
-            public const string ErrKartTanimsiz = "KART TANIMSIZ!";
         }
 
         [HttpGet("")]
@@ -140,7 +86,7 @@ namespace OgrenciBilgiSistemi.Controllers
                 if (cihaz is null)
                     return NotFound("Cihaz bulunamadı veya pasif.");
 
-                var no = NormalizeKartNo(kartNo);
+                var no = KartNo.Normalize(kartNo);
                 if (string.IsNullOrEmpty(no))
                     return BadRequest("Kart numarası geçersiz.");
 
@@ -148,7 +94,7 @@ namespace OgrenciBilgiSistemi.Controllers
 
                 if (ogrenci is null)
                 {
-                    await GuvenliYayinAsync(_hub, _tenant.OkulKodu, new OgrenciBilgisiDto
+                    await KartOkumaYayini.GonderAsync(_hub, _tenant.OkulKodu, new OgrenciBilgisiDto
                     {
                         OgrenciAdSoyad = "-",
                         OgrenciSinif = "-",
@@ -159,243 +105,47 @@ namespace OgrenciBilgiSistemi.Controllers
                         CihazAdi = cihaz.CihazAdi,
                         CihazKodu = cihaz.CihazKodu,
                         Reason = "KART_TANIMSIZ",
-                        Error = Msg.ErrKartTanimsiz
+                        Error = GecisKurallari.Mesajlar.KartTanimsiz
                     }, ct);
 
                     return NotFound("Kart tanımsız.");
                 }
 
                 // Kontrol + kayıt bu öğrenci için tek seferde (istek sonunda serbest bırakılır)
-                using var ogrenciKilidi = await OgrenciKilidiAlAsync(ogrenci.OgrenciId, ct);
+                using var ogrenciKilidi = await GecisKilidi.AlAsync(_tenant.OkulKodu, ogrenci.OgrenciId, ct);
 
-                var ogrenciSinif = ogrenci.Birim?.BirimAd ?? "-";
                 var now = DateTime.Now;
-                var today = now.Date;
-                var tomorrow = today.AddDays(1);
-                string? forcedGecisTipi = null;
 
-                // --- İzin kontrolleri (LOG ATMADAN) ---
-                if (cihaz.IstasyonTipi == IstasyonTipi.AnaKapi &&
-                    ogrenci.OgrenciCikisDurumu == OglenCikisDurumu.Hayir)
+                // İzin, saat penceresi ve günlük limit: ortak kural (ZKTeco yolu da aynısını kullanır)
+                var karar = await _gecisKarari.KararVerAsync(cihaz.IstasyonTipi, ogrenci, now, ct);
+                if (!karar.KayitYaz)
                 {
-                    await GuvenliYayinAsync(_hub, _tenant.OkulKodu, new OgrenciBilgisiDto
-                    {
-                        OgrenciAdSoyad = ogrenci.OgrenciAdSoyad,
-                        OgrenciNo = ogrenci.OgrenciNo,
-                        OgrenciSinif = ogrenciSinif,
-                        OgrenciGorsel = ogrenci.OgrenciGorsel,
-                        OgrenciGirisSaati = "-",
-                        OgrenciCikisSaati = "-",
-                        OglenCikisDurumu = ogrenci.OgrenciCikisDurumu,
-                        GecisTipi = "Reddedildi",
-                        Istasyon = cihaz.IstasyonTipi.ToString(),
-                        CihazAdi = cihaz.CihazAdi,
-                        CihazKodu = cihaz.CihazKodu,
-                        Reason = "ANA_KAPI_OGLE_RED",
-                        Error = Msg.ErrOglenYok
-                    }, ct);
+                    await KartOkumaYayini.GonderAsync(_hub, _tenant.OkulKodu,
+                        OgrenciBilgisiDto.Olustur(ogrenci, cihaz, "Reddedildi", karar.Reason, error: karar.Mesaj,
+                            cikisSaati: karar.OncekiCikisZamani?.ToString("HH:mm") ?? "-"), ct);
 
-                    return Ok(new { durum = "YOK_SAYILDI", gerekce = "Öğle çıkış izni yok." });
-                }
-
-                if (cihaz.IstasyonTipi == IstasyonTipi.Yemekhane)
-                {
-                    var yil = now.Year;
-                    var ay = now.Month;
-                    var yemekIzniVar = await _kartOkuService.YemekIzniVarMiAsync(ogrenci.OgrenciId, yil, ay, ct);
-
-                    if (!yemekIzniVar)
-                    {
-                        await GuvenliYayinAsync(_hub, _tenant.OkulKodu, new OgrenciBilgisiDto
-                        {
-                            OgrenciAdSoyad = ogrenci.OgrenciAdSoyad,
-                            OgrenciNo = ogrenci.OgrenciNo,
-                            OgrenciSinif = ogrenciSinif,
-                            OgrenciGorsel = ogrenci.OgrenciGorsel,
-                            OgrenciGirisSaati = "-",
-                            OgrenciCikisSaati = "-",
-                            OglenCikisDurumu = ogrenci.OgrenciCikisDurumu,
-                            GecisTipi = "Reddedildi",
-                            Istasyon = cihaz.IstasyonTipi.ToString(),
-                            CihazAdi = cihaz.CihazAdi,
-                            CihazKodu = cihaz.CihazKodu,
-                            Reason = "YEMEKHANE_RED",
-                            Error = Msg.ErrYemekYok
-                        }, ct);
-
-                        return Ok(new { durum = "YOK_SAYILDI", gerekce = "Yemekhane izni yok." });
-                    }
-                }
-
-                // --- Günlük limit kontrolleri (LOG ATMADAN) ---
-                if (cihaz.IstasyonTipi == IstasyonTipi.Yemekhane)
-                {
-                    var bugunYemekVar = await _kartOkuService.BugunYemekGirisiVarMiAsync(ogrenci.OgrenciId, today, tomorrow, ct);
-
-                    if (bugunYemekVar)
-                    {
-                        await GuvenliYayinAsync(_hub, _tenant.OkulKodu, new OgrenciBilgisiDto
-                        {
-                            OgrenciAdSoyad = ogrenci.OgrenciAdSoyad,
-                            OgrenciNo = ogrenci.OgrenciNo,
-                            OgrenciSinif = ogrenciSinif,
-                            OgrenciGorsel = ogrenci.OgrenciGorsel,
-                            OgrenciGirisSaati = "-",
-                            OgrenciCikisSaati = "-",
-                            OglenCikisDurumu = ogrenci.OgrenciCikisDurumu,
-                            GecisTipi = "Reddedildi",
-                            Istasyon = cihaz.IstasyonTipi.ToString(),
-                            CihazAdi = cihaz.CihazAdi,
-                            CihazKodu = cihaz.CihazKodu,
-                            Reason = "YEMEKHANE_LIMIT",
-                            Error = Msg.ErrYemekLimit
-                        }, ct);
-
-                        return Ok(new { durum = "YOK_SAYILDI", gerekce = "Yemekhane günlük limit dolu." });
-                    }
-                }
-                else if (cihaz.IstasyonTipi == IstasyonTipi.AnaKapi &&
-                         ogrenci.OgrenciCikisDurumu == OglenCikisDurumu.Evet)
-                {
-                    var (cikisVarMi, girisVarMi, cikisZamani) = await _kartOkuService.BugunAnaKapiHareketleriAsync(
-                        ogrenci.OgrenciId, today, tomorrow, ct);
-
-                    if (!cikisVarMi && !_ayar.OgleCikisSaatiMi(now))
-                    {
-                        // Öğle çıkış saati dışında: kayıt/SMS yok
-                        await GuvenliYayinAsync(_hub, _tenant.OkulKodu, new OgrenciBilgisiDto
-                        {
-                            OgrenciAdSoyad = ogrenci.OgrenciAdSoyad,
-                            OgrenciNo = ogrenci.OgrenciNo,
-                            OgrenciSinif = ogrenciSinif,
-                            OgrenciGorsel = ogrenci.OgrenciGorsel,
-                            OgrenciGirisSaati = "-",
-                            OgrenciCikisSaati = "-",
-                            OglenCikisDurumu = ogrenci.OgrenciCikisDurumu,
-                            GecisTipi = "Reddedildi",
-                            Istasyon = cihaz.IstasyonTipi.ToString(),
-                            CihazAdi = cihaz.CihazAdi,
-                            CihazKodu = cihaz.CihazKodu,
-                            Reason = "ANA_KAPI_OGLE_SAAT_DISI",
-                            Error = $"ÖĞLE ÇIKIŞ SAATİ DEĞİL ({_ayar.OgleCikisAraligiMetni})!"
-                        }, ct);
-
-                        return Ok(new { durum = "YOK_SAYILDI", gerekce = "Öğle çıkış saati dışında.", reason = "ANA_KAPI_OGLE_SAAT_DISI" });
-                    }
-                    else if (!cikisVarMi)
-                    {
-                        forcedGecisTipi = "Çıkış";
-                    }
-                    else if (!girisVarMi && cikisZamani.HasValue && now - cikisZamani.Value < _ayar.OgleDonusMinSure)
-                    {
-                        // Çıkıştan hemen sonra tekrar okutma: dönüş sayma, kayıt/SMS yok
-                        await GuvenliYayinAsync(_hub, _tenant.OkulKodu, new OgrenciBilgisiDto
-                        {
-                            OgrenciAdSoyad = ogrenci.OgrenciAdSoyad,
-                            OgrenciNo = ogrenci.OgrenciNo,
-                            OgrenciSinif = ogrenciSinif,
-                            OgrenciGorsel = ogrenci.OgrenciGorsel,
-                            OgrenciGirisSaati = "-",
-                            OgrenciCikisSaati = cikisZamani.Value.ToString("HH:mm"),
-                            OglenCikisDurumu = ogrenci.OgrenciCikisDurumu,
-                            GecisTipi = "Reddedildi",
-                            Istasyon = cihaz.IstasyonTipi.ToString(),
-                            CihazAdi = cihaz.CihazAdi,
-                            CihazKodu = cihaz.CihazKodu,
-                            Reason = "ANA_KAPI_OGLE_CIKIS_YAPILDI",
-                            Error = $"Öğle çıkışı zaten yapıldı ({cikisZamani.Value:HH:mm})."
-                        }, ct);
-
-                        return Ok(new { durum = "YOK_SAYILDI", gerekce = "Öğle çıkışı az önce yapıldı.", reason = "ANA_KAPI_OGLE_CIKIS_YAPILDI" });
-                    }
-                    else if (!girisVarMi)
-                    {
-                        forcedGecisTipi = "Giriş";
-                    }
-                    else
-                    {
-                        await GuvenliYayinAsync(_hub, _tenant.OkulKodu, new OgrenciBilgisiDto
-                        {
-                            OgrenciAdSoyad = ogrenci.OgrenciAdSoyad,
-                            OgrenciNo = ogrenci.OgrenciNo,
-                            OgrenciSinif = ogrenciSinif,
-                            OgrenciGorsel = ogrenci.OgrenciGorsel,
-                            OgrenciGirisSaati = "-",
-                            OgrenciCikisSaati = "-",
-                            OglenCikisDurumu = ogrenci.OgrenciCikisDurumu,
-                            GecisTipi = "Reddedildi",
-                            Istasyon = cihaz.IstasyonTipi.ToString(),
-                            CihazAdi = cihaz.CihazAdi,
-                            CihazKodu = cihaz.CihazKodu,
-                            Reason = "ANA_KAPI_OGLE_DONUS_LIMIT",
-                            Error = "Bugün öğle çıkışı ve dönüşü zaten yapılmış!"
-                        }, ct);
-
-                        return Ok(new { durum = "YOK_SAYILDI", gerekce = "Öğle çıkış/dönüş tamam.", reason = "ANA_KAPI_OGLE_DONUS_LIMIT" });
-                    }
-                }
-
-                // --- Kayıt: istasyona göre netleştir ---
-                if (forcedGecisTipi is null)
-                {
-                    forcedGecisTipi = cihaz.IstasyonTipi switch
-                    {
-                        IstasyonTipi.Yemekhane => "Giriş",
-                        IstasyonTipi.AnaKapi when ogrenci.OgrenciCikisDurumu != OglenCikisDurumu.Evet => null,
-                        _ => null
-                    };
+                    return Ok(new { durum = "YOK_SAYILDI", gerekce = karar.Mesaj, reason = karar.Reason });
                 }
 
                 var sonuc = await _gecisService.KaydetAsync(
-                    cihaz.CihazId, ogrenci.OgrenciId, cihaz.IstasyonTipi, now, ct, forcedGecisTipi);
+                    cihaz.CihazId, ogrenci.OgrenciId, cihaz.IstasyonTipi, now, ct, karar.ZorunluGecisTipi);
 
-                var girisSaati = "-";
-                var cikisSaati = "-";
-                if (string.Equals(sonuc.GecisTipi, "Giriş", StringComparison.OrdinalIgnoreCase))
-                    girisSaati = now.ToString("HH:mm");
-                else if (string.Equals(sonuc.GecisTipi, "Çıkış", StringComparison.OrdinalIgnoreCase) ||
-                         string.Equals(sonuc.GecisTipi, "Cikis", StringComparison.OrdinalIgnoreCase))
-                    cikisSaati = now.ToString("HH:mm");
+                var girisMi = string.Equals(sonuc.GecisTipi, GecisKurallari.Giris, StringComparison.OrdinalIgnoreCase);
+                var cikisMi = string.Equals(sonuc.GecisTipi, GecisKurallari.Cikis, StringComparison.OrdinalIgnoreCase);
+                var (reason, info) = GecisKurallari.BasariMesaji(cihaz.IstasyonTipi, sonuc.GecisTipi);
 
-                var dto = new OgrenciBilgisiDto
-                {
-                    OgrenciAdSoyad = ogrenci.OgrenciAdSoyad,
-                    OgrenciNo = ogrenci.OgrenciNo,
-                    OgrenciSinif = ogrenciSinif,
-                    OgrenciGorsel = ogrenci.OgrenciGorsel,
-                    OgrenciGirisSaati = girisSaati,
-                    OgrenciCikisSaati = cikisSaati,
-                    OglenCikisDurumu = ogrenci.OgrenciCikisDurumu,
-                    GecisTipi = sonuc.GecisTipi,
-                    Istasyon = cihaz.IstasyonTipi.ToString(),
-                    CihazAdi = cihaz.CihazAdi,
-                    CihazKodu = cihaz.CihazKodu,
-                    Reason =
-                        cihaz.IstasyonTipi == IstasyonTipi.Yemekhane ? "YEMEKHANE_OK" :
-                        cihaz.IstasyonTipi != IstasyonTipi.AnaKapi ? "GENEL_OK" :
-                        string.Equals(sonuc.GecisTipi, "Çıkış", StringComparison.OrdinalIgnoreCase) ? "ANA_KAPI_OGLE_OK" :
-                        string.Equals(sonuc.GecisTipi, "Giriş", StringComparison.OrdinalIgnoreCase) ? "ANA_KAPI_OGLE_DONUS_OK" :
-                        "GENEL_OK",
-                    Info =
-                        cihaz.IstasyonTipi == IstasyonTipi.Yemekhane ? Msg.InfoYemekOk :
-                        cihaz.IstasyonTipi != IstasyonTipi.AnaKapi ? Msg.InfoGenelOk :
-                        string.Equals(sonuc.GecisTipi, "Çıkış", StringComparison.OrdinalIgnoreCase) ? Msg.InfoOglenOk :
-                        string.Equals(sonuc.GecisTipi, "Giriş", StringComparison.OrdinalIgnoreCase) ? Msg.InfoOgleDonusOk :
-                        Msg.InfoGenelOk
-                };
-
-                await GuvenliYayinAsync(_hub, _tenant.OkulKodu, dto, ct);
+                await KartOkumaYayini.GonderAsync(_hub, _tenant.OkulKodu,
+                    OgrenciBilgisiDto.Olustur(ogrenci, cihaz, sonuc.GecisTipi, reason, info: info,
+                        girisSaati: girisMi ? now.ToString("HH:mm") : "-",
+                        cikisSaati: cikisMi ? now.ToString("HH:mm") : "-"), ct);
 
                 // Ana Kapı geçişlerinde veliye SMS bildirimi (fire-and-forget)
-                if (cihaz.IstasyonTipi == IstasyonTipi.AnaKapi &&
-                    (string.Equals(sonuc.GecisTipi, "Giriş", StringComparison.OrdinalIgnoreCase) ||
-                     string.Equals(sonuc.GecisTipi, "Çıkış", StringComparison.OrdinalIgnoreCase)))
+                if (cihaz.IstasyonTipi == IstasyonTipi.AnaKapi && (girisMi || cikisMi))
                 {
                     var ogrId = ogrenci.OgrenciId;
                     var ogrAdSoyad = ogrenci.OgrenciAdSoyad;
                     var gecisTipiKopya = sonuc.GecisTipi;
                     var anlikZaman = now;
-
                     var okulKodu = _tenant.OkulKodu;
 
                     _ = Task.Run(async () =>

@@ -1,4 +1,5 @@
-﻿using ClosedXML.Excel;
+﻿using OgrenciBilgiSistemi.Shared.Helpers;
+using ClosedXML.Excel;
 using Microsoft.EntityFrameworkCore;
 using OgrenciBilgiSistemi.Abstractions;
 using OgrenciBilgiSistemi.Data;
@@ -35,13 +36,6 @@ namespace OgrenciBilgiSistemi.Services.Implementations
         }
 
         // ---- Helpers ---------------------------------------------------------
-
-        private static string? NormalizeKartNo(string? val)
-        {
-            if (string.IsNullOrWhiteSpace(val))
-                return null;
-            return val.Trim().TrimStart('0');
-        }
 
         // Ortak arama filtresi — liste Excel'i ve veli raporu Excel'inde kullanılır
         // (OgrencilerController'dan taşındı; davranış birebir korunmuştur)
@@ -95,7 +89,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
         public async Task<int> EkleAsync(OgrenciModel model, IFormFile? gorsel, bool buAyYemekhaneAktif, CancellationToken ct = default)
         {
             model.OgrenciAdSoyad = (model.OgrenciAdSoyad ?? string.Empty).ToUpper(_tr);
-            model.OgrenciKartNo = NormalizeKartNo(model.OgrenciKartNo);
+            model.OgrenciKartNo = KartNo.Normalize(model.OgrenciKartNo);
 
             var strategy = _db.Database.CreateExecutionStrategy();
             await strategy.ExecuteAsync(async () =>
@@ -133,7 +127,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
 
                 ent.OgrenciAdSoyad = (model.OgrenciAdSoyad ?? string.Empty).ToUpper(_tr);
                 ent.OgrenciNo = model.OgrenciNo;
-                ent.OgrenciKartNo = NormalizeKartNo(model.OgrenciKartNo);
+                ent.OgrenciKartNo = KartNo.Normalize(model.OgrenciKartNo);
                 ent.BirimId = model.BirimId;
                 ent.OgretmenId = await BirimdenOgretmenBulAsync(model.BirimId, ct);
                 ent.IsDeleted = model.IsDeleted;

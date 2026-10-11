@@ -1,3 +1,4 @@
+using OgrenciBilgiSistemi.Shared.Helpers;
 using Microsoft.Data.SqlClient;
 using OgrenciBilgiSistemi.Api.Dtos;
 using OgrenciBilgiSistemi.Api.Models;
@@ -505,7 +506,8 @@ namespace OgrenciBilgiSistemi.Api.Services
                 await using var conn = new SqlConnection(ConnectionString);
                 await using var cmd  = new SqlCommand(query, conn);
 
-                var kartNo = string.IsNullOrWhiteSpace(dto.OgrenciKartNo) ? null : dto.OgrenciKartNo.Trim();
+                // Panel ve kart okuma ile aynı biçim (baştaki sıfırlar atılır); aksi halde okutmada eşleşmez
+                var kartNo = KartNo.Normalize(dto.OgrenciKartNo);
                 cmd.Parameters.AddWithValue("@adSoyad",      dto.OgrenciAdSoyad.Trim().ToUpperInvariant());
                 cmd.Parameters.AddWithValue("@no",           dto.OgrenciNo);
                 cmd.Parameters.AddWithValue("@kartNo",       (object?)kartNo ?? DBNull.Value);
@@ -551,7 +553,8 @@ namespace OgrenciBilgiSistemi.Api.Services
                 await using var conn = new SqlConnection(ConnectionString);
                 await using var cmd  = new SqlCommand(query, conn);
 
-                var kartNo = string.IsNullOrWhiteSpace(dto.OgrenciKartNo) ? null : dto.OgrenciKartNo.Trim();
+                // Panel ve kart okuma ile aynı biçim (baştaki sıfırlar atılır); aksi halde okutmada eşleşmez
+                var kartNo = KartNo.Normalize(dto.OgrenciKartNo);
                 cmd.Parameters.AddWithValue("@id",           ogrenciId);
                 cmd.Parameters.AddWithValue("@adSoyad",      dto.OgrenciAdSoyad.Trim().ToUpperInvariant());
                 cmd.Parameters.AddWithValue("@no",           dto.OgrenciNo);

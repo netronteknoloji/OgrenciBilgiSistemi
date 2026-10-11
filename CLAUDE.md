@@ -70,6 +70,9 @@ Mobil     → Shared (HTTP üzerinden Api'ye)
 dotnet build OgrenciBilgiSistemi/OgrenciBilgiSistemi.csproj
 dotnet build OgrenciBilgiSistemi.Api/OgrenciBilgiSistemi.Api.csproj
 
+# Test (saf kurallar; DB/COM gerekmez)
+dotnet test OgrenciBilgiSistemi.Tests/OgrenciBilgiSistemi.Tests.csproj
+
 # Çalıştır
 dotnet run --project OgrenciBilgiSistemi/OgrenciBilgiSistemi.csproj
 dotnet run --project OgrenciBilgiSistemi.Api/OgrenciBilgiSistemi.Api.csproj
@@ -101,6 +104,8 @@ dotnet ef migrations script --idempotent --project OgrenciBilgiSistemi/OgrenciBi
 - **Elle SQL betiği** (`OgrenciBilgiSistemi/Scripts/`) yazılırsa `__EFMigrationsHistory` kaydını da eklemeli; yoksa sonraki idempotent migration betiği aynı adımı tekrar dener.
 - **CI**: `.github/workflows/backend-ci.yml` → MVC + API build ve güvenlik açıklı paket kapısı (Mobil: `codemagic.yaml`).
 - **SMS retry** her iki backend'de de bağımsız hosted service olarak var.
+- **Kart okuma kuralları** (öğle çıkışı/dönüşü, yemekhane izni/limiti) tek yerde: `Shared/Kurallar/GecisKurallari` (saf, testli). USB (`KartOkuController`) ve ZKTeco (`KartOkumaOlayIsleyiciService`) yolu `IGecisKarariService` + `GecisKilidi` üzerinden aynı kararı kullanır; kural değişikliği yalnızca orada ve testlerde yapılır.
+- **Kart no** kaydederken ve okuturken `Shared/Helpers/KartNo.Normalize` (MVC + API).
 
 ## İlk Bakış Sırası
 

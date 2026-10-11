@@ -18,7 +18,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
 
         public async Task<OgrenciModel?> GetOgrenciByKartNoAsync(string kartNo, CancellationToken ct = default)
         {
-            // Not: Kart normalizasyonu (baştaki sıfırların atılması) Controller tarafında yapılır.
+            // Not: Kart normalizasyonu (KartNo.Normalize) çağıran tarafta yapılır.
             var k = (kartNo ?? string.Empty).Trim();
 
             return await _context.Ogrenciler

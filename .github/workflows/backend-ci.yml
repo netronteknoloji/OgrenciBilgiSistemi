@@ -28,6 +28,9 @@ jobs:
       - name: API derle
         run: dotnet build OgrenciBilgiSistemi.Api/OgrenciBilgiSistemi.Api.csproj -c Release
 
+      - name: Testler
+        run: dotnet test OgrenciBilgiSistemi.Tests/OgrenciBilgiSistemi.Tests.csproj -c Release
+
       - name: Güvenlik açığı olan paket kontrolü
         shell: pwsh
         run: |

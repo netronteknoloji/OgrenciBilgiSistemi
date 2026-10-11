@@ -3,7 +3,10 @@ using Microsoft.EntityFrameworkCore;
 using OgrenciBilgiSistemi.Data;
 using OgrenciBilgiSistemi.Dtos;
 using OgrenciBilgiSistemi.Hubs;
+using OgrenciBilgiSistemi.Services.Implementations;
 using OgrenciBilgiSistemi.Services.Interfaces;
+using OgrenciBilgiSistemi.Shared.Helpers;
+using OgrenciBilgiSistemi.Shared.Kurallar;
 using OgrenciBilgiSistemi.Shared.Services;
 
 public class KartOkumaOlayIsleyiciService : IHostedService
@@ -41,12 +44,11 @@ public class KartOkumaOlayIsleyiciService : IHostedService
         return Task.CompletedTask;
     }
 
-    private static string Normalize(string s) => (s ?? string.Empty).Trim().TrimStart('0');
-
     private async Task KartOkumaIsleyiciAsync(string kartNo)
     {
         var now = DateTime.Now;
-        var norm = Normalize(kartNo);
+        var norm = KartNo.Normalize(kartNo);
+        if (norm is null) return;
 
         // Olay, bağlı cihazın okulunda işlenir; okul bilinmiyorsa hiçbir DB'ye yazılmaz
         var okulKodu = _zkTecoService.BagliOkulKodu;
@@ -60,18 +62,11 @@ public class KartOkumaOlayIsleyiciService : IHostedService
         {
             await using var scope = _tenantKapsam.Olustur(okulKodu);
             var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var kartOku = scope.ServiceProvider.GetRequiredService<IKartOkuService>();
+            var gecisKarari = scope.ServiceProvider.GetRequiredService<IGecisKarariService>();
             var svc = scope.ServiceProvider.GetRequiredService<IGecisService>();
 
-            // 1) Öğrenciyi bul
-            var ogr = await db.Ogrenciler.AsNoTracking()
-                .FirstOrDefaultAsync(o => o.OgrenciKartNo == norm && !o.IsDeleted);
-            if (ogr is null)
-            {
-                _logger.LogWarning("ZKTeco kart tanımsız: {Kart}", norm);
-                return;
-            }
-
-            // 2) Olayı üreten cihaz: bağlı cihaz (yoksa okulun ilk aktif ZKTeco cihazı)
+            // 1) Olayı üreten cihaz: bağlı cihaz (yoksa okulun ilk aktif ZKTeco cihazı)
             var bagliCihazId = _zkTecoService.CurrentCihazId;
             var cihaz = await db.Cihazlar.AsNoTracking()
                 .Where(c => c.DonanimTipi == DonanimTipi.ZKTeco && !c.IsDeleted
@@ -85,14 +80,36 @@ public class KartOkumaOlayIsleyiciService : IHostedService
                 return;
             }
 
-            // 3) Geçişi kaydet — yön kararı (giriş/çıkış) GecisService.KaydetAsync içinde belirlenir
-            var sonuc = await svc.KaydetAsync(cihaz.CihazId, ogr.OgrenciId, cihaz.IstasyonTipi, now);
+            // 2) Öğrenciyi bul
+            var ogr = await kartOku.GetOgrenciByKartNoAsync(norm);
+            if (ogr is null)
+            {
+                _logger.LogWarning("ZKTeco okutması: kart tanımsız (CihazId: {CihazId}).", cihaz.CihazId);
+                return;
+            }
 
-            // 3.5) SMS bildirimi - sadece Ana Kapı geçişlerinde (Yemekhane SMS'i ayrı serviste).
-            // Fire-and-forget: SMS gönderimi kart okuma response'unu bloklamaz.
-            if (cihaz.IstasyonTipi == IstasyonTipi.AnaKapi &&
-                (string.Equals(sonuc.GecisTipi, "Giriş", StringComparison.OrdinalIgnoreCase) ||
-                 string.Equals(sonuc.GecisTipi, "Çıkış", StringComparison.OrdinalIgnoreCase)))
+            // 3) USB yoluyla aynı kilit ve aynı kural: izin, saat penceresi, günlük limit
+            using var ogrenciKilidi = await GecisKilidi.AlAsync(okulKodu, ogr.OgrenciId);
+
+            var karar = await gecisKarari.KararVerAsync(cihaz.IstasyonTipi, ogr, now);
+            if (!karar.KayitYaz)
+            {
+                await KartOkumaYayini.GonderAsync(_hub, okulKodu,
+                    OgrenciBilgisiDto.Olustur(ogr, cihaz, "Reddedildi", karar.Reason, error: karar.Mesaj,
+                        cikisSaati: karar.OncekiCikisZamani?.ToString("HH:mm") ?? "-"), CancellationToken.None);
+                return;
+            }
+
+            // 4) Geçişi kaydet — yön, kural zorunlu kılmadıysa GecisService.KaydetAsync içinde belirlenir
+            var sonuc = await svc.KaydetAsync(cihaz.CihazId, ogr.OgrenciId, cihaz.IstasyonTipi, now,
+                CancellationToken.None, karar.ZorunluGecisTipi);
+
+            var girisMi = string.Equals(sonuc.GecisTipi, GecisKurallari.Giris, StringComparison.OrdinalIgnoreCase);
+            var cikisMi = string.Equals(sonuc.GecisTipi, GecisKurallari.Cikis, StringComparison.OrdinalIgnoreCase);
+
+            // 5) SMS bildirimi - sadece Ana Kapı geçişlerinde (Yemekhane SMS'i ayrı serviste).
+            // Fire-and-forget: SMS gönderimi kart okuma akışını bloklamaz.
+            if (cihaz.IstasyonTipi == IstasyonTipi.AnaKapi && (girisMi || cikisMi))
             {
                 _ = Task.Run(async () =>
                 {
@@ -109,59 +126,16 @@ public class KartOkumaOlayIsleyiciService : IHostedService
                 });
             }
 
-            // 4) Sınıf bilgisini çek
-            var sinifAdi = await db.Birimler.AsNoTracking()
-                .Where(b => b.BirimId == ogr.BirimId)
-                .Select(b => b.BirimAd)
-                .FirstOrDefaultAsync() ?? "-";
-
-            // 5) SignalR ile öğrenci bilgisini gönder
-            var girisSaati = "-";
-            var cikisSaati = "-";
-            if (string.Equals(sonuc.GecisTipi, "Giriş", StringComparison.OrdinalIgnoreCase))
-                girisSaati = now.ToString("HH:mm");
-            else if (string.Equals(sonuc.GecisTipi, "Çıkış", StringComparison.OrdinalIgnoreCase))
-                cikisSaati = now.ToString("HH:mm");
-
-            var dto = new OgrenciBilgisiDto
-            {
-                OgrenciAdSoyad = ogr.OgrenciAdSoyad,
-                OgrenciNo = ogr.OgrenciNo,
-                OgrenciSinif = sinifAdi,
-                OgrenciGorsel = ogr.OgrenciGorsel,
-                OgrenciGirisSaati = girisSaati,
-                OgrenciCikisSaati = cikisSaati,
-                OglenCikisDurumu = ogr.OgrenciCikisDurumu,
-                GecisTipi = sonuc.GecisTipi,
-                Istasyon = cihaz.IstasyonTipi.ToString(),
-                CihazAdi = cihaz.CihazAdi,
-                CihazKodu = cihaz.CihazKodu,
-                Reason = "GENEL_OK",
-                Info = "Geçiş başarılı."
-            };
-
-            await GuvenliYayinAsync(_hub, okulKodu, dto, CancellationToken.None);
+            // 6) Kart okuma ekranına sonuç
+            var (reason, info) = GecisKurallari.BasariMesaji(cihaz.IstasyonTipi, sonuc.GecisTipi);
+            await KartOkumaYayini.GonderAsync(_hub, okulKodu,
+                OgrenciBilgisiDto.Olustur(ogr, cihaz, sonuc.GecisTipi, reason, info: info,
+                    girisSaati: girisMi ? now.ToString("HH:mm") : "-",
+                    cikisSaati: cikisMi ? now.ToString("HH:mm") : "-"), CancellationToken.None);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Kart okuma işleminde hata. Kart: {Kart}", norm);
-        }
-    }
-
-    // Yavaş/ölü client kart akışını blocklamasın diye SignalR yayınını
-    // kısa bir timeout ile sarmalar.
-    private static async Task GuvenliYayinAsync<T>(
-        IHubContext<KartOkuHub> hub, string okulKodu, T dto, CancellationToken ct, int timeoutMs = 3000)
-    {
-        using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-        cts.CancelAfter(timeoutMs);
-        try
-        {
-            await hub.Clients.Group(KartOkuHub.OkulGrubu(okulKodu)).SendAsync("OgrenciBilgisiAl", dto, cts.Token);
-        }
-        catch (OperationCanceledException) when (cts.IsCancellationRequested && !ct.IsCancellationRequested)
-        {
-            // Sessiz: client cevap vermedi, kart akışını blocklamayalım
+            _logger.LogError(ex, "Kart okuma işleminde hata (okul {OkulKodu}).", okulKodu);
         }
     }
 }
