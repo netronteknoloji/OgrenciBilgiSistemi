@@ -354,21 +354,6 @@ namespace OgrenciBilgiSistemi.Controllers
         // -------------------------------------------------------------
         // Muafiyet işlemleri (+ alias)
         // -------------------------------------------------------------
-        [MenuIslemYetki("Aidat", "Index")]
-        [HttpPost("SetMuafiyet")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> SetMuafiyet(int ogrenciId, int yil, bool muaf, CancellationToken ct)
-        {
-            var ok = await _aidatService.SetYillikMuafiyetAsync(ogrenciId, yil, muaf, ct);
-            return Json(new { success = ok });
-        }
-
-        [HttpGet("GetMuafiyet")]
-        public async Task<IActionResult> GetMuafiyet(int ogrenciId, int yil, CancellationToken ct)
-        {
-            var muaf = await _aidatService.GetYillikMuafiyetAsync(ogrenciId, yil, ct);
-            return Json(new { muaf });
-        }
 
         // /OgrenciAidat/MuafiyetAyarla (alias’lar)
         [MenuIslemYetki("Aidat", "Index")]

@@ -43,8 +43,6 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             return val.Trim().TrimStart('0');
         }
 
-        private static string? NormalizeText(string? s) => string.IsNullOrWhiteSpace(s) ? null : s.Trim();
-
         // Ortak arama filtresi — liste Excel'i ve veli raporu Excel'inde kullanılır
         // (OgrencilerController'dan taşındı; davranış birebir korunmuştur)
         private static IQueryable<OgrenciModel> AramaFiltreUygula(

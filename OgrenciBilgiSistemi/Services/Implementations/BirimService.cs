@@ -18,15 +18,6 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             _logger = logger;
         }
 
-        public async Task<IReadOnlyList<BirimDto>> GetAllAsync(bool? sinifMi = null, CancellationToken ct = default)
-            => await _db.Birimler
-                .AsNoTracking()
-                .Where(b => !b.IsDeleted)
-                .Where(b => !sinifMi.HasValue || b.BirimSinifMi == sinifMi.Value)
-                .OrderBy(b => b.BirimAd)
-                .Select(b => new BirimDto { Id = b.BirimId, Ad = b.BirimAd })
-                .ToListAsync(ct);
-
         public async Task<List<SelectListItem>> GetSelectListAsync(
             int? selectedId = null,
             bool? sinifMi = null,

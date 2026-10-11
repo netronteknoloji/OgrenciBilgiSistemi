@@ -281,21 +281,6 @@ namespace OgrenciBilgiSistemi.Controllers
             return RedirectToAction("Index", "Cihazlar");
         }
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> SetYemekhaneBuAy(
-            int id,
-            bool aktif,
-            string? sortOrder,
-            string? searchString,
-            int? pageNumber,
-            int? birimId)
-        {
-            await _yemekhaneService.SetBuAyAsync(id, aktif);
-            return RedirectToAction(nameof(Index),
-                new { sortOrder, searchString, pageNumber, birimId });
-        }
-
         #endregion
 
         #region ExportToExcel

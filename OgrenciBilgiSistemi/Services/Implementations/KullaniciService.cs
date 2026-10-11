@@ -227,19 +227,6 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 })
                 .ToListAsync(ct);
 
-        public async Task<List<SelectListItem>> GetServislerByIdSelectListAsync(int? selectedId = null, CancellationToken ct = default)
-            => await _db.Kullanicilar
-                .AsNoTracking()
-                .Where(k => !k.IsDeleted && k.Rol == KullaniciRolu.Servis)
-                .OrderBy(k => k.KullaniciAdi)
-                .Select(k => new SelectListItem
-                {
-                    Value = k.KullaniciId.ToString(),
-                    Text = k.KullaniciAdi,
-                    Selected = selectedId.HasValue && k.KullaniciId == selectedId.Value
-                })
-                .ToListAsync(ct);
-
         public async Task<List<SelectListItem>> GetServislerPlakaliSelectListAsync(CancellationToken ct = default)
             => await _db.Kullanicilar
                 .AsNoTracking()

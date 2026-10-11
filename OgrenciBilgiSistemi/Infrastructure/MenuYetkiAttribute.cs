@@ -8,18 +8,9 @@ using System.Security.Claims;
 namespace OgrenciBilgiSistemi.Infrastructure
 {
     /// <summary>
-    /// Controller action'larında menü bazlı yetkilendirme uygular.
-    /// Kullanıcının ilgili menü ögesine erişim izni olup olmadığını kontrol eder.
+    /// Global filtre: kullanıcının istenen controller/action'a karşılık gelen menü ögesine yetkisi var mı kontrol eder.
     /// Admin rolündeki kullanıcılar her zaman geçer.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = false)]
-    public class MenuYetkiAttribute : TypeFilterAttribute
-    {
-        public MenuYetkiAttribute() : base(typeof(MenuYetkiFilter))
-        {
-        }
-    }
-
     public class MenuYetkiFilter : IAsyncAuthorizationFilter
     {
         private readonly AppDbContext _db;

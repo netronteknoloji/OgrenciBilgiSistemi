@@ -63,14 +63,6 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             }
         }
 
-        public async Task<List<CihazModel>> GetCihazlarAsync(CancellationToken ct = default)
-        {
-            await EnsureCihazListAsync(ct);
-            return _cihazlar;
-        }
-
-        public List<CihazModel> GetCihazlar() => _cihazlar;
-
         // ---------------------- KULLANICI UPSERT (SSR -> Legacy) ----------------------
         public async Task<bool> CihazaOgrenciEkleAsync(OgrenciModel ogrenci, CancellationToken ct = default)
         {

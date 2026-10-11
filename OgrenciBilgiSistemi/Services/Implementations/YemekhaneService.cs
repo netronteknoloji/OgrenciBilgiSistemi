@@ -97,11 +97,6 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             return kayit;
         }
 
-        public Task<OgrenciYemekModel?> GetAyAsync(int ogrenciId, int yil, int ay, CancellationToken ct = default)
-            => _ctx.OgrenciYemekler
-                   .AsNoTracking()
-                   .FirstOrDefaultAsync(x => x.OgrenciId == ogrenciId && x.Yil == yil && x.Ay == ay, ct);
-
         public async Task<OgrenciYemekModel> SetBuAyAsync(int ogrenciId, bool aktif, string? not = null, CancellationToken ct = default)
         {
             var (yil, ay) = GetCurrentYearMonth();
@@ -122,44 +117,6 @@ namespace OgrenciBilgiSistemi.Services.Implementations
 
             await _ctx.SaveChangesAsync(ct);
             _logger.LogInformation("Yemek SetBuAy: OgrenciId={Id}, {Yil}-{Ay}, Aktif={Aktif}", ogrenciId, yil, ay, aktif);
-            return kayit;
-        }
-
-        public async Task<bool?> GetBuAyDurumAsync(int ogrenciId, CancellationToken ct = default)
-        {
-            var (yil, ay) = GetCurrentYearMonth();
-            return await _ctx.OgrenciYemekler
-                .AsNoTracking()
-                .Where(x => x.OgrenciId == ogrenciId && x.Yil == yil && x.Ay == ay)
-                .Select(x => (bool?)x.Aktif)
-                .FirstOrDefaultAsync(ct);
-        }
-
-        public async Task<OgrenciYemekModel> ToggleBuAyAsync(int ogrenciId, CancellationToken ct = default)
-        {
-            var (yil, ay) = GetCurrentYearMonth();
-            var kayit = await _ctx.OgrenciYemekler
-                .FirstOrDefaultAsync(x => x.OgrenciId == ogrenciId && x.Yil == yil && x.Ay == ay, ct);
-
-            if (kayit == null)
-            {
-                kayit = new OgrenciYemekModel
-                {
-                    OgrenciId = ogrenciId,
-                    Yil = yil,
-                    Ay = ay,
-                    Aktif = true
-                };
-                _ctx.OgrenciYemekler.Add(kayit);
-            }
-            else
-            {
-                kayit.Aktif = !kayit.Aktif;
-                _ctx.OgrenciYemekler.Update(kayit);
-            }
-
-            await _ctx.SaveChangesAsync(ct);
-            _logger.LogInformation("Yemek ToggleBuAy: OgrenciId={Id}, {Yil}-{Ay}, YeniAktif={Aktif}", ogrenciId, yil, ay, kayit.Aktif);
             return kayit;
         }
 

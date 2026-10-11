@@ -75,36 +75,5 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             return (true, girisVarMi, cikisZamani);
         }
 
-        public Task<OgrenciBilgisiDto> OgrenciDtoHazirla(
-            OgrenciModel ogrenci,
-            OgrenciDetayModel log,
-            CancellationToken ct = default)
-        {
-            const string GIRIS = "GİRİŞ";
-            const string CIKIS = "ÇIKIŞ";
-
-            // DB her zaman büyük harfle “GİRİŞ/ÇIKIŞ” yazıyor:
-            bool isGiris = string.Equals(log.OgrenciGecisTipi, GIRIS, StringComparison.Ordinal);
-            bool isCikis = string.Equals(log.OgrenciGecisTipi, CIKIS, StringComparison.Ordinal);
-
-            // Saat alanını doğru taraftan çek
-            var saat = (isGiris ? log.OgrenciGTarih : log.OgrenciCTarih)?.ToString("HH:mm") ?? "-";
-
-            var dto = new OgrenciBilgisiDto
-            {
-                OgrenciAdSoyad = ogrenci.OgrenciAdSoyad,
-                OgrenciNo = ogrenci.OgrenciNo,
-                OgrenciSinif = ogrenci.Birim?.BirimAd ?? "-",
-                OgrenciGorsel = ogrenci.OgrenciGorsel,
-                OgrenciGirisSaati = isGiris ? saat : "-",
-                OgrenciCikisSaati = isCikis ? saat : "-",
-                OglenCikisDurumu = ogrenci.OgrenciCikisDurumu,
-                GecisTipi = isGiris ? "Giriş" : (isCikis ? "Çıkış" : log.OgrenciGecisTipi ?? string.Empty),
-
-                // Istasyon, CihazAdi, CihazKodu, Reason, Error, Info -> Controller tarafında set ediliyor.
-            };
-
-            return Task.FromResult(dto);
-        }
     }
 }

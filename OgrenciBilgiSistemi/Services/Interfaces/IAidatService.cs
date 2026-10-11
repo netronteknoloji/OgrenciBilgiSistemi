@@ -75,10 +75,5 @@ namespace OgrenciBilgiSistemi.Services.Interfaces
             bool muaf,
             CancellationToken ct = default);
 
-        /// <summary>Öğrencinin belirli bir yıl için muafiyet durumunu döndürür.</summary>
-        Task<bool> GetYillikMuafiyetAsync(
-            int ogrenciId,
-            int yil,
-            CancellationToken ct = default);
     }
 }

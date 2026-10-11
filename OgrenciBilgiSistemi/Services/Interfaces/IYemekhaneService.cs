@@ -42,18 +42,9 @@ namespace OgrenciBilgiSistemi.Services.Interfaces
         /// <summary>Belirtilen yıl/ay için kaydı upsert eder.</summary>
         Task<OgrenciYemekModel> SetAyAsync(int ogrenciId, int yil, int ay, bool aktif, string? not = null, CancellationToken ct = default);
 
-        /// <summary>Belirtilen yıl/ay kaydını getirir (yoksa null).</summary>
-        Task<OgrenciYemekModel?> GetAyAsync(int ogrenciId, int yil, int ay, CancellationToken ct = default);
-
         // -------- "Bu Ay" yardımcıları (Eyl başlangıçlı akademik yıla göre yıl hesaplar) --------
         /// <summary>İçinde bulunulan ay için upsert. Sadece bu aya yazar.</summary>
         Task<OgrenciYemekModel> SetBuAyAsync(int ogrenciId, bool aktif, string? not = null, CancellationToken ct = default);
-
-        /// <summary>İçinde bulunulan ay için mevcut durum (true/false). Kayıt yoksa null.</summary>
-        Task<bool?> GetBuAyDurumAsync(int ogrenciId, CancellationToken ct = default);
-
-        /// <summary>İçinde bulunulan ay için durumu toggle eder (yoksa kayıt oluşturur).</summary>
-        Task<OgrenciYemekModel> ToggleBuAyAsync(int ogrenciId, CancellationToken ct = default);
 
         /// <summary>Index sayfası için: verilen öğrenci id’leri için bu ayın durumlarını tek seferde getirir.</summary>
         Task<Dictionary<int, bool>> GetBuAyDurumlariAsync(IEnumerable<int> ogrenciIdleri, CancellationToken ct = default);

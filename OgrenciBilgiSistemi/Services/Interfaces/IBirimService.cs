@@ -10,7 +10,6 @@ namespace OgrenciBilgiSistemi.Services.Interfaces
         Task UpdateAsync(BirimModel model, CancellationToken ct = default);
         Task DeleteAsync(int id, CancellationToken ct = default);
 
-        Task<IReadOnlyList<BirimDto>> GetAllAsync(bool? sinifMi = null, CancellationToken ct = default);
         Task<List<SelectListItem>> GetSelectListAsync(int? selectedId = null, bool? sinifMi = null,
                         BirimFiltre filtre = BirimFiltre.Aktif, CancellationToken ct = default);
 

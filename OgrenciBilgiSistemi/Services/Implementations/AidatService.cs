@@ -496,16 +496,6 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             return true;
         }
 
-        public async Task<bool> GetYillikMuafiyetAsync(int ogrenciId, int yil, CancellationToken ct = default)
-        {
-            var muaf = await _db.OgrenciAidatlar
-                .Where(a => a.OgrenciId == ogrenciId && a.BaslangicYil == yil)
-                .Select(a => (bool?)a.Muaf)
-                .FirstOrDefaultAsync(ct);
-
-            return muaf ?? false;
-        }
-
         public async Task<List<int>> GetKullanilabilirYillarAsync(int ogrenciId, CancellationToken ct = default)
         {
             return await _db.OgrenciAidatlar

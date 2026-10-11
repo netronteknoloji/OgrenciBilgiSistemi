@@ -66,12 +66,5 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             }
         }
 
-        public async Task<int> OkunmamisSayisi(int kullaniciId, CancellationToken ct = default)
-        {
-            return await _db.Bildirimler
-                .AsNoTracking()
-                .Where(b => b.AliciKullaniciId == kullaniciId && !b.Okundu)
-                .CountAsync(ct);
-        }
     }
 }

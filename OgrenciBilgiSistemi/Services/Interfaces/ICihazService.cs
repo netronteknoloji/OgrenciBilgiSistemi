@@ -4,8 +4,6 @@ using OgrenciBilgiSistemi.Models;
 public interface ICihazService
 {
     Task YenileCihazListesiAsync(CancellationToken ct = default);
-    Task<List<CihazModel>> GetCihazlarAsync(CancellationToken ct = default);
-    List<CihazModel> GetCihazlar();
     Task<bool> CihazaOgrenciEkleAsync(OgrenciModel ogrenci, CancellationToken ct = default);
     Task<bool> CihazaOgrenciGuncelleAsync(OgrenciModel ogrenci, CancellationToken ct = default);
     Task<bool> CihazaOgrenciSilAsync(int ogrenciId, CancellationToken ct = default);
