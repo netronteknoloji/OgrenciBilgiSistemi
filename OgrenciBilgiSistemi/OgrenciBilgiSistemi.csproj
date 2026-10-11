@@ -15,15 +15,12 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<COMReference Include="zkemkeeper">
-			<VersionMinor>0</VersionMinor>
-			<VersionMajor>1</VersionMajor>
-			<Guid>fe9ded34-e159-408e-8490-b720a5e632c7</Guid>
-			<Lcid>0</Lcid>
-			<WrapperTool>tlbimp</WrapperTool>
-			<Isolated>false</Isolated>
+		<!-- zkemkeeper (ZKTeco COM, GUID fe9ded34-e159-408e-8490-b720a5e632c7) için tlbimp çıktısı.
+		     Derleme COM kaydı gerektirmez (CI/yeni geliştirici); çalışma anında cihaz SDK'sı yine kayıtlı olmalı. -->
+		<Reference Include="Interop.zkemkeeper">
+			<HintPath>Lib\Interop.zkemkeeper.dll</HintPath>
 			<EmbedInteropTypes>true</EmbedInteropTypes>
-		</COMReference>
+		</Reference>
 	</ItemGroup>
 
 	<ItemGroup>

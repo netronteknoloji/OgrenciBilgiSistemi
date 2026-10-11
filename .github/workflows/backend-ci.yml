@@ -1,0 +1,44 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ['OgrenciBilgiSistemi.Mobil/**', 'docs/**', '**/*.md']
+  pull_request:
+    paths-ignore: ['OgrenciBilgiSistemi.Mobil/**', 'docs/**', '**/*.md']
+
+jobs:
+  build:
+    # MVC x86 hedefler; zkemkeeper interop'u Lib/ altında olduğu için COM kaydı gerekmez
+    runs-on: windows-latest
+    env:
+      DOTNET_NOLOGO: true
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: MVC derle
+        run: dotnet build OgrenciBilgiSistemi/OgrenciBilgiSistemi.csproj -c Release
+
+      - name: API derle
+        run: dotnet build OgrenciBilgiSistemi.Api/OgrenciBilgiSistemi.Api.csproj -c Release
+
+      - name: Güvenlik açığı olan paket kontrolü
+        shell: pwsh
+        run: |
+          $projeler = @(
+            'OgrenciBilgiSistemi/OgrenciBilgiSistemi.csproj',
+            'OgrenciBilgiSistemi.Api/OgrenciBilgiSistemi.Api.csproj'
+          )
+          $bulundu = $false
+          foreach ($p in $projeler) {
+            $cikti = dotnet list $p package --vulnerable --include-transitive 2>&1 | Out-String
+            Write-Host $cikti
+            if ($cikti -match 'has the following vulnerable packages') { $bulundu = $true }
+          }
+          if ($bulundu) { Write-Error 'Güvenlik açığı olan paket var.'; exit 1 }
