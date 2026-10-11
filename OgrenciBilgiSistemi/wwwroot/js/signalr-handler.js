@@ -8,7 +8,6 @@ let retryCount = 0;
 
 const config = {
   displayDuration: 1000, // ms
-  maxRetryAttempts: 5,
   initialRetryDelay: 1000, // ms
   maxRetryDelay: 30000, // ms
 };
@@ -81,9 +80,16 @@ document.addEventListener("DOMContentLoaded", () => {
   window.addEventListener("offline", () =>
     showTransientBanner("Bağlantı yok (offline).", "#fde68a"),
   );
-  window.addEventListener("online", () =>
-    showTransientBanner("Bağlantı geri geldi.", "#bbf7d0"),
-  );
+  // Ağ geri gelince beklemeden bağlanmayı dene
+  window.addEventListener("online", () => {
+    showTransientBanner("Bağlantı geri geldi.", "#bbf7d0");
+    if (yenidenBaglanmaZamanlayici) {
+      clearTimeout(yenidenBaglanmaZamanlayici);
+      yenidenBaglanmaZamanlayici = null;
+    }
+    retryCount = 0;
+    startConnection();
+  });
 });
 
 /* =================== Helpers =================== */
@@ -553,43 +559,65 @@ function registerConnectionEvents() {
     console.log("SignalR tekrar bağlandı.");
   });
 
+  // Otomatik yeniden bağlanma vazgeçerse (ör. uzun sunucu kesintisi) bağlantı burada kapanır.
+  // Kiosk gün boyu açık kalır: kapanıştan sonra da süresiz yeniden denenir.
   connection.onclose((err) => {
-    if (err) {
-      console.error("SignalR bağlantısı kapandı:", err);
-      showTransientBanner("Bağlantı kapandı.", "#fecaca");
-    }
+    if (sayfaKapaniyor) return;
+    if (err) console.error("SignalR bağlantısı kapandı:", err);
+    showTransientBanner("Bağlantı kapandı, yeniden bağlanılıyor…", "#fecaca", 3000);
+    retryCount = 0;
+    yenidenBaglanmayiPlanla();
   });
 }
 
+let sayfaKapaniyor = false;
+let yenidenBaglanmaZamanlayici = null;
+
+function yenidenBaglanmayiPlanla() {
+  if (yenidenBaglanmaZamanlayici || sayfaKapaniyor) return;
+  retryCount++;
+  const retryDelay = Math.min(
+    config.initialRetryDelay * Math.pow(2, retryCount),
+    config.maxRetryDelay,
+  );
+  console.log(`Yeniden denenecek (${retryCount}. deneme) ${retryDelay}ms sonra...`);
+  yenidenBaglanmaZamanlayici = setTimeout(() => {
+    yenidenBaglanmaZamanlayici = null;
+    startConnection();
+  }, retryDelay);
+}
+
+// Oturum düşmüşse (401) yeniden denemek anlamsız: sayfa yenilenir, giriş ekranına yönlenir
+function oturumDusmusMu(err) {
+  const mesaj = (err && (err.message || err.toString())) || "";
+  return (err && err.statusCode === 401) || mesaj.includes("401") || mesaj.includes("Unauthorized");
+}
+
 function startConnection() {
+  if (sayfaKapaniyor || connection.state !== signalR.HubConnectionState.Disconnected) return;
   connection
     .start()
     .then(() => {
+      retryCount = 0;
       console.log("SignalR bağlantısı kuruldu.");
+      showTransientBanner("Bağlantı kuruldu.", "#bbf7d0");
     })
     .catch((err) => {
       console.error("SignalR bağlantısı başlatılamadı:", err);
-      retryCount++;
-      if (retryCount <= config.maxRetryAttempts) {
-        const retryDelay = Math.min(
-          config.initialRetryDelay * Math.pow(2, retryCount),
-          config.maxRetryDelay,
-        );
-        console.log(
-          `Yeniden denenecek (${retryCount}. deneme) ${retryDelay}ms sonra...`,
-        );
-        setTimeout(startConnection, retryDelay);
-      } else {
-        console.error(
-          `Maksimum yeniden deneme sayısına ulaşıldı (${config.maxRetryAttempts}).`,
-        );
-        showTransientBanner("Bağlantı kurulamadı.", "#fecaca", 2500);
+      if (oturumDusmusMu(err)) {
+        window.location.reload();
+        return;
       }
+      // Süresiz denenir (en fazla maxRetryDelay aralıkla); ekran uyarıyı görünür tutar
+      showTransientBanner("Bağlantı kurulamadı, yeniden deneniyor…", "#fecaca", config.maxRetryDelay);
+      yenidenBaglanmayiPlanla();
     });
 }
 
 /* =================== Cleanup =================== */
 window.addEventListener("beforeunload", () => {
+  sayfaKapaniyor = true;
+  if (yenidenBaglanmaZamanlayici) clearTimeout(yenidenBaglanmaZamanlayici);
   if (displayTimeoutId) clearTimeout(displayTimeoutId);
   if (transientBannerId) clearTimeout(transientBannerId);
   if (connection) {
