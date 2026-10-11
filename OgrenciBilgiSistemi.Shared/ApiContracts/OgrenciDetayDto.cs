@@ -17,6 +17,11 @@ namespace OgrenciBilgiSistemi.Shared.ApiContracts
         public string VeliAdres { get; set; } = "-";
         public string OgretmenAdSoyad { get; set; } = "Atanmamış";
         public string Plaka { get; set; } = "Kullanmıyor";
+        // Sonradan eklendi; eski API sürümleri göndermez → null kalabilir.
+        public string? SoforAdSoyad { get; set; }
+        public string? SoforTelefon { get; set; }
+        public string? HostesAdSoyad { get; set; }
+        public string? HostesTelefon { get; set; }
         public int OgrenciCikisDurumu { get; set; }
     }
 }

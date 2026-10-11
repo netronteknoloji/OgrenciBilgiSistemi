@@ -85,13 +85,51 @@
                 </Border>
 
                 <Border StrokeShape="RoundRectangle 20" Padding="20" StrokeThickness="0" BackgroundColor="{StaticResource Kart}">
-                    <HorizontalStackLayout Spacing="20">
-                        <Label Text="🚌" FontSize="24" VerticalOptions="Center" />
-                        <VerticalStackLayout VerticalOptions="Center">
-                            <Label Text="Okul Servis Plakası" FontSize="13" TextColor="{StaticResource MetinSoluk}" FontAttributes="Bold" />
-                            <Label Text="{Binding Plaka}" FontSize="16" TextColor="{Binding TemaRenk}" FontAttributes="Bold" />
-                        </VerticalStackLayout>
-                    </HorizontalStackLayout>
+                    <VerticalStackLayout Spacing="12">
+                        <HorizontalStackLayout Spacing="20">
+                            <Label Text="🚌" FontSize="24" VerticalOptions="Center" />
+                            <VerticalStackLayout VerticalOptions="Center">
+                                <Label Text="Okul Servis Plakası" FontSize="13" TextColor="{StaticResource MetinSoluk}" FontAttributes="Bold" />
+                                <Label Text="{Binding Plaka}" FontSize="16" TextColor="{Binding TemaRenk}" FontAttributes="Bold" />
+                            </VerticalStackLayout>
+                        </HorizontalStackLayout>
+
+                        <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding SoforGorunur}">
+                            <VerticalStackLayout Grid.Column="0" Spacing="2">
+                                <Label Text="Şoför" FontSize="11" TextColor="{StaticResource MetinSoluk}" FontAttributes="Bold" />
+                                <Label Text="{Binding SoforMetni}" FontSize="13" TextColor="{StaticResource MetinKoyu}" FontAttributes="Bold" />
+                            </VerticalStackLayout>
+                            <Label Grid.Column="1" Text="{Binding SoforTelefon, StringFormat='📞 {0}'}" FontSize="13"
+                                   TextColor="{Binding TemaRenk}" FontAttributes="Bold" VerticalOptions="Center">
+                                <Label.Triggers>
+                                    <DataTrigger TargetType="Label" Binding="{Binding SoforTelefon}" Value="">
+                                        <Setter Property="IsVisible" Value="False" />
+                                    </DataTrigger>
+                                </Label.Triggers>
+                                <Label.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding SoforAraCommand}" />
+                                </Label.GestureRecognizers>
+                            </Label>
+                        </Grid>
+
+                        <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding HostesGorunur}">
+                            <VerticalStackLayout Grid.Column="0" Spacing="2">
+                                <Label Text="Hostes" FontSize="11" TextColor="{StaticResource MetinSoluk}" FontAttributes="Bold" />
+                                <Label Text="{Binding HostesMetni}" FontSize="13" TextColor="{StaticResource MetinKoyu}" FontAttributes="Bold" />
+                            </VerticalStackLayout>
+                            <Label Grid.Column="1" Text="{Binding HostesTelefon, StringFormat='📞 {0}'}" FontSize="13"
+                                   TextColor="{Binding TemaRenk}" FontAttributes="Bold" VerticalOptions="Center">
+                                <Label.Triggers>
+                                    <DataTrigger TargetType="Label" Binding="{Binding HostesTelefon}" Value="">
+                                        <Setter Property="IsVisible" Value="False" />
+                                    </DataTrigger>
+                                </Label.Triggers>
+                                <Label.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding HostesAraCommand}" />
+                                </Label.GestureRecognizers>
+                            </Label>
+                        </Grid>
+                    </VerticalStackLayout>
                 </Border>
 
                 <Border StrokeShape="RoundRectangle 20" Padding="20" StrokeThickness="0" BackgroundColor="{StaticResource Kart}">

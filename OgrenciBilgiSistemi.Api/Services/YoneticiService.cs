@@ -111,6 +111,9 @@ namespace OgrenciBilgiSistemi.Api.Services
                        k.KullaniciAdi,
                        k.Telefon AS ServisTelefon,
                        sp.Plaka,
+                       sp.SoforAdSoyad,
+                       sp.HostesAdSoyad,
+                       sp.HostesTelefon,
                        sp.IsDeleted,
                        (SELECT COUNT(*) FROM Ogrenciler o
                           WHERE o.ServisId = k.KullaniciId
@@ -137,6 +140,9 @@ namespace OgrenciBilgiSistemi.Api.Services
                         KullaniciAdi = reader["KullaniciAdi"]?.ToString() ?? "",
                         Plaka = reader["Plaka"] is DBNull ? null : reader["Plaka"]?.ToString(),
                         ServisTelefon = reader["ServisTelefon"] is DBNull ? null : reader["ServisTelefon"]?.ToString(),
+                        SoforAdSoyad = reader["SoforAdSoyad"] as string,
+                        HostesAdSoyad = reader["HostesAdSoyad"] as string,
+                        HostesTelefon = reader["HostesTelefon"] as string,
                         IsDeleted = reader["IsDeleted"] is not DBNull && Convert.ToBoolean(reader["IsDeleted"]),
                         OgrenciSayisi = Convert.ToInt32(reader["OgrenciSayisi"])
                     });

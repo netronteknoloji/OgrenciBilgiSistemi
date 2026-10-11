@@ -36,6 +36,12 @@ namespace OgrenciBilgiSistemi.Mobil.ViewModels
         [ObservableProperty] private string ogrenciKartNo = string.Empty;
         [ObservableProperty] private string plaka = string.Empty;
         [ObservableProperty] private string ogretmenAdSoyad = string.Empty;
+        [ObservableProperty] private string soforMetni = string.Empty;
+        [ObservableProperty] private string soforTelefon = string.Empty;
+        [ObservableProperty] private bool soforGorunur;
+        [ObservableProperty] private string hostesMetni = string.Empty;
+        [ObservableProperty] private string hostesTelefon = string.Empty;
+        [ObservableProperty] private bool hostesGorunur;
         [ObservableProperty] private string veliAdSoyad = string.Empty;
         [ObservableProperty] private string veliTelefon = string.Empty;
         [ObservableProperty] private string veliEmail = string.Empty;
@@ -62,6 +68,22 @@ namespace OgrenciBilgiSistemi.Mobil.ViewModels
         {
             await OgrenciDetayYukleAsync();
             SetCurrentWeek(DateTime.Today);
+        }
+
+        [RelayCommand]
+        void SoforAra() => Ara(SoforTelefon);
+
+        [RelayCommand]
+        void HostesAra() => Ara(HostesTelefon);
+
+        private static void Ara(string numara)
+        {
+            try
+            {
+                if (PhoneDialer.Default.IsSupported && !string.IsNullOrWhiteSpace(numara))
+                    PhoneDialer.Default.Open(numara.Trim());
+            }
+            catch { }
         }
 
         [RelayCommand]
@@ -99,6 +121,15 @@ namespace OgrenciBilgiSistemi.Mobil.ViewModels
                 OgrenciKartNo = detay.OgrenciKartNo ?? string.Empty;
                 Plaka = detay.Plaka ?? string.Empty;
                 OgretmenAdSoyad = detay.OgretmenAdSoyad ?? string.Empty;
+
+                // Eski API bu alanları göndermez → satırlar gizli kalır.
+                SoforTelefon = detay.SoforTelefon?.Trim() ?? string.Empty;
+                SoforMetni = string.IsNullOrWhiteSpace(detay.SoforAdSoyad) ? "—" : detay.SoforAdSoyad;
+                SoforGorunur = !string.IsNullOrWhiteSpace(detay.SoforAdSoyad) || SoforTelefon.Length > 0;
+                HostesTelefon = detay.HostesTelefon?.Trim() ?? string.Empty;
+                HostesMetni = string.IsNullOrWhiteSpace(detay.HostesAdSoyad) ? "—" : detay.HostesAdSoyad;
+                HostesGorunur = !string.IsNullOrWhiteSpace(detay.HostesAdSoyad) || HostesTelefon.Length > 0;
+
                 VeliAdSoyad = detay.VeliAdSoyad ?? string.Empty;
                 VeliTelefon = detay.VeliTelefon ?? string.Empty;
                 VeliEmail = detay.VeliEmail ?? string.Empty;

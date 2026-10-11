@@ -69,6 +69,7 @@ namespace OgrenciBilgiSistemi.Api.Services
                 await using var conn = new SqlConnection(ConnectionString);
                 const string query = @"
                     SELECT SP.KullaniciId, SP.Plaka, K.Telefon AS ServisTelefon,
+                           SP.SoforAdSoyad, SP.HostesAdSoyad, SP.HostesTelefon,
                            SP.IsDeleted
                     FROM ServisProfiller SP
                     INNER JOIN Kullanicilar K ON K.KullaniciId = SP.KullaniciId
@@ -86,6 +87,9 @@ namespace OgrenciBilgiSistemi.Api.Services
                         KullaniciId = (int)reader["KullaniciId"],
                         Plaka       = reader["Plaka"]?.ToString() ?? string.Empty,
                         ServisTelefon = reader["ServisTelefon"]?.ToString(),
+                        SoforAdSoyad = reader["SoforAdSoyad"] as string,
+                        HostesAdSoyad = reader["HostesAdSoyad"] as string,
+                        HostesTelefon = reader["HostesTelefon"] as string,
                         IsDeleted = Convert.ToBoolean(reader["IsDeleted"])
                     };
                 }

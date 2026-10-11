@@ -413,7 +413,9 @@ namespace OgrenciBilgiSistemi.Api.Services
                         u.BirimAd,
                         vk.KullaniciAdi AS VeliAdSoyad, vk.Telefon AS VeliTelefon,
                         p.VeliEmail, p.VeliMeslek, p.VeliIsYeri, p.VeliAdres,
-                        t.KullaniciAdi AS OgretmenAdSoyad, srv.Plaka
+                        t.KullaniciAdi AS OgretmenAdSoyad, srv.Plaka,
+                        srv.SoforAdSoyad, sk.Telefon AS SoforTelefon,
+                        srv.HostesAdSoyad, srv.HostesTelefon
                     FROM Ogrenciler s
                     LEFT JOIN Birimler          u   ON s.BirimId        = u.BirimId
                     LEFT JOIN Kullanicilar      vk  ON s.VeliId         = vk.KullaniciId
@@ -426,6 +428,7 @@ namespace OgrenciBilgiSistemi.Api.Services
                     ) sinifOgretmen
                     LEFT JOIN Kullanicilar      t   ON sinifOgretmen.KullaniciId = t.KullaniciId
                     LEFT JOIN ServisProfiller    srv ON s.ServisId       = srv.KullaniciId
+                    LEFT JOIN Kullanicilar      sk  ON srv.KullaniciId  = sk.KullaniciId
                     WHERE s.OgrenciId = @ogrenciId AND s.IsDeleted = 0";
 
                 await using var cmd = new SqlCommand(query, conn);
@@ -457,7 +460,11 @@ namespace OgrenciBilgiSistemi.Api.Services
                         VeliIsYeri       = reader["VeliIsYeri"]?.ToString()      ?? "-",
                         VeliAdres        = reader["VeliAdres"]?.ToString()       ?? "-",
                         OgretmenAdSoyad  = reader["OgretmenAdSoyad"]?.ToString() ?? "Atanmamış",
-                        Plaka            = reader["Plaka"]?.ToString()           ?? "Kullanmıyor"
+                        Plaka            = reader["Plaka"]?.ToString()           ?? "Kullanmıyor",
+                        SoforAdSoyad     = reader["SoforAdSoyad"]  as string,
+                        SoforTelefon     = reader["SoforTelefon"]  as string,
+                        HostesAdSoyad    = reader["HostesAdSoyad"] as string,
+                        HostesTelefon    = reader["HostesTelefon"] as string
                     };
                 }
             }

@@ -15,6 +15,9 @@ namespace OgrenciBilgiSistemi.Mobil.ViewModels
         [ObservableProperty] private string adSoyad = string.Empty;
         [ObservableProperty] private string plaka = "-";
         [ObservableProperty] private string telefon = "-";
+        [ObservableProperty] private string sofor = "—";
+        [ObservableProperty] private string hostes = "—";
+        [ObservableProperty] private string hostesTelefon = "—";
         [ObservableProperty] private string ogrenciSayisiMetni = string.Empty;
         [ObservableProperty] private string ogrencilerBaslik = "Öğrenciler";
         [ObservableProperty] private IReadOnlyList<Ogrenci> ogrenciler = [];
@@ -33,6 +36,9 @@ namespace OgrenciBilgiSistemi.Mobil.ViewModels
             AdSoyad = servis.KullaniciAdi;
             Plaka = servis.PlakaGosterim;
             Telefon = servis.TelefonGosterim;
+            Sofor = servis.SoforGosterim;
+            Hostes = servis.HostesGosterim;
+            HostesTelefon = servis.HostesTelefonGosterim;
             OgrenciSayisiMetni = $"{servis.OgrenciSayisi} öğrenci";
         }
 
@@ -56,12 +62,17 @@ namespace OgrenciBilgiSistemi.Mobil.ViewModels
         }
 
         [RelayCommand]
-        void TelefonAra()
+        void TelefonAra() => Ara(Telefon);
+
+        [RelayCommand]
+        void HostesTelefonAra() => Ara(HostesTelefon);
+
+        private static void Ara(string numara)
         {
             try
             {
-                if (PhoneDialer.Default.IsSupported && !string.IsNullOrEmpty(Telefon) && Telefon != "—")
-                    PhoneDialer.Default.Open(Telefon);
+                if (PhoneDialer.Default.IsSupported && !string.IsNullOrEmpty(numara) && numara != "—")
+                    PhoneDialer.Default.Open(numara);
             }
             catch { }
         }

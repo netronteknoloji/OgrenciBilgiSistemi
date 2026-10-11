@@ -16,7 +16,7 @@
                                AltBaslik="{Binding AltBaslik}"
                                AramaGoster="True"
                                AramaMetni="{Binding AramaMetni}"
-                               AramaPlaceholder="Plaka veya şoför adı ile ara..."
+                               AramaPlaceholder="Plaka, şoför veya hostes ara..."
                                BaslikGradyan="{StaticResource AdminBaslikGradyan}"
                                VurguRenk="{StaticResource AdminRenk}"
                                ShowBack="True"
@@ -53,7 +53,7 @@
                                     <Label.FormattedText>
                                         <FormattedString>
                                             <Span Text="Şoför: " />
-                                            <Span Text="{Binding KullaniciAdi}" />
+                                            <Span Text="{Binding SoforGosterim}" />
                                         </FormattedString>
                                     </Label.FormattedText>
                                 </Label>

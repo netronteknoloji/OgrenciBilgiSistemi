@@ -72,12 +72,10 @@ namespace OgrenciBilgiSistemi.Mobil.ViewModels
         }
 
         private static bool Eslesir(ServisListeOgesi s, string arama)
-        {
-            if (!string.IsNullOrEmpty(s.Plaka) &&
-                s.Plaka.Contains(arama, StringComparison.OrdinalIgnoreCase))
-                return true;
-            return !string.IsNullOrEmpty(s.KullaniciAdi) &&
-                   s.KullaniciAdi.Contains(arama, StringComparison.OrdinalIgnoreCase);
-        }
+            => Icerir(s.Plaka, arama) || Icerir(s.KullaniciAdi, arama) ||
+               Icerir(s.SoforAdSoyad, arama) || Icerir(s.HostesAdSoyad, arama);
+
+        private static bool Icerir(string? deger, string arama)
+            => !string.IsNullOrEmpty(deger) && deger.Contains(arama, StringComparison.OrdinalIgnoreCase);
     }
 }
