@@ -100,7 +100,8 @@ namespace OgrenciBilgiSistemi.Api.Controllers
             {
                 var kayitlar = model.Kayitlar.Select(k => (k.OgrenciId, k.DurumId)).ToList();
 
-                await _servisService.ServisYoklamaKaydet(
+                // Bu servise kayıtlı olmayan öğrenciler yazılmaz; SMS yalnızca yazılanlara gider
+                kayitlar = await _servisService.ServisYoklamaKaydet(
                     kayitlar,
                     tokenServisId,
                     model.Periyot

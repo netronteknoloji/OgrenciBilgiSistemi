@@ -41,8 +41,12 @@ namespace OgrenciBilgiSistemi.Api.Services
                 LEFT JOIN OgretmenProfiller OP ON OP.KullaniciId = K.KullaniciId
                 WHERE K.KullaniciAdi = @kullaniciAdi
                   AND K.IsDeleted = 0
-                  -- Pasif öğretmen profili olan öğretmen giriş yapamaz
-                  AND (K.Rol <> 2 OR ISNULL(OP.IsDeleted, 0) = 0)";
+                  -- Pasif öğretmen/servis/veli profili olan kullanıcı giriş yapamaz
+                  AND (K.Rol <> 2 OR ISNULL(OP.IsDeleted, 0) = 0)
+                  AND (K.Rol <> 3 OR ISNULL(SP.IsDeleted, 0) = 0)
+                  AND (K.Rol <> 4 OR ISNULL(V.IsDeleted, 0) = 0)
+                  -- DB'deki GenelAdmin satırı oturum açamaz (yalnızca yapılandırmadan)
+                  AND ISNULL(K.Rol, 0) <> 5";
 
             string?        storedHash = null;
             KullaniciModel?  found      = null;
@@ -111,8 +115,12 @@ namespace OgrenciBilgiSistemi.Api.Services
                 LEFT JOIN OgretmenProfiller OP ON OP.KullaniciId = K.KullaniciId
                 WHERE K.KullaniciId = @kullaniciId
                   AND K.IsDeleted = 0
-                  -- Pasif öğretmen profili olan öğretmen giriş yapamaz
-                  AND (K.Rol <> 2 OR ISNULL(OP.IsDeleted, 0) = 0)";
+                  -- Pasif öğretmen/servis/veli profili olan kullanıcı giriş yapamaz
+                  AND (K.Rol <> 2 OR ISNULL(OP.IsDeleted, 0) = 0)
+                  AND (K.Rol <> 3 OR ISNULL(SP.IsDeleted, 0) = 0)
+                  AND (K.Rol <> 4 OR ISNULL(V.IsDeleted, 0) = 0)
+                  -- DB'deki GenelAdmin satırı oturum açamaz (yalnızca yapılandırmadan)
+                  AND ISNULL(K.Rol, 0) <> 5";
 
             try
             {

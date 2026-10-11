@@ -25,7 +25,8 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 .Where(k => !k.IsDeleted)
                 .SingleOrDefaultAsync(u => u.KullaniciAdi == kullaniciAdi, ct);
 
-            if (user is null)
+            // DB'deki GenelAdmin satırı oturum açamaz; Genel Yönetici yalnızca yapılandırmadan doğrulanır
+            if (user is null || user.Rol == KullaniciRolu.GenelAdmin)
                 return null;
 
             var hasher = new PasswordHasher<KullaniciModel>();

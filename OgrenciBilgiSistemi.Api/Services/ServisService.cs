@@ -182,7 +182,7 @@ namespace OgrenciBilgiSistemi.Api.Services
         /// <summary>
         /// Servis yoklamasını toplu olarak kaydeder veya günceller.
         /// </summary>
-        public async Task ServisYoklamaKaydet(
+        public async Task<List<(int OgrenciId, int DurumId)>> ServisYoklamaKaydet(
             IEnumerable<(int OgrenciId, int DurumId)> yoklamaVerisi,
             int kullaniciId,
             int periyot)
@@ -196,7 +196,8 @@ namespace OgrenciBilgiSistemi.Api.Services
                 const string query = @"
                     DECLARE @Bugun DATE = CAST(GETDATE() AS DATE);
                     MERGE INTO ServisYoklamalar AS target
-                    USING (SELECT @ogrenciId AS OgrenciId) AS source
+                    USING (SELECT O.OgrenciId FROM Ogrenciler O
+                           WHERE O.OgrenciId = @ogrenciId AND O.ServisId = @kullaniciId AND O.IsDeleted = 0) AS source
                     ON (target.OgrenciId = source.OgrenciId
                         AND target.KullaniciId = @kullaniciId
                         AND target.Periyot = @periyot
@@ -209,6 +210,8 @@ namespace OgrenciBilgiSistemi.Api.Services
                         INSERT (OgrenciId, KullaniciId, DurumId, Periyot, SmsGonderildi, OlusturulmaTarihi)
                         VALUES (@ogrenciId, @kullaniciId, @durumId, @periyot, 0, GETDATE());";
 
+                var yazilanlar = new List<(int OgrenciId, int DurumId)>();
+
                 foreach (var kayit in yoklamaVerisi)
                 {
                     await using var cmd = new SqlCommand(query, conn, transaction);
@@ -216,10 +219,13 @@ namespace OgrenciBilgiSistemi.Api.Services
                     cmd.Parameters.AddWithValue("@durumId", kayit.DurumId);
                     cmd.Parameters.AddWithValue("@kullaniciId", kullaniciId);
                     cmd.Parameters.AddWithValue("@periyot", periyot);
-                    await cmd.ExecuteNonQueryAsync();
+
+                    if (await cmd.ExecuteNonQueryAsync() > 0)
+                        yazilanlar.Add(kayit);
                 }
 
                 await transaction.CommitAsync();
+                return yazilanlar;
             }
             catch
             {

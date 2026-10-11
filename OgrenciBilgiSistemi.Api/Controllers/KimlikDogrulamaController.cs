@@ -57,22 +57,6 @@ namespace OgrenciBilgiSistemi.Api.Controllers
             return Ok(okullar);
         }
 
-        /// <summary>
-        /// Genel Admin şifre hash'i üretmek için geçici endpoint.
-        /// Hash alındıktan sonra bu endpoint kaldırılabilir.
-        /// </summary>
-        [Authorize(Policy = "AdminOnly")]
-        [HttpGet("hash-uret")]
-        public IActionResult HashUret([FromQuery] string sifre)
-        {
-            if (string.IsNullOrWhiteSpace(sifre))
-                return BadRequest("Şifre boş olamaz.");
-
-            var hasher = new Microsoft.AspNetCore.Identity.PasswordHasher<object>();
-            var hash = hasher.HashPassword(null!, sifre);
-            return Ok(new { hash });
-        }
-
         [AllowAnonymous]
         [HttpPost("login")]
         public async Task<IActionResult> GirisYap([FromBody] ApiGirisIstegiDto istek)

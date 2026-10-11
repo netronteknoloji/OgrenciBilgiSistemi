@@ -52,6 +52,10 @@ namespace OgrenciBilgiSistemi.Services.Implementations
 
         public async Task EkleAsync(KullaniciModel model, CancellationToken ct = default)
         {
+            // Genel Yönetici yalnızca yapılandırmadan gelir; panelden atanamaz
+            if (model.Rol == KullaniciRolu.GenelAdmin)
+                throw new InvalidOperationException("Genel Yönetici rolü atanamaz.");
+
             // OgretmenProfil: görsel kaydet
             if (model.Rol == KullaniciRolu.Ogretmen && model.OgretmenProfil != null)
             {
@@ -81,6 +85,9 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 .Include(k => k.VeliProfil)
                 .FirstOrDefaultAsync(k => k.KullaniciId == model.KullaniciId, ct)
                 ?? throw new KeyNotFoundException("Kullanıcı bulunamadı.");
+
+            if (model.Rol == KullaniciRolu.GenelAdmin || kullanici.Rol == KullaniciRolu.GenelAdmin)
+                throw new InvalidOperationException("Genel Yönetici rolü atanamaz ve bu kullanıcı düzenlenemez.");
 
             var eskiOgretmenBirimId = kullanici.OgretmenProfil?.BirimId;
 
