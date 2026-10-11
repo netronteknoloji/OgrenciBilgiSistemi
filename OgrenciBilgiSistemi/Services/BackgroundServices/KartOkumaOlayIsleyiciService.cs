@@ -4,22 +4,23 @@ using OgrenciBilgiSistemi.Data;
 using OgrenciBilgiSistemi.Dtos;
 using OgrenciBilgiSistemi.Hubs;
 using OgrenciBilgiSistemi.Services.Interfaces;
+using OgrenciBilgiSistemi.Shared.Services;
 
 public class KartOkumaOlayIsleyiciService : IHostedService
 {
     private readonly IZKTecoService _zkTecoService;
-    private readonly IServiceScopeFactory _scopeFactory;
+    private readonly TenantKapsamFabrikasi _tenantKapsam;
     private readonly IHubContext<KartOkuHub> _hub;
     private readonly ILogger<KartOkumaOlayIsleyiciService> _logger;
 
     public KartOkumaOlayIsleyiciService(
         IZKTecoService zkTecoService,
-        IServiceScopeFactory scopeFactory,
+        TenantKapsamFabrikasi tenantKapsam,
         IHubContext<KartOkuHub> hub,
         ILogger<KartOkumaOlayIsleyiciService> logger)
     {
         _zkTecoService = zkTecoService;
-        _scopeFactory = scopeFactory;
+        _tenantKapsam = tenantKapsam;
         _hub = hub;
         _logger = logger;
     }
@@ -47,9 +48,17 @@ public class KartOkumaOlayIsleyiciService : IHostedService
         var now = DateTime.Now;
         var norm = Normalize(kartNo);
 
+        // Olay, bağlı cihazın okulunda işlenir; okul bilinmiyorsa hiçbir DB'ye yazılmaz
+        var okulKodu = _zkTecoService.BagliOkulKodu;
+        if (string.IsNullOrEmpty(okulKodu))
+        {
+            _logger.LogWarning("ZKTeco kart olayı geldi ama bağlı cihazın okulu bilinmiyor; işlenmedi.");
+            return;
+        }
+
         try
         {
-            using var scope = _scopeFactory.CreateScope();
+            await using var scope = _tenantKapsam.Olustur(okulKodu);
             var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
             var svc = scope.ServiceProvider.GetRequiredService<IGecisService>();
 
@@ -62,10 +71,11 @@ public class KartOkumaOlayIsleyiciService : IHostedService
                 return;
             }
 
-            // 2) Bu worker’ın kullanacağı ZKTeco cihazını seç
-            // (Basit: ilk aktif ZKTeco. İstersen appsettings ile spesifik CihazKodu/Id bağlayabilirsin.)
+            // 2) Olayı üreten cihaz: bağlı cihaz (yoksa okulun ilk aktif ZKTeco cihazı)
+            var bagliCihazId = _zkTecoService.CurrentCihazId;
             var cihaz = await db.Cihazlar.AsNoTracking()
-                .Where(c => c.DonanimTipi == DonanimTipi.ZKTeco && !c.IsDeleted)
+                .Where(c => c.DonanimTipi == DonanimTipi.ZKTeco && !c.IsDeleted
+                         && (bagliCihazId == null || c.CihazId == bagliCihazId))
                 .OrderBy(c => c.CihazId)
                 .FirstOrDefaultAsync();
 
@@ -88,7 +98,7 @@ public class KartOkumaOlayIsleyiciService : IHostedService
                 {
                     try
                     {
-                        using var smsScope = _scopeFactory.CreateScope();
+                        await using var smsScope = _tenantKapsam.Olustur(okulKodu);
                         var smsSvc = smsScope.ServiceProvider.GetRequiredService<ISmsGonderimService>();
                         await smsSvc.GecisSmsBildir(ogr.OgrenciId, ogr.OgrenciAdSoyad, sonuc.GecisTipi, now);
                     }

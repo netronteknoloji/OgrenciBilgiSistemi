@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
 using OgrenciBilgiSistemi.Constants;
 using OgrenciBilgiSistemi.Data;
+using OgrenciBilgiSistemi.Shared.Services;
 using System.Security.Claims;
 
 namespace OgrenciBilgiSistemi.Infrastructure
@@ -14,10 +15,12 @@ namespace OgrenciBilgiSistemi.Infrastructure
     public class MenuYetkiFilter : IAsyncAuthorizationFilter
     {
         private readonly AppDbContext _db;
+        private readonly TenantBaglami _tenant;
 
-        public MenuYetkiFilter(AppDbContext db)
+        public MenuYetkiFilter(AppDbContext db, TenantBaglami tenant)
         {
             _db = db;
+            _tenant = tenant;
         }
 
         public async Task OnAuthorizationAsync(AuthorizationFilterContext context)
@@ -30,6 +33,10 @@ namespace OgrenciBilgiSistemi.Infrastructure
 
             // Local Admin her yere erişebilir
             if (user.IsInRole(RolAdlari.Admin))
+                return;
+
+            // Okul bağlamı yoksa DB'ye gidilmez; TenantZorunluFilter okul seçimine/girişe yönlendirir
+            if (string.IsNullOrEmpty(_tenant.ConnectionString))
                 return;
 
             // Mevcut controller ve action adlarını al

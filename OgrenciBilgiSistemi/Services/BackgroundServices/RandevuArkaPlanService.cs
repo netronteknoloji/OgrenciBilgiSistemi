@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using OgrenciBilgiSistemi.Data;
 using OgrenciBilgiSistemi.Services.Interfaces;
+using OgrenciBilgiSistemi.Shared.Services;
 
 namespace OgrenciBilgiSistemi.Services.BackgroundServices;
 
@@ -8,12 +9,12 @@ public sealed class RandevuArkaPlanService : BackgroundService
 {
     private static readonly TimeSpan POLL_INTERVAL = TimeSpan.FromMinutes(15);
 
-    private readonly IServiceScopeFactory _scopeFactory;
+    private readonly TenantKapsamFabrikasi _tenantKapsam;
     private readonly ILogger<RandevuArkaPlanService> _logger;
 
-    public RandevuArkaPlanService(IServiceScopeFactory scopeFactory, ILogger<RandevuArkaPlanService> logger)
+    public RandevuArkaPlanService(TenantKapsamFabrikasi tenantKapsam, ILogger<RandevuArkaPlanService> logger)
     {
-        _scopeFactory = scopeFactory;
+        _tenantKapsam = tenantKapsam;
         _logger = logger;
     }
 
@@ -25,8 +26,8 @@ public sealed class RandevuArkaPlanService : BackgroundService
         {
             try
             {
-                await TamamlanmisRandevulariIsaretle(stoppingToken);
-                await HatirlatmaGonder(stoppingToken);
+                await _tenantKapsam.HerOkulIcinAsync("Randevu tamamlama", TamamlanmisRandevulariIsaretle, stoppingToken);
+                await _tenantKapsam.HerOkulIcinAsync("Randevu hatırlatma", HatirlatmaGonder, stoppingToken);
             }
             catch (OperationCanceledException) { break; }
             catch (Exception ex)
@@ -39,10 +40,9 @@ public sealed class RandevuArkaPlanService : BackgroundService
         }
     }
 
-    private async Task TamamlanmisRandevulariIsaretle(CancellationToken ct)
+    private async Task TamamlanmisRandevulariIsaretle(IServiceProvider sp, CancellationToken ct)
     {
-        using var scope = _scopeFactory.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var db = sp.GetRequiredService<AppDbContext>();
 
         var simdi = DateTime.Now;
         var gecmisRandevular = await db.Randevular
@@ -62,11 +62,10 @@ public sealed class RandevuArkaPlanService : BackgroundService
         _logger.LogInformation("{Adet} randevu tamamlandı olarak işaretlendi.", gecmisRandevular.Count);
     }
 
-    private async Task HatirlatmaGonder(CancellationToken ct)
+    private async Task HatirlatmaGonder(IServiceProvider sp, CancellationToken ct)
     {
-        using var scope = _scopeFactory.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        var bildirimService = scope.ServiceProvider.GetRequiredService<IBildirimService>();
+        var db = sp.GetRequiredService<AppDbContext>();
+        var bildirimService = sp.GetRequiredService<IBildirimService>();
 
         var simdi = DateTime.Now;
         var birSaatSonra = simdi.AddHours(1);

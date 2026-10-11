@@ -33,6 +33,7 @@ if (string.IsNullOrWhiteSpace(jwtKey))
 builder.Services.Configure<List<OkulBilgiAyari>>(builder.Configuration.GetSection("Okullar"));
 builder.Services.AddSingleton<OkulYapilandirmaServisi>();
 builder.Services.AddScoped<TenantBaglami>();
+builder.Services.AddSingleton<TenantKapsamFabrikasi>();
 
 // --------------------
 // CORS — appsettings'ten yapılandırılmış origin'ler

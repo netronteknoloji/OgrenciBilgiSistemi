@@ -7,6 +7,7 @@ using OgrenciBilgiSistemi.Data;
 using OgrenciBilgiSistemi.Models;
 using OgrenciBilgiSistemi.Sms;
 using zkemkeeper;
+using OgrenciBilgiSistemi.Shared.Services;
 
 namespace OgrenciBilgiSistemi.Services.BackgroundServices;
 
@@ -24,14 +25,14 @@ public sealed class YemekhanePollingService : BackgroundService
 
     private static readonly CultureInfo Tr = CultureInfo.GetCultureInfo("tr-TR");
 
-    private readonly IServiceScopeFactory _scopeFactory;
+    private readonly TenantKapsamFabrikasi _tenantKapsam;
     private readonly ILogger<YemekhanePollingService> _logger;
 
     public YemekhanePollingService(
-        IServiceScopeFactory scopeFactory,
+        TenantKapsamFabrikasi tenantKapsam,
         ILogger<YemekhanePollingService> logger)
     {
-        _scopeFactory = scopeFactory;
+        _tenantKapsam = tenantKapsam;
         _logger = logger;
     }
 
@@ -43,8 +44,8 @@ public sealed class YemekhanePollingService : BackgroundService
         {
             try
             {
-                await YemekhaneLogIsle(stoppingToken);
-                await BekleyenSmsGonder(stoppingToken);
+                await _tenantKapsam.HerOkulIcinAsync("Yemekhane log işleme", YemekhaneLogIsle, stoppingToken);
+                await _tenantKapsam.HerOkulIcinAsync("Yemekhane SMS retry", BekleyenSmsGonder, stoppingToken);
             }
             catch (OperationCanceledException) { break; }
             catch (Exception ex)
@@ -62,10 +63,9 @@ public sealed class YemekhanePollingService : BackgroundService
     // -------------------------------------------------------
     // 1) Cihazlardan log çek, DB'ye yaz
     // -------------------------------------------------------
-    private async Task YemekhaneLogIsle(CancellationToken ct)
+    private async Task YemekhaneLogIsle(IServiceProvider sp, CancellationToken ct)
     {
-        using var scope = _scopeFactory.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var db = sp.GetRequiredService<AppDbContext>();
 
         var cihazlar = await db.Cihazlar.AsNoTracking()
             .Where(c => !c.IsDeleted
@@ -348,12 +348,11 @@ public sealed class YemekhanePollingService : BackgroundService
     // -------------------------------------------------------
     // 2) Bekleyen SMS'leri gönder
     // -------------------------------------------------------
-    private async Task BekleyenSmsGonder(CancellationToken ct)
+    private async Task BekleyenSmsGonder(IServiceProvider sp, CancellationToken ct)
     {
-        using var scope = _scopeFactory.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        var smsService = scope.ServiceProvider.GetRequiredService<ISmsService>();
-        var smsAyar = scope.ServiceProvider.GetRequiredService<IOptions<SmsAyarlari>>().Value;
+        var db = sp.GetRequiredService<AppDbContext>();
+        var smsService = sp.GetRequiredService<ISmsService>();
+        var smsAyar = sp.GetRequiredService<IOptions<SmsAyarlari>>().Value;
 
         if (!smsAyar.Aktif) return;
 

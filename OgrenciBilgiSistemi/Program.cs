@@ -28,9 +28,12 @@ builder.Services.Configure<List<OkulBilgiAyari>>(builder.Configuration.GetSectio
 builder.Services.Configure<OgrenciBilgiSistemi.Models.KartOkumaAyarlari>(builder.Configuration.GetSection("KartOkuma"));
 builder.Services.AddSingleton<OkulYapilandirmaServisi>();
 builder.Services.AddScoped<TenantBaglami>();
+builder.Services.AddSingleton<TenantKapsamFabrikasi>();
 
 // --------------------
 // DbContext — per-request connection string (pool kullanılamaz)
+// Tenant yoksa sağlayıcı yapılandırılmaz: DbContext ilk kullanımda hata verir (başka okula düşmez).
+// İstek dışı işler (arka plan, Task.Run) kapsamı TenantKapsamFabrikasi ile açmalıdır.
 // --------------------
 builder.Services.AddDbContext<AppDbContext>((serviceProvider, options) =>
 {
@@ -42,19 +45,6 @@ builder.Services.AddDbContext<AppDbContext>((serviceProvider, options) =>
                 maxRetryCount: 5,
                 maxRetryDelay: TimeSpan.FromSeconds(10),
                 errorNumbersToAdd: null));
-    }
-    else
-    {
-        // Fallback: ilk okulun connection string'i (background service'ler için)
-        var firstOkul = okullar.FirstOrDefault();
-        if (firstOkul is not null && !string.IsNullOrEmpty(firstOkul.ConnectionString))
-        {
-            options.UseSqlServer(firstOkul.ConnectionString, sql =>
-                sql.EnableRetryOnFailure(
-                    maxRetryCount: 5,
-                    maxRetryDelay: TimeSpan.FromSeconds(10),
-                    errorNumbersToAdd: null));
-        }
     }
 });
 

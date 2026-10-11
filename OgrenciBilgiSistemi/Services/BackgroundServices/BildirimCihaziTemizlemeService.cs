@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using OgrenciBilgiSistemi.Data;
+using OgrenciBilgiSistemi.Shared.Services;
 
 namespace OgrenciBilgiSistemi.Services.BackgroundServices;
 
@@ -13,14 +14,14 @@ public sealed class BildirimCihaziTemizlemeService : BackgroundService
     private static readonly TimeSpan POLL_INTERVAL = TimeSpan.FromDays(1);
     private const int TOKEN_OMUR_GUN = 90;
 
-    private readonly IServiceScopeFactory _scopeFactory;
+    private readonly TenantKapsamFabrikasi _tenantKapsam;
     private readonly ILogger<BildirimCihaziTemizlemeService> _logger;
 
     public BildirimCihaziTemizlemeService(
-        IServiceScopeFactory scopeFactory,
+        TenantKapsamFabrikasi tenantKapsam,
         ILogger<BildirimCihaziTemizlemeService> logger)
     {
-        _scopeFactory = scopeFactory;
+        _tenantKapsam = tenantKapsam;
         _logger = logger;
     }
 
@@ -32,7 +33,7 @@ public sealed class BildirimCihaziTemizlemeService : BackgroundService
         {
             try
             {
-                await EskiTokenlariSil(stoppingToken);
+                await _tenantKapsam.HerOkulIcinAsync("FCM token temizliği", EskiTokenlariSil, stoppingToken);
             }
             catch (OperationCanceledException) { break; }
             catch (Exception ex)
@@ -45,10 +46,9 @@ public sealed class BildirimCihaziTemizlemeService : BackgroundService
         }
     }
 
-    private async Task EskiTokenlariSil(CancellationToken ct)
+    private async Task EskiTokenlariSil(IServiceProvider sp, CancellationToken ct)
     {
-        using var scope = _scopeFactory.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var db = sp.GetRequiredService<AppDbContext>();
 
         var sinir = DateTime.Now.AddDays(-TOKEN_OMUR_GUN);
 

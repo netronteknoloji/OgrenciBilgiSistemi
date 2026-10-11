@@ -18,7 +18,7 @@ namespace OgrenciBilgiSistemi.Controllers
         private readonly ICihazService _cihazService;
         private readonly IKartOkuService _kartOkuService;
         private readonly IHubContext<KartOkuHub> _hub;
-        private readonly IServiceScopeFactory _scopeFactory;
+        private readonly TenantKapsamFabrikasi _tenantKapsam;
         private readonly ILogger<KartOkuController> _logger;
         private readonly TenantBaglami _tenant;
         private readonly KartOkumaAyarlari _ayar;
@@ -33,7 +33,7 @@ namespace OgrenciBilgiSistemi.Controllers
             ICihazService cihazService,
             IKartOkuService kartOkuService,
             IHubContext<KartOkuHub> hub,
-            IServiceScopeFactory scopeFactory,
+            TenantKapsamFabrikasi tenantKapsam,
             ILogger<KartOkuController> logger,
             TenantBaglami tenant,
             IOptions<KartOkumaAyarlari> ayar)
@@ -42,7 +42,7 @@ namespace OgrenciBilgiSistemi.Controllers
             _cihazService = cihazService;
             _kartOkuService = kartOkuService;
             _hub = hub;
-            _scopeFactory = scopeFactory;
+            _tenantKapsam = tenantKapsam;
             _logger = logger;
             _tenant = tenant;
             _ayar = ayar.Value;
@@ -396,11 +396,14 @@ namespace OgrenciBilgiSistemi.Controllers
                     var gecisTipiKopya = sonuc.GecisTipi;
                     var anlikZaman = now;
 
+                    var okulKodu = _tenant.OkulKodu;
+
                     _ = Task.Run(async () =>
                     {
                         try
                         {
-                            using var smsScope = _scopeFactory.CreateScope();
+                            // İstek kapsamı bitmiş olabilir; SMS aynı okulun kapsamında gönderilir
+                            await using var smsScope = _tenantKapsam.Olustur(okulKodu);
                             var smsSvc = smsScope.ServiceProvider.GetRequiredService<ISmsGonderimService>();
                             await smsSvc.GecisSmsBildir(ogrId, ogrAdSoyad, gecisTipiKopya, anlikZaman);
                         }

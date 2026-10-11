@@ -13,15 +13,15 @@ namespace OgrenciBilgiSistemi.Api.Controllers
     {
         private readonly IServisService _servisService;
         private readonly IOgrenciService _ogrenciService;
-        private readonly IServiceScopeFactory _scopeFactory;
+        private readonly TenantKapsamFabrikasi _tenantKapsam;
         private readonly TenantBaglami _tenantBaglami;
         private readonly ILogger<ServisController> _logger;
 
-        public ServisController(IServisService servisService, IOgrenciService ogrenciService, IServiceScopeFactory scopeFactory, TenantBaglami tenantBaglami, ILogger<ServisController> logger)
+        public ServisController(IServisService servisService, IOgrenciService ogrenciService, TenantKapsamFabrikasi tenantKapsam, TenantBaglami tenantBaglami, ILogger<ServisController> logger)
         {
             _servisService = servisService;
             _ogrenciService = ogrenciService;
-            _scopeFactory = scopeFactory;
+            _tenantKapsam = tenantKapsam;
             _tenantBaglami = tenantBaglami;
             _logger = logger;
         }
@@ -108,23 +108,14 @@ namespace OgrenciBilgiSistemi.Api.Controllers
                 );
 
                 // SMS bildirimini arka planda gönder
-                // Tenant bilgileri istek scope'undan snapshot alınır; arka plan scope'unda
-                // TenantBaglami otomatik doldurulmadığı için manuel set edilir.
-                var tenantSnapshot = (
-                    OkulKodu: _tenantBaglami.OkulKodu,
-                    ConnectionString: _tenantBaglami.ConnectionString,
-                    OkulAdi: _tenantBaglami.OkulAdi
-                );
+                // İstek kapsamı bitmiş olabilir; SMS aynı okulun kapsamında gönderilir
+                var okulKodu = _tenantBaglami.OkulKodu;
 
                 _ = Task.Run(async () =>
                 {
                     try
                     {
-                        using var scope = _scopeFactory.CreateScope();
-                        var tenant = scope.ServiceProvider.GetRequiredService<TenantBaglami>();
-                        tenant.OkulKodu = tenantSnapshot.OkulKodu;
-                        tenant.ConnectionString = tenantSnapshot.ConnectionString;
-                        tenant.OkulAdi = tenantSnapshot.OkulAdi;
+                        await using var scope = _tenantKapsam.Olustur(okulKodu);
 
                         var smsBildirim = scope.ServiceProvider.GetRequiredService<IYoklamaSmsBildirimService>();
                         await smsBildirim.ServisYoklamaBildir(kayitlar, model.Periyot);

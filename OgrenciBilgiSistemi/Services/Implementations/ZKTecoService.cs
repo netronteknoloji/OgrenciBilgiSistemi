@@ -1,6 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using OgrenciBilgiSistemi.Data;
+using OgrenciBilgiSistemi.Models;
 using OgrenciBilgiSistemi.Services.Interfaces;
+using OgrenciBilgiSistemi.Shared.Services;
 using System.Runtime.InteropServices;
 using zkemkeeper;
 
@@ -11,7 +13,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
         private const int MACHINE_NO = 1;
 
         private readonly ILogger<ZKTecoService> _logger;
-        private readonly IServiceScopeFactory _scopeFactory;
+        private readonly TenantKapsamFabrikasi _tenantKapsam;
 
         private CZKEM? _zkemkeeper;
         private readonly SemaphoreSlim _connLock = new(1, 1);
@@ -19,15 +21,16 @@ namespace OgrenciBilgiSistemi.Services.Implementations
         private event Func<string, Task>? _internalCardHandler;
 
         // Bağlanılan cihaz bilgisi (tek cihaz senaryosu için)
+        public string? BagliOkulKodu { get; private set; }
         public int? CurrentCihazId { get; private set; }
         public IstasyonTipi? CurrentIstasyonTipi { get; private set; }
 
         public bool IsConnected { get; private set; }
 
-        public ZKTecoService(ILogger<ZKTecoService> logger, IServiceScopeFactory serviceScopeFactory)
+        public ZKTecoService(ILogger<ZKTecoService> logger, TenantKapsamFabrikasi tenantKapsam)
         {
             _logger = logger;
-            _scopeFactory = serviceScopeFactory;
+            _tenantKapsam = tenantKapsam;
         }
 
         public event Func<string, Task> OnCardReadAsync
@@ -43,17 +46,29 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             {
                 if (IsConnected) return true;
 
-                using var scope = _scopeFactory.CreateScope();
-                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                // Tek gerçek zamanlı bağlantı: okullar sırayla taranır, uygun ZKTeco cihazı olan ilk okul seçilir.
+                // Kart olayları bu okulun kapsamında işlenir (BagliOkulKodu).
+                CihazModel? cihaz = null;
+                string? cihazOkulKodu = null;
+                foreach (var okul in _tenantKapsam.Okullar)
+                {
+                    await using var scope = _tenantKapsam.Olustur(okul.OkulKodu);
+                    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-                // 🔧 DonanimTipi'ni kullan
-                var cihaz = await db.Cihazlar.AsNoTracking()
-                    .Where(c => !c.IsDeleted
-                             && c.DonanimTipi == DonanimTipi.ZKTeco
-                             && !string.IsNullOrWhiteSpace(c.IpAdresi)
-                             && c.PortNo.HasValue && c.PortNo.Value > 0)
-                    .OrderBy(c => c.CihazId)
-                    .FirstOrDefaultAsync();
+                    cihaz = await db.Cihazlar.AsNoTracking()
+                        .Where(c => !c.IsDeleted
+                                 && c.DonanimTipi == DonanimTipi.ZKTeco
+                                 && !string.IsNullOrWhiteSpace(c.IpAdresi)
+                                 && c.PortNo.HasValue && c.PortNo.Value > 0)
+                        .OrderBy(c => c.CihazId)
+                        .FirstOrDefaultAsync();
+
+                    if (cihaz is not null)
+                    {
+                        cihazOkulKodu = okul.OkulKodu;
+                        break;
+                    }
+                }
 
                 if (cihaz is null)
                 {
@@ -82,6 +97,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 _zkemkeeper.OnHIDNum += zkem_OnHIDNum;
 
                 // Bağlanılan cihazı hatırla
+                BagliOkulKodu = cihazOkulKodu;
                 CurrentCihazId = cihaz.CihazId;
                 CurrentIstasyonTipi = cihaz.IstasyonTipi;
 

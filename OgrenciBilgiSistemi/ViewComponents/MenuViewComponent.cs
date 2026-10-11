@@ -16,6 +16,11 @@ public class MenuViewComponent : ViewComponent
         if (user is null || user.Identity?.IsAuthenticated != true)
             return View("Default", Array.Empty<MenuOgeDto>());
 
+        // Okul seçilmeden (ör. Genel Admin okul seçim ekranı) menü DB'den okunamaz
+        var tenant = HttpContext.RequestServices.GetRequiredService<OgrenciBilgiSistemi.Shared.Services.TenantBaglami>();
+        if (string.IsNullOrEmpty(tenant.ConnectionString))
+            return View("Default", Array.Empty<MenuOgeDto>());
+
         // GenelAdmin: DB'deki menü atamalarına göre göster
         if (user.IsInRole("GenelAdmin"))
         {

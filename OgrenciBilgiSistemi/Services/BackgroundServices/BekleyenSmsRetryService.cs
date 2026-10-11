@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using OgrenciBilgiSistemi.Data;
 using OgrenciBilgiSistemi.Models;
 using OgrenciBilgiSistemi.Sms;
+using OgrenciBilgiSistemi.Shared.Services;
 
 namespace OgrenciBilgiSistemi.Services.BackgroundServices;
 
@@ -18,12 +19,12 @@ public sealed class BekleyenSmsRetryService : BackgroundService
 
     private static readonly TimeSpan POLL_INTERVAL = TimeSpan.FromMinutes(2);
 
-    private readonly IServiceScopeFactory _scopeFactory;
+    private readonly TenantKapsamFabrikasi _tenantKapsam;
     private readonly ILogger<BekleyenSmsRetryService> _logger;
 
-    public BekleyenSmsRetryService(IServiceScopeFactory scopeFactory, ILogger<BekleyenSmsRetryService> logger)
+    public BekleyenSmsRetryService(TenantKapsamFabrikasi tenantKapsam, ILogger<BekleyenSmsRetryService> logger)
     {
-        _scopeFactory = scopeFactory;
+        _tenantKapsam = tenantKapsam;
         _logger = logger;
     }
 
@@ -35,7 +36,7 @@ public sealed class BekleyenSmsRetryService : BackgroundService
         {
             try
             {
-                await AnaKapiBekleyenleriGonder(stoppingToken);
+                await _tenantKapsam.HerOkulIcinAsync("Ana Kapı SMS retry", AnaKapiBekleyenleriGonder, stoppingToken);
             }
             catch (OperationCanceledException) { break; }
             catch (Exception ex)
@@ -48,12 +49,11 @@ public sealed class BekleyenSmsRetryService : BackgroundService
         }
     }
 
-    private async Task AnaKapiBekleyenleriGonder(CancellationToken ct)
+    private async Task AnaKapiBekleyenleriGonder(IServiceProvider sp, CancellationToken ct)
     {
-        using var scope = _scopeFactory.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        var smsService = scope.ServiceProvider.GetRequiredService<ISmsService>();
-        var smsAyar = scope.ServiceProvider.GetRequiredService<IOptions<SmsAyarlari>>().Value;
+        var db = sp.GetRequiredService<AppDbContext>();
+        var smsService = sp.GetRequiredService<ISmsService>();
+        var smsAyar = sp.GetRequiredService<IOptions<SmsAyarlari>>().Value;
 
         if (!smsAyar.Aktif) return;
 

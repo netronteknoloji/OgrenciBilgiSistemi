@@ -37,7 +37,8 @@ Mobil     → Shared (HTTP üzerinden Api'ye)
 ## Multi-Tenancy
 
 - Tenant listesi: `appsettings.json` → `Okullar[]`.
-- DbContext **per-request connection string** alır.
+- DbContext **per-request connection string** alır. Tenant yoksa DB'ye bağlanmaz ("ilk okul" fallback'i yok).
+- İstek dışı işler (arka plan servisi, `Task.Run`) kapsamı `TenantKapsamFabrikasi` ile açar: `Olustur(okulKodu)` veya `HerOkulIcinAsync(...)`. Çıplak `IServiceScopeFactory.CreateScope()` ile DB'ye erişme.
 - Migration sadece MVC'de; deploy için idempotent script üretip her DB'de çalıştır.
 
 ## Genel Yasaklar

@@ -6,6 +6,12 @@
         Task DisconnectAsync();
         bool IsConnected { get; }
 
+        /// <summary>Bağlı cihazın ait olduğu okul; kart olayları bu okulun kapsamında işlenir.</summary>
+        string? BagliOkulKodu { get; }
+
+        /// <summary>Bağlı cihazın Id'si (BagliOkulKodu DB'sinde).</summary>
+        int? CurrentCihazId { get; }
+
         /// <summary>
         /// ZKTeco cihazdan kart okunduğunda tetiklenen async event.
         /// </summary>

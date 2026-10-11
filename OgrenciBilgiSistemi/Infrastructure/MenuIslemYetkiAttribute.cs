@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
 using OgrenciBilgiSistemi.Constants;
 using OgrenciBilgiSistemi.Data;
+using OgrenciBilgiSistemi.Shared.Services;
 using System.Security.Claims;
 
 namespace OgrenciBilgiSistemi.Infrastructure
@@ -25,12 +26,14 @@ namespace OgrenciBilgiSistemi.Infrastructure
     public class MenuIslemYetkiFilter : IAsyncAuthorizationFilter
     {
         private readonly AppDbContext _db;
+        private readonly TenantBaglami _tenant;
         private readonly string _controller;
         private readonly string _action;
 
-        public MenuIslemYetkiFilter(AppDbContext db, string controller, string action)
+        public MenuIslemYetkiFilter(AppDbContext db, TenantBaglami tenant, string controller, string action)
         {
             _db = db;
+            _tenant = tenant;
             _controller = controller;
             _action = action;
         }
@@ -43,6 +46,10 @@ namespace OgrenciBilgiSistemi.Infrastructure
                 return;
 
             if (user.IsInRole(RolAdlari.Admin))
+                return;
+
+            // Okul bağlamı yoksa DB'ye gidilmez; TenantZorunluFilter okul seçimine/girişe yönlendirir
+            if (string.IsNullOrEmpty(_tenant.ConnectionString))
                 return;
 
             int? kullaniciId = null;
