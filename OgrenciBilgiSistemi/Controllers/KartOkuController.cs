@@ -68,7 +68,12 @@ namespace OgrenciBilgiSistemi.Controllers
             public const string InfoOglenOk = "ÖĞLE ÇIKIŞI ONAYLANDI.";
             public const string InfoYemekOk = "YEMEKHANE GEÇİŞİ ONAYLANDI.";
             public const string InfoGenelOk = "Geçiş başarılı.";
+            public const string InfoOgleDonusOk = "ÖĞLE DÖNÜŞÜ ONAYLANDI.";
+            public const string ErrKartTanimsiz = "KART TANIMSIZ!";
         }
+
+        // Öğle çıkışından sonra bu süre dolmadan yapılan okutma dönüş sayılmaz (yanlışlıkla çift okutma).
+        private static readonly TimeSpan OgleDonusMinSure = TimeSpan.FromMinutes(10);
 
         [HttpGet("")]
         public async Task<IActionResult> Index(string? cihazKodu, CancellationToken ct)
@@ -119,7 +124,23 @@ namespace OgrenciBilgiSistemi.Controllers
                 var ogrenci = await _kartOkuService.GetOgrenciByKartNoAsync(no, ct);
 
                 if (ogrenci is null)
+                {
+                    await GuvenliYayinAsync(_hub, new OgrenciBilgisiDto
+                    {
+                        OgrenciAdSoyad = "-",
+                        OgrenciSinif = "-",
+                        OgrenciGirisSaati = "-",
+                        OgrenciCikisSaati = "-",
+                        GecisTipi = "Reddedildi",
+                        Istasyon = cihaz.IstasyonTipi.ToString(),
+                        CihazAdi = cihaz.CihazAdi,
+                        CihazKodu = cihaz.CihazKodu,
+                        Reason = "KART_TANIMSIZ",
+                        Error = Msg.ErrKartTanimsiz
+                    }, ct);
+
                     return NotFound("Kart tanımsız.");
+                }
 
                 var ogrenciSinif = ogrenci.Birim?.BirimAd ?? "-";
                 var now = DateTime.Now;
@@ -210,12 +231,34 @@ namespace OgrenciBilgiSistemi.Controllers
                 else if (cihaz.IstasyonTipi == IstasyonTipi.AnaKapi &&
                          ogrenci.OgrenciCikisDurumu == OglenCikisDurumu.Evet)
                 {
-                    var (cikisVarMi, girisVarMi) = await _kartOkuService.BugunAnaKapiHareketleriAsync(
+                    var (cikisVarMi, girisVarMi, cikisZamani) = await _kartOkuService.BugunAnaKapiHareketleriAsync(
                         ogrenci.OgrenciId, today, tomorrow, ct);
 
                     if (!cikisVarMi)
                     {
                         forcedGecisTipi = "Çıkış";
+                    }
+                    else if (!girisVarMi && cikisZamani.HasValue && now - cikisZamani.Value < OgleDonusMinSure)
+                    {
+                        // Çıkıştan hemen sonra tekrar okutma: dönüş sayma, kayıt/SMS yok
+                        await GuvenliYayinAsync(_hub, new OgrenciBilgisiDto
+                        {
+                            OgrenciAdSoyad = ogrenci.OgrenciAdSoyad,
+                            OgrenciNo = ogrenci.OgrenciNo,
+                            OgrenciSinif = ogrenciSinif,
+                            OgrenciGorsel = ogrenci.OgrenciGorsel,
+                            OgrenciGirisSaati = "-",
+                            OgrenciCikisSaati = cikisZamani.Value.ToString("HH:mm"),
+                            OglenCikisDurumu = ogrenci.OgrenciCikisDurumu,
+                            GecisTipi = "Reddedildi",
+                            Istasyon = cihaz.IstasyonTipi.ToString(),
+                            CihazAdi = cihaz.CihazAdi,
+                            CihazKodu = cihaz.CihazKodu,
+                            Reason = "ANA_KAPI_OGLE_CIKIS_YAPILDI",
+                            Error = $"Öğle çıkışı zaten yapıldı ({cikisZamani.Value:HH:mm})."
+                        }, ct);
+
+                        return Ok(new { durum = "YOK_SAYILDI", gerekce = "Öğle çıkışı az önce yapıldı.", reason = "ANA_KAPI_OGLE_CIKIS_YAPILDI" });
                     }
                     else if (!girisVarMi)
                     {
@@ -281,14 +324,16 @@ namespace OgrenciBilgiSistemi.Controllers
                     CihazKodu = cihaz.CihazKodu,
                     Reason =
                         cihaz.IstasyonTipi == IstasyonTipi.Yemekhane ? "YEMEKHANE_OK" :
-                        (cihaz.IstasyonTipi == IstasyonTipi.AnaKapi &&
-                         string.Equals(sonuc.GecisTipi, "Çıkış", StringComparison.OrdinalIgnoreCase))
-                            ? "ANA_KAPI_OGLE_OK" : "GENEL_OK",
+                        cihaz.IstasyonTipi != IstasyonTipi.AnaKapi ? "GENEL_OK" :
+                        string.Equals(sonuc.GecisTipi, "Çıkış", StringComparison.OrdinalIgnoreCase) ? "ANA_KAPI_OGLE_OK" :
+                        string.Equals(sonuc.GecisTipi, "Giriş", StringComparison.OrdinalIgnoreCase) ? "ANA_KAPI_OGLE_DONUS_OK" :
+                        "GENEL_OK",
                     Info =
                         cihaz.IstasyonTipi == IstasyonTipi.Yemekhane ? Msg.InfoYemekOk :
-                        (cihaz.IstasyonTipi == IstasyonTipi.AnaKapi &&
-                         string.Equals(sonuc.GecisTipi, "Çıkış", StringComparison.OrdinalIgnoreCase))
-                            ? Msg.InfoOglenOk : Msg.InfoGenelOk
+                        cihaz.IstasyonTipi != IstasyonTipi.AnaKapi ? Msg.InfoGenelOk :
+                        string.Equals(sonuc.GecisTipi, "Çıkış", StringComparison.OrdinalIgnoreCase) ? Msg.InfoOglenOk :
+                        string.Equals(sonuc.GecisTipi, "Giriş", StringComparison.OrdinalIgnoreCase) ? Msg.InfoOgleDonusOk :
+                        Msg.InfoGenelOk
                 };
 
                 await GuvenliYayinAsync(_hub, dto, ct);

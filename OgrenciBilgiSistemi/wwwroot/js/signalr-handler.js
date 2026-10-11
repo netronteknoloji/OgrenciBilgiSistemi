@@ -214,6 +214,24 @@ function getReasonSpec(reason, ctx) {
         text: infoMsg || "ÖĞLE ÇIKIŞI ONAYLANDI.",
         beep: false,
       };
+    case "ANA_KAPI_OGLE_DONUS_OK":
+      return {
+        fullBg: "#22c55e",
+        text: infoMsg || "ÖĞLE DÖNÜŞÜ ONAYLANDI.",
+        beep: false,
+      };
+    case "ANA_KAPI_OGLE_CIKIS_YAPILDI":
+      return {
+        fullBg: "#dc2626",
+        text: errMsg || "Öğle çıkışı zaten yapıldı!",
+        beep: true,
+      };
+    case "KART_TANIMSIZ":
+      return {
+        fullBg: "#dc2626",
+        text: errMsg || "KART TANIMSIZ!",
+        beep: true,
+      };
     case "ANA_KAPI_OGLE_RED":
       return {
         fullBg: "#dc2626",
@@ -311,6 +329,7 @@ function renderStudentFragment(o, lunch) {
     reasonStr === "ANA_KAPI_OGLE_RED" ||
     reasonStr === "ANA_KAPI_OGLE_LIMIT" ||
     reasonStr === "ANA_KAPI_OGLE_DONUS_LIMIT" ||
+    reasonStr === "ANA_KAPI_OGLE_CIKIS_YAPILDI" ||
     (o.gecisTipi || o.GecisTipi || "").toString().toLowerCase() ===
       "reddedildi";
 
@@ -334,6 +353,12 @@ function renderStudentFragment(o, lunch) {
     if (reasonStr === "ANA_KAPI_OGLE_OK") {
       badge.textContent = "Öğle Çıkış: Onaylandı";
       badge.style.color = "#16a34a";
+    } else if (reasonStr === "ANA_KAPI_OGLE_DONUS_OK") {
+      badge.textContent = "Öğle Dönüş: Onaylandı";
+      badge.style.color = "#16a34a";
+    } else if (reasonStr === "ANA_KAPI_OGLE_CIKIS_YAPILDI") {
+      badge.textContent = "Öğle Çıkış: Zaten Yapıldı!";
+      badge.style.color = "#dc2626";
     } else if (reasonStr === "ANA_KAPI_OGLE_RED") {
       badge.textContent = "Öğle Çıkış: İzin Yok!";
       badge.style.color = "#dc2626";
@@ -480,7 +505,10 @@ function showStudentInfo(o) {
 
   if (spec.beep) playBeep();
 
-  frag.appendChild(renderStudentFragment(o, lunchAllowedFromEnum(o)));
+  // Tanımsız kartta gösterilecek öğrenci yok; sadece banner
+  if (effectiveReason !== "KART_TANIMSIZ") {
+    frag.appendChild(renderStudentFragment(o, lunchAllowedFromEnum(o)));
+  }
 
   ogrenciBilgisiContainer.replaceChildren(frag);
 

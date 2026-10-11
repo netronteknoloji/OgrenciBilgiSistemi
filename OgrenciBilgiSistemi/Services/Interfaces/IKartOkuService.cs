@@ -12,5 +12,5 @@ public interface IKartOkuService
 
     Task<bool> YemekIzniVarMiAsync(int ogrenciId, int yil, int ay, CancellationToken ct = default);
     Task<bool> BugunYemekGirisiVarMiAsync(int ogrenciId, DateTime today, DateTime tomorrow, CancellationToken ct = default);
-    Task<(bool CikisVarMi, bool GirisVarMi)> BugunAnaKapiHareketleriAsync(int ogrenciId, DateTime today, DateTime tomorrow, CancellationToken ct = default);
+    Task<(bool CikisVarMi, bool GirisVarMi, DateTime? CikisZamani)> BugunAnaKapiHareketleriAsync(int ogrenciId, DateTime today, DateTime tomorrow, CancellationToken ct = default);
 }

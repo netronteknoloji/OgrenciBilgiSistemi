@@ -49,22 +49,30 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                                    || (l.OgrenciCTarih >= today && l.OgrenciCTarih < tomorrow)), ct);
         }
 
-        public async Task<(bool CikisVarMi, bool GirisVarMi)> BugunAnaKapiHareketleriAsync(
+        /// <summary>
+        /// Bugünkü Ana Kapı öğle hareketleri: ilk çıkış ve o çıkıştan SONRAKİ giriş (öğle dönüşü).
+        /// Çıkıştan önceki girişler dönüş sayılmaz.
+        /// </summary>
+        public async Task<(bool CikisVarMi, bool GirisVarMi, DateTime? CikisZamani)> BugunAnaKapiHareketleriAsync(
             int ogrenciId, DateTime today, DateTime tomorrow, CancellationToken ct = default)
         {
-            var cikisVarMi = await _context.OgrenciDetaylar.AsNoTracking()
-                .AnyAsync(l => l.OgrenciId == ogrenciId
-                               && l.Cihaz != null
-                               && l.Cihaz.IstasyonTipi == IstasyonTipi.AnaKapi
-                               && l.OgrenciCTarih >= today && l.OgrenciCTarih < tomorrow, ct);
+            var cikisZamani = await _context.OgrenciDetaylar.AsNoTracking()
+                .Where(l => l.OgrenciId == ogrenciId
+                            && l.Cihaz != null
+                            && l.Cihaz.IstasyonTipi == IstasyonTipi.AnaKapi
+                            && l.OgrenciCTarih >= today && l.OgrenciCTarih < tomorrow)
+                .MinAsync(l => l.OgrenciCTarih, ct);
+
+            if (cikisZamani is null)
+                return (false, false, null);
 
             var girisVarMi = await _context.OgrenciDetaylar.AsNoTracking()
                 .AnyAsync(l => l.OgrenciId == ogrenciId
                                && l.Cihaz != null
                                && l.Cihaz.IstasyonTipi == IstasyonTipi.AnaKapi
-                               && l.OgrenciGTarih >= today && l.OgrenciGTarih < tomorrow, ct);
+                               && l.OgrenciGTarih > cikisZamani && l.OgrenciGTarih < tomorrow, ct);
 
-            return (cikisVarMi, girisVarMi);
+            return (true, girisVarMi, cikisZamani);
         }
 
         public Task<OgrenciBilgisiDto> OgrenciDtoHazirla(
