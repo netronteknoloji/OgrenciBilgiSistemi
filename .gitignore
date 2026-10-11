@@ -9,6 +9,9 @@ appsettings.Development.json
 appsettings.Production.json
 secrets.json
 
+# Kullanıcı yüklemeleri (kişisel görseller, KVKK) — repoya girmez
+OgrenciBilgiSistemi/wwwroot/uploads/
+
 # Mobile embedded config hariç tutulmaz (build-time gömülü)
 !OgrenciBilgiSistemi.Mobil/appsettings.json
 
