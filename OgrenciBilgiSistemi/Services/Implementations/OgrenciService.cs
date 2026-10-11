@@ -96,10 +96,10 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             {
                 await using var tx = await _db.Database.BeginTransactionAsync(ct);
 
-                if (gorsel is not null)
-                {
-                    model.OgrenciGorsel = await _files.SaveImageAsync(gorsel, existingPath: null, ct);
-                }
+                // Görsel yolu yalnızca yüklenen dosyadan gelir; formdan gelen değer kullanılmaz
+                model.OgrenciGorsel = gorsel is not null
+                    ? await _files.SaveImageAsync(gorsel, existingPath: null, ct)
+                    : null;
 
                 model.OgretmenId = await BirimdenOgretmenBulAsync(model.BirimId, ct);
                 _db.Ogrenciler.Add(model);

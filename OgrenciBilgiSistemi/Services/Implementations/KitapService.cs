@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using OgrenciBilgiSistemi.Abstractions;
+using Microsoft.EntityFrameworkCore;
 using OgrenciBilgiSistemi.Data;
 using OgrenciBilgiSistemi.Models;
 using OgrenciBilgiSistemi.Services.Interfaces;
@@ -9,16 +10,16 @@ namespace OgrenciBilgiSistemi.Services.Implementations
     {
         private readonly AppDbContext _db;
         private readonly ILogger<KitapService> _logger;
-        private readonly IWebHostEnvironment _env;
+        private readonly IFileStorage _files;
 
         public KitapService(
             AppDbContext db,
             ILogger<KitapService> logger,
-            IWebHostEnvironment env)
+            IFileStorage files)
         {
             _db = db;
             _logger = logger;
-            _env = env;
+            _files = files;
         }
 
         // ======================
@@ -93,10 +94,8 @@ namespace OgrenciBilgiSistemi.Services.Implementations
         // ======================
         public async Task<int> AddAsync(KitapModel model, IFormFile? gorsel, CancellationToken ct = default)
         {
-            if (gorsel != null)
-            {
-                model.KitapGorsel = await UploadImageAsync(gorsel, null, ct);
-            }
+            // Görsel yolu yalnızca yüklenen dosyadan gelir; formdan gelen değer kullanılmaz
+            model.KitapGorsel = gorsel != null ? await _files.SaveImageAsync(gorsel, null, ct) : null;
 
             _db.Kitaplar.Add(model);
             await _db.SaveChangesAsync(ct);
@@ -116,7 +115,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
 
             if (gorsel != null)
             {
-                kitap.KitapGorsel = await UploadImageAsync(gorsel, kitap.KitapGorsel, ct);
+                kitap.KitapGorsel = await _files.SaveImageAsync(gorsel, kitap.KitapGorsel, ct);
             }
 
             await _db.SaveChangesAsync(ct);
@@ -142,43 +141,5 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             return await q.FirstOrDefaultAsync(k => k.KitapId == id, ct);
         }
 
-        private async Task<string> UploadImageAsync(IFormFile file, string? existingPath, CancellationToken ct)
-        {
-            if (file == null || file.Length == 0)
-                return existingPath ?? string.Empty;
-
-            var uploadsFolder = Path.Combine(_env.WebRootPath, "uploads");
-            if (!Directory.Exists(uploadsFolder))
-            {
-                Directory.CreateDirectory(uploadsFolder);
-            }
-
-            // Eski görsel varsa sil
-            if (!string.IsNullOrEmpty(existingPath))
-            {
-                var oldPhysicalPath = Path.Combine(_env.WebRootPath, existingPath.TrimStart('/'));
-                if (File.Exists(oldPhysicalPath))
-                {
-                    try
-                    {
-                        File.Delete(oldPhysicalPath);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogWarning(ex, "Eski kitap görseli silinemedi: {Path}", oldPhysicalPath);
-                    }
-                }
-            }
-
-            var fileName = Guid.NewGuid().ToString("N") + Path.GetExtension(file.FileName);
-            var newPath = Path.Combine(uploadsFolder, fileName);
-
-            using (var stream = new FileStream(newPath, FileMode.Create))
-            {
-                await file.CopyToAsync(stream, ct);
-            }
-
-            return "/uploads/" + fileName;
-        }
     }
 }

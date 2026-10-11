@@ -1,3 +1,4 @@
+using OgrenciBilgiSistemi.Abstractions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -14,15 +15,15 @@ namespace OgrenciBilgiSistemi.Services.Implementations
     public sealed class KullaniciService : IKullaniciService
     {
         private readonly AppDbContext _db;
-        private readonly IWebHostEnvironment _env;
+        private readonly IFileStorage _files;
         private readonly IMemoryCache _cache;
         private readonly TenantBaglami _tenant;
         private readonly PasswordHasher<KullaniciModel> _passwordHasher = new();
 
-        public KullaniciService(AppDbContext db, IWebHostEnvironment env, IMemoryCache cache, TenantBaglami tenant)
+        public KullaniciService(AppDbContext db, IFileStorage files, IMemoryCache cache, TenantBaglami tenant)
         {
             _db = db;
-            _env = env;
+            _files = files;
             _cache = cache;
             _tenant = tenant;
         }
@@ -58,10 +59,13 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 throw new InvalidOperationException("Genel Yönetici rolü atanamaz.");
 
             // OgretmenProfil: görsel kaydet
+            // Görsel yolu yalnızca yüklenen dosyadan gelir; formdan gelen değer kullanılmaz
             if (model.Rol == KullaniciRolu.Ogretmen && model.OgretmenProfil != null)
             {
-                if (model.OgretmenProfil.GorselFile != null && model.OgretmenProfil.GorselFile.Length > 0)
-                    model.OgretmenProfil.GorselPath = await SaveImageAsync(model.OgretmenProfil.GorselFile, ct);
+                var dosya = model.OgretmenProfil.GorselFile;
+                model.OgretmenProfil.GorselPath = dosya is { Length: > 0 }
+                    ? await _files.SaveImageAsync(dosya, null, ct, "kullanici")
+                    : null;
             }
 
             model.Sifre = _passwordHasher.HashPassword(model, model.Sifre);
@@ -123,7 +127,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 profil.IsDeleted = kullanici.IsDeleted;
 
                 if (model.OgretmenProfil?.GorselFile != null && model.OgretmenProfil.GorselFile.Length > 0)
-                    profil.GorselPath = await SaveImageAsync(model.OgretmenProfil.GorselFile, ct);
+                    profil.GorselPath = await _files.SaveImageAsync(model.OgretmenProfil.GorselFile, profil.GorselPath, ct, "kullanici");
             }
             else if (kullanici.OgretmenProfil != null)
             {
@@ -387,22 +391,6 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                     Text = b.BirimAd
                 })
                 .ToListAsync(ct);
-
-        private async Task<string> SaveImageAsync(IFormFile file, CancellationToken ct)
-        {
-            var root = Path.Combine(_env.WebRootPath ?? "wwwroot", "uploads", "kullanici");
-            Directory.CreateDirectory(root);
-
-            var ext = Path.GetExtension(file.FileName);
-            var name = $"kul_{Guid.NewGuid():N}{ext}";
-            var full = Path.Combine(root, name);
-
-            using (var fs = new FileStream(full, FileMode.Create))
-                await file.CopyToAsync(fs, ct);
-
-            var rel = Path.Combine("uploads", "kullanici", name).Replace("\\", "/");
-            return "/" + rel;
-        }
 
         private static List<MenuOgeAtamaVm> BuildMenuViewModels(
             int? parentId, List<MenuOgeModel> allMenus, List<int> assignedMenuIds)

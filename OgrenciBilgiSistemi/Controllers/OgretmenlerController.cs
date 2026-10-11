@@ -63,6 +63,13 @@ namespace OgrenciBilgiSistemi.Controllers
                 await _ogretmenProfilService.EkleKullaniciVeProfilAsync(vm.ToEkleVm(), ct);
                 return RedirectToAction(nameof(Index));
             }
+            catch (InvalidOperationException ex)
+            {
+                // Geçersiz görsel (tür/boyut) gibi kullanıcıya gösterilecek hatalar
+                ModelState.AddModelError(string.Empty, ex.Message);
+                vm.Birimler = await _kullaniciService.GetBirimlerSelectListAsync(vm.BirimId, ct);
+                return View(vm);
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Öğretmen eklenirken hata oluştu.");
@@ -109,6 +116,12 @@ namespace OgrenciBilgiSistemi.Controllers
             {
                 await _ogretmenProfilService.GuncelleAsync(vm.ToProfilModel(), vm.KullaniciAdi, vm.Telefon, vm.Sifre, ct);
                 return RedirectToAction(nameof(Index));
+            }
+            catch (InvalidOperationException ex)
+            {
+                ModelState.AddModelError(string.Empty, ex.Message);
+                vm.Birimler = await _kullaniciService.GetBirimlerSelectListAsync(vm.BirimId, ct);
+                return View(vm);
             }
             catch (Exception ex)
             {

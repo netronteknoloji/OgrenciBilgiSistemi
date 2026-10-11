@@ -44,6 +44,12 @@ namespace OgrenciBilgiSistemi.Controllers
                 await _kitapService.AddAsync(vm.ToModel(), KitapGorselFile, ct);
                 return RedirectToAction(nameof(Index));
             }
+            catch (InvalidOperationException ex)
+            {
+                // Geçersiz görsel (tür/boyut) gibi kullanıcıya gösterilecek hatalar
+                TempData["Hata"] = ex.Message;
+                return View(vm);
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Kitap eklenirken hata oluştu.");
@@ -71,6 +77,11 @@ namespace OgrenciBilgiSistemi.Controllers
             {
                 await _kitapService.UpdateAsync(vm.ToModel(), KitapGorselFile, ct);
                 return RedirectToAction(nameof(Index));
+            }
+            catch (InvalidOperationException ex)
+            {
+                TempData["Hata"] = ex.Message;
+                return View(vm);
             }
             catch (Exception ex)
             {

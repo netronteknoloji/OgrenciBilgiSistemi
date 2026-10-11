@@ -1,3 +1,4 @@
+using OgrenciBilgiSistemi.Abstractions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using OgrenciBilgiSistemi.Data;
@@ -11,14 +12,14 @@ namespace OgrenciBilgiSistemi.Services.Implementations
     public sealed class OgretmenProfilService : IOgretmenProfilService
     {
         private readonly AppDbContext _db;
-        private readonly IWebHostEnvironment _env;
+        private readonly IFileStorage _files;
         private readonly ILogger<OgretmenProfilService> _logger;
         private readonly PasswordHasher<KullaniciModel> _passwordHasher = new();
 
-        public OgretmenProfilService(AppDbContext db, IWebHostEnvironment env, ILogger<OgretmenProfilService> logger)
+        public OgretmenProfilService(AppDbContext db, IFileStorage files, ILogger<OgretmenProfilService> logger)
         {
             _db = db;
-            _env = env;
+            _files = files;
             _logger = logger;
         }
 
@@ -62,7 +63,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             };
 
             if (vm.GorselFile != null && vm.GorselFile.Length > 0)
-                profil.GorselPath = await SaveImageAsync(vm.GorselFile, ct);
+                profil.GorselPath = await _files.SaveImageAsync(vm.GorselFile, null, ct, "ogretmen");
 
             var kullanici = new KullaniciModel
             {
@@ -100,7 +101,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             mevcut.IsDeleted = model.IsDeleted;
 
             if (model.GorselFile != null && model.GorselFile.Length > 0)
-                mevcut.GorselPath = await SaveImageAsync(model.GorselFile, ct);
+                mevcut.GorselPath = await _files.SaveImageAsync(model.GorselFile, mevcut.GorselPath, ct, "ogretmen");
 
             var kullanici = await _db.Kullanicilar.FindAsync([model.KullaniciId], ct);
             if (kullanici != null)
@@ -156,20 +157,5 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 .AsNoTracking()
                 .FirstOrDefaultAsync(o => o.KullaniciId == kullaniciId, ct);
 
-        private async Task<string> SaveImageAsync(IFormFile file, CancellationToken ct)
-        {
-            var root = Path.Combine(_env.WebRootPath ?? "wwwroot", "uploads", "ogretmen");
-            Directory.CreateDirectory(root);
-
-            var ext = Path.GetExtension(file.FileName);
-            var name = $"ogr_{Guid.NewGuid():N}{ext}";
-            var full = Path.Combine(root, name);
-
-            using (var fs = new FileStream(full, FileMode.Create))
-                await file.CopyToAsync(fs, ct);
-
-            var rel = Path.Combine("uploads", "ogretmen", name).Replace("\\", "/");
-            return "/" + rel;
-        }
     }
 }
