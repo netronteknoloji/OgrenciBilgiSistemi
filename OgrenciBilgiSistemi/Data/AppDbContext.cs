@@ -96,6 +96,22 @@ namespace OgrenciBilgiSistemi.Data
             modelBuilder.Entity<OgrenciDetayModel>()
                 .HasQueryFilter(d => !d.Ogrenci.IsDeleted || IncludeDeleted);
 
+            // COALESCE(GTarih, CTarih) ile yapılan tarih filtre/sıralamaları için (raporlar, mobil liste, SMS taraması).
+            // SQL Server, sorgudaki aynı COALESCE ifadesini bu kolonla eşleştirip indeksi kullanır.
+            modelBuilder.Entity<OgrenciDetayModel>(e =>
+            {
+                e.Property(d => d.OlayZamani)
+                 .HasComputedColumnSql("COALESCE([OgrenciGTarih],[OgrenciCTarih])", stored: true);
+
+                e.HasIndex(d => d.OlayZamani)
+                 // Tarama sorgusu tablo okumadan karşılansın (SMS bayrağı ve tarihler dahil)
+                 .IncludeProperties(d => new { d.OgrenciId, d.IstasyonTipi, d.OgrenciSmsGonderildi, d.OgrenciGTarih, d.OgrenciCTarih })
+                 .HasDatabaseName("IX_OgrenciDetaylar_OlayZamani");
+
+                e.HasIndex(d => new { d.OgrenciId, d.OlayZamani })
+                 .HasDatabaseName("IX_OgrenciDetaylar_OgrenciId_OlayZamani");
+            });
+
             // =========================
             // KITAP DETAY (matching filter + ilişkiyi netleştir)
             // =========================
@@ -298,6 +314,11 @@ namespace OgrenciBilgiSistemi.Data
             // =========================
             modelBuilder.Entity<SinifYoklamaModel>(e =>
             {
+                // Günlük yoklama SMS taraması tarih aralığıyla çalışır
+                e.HasIndex(y => y.OlusturulmaTarihi)
+                 .IncludeProperties(y => new { y.OgrenciId, y.SmsDurumu, y.Ders1, y.Ders2, y.Ders3, y.Ders4, y.Ders5, y.Ders6, y.Ders7, y.Ders8 })
+                 .HasDatabaseName("IX_SinifYoklamalar_OlusturulmaTarihi");
+
                 e.HasOne(sy => sy.Ogrenci)
                  .WithMany(o => o.SinifYoklamalar)
                  .HasForeignKey(sy => sy.OgrenciId)
@@ -321,6 +342,9 @@ namespace OgrenciBilgiSistemi.Data
             // =========================
             modelBuilder.Entity<ServisYoklamaModel>(e =>
             {
+                e.HasIndex(y => y.OlusturulmaTarihi)
+                 .HasDatabaseName("IX_ServisYoklamalar_OlusturulmaTarihi");
+
                 e.HasOne(sy => sy.Ogrenci)
                  .WithMany(o => o.ServisYoklamalar)
                  .HasForeignKey(sy => sy.OgrenciId)
@@ -424,6 +448,11 @@ namespace OgrenciBilgiSistemi.Data
             // =========================
             // BILDIRIM
             // =========================
+
+            // Bildirim listesi alıcıya göre süzülüp tarihe göre sıralanır
+            modelBuilder.Entity<BildirimModel>()
+                .HasIndex(b => new { b.AliciKullaniciId, b.OlusturulmaTarihi })
+                .HasDatabaseName("IX_Bildirimler_Alici_Tarih");
 
             modelBuilder.Entity<BildirimModel>()
                 .HasOne(b => b.Alici)

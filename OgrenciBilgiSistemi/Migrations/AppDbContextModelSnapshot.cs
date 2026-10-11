@@ -109,6 +109,9 @@ namespace OgrenciBilgiSistemi.Migrations
                     b.HasIndex("AliciKullaniciId", "Okundu")
                         .HasDatabaseName("IX_Bildirimler_Alici_Okundu");
 
+                    b.HasIndex("AliciKullaniciId", "OlusturulmaTarihi")
+                        .HasDatabaseName("IX_Bildirimler_Alici_Tarih");
+
                     b.ToTable("Bildirimler");
                 });
 
@@ -904,6 +907,11 @@ namespace OgrenciBilgiSistemi.Migrations
                     b.Property<bool?>("OgrenciSmsGonderildi")
                         .HasColumnType("bit");
 
+                    b.Property<DateTime?>("OlayZamani")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("datetime2")
+                        .HasComputedColumnSql("COALESCE([OgrenciGTarih],[OgrenciCTarih])", true);
+
                     b.HasKey("OgrenciDetayId");
 
                     b.HasIndex("CihazId");
@@ -912,7 +920,15 @@ namespace OgrenciBilgiSistemi.Migrations
 
                     b.HasIndex("OgrenciGTarih");
 
+                    b.HasIndex("OlayZamani")
+                        .HasDatabaseName("IX_OgrenciDetaylar_OlayZamani");
+
+                    SqlServerIndexBuilderExtensions.IncludeProperties(b.HasIndex("OlayZamani"), new[] { "OgrenciId", "IstasyonTipi", "OgrenciSmsGonderildi", "OgrenciGTarih", "OgrenciCTarih" });
+
                     b.HasIndex("OgrenciId", "IstasyonTipi");
+
+                    b.HasIndex("OgrenciId", "OlayZamani")
+                        .HasDatabaseName("IX_OgrenciDetaylar_OgrenciId_OlayZamani");
 
                     b.ToTable("OgrenciDetaylar");
                 });
@@ -1317,6 +1333,9 @@ namespace OgrenciBilgiSistemi.Migrations
 
                     b.HasIndex("OgrenciId");
 
+                    b.HasIndex("OlusturulmaTarihi")
+                        .HasDatabaseName("IX_ServisYoklamalar_OlusturulmaTarihi");
+
                     b.HasIndex("KullaniciId", "OgrenciId", "Periyot", "OlusturulmaTarihi");
 
                     b.ToTable("ServisYoklamalar");
@@ -1372,6 +1391,11 @@ namespace OgrenciBilgiSistemi.Migrations
                     b.HasKey("SinifYoklamaId");
 
                     b.HasIndex("KullaniciId");
+
+                    b.HasIndex("OlusturulmaTarihi")
+                        .HasDatabaseName("IX_SinifYoklamalar_OlusturulmaTarihi");
+
+                    SqlServerIndexBuilderExtensions.IncludeProperties(b.HasIndex("OlusturulmaTarihi"), new[] { "OgrenciId", "SmsDurumu", "Ders1", "Ders2", "Ders3", "Ders4", "Ders5", "Ders6", "Ders7", "Ders8" });
 
                     b.HasIndex("OgrenciId", "OlusturulmaTarihi");
 

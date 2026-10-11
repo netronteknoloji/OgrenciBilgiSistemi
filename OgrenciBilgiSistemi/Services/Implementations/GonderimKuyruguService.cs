@@ -36,8 +36,8 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             var sorgu = _db.OgrenciDetaylar.AsNoTracking()
                 .Where(d => d.OgrenciSmsGonderildi != true
                             && (d.IstasyonTipi == IstasyonTipi.AnaKapi || d.IstasyonTipi == IstasyonTipi.Yemekhane)
-                            && ((d.OgrenciGTarih >= bugun && d.OgrenciGTarih < yarin)
-                                || (d.OgrenciCTarih >= bugun && d.OgrenciCTarih < yarin))
+                            && (d.OgrenciGTarih ?? d.OgrenciCTarih) >= bugun
+                            && (d.OgrenciGTarih ?? d.OgrenciCTarih) < yarin
                             && d.Ogrenci.Veli != null && d.Ogrenci.Veli.Telefon != null && d.Ogrenci.Veli.Telefon != "");
             if (ogrenciId is not null)
                 sorgu = sorgu.Where(d => d.OgrenciId == ogrenciId);

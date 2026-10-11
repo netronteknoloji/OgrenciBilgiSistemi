@@ -24,6 +24,11 @@ namespace OgrenciBilgiSistemi.Models
         public DateTime? OgrenciGTarih { get; set; }
         public DateTime? OgrenciCTarih { get; set; }
 
+        // Olayın zamanı = COALESCE(OgrenciGTarih, OgrenciCTarih). DB'de persisted computed column;
+        // tarih aralığı/sıralama sorguları indeksle çalışsın diye. Uygulama yazmaz.
+        [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
+        public DateTime? OlayZamani { get; private set; }
+
         // İsteğe bağlı alanlar
         [StringLength(5)]
         [Column(TypeName = "nvarchar(5)")]
