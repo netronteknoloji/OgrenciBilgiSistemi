@@ -72,8 +72,9 @@ namespace OgrenciBilgiSistemi.Api.Controllers
                 var yoklama = await _servisService.MevcutServisYoklamaGetir(servisId, periyot);
                 return Ok(yoklama);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Servis yoklama bilgisi alınırken bir hata oluştu.");
                 return StatusCode(500, new { error = "Servis yoklama bilgisi alınırken bir hata oluştu." });
             }
         }
@@ -128,8 +129,9 @@ namespace OgrenciBilgiSistemi.Api.Controllers
 
                 return Ok(new { message = "Servis yoklaması başarıyla kaydedildi." });
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Servis yoklaması kaydedilirken bir hata oluştu.");
                 return StatusCode(500, new { error = "Servis yoklaması kaydedilirken bir hata oluştu." });
             }
         }
@@ -169,8 +171,9 @@ namespace OgrenciBilgiSistemi.Api.Controllers
                 var kayitlar = await _servisService.OgrenciYoklamaGecmisiGetir(ogrenciId, baslangic, bitis);
                 return Ok(kayitlar);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Servis yoklama geçmişi alınırken bir hata oluştu.");
                 return StatusCode(500, new { error = "Servis yoklama geçmişi alınırken bir hata oluştu." });
             }
         }

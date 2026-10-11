@@ -24,6 +24,7 @@ namespace OgrenciBilgiSistemi.Api.Controllers
         private readonly OkulYapilandirmaServisi _okulServisi;
         private readonly ILogger<KimlikDogrulamaController> _logger;
         private readonly TimeProvider _timeProvider;
+        private readonly GirisDenemeSayaci _denemeSayaci;
 
         // Access token süresi (dakika)
         private const int AccessTokenDakika = 30;
@@ -34,8 +35,10 @@ namespace OgrenciBilgiSistemi.Api.Controllers
             IConfiguration configuration,
             OkulYapilandirmaServisi okulServisi,
             ILogger<KimlikDogrulamaController> logger,
-            TimeProvider timeProvider)
+            TimeProvider timeProvider,
+            GirisDenemeSayaci denemeSayaci)
         {
+            _denemeSayaci = denemeSayaci;
             _girisService = girisService;
             _refreshTokenService = refreshTokenService;
             _configuration = configuration;
@@ -76,6 +79,13 @@ namespace OgrenciBilgiSistemi.Api.Controllers
             // DB'de aranmaz. Seçilen okulun bağlamında token üretilir.
             var genelAdminKullaniciAdi = _configuration["GenelAdmin:KullaniciAdi"];
             var genelAdminSifreHash = _configuration["GenelAdmin:SifreHash"];
+
+            // Art arda hatalı denemeler hesabı geçici kilitler (Genel Admin okuldan bağımsız sayılır)
+            var denemeAnahtari = GirisDenemeSayaci.Anahtar(
+                istek.KullaniciAdi == genelAdminKullaniciAdi ? null : okul.OkulKodu, istek.KullaniciAdi);
+            if (_denemeSayaci.KilitliMi(denemeAnahtari, out var kalan))
+                return StatusCode(StatusCodes.Status429TooManyRequests, GirisDenemeSayaci.KilitMesaji(kalan));
+
             if (!string.IsNullOrWhiteSpace(genelAdminKullaniciAdi) &&
                 !string.IsNullOrWhiteSpace(genelAdminSifreHash) &&
                 istek.KullaniciAdi == genelAdminKullaniciAdi)
@@ -83,7 +93,11 @@ namespace OgrenciBilgiSistemi.Api.Controllers
                 var genelHasher = new Microsoft.AspNetCore.Identity.PasswordHasher<object>();
                 var dogrulama = genelHasher.VerifyHashedPassword(null!, genelAdminSifreHash, istek.Sifre);
                 if (dogrulama == Microsoft.AspNetCore.Identity.PasswordVerificationResult.Failed)
+                {
+                    _denemeSayaci.HataliKaydet(denemeAnahtari);
                     return Unauthorized("Kullanıcı adı veya şifre hatalı.");
+                }
+                _denemeSayaci.Sifirla(denemeAnahtari);
 
                 var genelAdminKullanici = new KullaniciModel
                 {
@@ -120,7 +134,11 @@ namespace OgrenciBilgiSistemi.Api.Controllers
                 istek.KullaniciAdi, istek.Sifre, okul.ConnectionString);
 
             if (kullanici is null)
+            {
+                _denemeSayaci.HataliKaydet(denemeAnahtari);
                 return Unauthorized("Kullanıcı adı veya şifre hatalı.");
+            }
+            _denemeSayaci.Sifirla(denemeAnahtari);
 
             // JWT access token üret (kısa süreli)
             var accessToken = GenerateJwtToken(kullanici, okul.OkulKodu);

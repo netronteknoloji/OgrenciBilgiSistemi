@@ -11,11 +11,14 @@ namespace OgrenciBilgiSistemi.Api.Controllers
     {
         private readonly IGecisKayitService _gecisKayitService;
         private readonly IOgrenciService _ogrenciService;
+        private readonly ILogger<GecisKayitController> _logger;
 
-        public GecisKayitController(IGecisKayitService gecisKayitService, IOgrenciService ogrenciService)
+        public GecisKayitController(IGecisKayitService gecisKayitService, IOgrenciService ogrenciService,
+            ILogger<GecisKayitController> logger)
         {
             _gecisKayitService = gecisKayitService;
             _ogrenciService = ogrenciService;
+            _logger = logger;
         }
 
         // GET: api/gecis-kayit?baslangic=2026-01-01&bitis=2026-03-07&arama=ali&sinifId=3
@@ -54,8 +57,9 @@ namespace OgrenciBilgiSistemi.Api.Controllers
                 var kayitlar = await _gecisKayitService.GetListAsync(baslangic, bitis, arama, sinifId, veliId, servisId, pageNumber, pageSize);
                 return Ok(kayitlar);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Giriş/çıkış kayıtları alınırken bir hata oluştu.");
                 return StatusCode(500, new { error = "Giriş/çıkış kayıtları alınırken bir hata oluştu." });
             }
         }
@@ -92,8 +96,9 @@ namespace OgrenciBilgiSistemi.Api.Controllers
                 var kayitlar = await _gecisKayitService.GetByOgrenciIdAsync(ogrenciId, baslangic, bitis);
                 return Ok(kayitlar);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Öğrenci giriş/çıkış kayıtları alınırken bir hata oluştu.");
                 return StatusCode(500, new { error = "Öğrenci giriş/çıkış kayıtları alınırken bir hata oluştu." });
             }
         }

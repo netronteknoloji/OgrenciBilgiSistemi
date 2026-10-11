@@ -10,10 +10,12 @@ namespace OgrenciBilgiSistemi.Api.Controllers
     public class SiniflarController : ControllerBase
     {
         private readonly ISinifService _sinifService;
+        private readonly ILogger<SiniflarController> _logger;
 
-        public SiniflarController(ISinifService sinifService)
+        public SiniflarController(ISinifService sinifService, ILogger<SiniflarController> logger)
         {
             _sinifService = sinifService;
+            _logger = logger;
         }
 
         [HttpGet("all-with-count")]
@@ -28,8 +30,9 @@ namespace OgrenciBilgiSistemi.Api.Controllers
                 var data = await _sinifService.TumSiniflariOgrenciSayisiIleGetirAsync();
                 return Ok(data);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Sınıf listesi alınırken bir hata oluştu.");
                 return StatusCode(500, new { error = "Sınıf listesi alınırken bir hata oluştu." });
             }
         }

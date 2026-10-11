@@ -13,11 +13,14 @@ namespace OgrenciBilgiSistemi.Api.Controllers
     {
         private readonly IRandevuService _randevuService;
         private readonly IBildirimService _bildirimService;
+        private readonly ILogger<RandevularController> _logger;
 
-        public RandevularController(IRandevuService randevuService, IBildirimService bildirimService)
+        public RandevularController(IRandevuService randevuService, IBildirimService bildirimService,
+            ILogger<RandevularController> logger)
         {
             _randevuService = randevuService;
             _bildirimService = bildirimService;
+            _logger = logger;
         }
 
         private int KullaniciId => int.Parse(User.FindFirst("kullaniciId")!.Value);
@@ -37,7 +40,9 @@ namespace OgrenciBilgiSistemi.Api.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = $"Randevu listesi alınamadı: {ex.Message}" });
+                // Hata ayrıntısı (SQL vb.) istemciye değil loga gider
+                _logger.LogError(ex, "Randevu listesi alınamadı.");
+                return StatusCode(500, new { error = "Randevu listesi alınamadı." });
             }
         }
 

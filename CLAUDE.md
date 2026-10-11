@@ -31,7 +31,7 @@ Mobil     → Shared (HTTP üzerinden Api'ye)
 | Auth | Cookie | JWT Bearer |
 | Tenant | Cookie/Session | JWT `okulKodu` claim |
 | DB | EF Core | Raw `SqlClient` |
-| Authorize | Global FallbackPolicy | Manuel `[Authorize]` |
+| Authorize | Global FallbackPolicy | FallbackPolicy (kimlik zorunlu) + `[Authorize]`/`[AllowAnonymous]` |
 | Background svc | 6 | 1 |
 
 ## Multi-Tenancy

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
@@ -78,15 +79,20 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorization(opts =>
 {
     opts.AddPolicy("AdminOnly", p => p.RequireClaim("rol", "Admin", "GenelAdmin"));
+
+    // [Authorize]/[AllowAnonymous] unutulan yeni endpoint varsayılan olarak kimlik ister (anonim açılmaz)
+    opts.FallbackPolicy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
 });
 
 // --------------------
 // Servisler
 // --------------------
 builder.Services.AddControllers();
+builder.Services.AddProblemDetails();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<IGirisService, GirisService>();
 builder.Services.AddSingleton<RefreshTokenService>();
+builder.Services.AddSingleton<GirisDenemeSayaci>();
 builder.Services.AddScoped<ISinifService, SinifService>();
 builder.Services.AddScoped<IOgrenciService, OgrenciService>();
 builder.Services.AddScoped<IGecisKayitService, GecisKayitService>();
@@ -132,11 +138,20 @@ PushAltyapiExtensions.FirebaseUygulamasiniBaslat(
 // --------------------
 // Middleware sırası
 // --------------------
+// Yakalanmayan hatalar loglanır ve istemciye ayrıntısız ProblemDetails (500) döner
+app.UseExceptionHandler();
+if (!app.Environment.IsDevelopment())
+    app.UseHsts();
+
 app.UseHttpsRedirection();
 app.UseCors("ConfiguredOrigins");
 
-app.UseSwagger();
-app.UseSwaggerUI();
+// Swagger yalnızca geliştirmede; canlıda gerekirse "Swagger:Etkin": true ile geçici açılır
+if (app.Environment.IsDevelopment() || app.Configuration.GetValue<bool>("Swagger:Etkin"))
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
 // MVC projesinin wwwroot klasörünü statik dosya olarak sun
 var mvcWwwRoot = app.Configuration["MvcWwwRootPath"];

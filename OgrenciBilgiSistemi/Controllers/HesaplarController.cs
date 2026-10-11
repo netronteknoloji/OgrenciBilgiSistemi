@@ -15,15 +15,29 @@ namespace OgrenciBilgiSistemi.Controllers
         private readonly IKimlikDogrulamaService _kimlikServisi;
         private readonly OkulYapilandirmaServisi _okulServisi;
         private readonly IConfiguration _configuration;
+        private readonly GirisDenemeSayaci _denemeSayaci;
 
         public HesaplarController(
             IKimlikDogrulamaService kimlikServisi,
             OkulYapilandirmaServisi okulServisi,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            GirisDenemeSayaci denemeSayaci)
         {
             _kimlikServisi = kimlikServisi;
             _okulServisi = okulServisi;
             _configuration = configuration;
+            _denemeSayaci = denemeSayaci;
+        }
+
+        // Art arda hatalı denemelerde hesap geçici kilitlenir; kilitliyse formu hata ile döndürür
+        private IActionResult? KilitliyseReddet(string denemeAnahtari, GirisIstegiDto model)
+        {
+            if (!_denemeSayaci.KilitliMi(denemeAnahtari, out var kalan))
+                return null;
+
+            ModelState.AddModelError(string.Empty, GirisDenemeSayaci.KilitMesaji(kalan));
+            model.Okullar = _okulServisi.TumOkullariGetir();
+            return View(model);
         }
 
         [HttpGet]
@@ -54,14 +68,21 @@ namespace OgrenciBilgiSistemi.Controllers
                     return View(model);
                 }
 
+                var genelAnahtar = GirisDenemeSayaci.Anahtar(null, model.KullaniciAdi);
+                if (KilitliyseReddet(genelAnahtar, model) is { } genelKilit)
+                    return genelKilit;
+
                 var genelHasher = new PasswordHasher<object>();
                 var genelResult = genelHasher.VerifyHashedPassword(null!, genelAdminSifreHash, model.Sifre);
                 if (genelResult == PasswordVerificationResult.Failed)
                 {
+                    _denemeSayaci.HataliKaydet(genelAnahtar);
                     ModelState.AddModelError(string.Empty, "Geçersiz kullanıcı adı veya şifre.");
                     model.Okullar = _okulServisi.TumOkullariGetir();
                     return View(model);
                 }
+
+                _denemeSayaci.Sifirla(genelAnahtar);
 
                 var genelClaims = new List<Claim>
                 {
@@ -101,14 +122,21 @@ namespace OgrenciBilgiSistemi.Controllers
                 return View(model);
             }
 
+            var denemeAnahtari = GirisDenemeSayaci.Anahtar(okul.OkulKodu, model.KullaniciAdi);
+            if (KilitliyseReddet(denemeAnahtari, model) is { } kilit)
+                return kilit;
+
             var user = await _kimlikServisi.DogrulaAsync(okul.ConnectionString, model.KullaniciAdi, model.Sifre);
 
             if (user is null)
             {
+                _denemeSayaci.HataliKaydet(denemeAnahtari);
                 ModelState.AddModelError(string.Empty, "Geçersiz kullanıcı adı veya şifre.");
                 model.Okullar = _okulServisi.TumOkullariGetir();
                 return View(model);
             }
+
+            _denemeSayaci.Sifirla(denemeAnahtari);
 
             var claims = new List<Claim>
             {

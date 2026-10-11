@@ -124,6 +124,7 @@ builder.Services.AddHostedService<BildirimCihaziTemizlemeService>();
 builder.Services.AddSignalR();
 builder.Services.AddMemoryCache();
 builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddSingleton<GirisDenemeSayaci>();
 
 // Cookie Auth
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
