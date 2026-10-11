@@ -63,13 +63,13 @@ namespace OgrenciBilgiSistemi.Controllers
         // Yavaş/ölü client'ın kart okumayı blocklamasını engellemek için
         // SignalR yayınlarını kısa bir timeout ile sarmalar.
         private static async Task GuvenliYayinAsync<T>(
-            IHubContext<KartOkuHub> hub, T dto, CancellationToken ct, int timeoutMs = 3000)
+            IHubContext<KartOkuHub> hub, string okulKodu, T dto, CancellationToken ct, int timeoutMs = 3000)
         {
             using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
             cts.CancelAfter(timeoutMs);
             try
             {
-                await hub.Clients.All.SendAsync("OgrenciBilgisiAl", dto, cts.Token);
+                await hub.Clients.Group(KartOkuHub.OkulGrubu(okulKodu)).SendAsync("OgrenciBilgisiAl", dto, cts.Token);
             }
             catch (OperationCanceledException) when (cts.IsCancellationRequested && !ct.IsCancellationRequested)
             {
@@ -148,7 +148,7 @@ namespace OgrenciBilgiSistemi.Controllers
 
                 if (ogrenci is null)
                 {
-                    await GuvenliYayinAsync(_hub, new OgrenciBilgisiDto
+                    await GuvenliYayinAsync(_hub, _tenant.OkulKodu, new OgrenciBilgisiDto
                     {
                         OgrenciAdSoyad = "-",
                         OgrenciSinif = "-",
@@ -178,7 +178,7 @@ namespace OgrenciBilgiSistemi.Controllers
                 if (cihaz.IstasyonTipi == IstasyonTipi.AnaKapi &&
                     ogrenci.OgrenciCikisDurumu == OglenCikisDurumu.Hayir)
                 {
-                    await GuvenliYayinAsync(_hub, new OgrenciBilgisiDto
+                    await GuvenliYayinAsync(_hub, _tenant.OkulKodu, new OgrenciBilgisiDto
                     {
                         OgrenciAdSoyad = ogrenci.OgrenciAdSoyad,
                         OgrenciNo = ogrenci.OgrenciNo,
@@ -206,7 +206,7 @@ namespace OgrenciBilgiSistemi.Controllers
 
                     if (!yemekIzniVar)
                     {
-                        await GuvenliYayinAsync(_hub, new OgrenciBilgisiDto
+                        await GuvenliYayinAsync(_hub, _tenant.OkulKodu, new OgrenciBilgisiDto
                         {
                             OgrenciAdSoyad = ogrenci.OgrenciAdSoyad,
                             OgrenciNo = ogrenci.OgrenciNo,
@@ -234,7 +234,7 @@ namespace OgrenciBilgiSistemi.Controllers
 
                     if (bugunYemekVar)
                     {
-                        await GuvenliYayinAsync(_hub, new OgrenciBilgisiDto
+                        await GuvenliYayinAsync(_hub, _tenant.OkulKodu, new OgrenciBilgisiDto
                         {
                             OgrenciAdSoyad = ogrenci.OgrenciAdSoyad,
                             OgrenciNo = ogrenci.OgrenciNo,
@@ -263,7 +263,7 @@ namespace OgrenciBilgiSistemi.Controllers
                     if (!cikisVarMi && !_ayar.OgleCikisSaatiMi(now))
                     {
                         // Öğle çıkış saati dışında: kayıt/SMS yok
-                        await GuvenliYayinAsync(_hub, new OgrenciBilgisiDto
+                        await GuvenliYayinAsync(_hub, _tenant.OkulKodu, new OgrenciBilgisiDto
                         {
                             OgrenciAdSoyad = ogrenci.OgrenciAdSoyad,
                             OgrenciNo = ogrenci.OgrenciNo,
@@ -289,7 +289,7 @@ namespace OgrenciBilgiSistemi.Controllers
                     else if (!girisVarMi && cikisZamani.HasValue && now - cikisZamani.Value < _ayar.OgleDonusMinSure)
                     {
                         // Çıkıştan hemen sonra tekrar okutma: dönüş sayma, kayıt/SMS yok
-                        await GuvenliYayinAsync(_hub, new OgrenciBilgisiDto
+                        await GuvenliYayinAsync(_hub, _tenant.OkulKodu, new OgrenciBilgisiDto
                         {
                             OgrenciAdSoyad = ogrenci.OgrenciAdSoyad,
                             OgrenciNo = ogrenci.OgrenciNo,
@@ -314,7 +314,7 @@ namespace OgrenciBilgiSistemi.Controllers
                     }
                     else
                     {
-                        await GuvenliYayinAsync(_hub, new OgrenciBilgisiDto
+                        await GuvenliYayinAsync(_hub, _tenant.OkulKodu, new OgrenciBilgisiDto
                         {
                             OgrenciAdSoyad = ogrenci.OgrenciAdSoyad,
                             OgrenciNo = ogrenci.OgrenciNo,
@@ -384,7 +384,7 @@ namespace OgrenciBilgiSistemi.Controllers
                         Msg.InfoGenelOk
                 };
 
-                await GuvenliYayinAsync(_hub, dto, ct);
+                await GuvenliYayinAsync(_hub, _tenant.OkulKodu, dto, ct);
 
                 // Ana Kapı geçişlerinde veliye SMS bildirimi (fire-and-forget)
                 if (cihaz.IstasyonTipi == IstasyonTipi.AnaKapi &&

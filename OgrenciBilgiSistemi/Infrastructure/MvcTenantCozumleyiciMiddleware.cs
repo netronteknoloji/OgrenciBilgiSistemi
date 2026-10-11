@@ -19,18 +19,7 @@ namespace OgrenciBilgiSistemi.Infrastructure
                 return;
             }
 
-            string? okulKodu = null;
-
-            // Genel Admin: session'daki seçili okul
-            if (context.User.IsInRole("GenelAdmin"))
-            {
-                okulKodu = context.Session.GetString("SeciliOkulKodu");
-            }
-            else
-            {
-                // Normal kullanıcı: cookie claim'deki okul kodu
-                okulKodu = context.User.FindFirst("okulKodu")?.Value;
-            }
+            var okulKodu = OkulKoduCoz(context);
 
             if (!string.IsNullOrEmpty(okulKodu))
             {
@@ -45,5 +34,14 @@ namespace OgrenciBilgiSistemi.Infrastructure
 
             await _next(context);
         }
+
+        /// <summary>
+        /// İsteğin okul kodu: Genel Admin için session'daki seçili okul, diğerleri için cookie claim'i.
+        /// SignalR hub bağlantısı da aynı kuralı kullanır.
+        /// </summary>
+        public static string? OkulKoduCoz(HttpContext context)
+            => context.User.IsInRole("GenelAdmin")
+                ? context.Session.GetString("SeciliOkulKodu")
+                : context.User.FindFirst("okulKodu")?.Value;
     }
 }

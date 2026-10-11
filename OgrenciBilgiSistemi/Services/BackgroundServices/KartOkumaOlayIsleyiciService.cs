@@ -140,7 +140,7 @@ public class KartOkumaOlayIsleyiciService : IHostedService
                 Info = "Geçiş başarılı."
             };
 
-            await GuvenliYayinAsync(_hub, dto, CancellationToken.None);
+            await GuvenliYayinAsync(_hub, okulKodu, dto, CancellationToken.None);
         }
         catch (Exception ex)
         {
@@ -151,13 +151,13 @@ public class KartOkumaOlayIsleyiciService : IHostedService
     // Yavaş/ölü client kart akışını blocklamasın diye SignalR yayınını
     // kısa bir timeout ile sarmalar.
     private static async Task GuvenliYayinAsync<T>(
-        IHubContext<KartOkuHub> hub, T dto, CancellationToken ct, int timeoutMs = 3000)
+        IHubContext<KartOkuHub> hub, string okulKodu, T dto, CancellationToken ct, int timeoutMs = 3000)
     {
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
         cts.CancelAfter(timeoutMs);
         try
         {
-            await hub.Clients.All.SendAsync("OgrenciBilgisiAl", dto, cts.Token);
+            await hub.Clients.Group(KartOkuHub.OkulGrubu(okulKodu)).SendAsync("OgrenciBilgisiAl", dto, cts.Token);
         }
         catch (OperationCanceledException) when (cts.IsCancellationRequested && !ct.IsCancellationRequested)
         {
