@@ -1196,6 +1196,49 @@ namespace OgrenciBilgiSistemi.Migrations
                     b.ToTable("Randevular");
                 });
 
+            modelBuilder.Entity("OgrenciBilgiSistemi.Models.RefreshTokenModel", b =>
+                {
+                    b.Property<long>("RefreshTokenId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("RefreshTokenId"));
+
+                    b.Property<DateTime?>("IptalZamani")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("KullaniciId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("OlusturmaZamani")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("OturumId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("SonKullanim")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("char(64)");
+
+                    b.HasKey("RefreshTokenId");
+
+                    b.HasIndex("KullaniciId")
+                        .HasDatabaseName("IX_RefreshTokenlar_KullaniciId");
+
+                    b.HasIndex("OturumId")
+                        .HasDatabaseName("IX_RefreshTokenlar_OturumId");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique()
+                        .HasDatabaseName("UX_RefreshTokenlar_TokenHash");
+
+                    b.ToTable("RefreshTokenlar");
+                });
+
             modelBuilder.Entity("OgrenciBilgiSistemi.Models.ServisProfilModel", b =>
                 {
                     b.Property<int>("KullaniciId")

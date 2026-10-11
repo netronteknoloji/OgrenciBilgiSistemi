@@ -1,84 +1,102 @@
-using System.Collections.Concurrent;
+using Microsoft.Data.SqlClient;
+using OgrenciBilgiSistemi.Shared.Helpers;
+using OgrenciBilgiSistemi.Shared.Models;
+using OgrenciBilgiSistemi.Shared.Services;
 
 namespace OgrenciBilgiSistemi.Api.Services
 {
+    public sealed record RefreshTokenSonucu(int KullaniciId, Guid OturumId, OkulBilgiAyari Okul);
+
     /// <summary>
-    /// Bellek içi refresh token deposu.
-    /// Sunucu yeniden başlatıldığında tokenlar silinir — kullanıcı tekrar giriş yapar.
+    /// Refresh token deposu: okulun DB'sindeki RefreshTokenlar tablosu (sunucu yeniden başlasa da oturumlar sürer).
+    /// Token biçimi "{okulKodu}.{rastgele}" (bkz. RefreshTokenBicimi); DB'de yalnızca hash'i saklanır.
+    /// Her giriş yeni bir oturum (OturumId) açar, kullanıcı birden çok cihazda oturum tutabilir.
+    /// Token tek kullanımlıktır; yenilemede aynı oturumda yenisi üretilir. Zamanlar UTC.
     /// </summary>
     public class RefreshTokenService
     {
-        private readonly ConcurrentDictionary<string, RefreshTokenBilgi> _tokenlar = new();
+        // Refresh token geçerlilik süresi (8 saat, kayan değil: her yenilemede yeniden 8 saat)
+        public static readonly TimeSpan TokenSuresi = TimeSpan.FromHours(8);
+
+        private readonly OkulYapilandirmaServisi _okulServisi;
         private readonly TimeProvider _timeProvider;
 
-        // Refresh token geçerlilik süresi (8 saat)
-        private static readonly TimeSpan TokenSuresi = TimeSpan.FromHours(8);
-
-        public RefreshTokenService(TimeProvider timeProvider)
+        public RefreshTokenService(OkulYapilandirmaServisi okulServisi, TimeProvider timeProvider)
         {
+            _okulServisi = okulServisi;
             _timeProvider = timeProvider;
         }
 
-        /// <summary>
-        /// Kullanıcı için yeni bir refresh token üretir ve depoya kaydeder.
-        /// Aynı kullanıcının önceki refresh token'ı varsa geçersiz kılınır.
-        /// </summary>
-        public string TokenOlustur(int kullaniciId, string okulKodu)
+        /// <summary>Yeni refresh token üretip kaydeder. <paramref name="oturumId"/> verilmezse yeni oturum açılır.</summary>
+        public async Task<(string Token, Guid OturumId)> OlusturAsync(
+            OkulBilgiAyari okul, int kullaniciId, Guid? oturumId = null, CancellationToken ct = default)
         {
-            // Eski tokenları temizle
-            var eskiTokenlar = _tokenlar
-                .Where(kvp => kvp.Value.KullaniciId == kullaniciId)
-                .Select(kvp => kvp.Key)
-                .ToList();
+            var token = RefreshTokenBicimi.Olustur(okul.OkulKodu);
+            var oturum = oturumId ?? Guid.NewGuid();
+            var simdi = _timeProvider.GetUtcNow().UtcDateTime;
 
-            foreach (var eski in eskiTokenlar)
-                _tokenlar.TryRemove(eski, out _);
+            const string sql = @"
+                INSERT INTO RefreshTokenlar (KullaniciId, OturumId, TokenHash, OlusturmaZamani, SonKullanim)
+                VALUES (@kullaniciId, @oturumId, @hash, @simdi, @sonKullanim)";
 
-            var token = Guid.NewGuid().ToString("N");
-            _tokenlar[token] = new RefreshTokenBilgi
-            {
-                KullaniciId = kullaniciId,
-                OkulKodu = okulKodu,
-                SonKullanim = _timeProvider.GetUtcNow().UtcDateTime.Add(TokenSuresi)
-            };
+            await using var conn = new SqlConnection(okul.ConnectionString);
+            await using var cmd = new SqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("@kullaniciId", kullaniciId);
+            cmd.Parameters.AddWithValue("@oturumId", oturum);
+            cmd.Parameters.AddWithValue("@hash", RefreshTokenBicimi.Hash(token));
+            cmd.Parameters.AddWithValue("@simdi", simdi);
+            cmd.Parameters.AddWithValue("@sonKullanim", simdi + TokenSuresi);
+            await conn.OpenAsync(ct);
+            await cmd.ExecuteNonQueryAsync(ct);
 
-            return token;
+            return (token, oturum);
         }
 
         /// <summary>
-        /// Refresh token'ı doğrular. Geçerliyse (kullanıcıId, okulKodu) döner, değilse null.
-        /// Doğrulanan token tüketilir (tek kullanımlık).
+        /// Token'ı doğrular ve tüketir (atomik: eşzamanlı iki yenilemeden yalnızca biri kazanır).
+        /// Geçersiz, süresi dolmuş, kullanılmış veya iptal edilmişse null.
         /// </summary>
-        public (int KullaniciId, string OkulKodu)? TokenDogrula(string refreshToken)
+        public async Task<RefreshTokenSonucu?> TuketAsync(string refreshToken, CancellationToken ct = default)
         {
-            if (!_tokenlar.TryRemove(refreshToken, out var bilgi))
-                return null;
+            var okulKodu = RefreshTokenBicimi.OkulKoduCoz(refreshToken);
+            var okul = okulKodu is null ? null : _okulServisi.OkulGetir(okulKodu);
+            if (okul is null) return null;
 
-            if (_timeProvider.GetUtcNow().UtcDateTime > bilgi.SonKullanim)
-                return null;
+            const string sql = @"
+                UPDATE RefreshTokenlar SET IptalZamani = @simdi
+                OUTPUT inserted.KullaniciId, inserted.OturumId
+                WHERE TokenHash = @hash AND IptalZamani IS NULL AND SonKullanim > @simdi";
 
-            return (bilgi.KullaniciId, bilgi.OkulKodu);
+            await using var conn = new SqlConnection(okul.ConnectionString);
+            await using var cmd = new SqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("@hash", RefreshTokenBicimi.Hash(refreshToken));
+            cmd.Parameters.AddWithValue("@simdi", _timeProvider.GetUtcNow().UtcDateTime);
+            await conn.OpenAsync(ct);
+
+            await using var r = await cmd.ExecuteReaderAsync(ct);
+            return await r.ReadAsync(ct)
+                ? new RefreshTokenSonucu(r.GetInt32(0), r.GetGuid(1), okul)
+                : null;
         }
 
-        /// <summary>
-        /// Kullanıcının tüm refresh tokenlarını geçersiz kılar (çıkış yapma vb.).
-        /// </summary>
-        public void KullaniciTokenlariniSil(int kullaniciId)
-        {
-            var tokenlar = _tokenlar
-                .Where(kvp => kvp.Value.KullaniciId == kullaniciId)
-                .Select(kvp => kvp.Key)
-                .ToList();
+        /// <summary>Tek cihazın oturumunu iptal eder (çıkış); kullanıcının diğer cihazları etkilenmez.</summary>
+        public Task OturumuIptalEtAsync(OkulBilgiAyari okul, Guid oturumId, CancellationToken ct = default)
+            => IptalEtAsync(okul, "OturumId = @deger", oturumId, ct);
 
-            foreach (var token in tokenlar)
-                _tokenlar.TryRemove(token, out _);
-        }
+        /// <summary>Kullanıcının tüm cihazlardaki oturumlarını iptal eder (şifre değişikliği vb.).</summary>
+        public Task KullanicininTumunuIptalEtAsync(OkulBilgiAyari okul, int kullaniciId, CancellationToken ct = default)
+            => IptalEtAsync(okul, "KullaniciId = @deger", kullaniciId, ct);
 
-        private class RefreshTokenBilgi
+        private async Task IptalEtAsync(OkulBilgiAyari okul, string kosul, object deger, CancellationToken ct)
         {
-            public int KullaniciId { get; set; }
-            public string OkulKodu { get; set; } = string.Empty;
-            public DateTime SonKullanim { get; set; }
+            var sql = $"UPDATE RefreshTokenlar SET IptalZamani = @simdi WHERE {kosul} AND IptalZamani IS NULL";
+
+            await using var conn = new SqlConnection(okul.ConnectionString);
+            await using var cmd = new SqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("@deger", deger);
+            cmd.Parameters.AddWithValue("@simdi", _timeProvider.GetUtcNow().UtcDateTime);
+            await conn.OpenAsync(ct);
+            await cmd.ExecuteNonQueryAsync(ct);
         }
     }
 }

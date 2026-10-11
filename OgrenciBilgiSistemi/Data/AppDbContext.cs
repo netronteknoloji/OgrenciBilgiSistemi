@@ -41,6 +41,7 @@ namespace OgrenciBilgiSistemi.Data
         public DbSet<SmsGonderimGecmisiModel> SmsGonderimGecmisleri { get; set; }
         public DbSet<BildirimCihaziModel> BildirimCihazlari { get; set; }
         public DbSet<GonderimKuyruguModel> GonderimKuyrugu { get; set; }
+        public DbSet<RefreshTokenModel> RefreshTokenlar { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -544,6 +545,24 @@ namespace OgrenciBilgiSistemi.Data
                 // Gönderici: bekleyen/kilidi düşmüş satırları alır
                 e.HasIndex(k => new { k.Durum, k.SonrakiDeneme })
                  .HasDatabaseName("IX_GonderimKuyrugu_Durum_SonrakiDeneme");
+            });
+
+            // =========================
+            // REFRESH TOKEN (mobil API oturumları)
+            // =========================
+            modelBuilder.Entity<RefreshTokenModel>(e =>
+            {
+                e.HasIndex(r => r.TokenHash)
+                 .IsUnique()
+                 .HasDatabaseName("UX_RefreshTokenlar_TokenHash");
+
+                // Şifre değişikliği/pasife alma: kullanıcının tüm oturumları iptal
+                e.HasIndex(r => r.KullaniciId)
+                 .HasDatabaseName("IX_RefreshTokenlar_KullaniciId");
+
+                // Çıkış: yalnızca o cihazın oturumu iptal
+                e.HasIndex(r => r.OturumId)
+                 .HasDatabaseName("IX_RefreshTokenlar_OturumId");
             });
 
             // =========================

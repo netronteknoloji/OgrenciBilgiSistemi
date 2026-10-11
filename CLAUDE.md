@@ -106,6 +106,7 @@ dotnet ef migrations script --idempotent --project OgrenciBilgiSistemi/OgrenciBi
 - **SMS + push = outbox (`GonderimKuyrugu` tablosu).** Üretici yalnızca kuyruğa ekler (kaynak bayrağıyla aynı transaction'da, `TekilAnahtar` unique); doğrudan `ISmsService.Gonder` / `IPushBildirimGonderici` çağırma, `Task.Run` ile gönderme. MVC: `IGonderimKuyruguService` + `KuyrukTetikleyici`; API: `IYoklamaSmsBildirimService` (yoklama), `BildirimService` (push). Gönderim/tekrar deneme yalnızca MVC'deki `GonderimKuyruguIsleyici`'de (API'nin eklediği satırlar dahil) → MVC app pool çalışır olmalı (AlwaysRunning). Kurallar: `Shared/Kurallar/GonderimKuyruguKurallari`.
 - **Kart okuma kuralları** (öğle çıkışı/dönüşü, yemekhane izni/limiti) tek yerde: `Shared/Kurallar/GecisKurallari` (saf, testli). USB (`KartOkuController`) ve ZKTeco (`KartOkumaOlayIsleyiciService`) yolu `IGecisKarariService` + `GecisKilidi` üzerinden aynı kararı kullanır; kural değişikliği yalnızca orada ve testlerde yapılır.
 - **Kart no** kaydederken ve okuturken `Shared/Helpers/KartNo.Normalize` (MVC + API).
+- **Mobil oturum (refresh token)** okul DB'sindeki `RefreshTokenlar` tablosunda (şeması MVC migration'ında, okuyup yazan yalnızca API). Eski kayıtları MVC `BildirimCihaziTemizlemeService` siler.
 
 ## İlk Bakış Sırası
 

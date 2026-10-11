@@ -99,17 +99,10 @@ namespace OgrenciBilgiSistemi.Api.Controllers
                 }
                 _denemeSayaci.Sifirla(denemeAnahtari);
 
-                var genelAdminKullanici = new KullaniciModel
-                {
-                    KullaniciId = 0,
-                    KullaniciAdi = genelAdminKullaniciAdi,
-                    AdSoyad = "Genel Yönetici",
-                    Rol = KullaniciRolu.GenelAdmin,
-                    IsDeleted = false
-                };
+                var genelAdminKullanici = GenelAdminKullanicisi(genelAdminKullaniciAdi);
 
-                var genelToken = GenerateJwtToken(genelAdminKullanici, okul.OkulKodu);
-                var genelRefresh = _refreshTokenService.TokenOlustur(genelAdminKullanici.KullaniciId, okul.OkulKodu);
+                var (genelRefresh, genelOturum) = await _refreshTokenService.OlusturAsync(okul, genelAdminKullanici.KullaniciId);
+                var genelToken = GenerateJwtToken(genelAdminKullanici, okul.OkulKodu, genelOturum);
 
                 return Ok(new
                 {
@@ -140,11 +133,9 @@ namespace OgrenciBilgiSistemi.Api.Controllers
             }
             _denemeSayaci.Sifirla(denemeAnahtari);
 
-            // JWT access token üret (kısa süreli)
-            var accessToken = GenerateJwtToken(kullanici, okul.OkulKodu);
-
-            // Refresh token üret (uzun süreli, tek kullanımlık)
-            var refreshToken = _refreshTokenService.TokenOlustur(kullanici.KullaniciId, okul.OkulKodu);
+            // Refresh token (yeni oturum, tek kullanımlık) + JWT access token (kısa süreli, oturumId claim'li)
+            var (refreshToken, oturumId) = await _refreshTokenService.OlusturAsync(okul, kullanici.KullaniciId);
+            var accessToken = GenerateJwtToken(kullanici, okul.OkulKodu, oturumId);
 
             return Ok(new
             {
@@ -176,26 +167,31 @@ namespace OgrenciBilgiSistemi.Api.Controllers
             if (string.IsNullOrWhiteSpace(istek.RefreshToken))
                 return BadRequest("Refresh token boş olamaz.");
 
-            // Refresh token'ı doğrula ve tüket
-            var sonuc = _refreshTokenService.TokenDogrula(istek.RefreshToken);
+            // Refresh token'ı doğrula ve tüket (okul, token'ın içinden çözülür)
+            var sonuc = await _refreshTokenService.TuketAsync(istek.RefreshToken);
             if (sonuc is null)
                 return Unauthorized("Refresh token geçersiz veya süresi dolmuş.");
 
-            var (kullaniciId, okulKodu) = sonuc.Value;
+            var okul = sonuc.Okul;
+            KullaniciModel? kullanici;
+            if (sonuc.KullaniciId == 0)
+            {
+                // Genel Admin: DB'de satırı yok; yapılandırmada hâlâ tanımlıysa yenilenir
+                var genelAdminKullaniciAdi = _configuration["GenelAdmin:KullaniciAdi"];
+                kullanici = string.IsNullOrWhiteSpace(genelAdminKullaniciAdi) ? null : GenelAdminKullanicisi(genelAdminKullaniciAdi);
+            }
+            else
+            {
+                // Kullanıcının (ve profilinin) hâlâ aktif olduğunu doğrula
+                kullanici = await _girisService.KimlikDogrulaAsync_IdIle(sonuc.KullaniciId, okul.ConnectionString);
+            }
 
-            // Okul bilgisini doğrula
-            var okul = _okulServisi.OkulGetir(okulKodu);
-            if (okul is null)
-                return Unauthorized("Geçersiz okul kodu.");
-
-            // Kullanıcının hâlâ aktif olduğunu doğrula
-            var kullanici = await _girisService.KimlikDogrulaAsync_IdIle(kullaniciId, okul.ConnectionString);
             if (kullanici is null || kullanici.IsDeleted)
                 return Unauthorized("Kullanıcı hesabı aktif değil.");
 
-            // Yeni access token + yeni refresh token üret (token rotation)
-            var yeniAccessToken = GenerateJwtToken(kullanici, okulKodu);
-            var yeniRefreshToken = _refreshTokenService.TokenOlustur(kullanici.KullaniciId, okulKodu);
+            // Aynı oturumda yeni token çifti (token rotation)
+            var (yeniRefreshToken, _) = await _refreshTokenService.OlusturAsync(okul, kullanici.KullaniciId, sonuc.OturumId);
+            var yeniAccessToken = GenerateJwtToken(kullanici, okul.OkulKodu, sonuc.OturumId);
 
             return Ok(new
             {
@@ -245,6 +241,11 @@ namespace OgrenciBilgiSistemi.Api.Controllers
                 if (!sonuc)
                     return NotFound(new { error = "Kullanıcı bulunamadı." });
 
+                // Şifre değişince tüm cihazlardaki oturumlar kapanır (bu cihaz access token süresince çalışır)
+                var okul = _okulServisi.OkulGetir(User.FindFirst("okulKodu")?.Value ?? string.Empty);
+                if (okul is not null)
+                    await _refreshTokenService.KullanicininTumunuIptalEtAsync(okul, kullaniciId);
+
                 return Ok(new { mesaj = "Şifre başarıyla değiştirildi." });
             }
             catch (Exception ex)
@@ -256,13 +257,18 @@ namespace OgrenciBilgiSistemi.Api.Controllers
 
         [Authorize]
         [HttpPost("logout")]
-        public IActionResult CikisYap()
+        public async Task<IActionResult> CikisYap()
         {
             var kullaniciIdStr = User.FindFirst("kullaniciId")?.Value;
-            if (!int.TryParse(kullaniciIdStr, out var kullaniciId))
+            var okul = _okulServisi.OkulGetir(User.FindFirst("okulKodu")?.Value ?? string.Empty);
+            if (!int.TryParse(kullaniciIdStr, out var kullaniciId) || okul is null)
                 return Unauthorized("Oturum bilgileri eksik.");
 
-            _refreshTokenService.KullaniciTokenlariniSil(kullaniciId);
+            // Yalnızca bu cihazın oturumu kapanır; oturumId'siz (eski) token'da kullanıcının tümü
+            if (Guid.TryParse(User.FindFirst("oturumId")?.Value, out var oturumId))
+                await _refreshTokenService.OturumuIptalEtAsync(okul, oturumId);
+            else
+                await _refreshTokenService.KullanicininTumunuIptalEtAsync(okul, kullaniciId);
 
             return Ok(new { mesaj = "Oturum sonlandırıldı." });
         }
@@ -270,7 +276,16 @@ namespace OgrenciBilgiSistemi.Api.Controllers
         /// <summary>
         /// Kullanıcı bilgilerini claim olarak içeren imzalı JWT token üretir.
         /// </summary>
-        private string GenerateJwtToken(KullaniciModel kullanici, string okulKodu)
+        private static KullaniciModel GenelAdminKullanicisi(string kullaniciAdi) => new()
+        {
+            KullaniciId = 0,
+            KullaniciAdi = kullaniciAdi,
+            AdSoyad = "Genel Yönetici",
+            Rol = KullaniciRolu.GenelAdmin,
+            IsDeleted = false
+        };
+
+        private string GenerateJwtToken(KullaniciModel kullanici, string okulKodu, Guid oturumId)
         {
             var secretKey = _configuration["Jwt:SecretKey"]
                 ?? throw new InvalidOperationException("Jwt:SecretKey yapılandırılmamış.");
@@ -295,7 +310,8 @@ namespace OgrenciBilgiSistemi.Api.Controllers
                 new(JwtRegisteredClaimNames.Jti,        Guid.NewGuid().ToString()),
                 new("kullaniciId", kullanici.KullaniciId.ToString()),
                 new("rol",         rolAdi),
-                new("okulKodu",    okulKodu)
+                new("okulKodu",    okulKodu),
+                new("oturumId",    oturumId.ToString())
             };
 
             if (kullanici.Rol == KullaniciRolu.Servis)

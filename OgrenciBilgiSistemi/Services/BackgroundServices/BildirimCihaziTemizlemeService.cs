@@ -50,6 +50,8 @@ public sealed class BildirimCihaziTemizlemeService : BackgroundService
     {
         var db = sp.GetRequiredService<AppDbContext>();
 
+        await RefreshTokenlariSil(db, ct);
+
         var sinir = DateTime.Now.AddDays(-TOKEN_OMUR_GUN);
 
         // IgnoreQueryFilters: soft-delete filtresini bypass et; IsDeleted=1 olanları hedefliyoruz.
@@ -65,5 +67,17 @@ public sealed class BildirimCihaziTemizlemeService : BackgroundService
         await db.SaveChangesAsync(ct);
 
         _logger.LogInformation("FCM token temizliği: {Count} eski kayıt fiziksel olarak silindi.", silinecekler.Count);
+    }
+
+    // Mobil API refresh token'ları: kullanılmış/iptal edilmiş veya süresi dolmuş olanlar 7 gün sonra silinir (UTC)
+    private async Task RefreshTokenlariSil(AppDbContext db, CancellationToken ct)
+    {
+        var sinir = DateTime.UtcNow.AddDays(-7);
+        var silinen = await db.RefreshTokenlar
+            .Where(r => (r.IptalZamani != null && r.IptalZamani < sinir) || r.SonKullanim < sinir)
+            .ExecuteDeleteAsync(ct);
+
+        if (silinen > 0)
+            _logger.LogInformation("Refresh token temizliği: {Count} eski kayıt silindi.", silinen);
     }
 }
