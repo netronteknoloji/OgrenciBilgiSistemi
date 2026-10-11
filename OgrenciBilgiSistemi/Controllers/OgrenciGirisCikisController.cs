@@ -1,5 +1,6 @@
 using ClosedXML.Excel;
 using Microsoft.AspNetCore.Mvc;
+using OgrenciBilgiSistemi.Helpers;
 using OgrenciBilgiSistemi.Models;
 using OgrenciBilgiSistemi.Services.Interfaces;
 using OgrenciBilgiSistemi.Shared.Constants;
@@ -53,11 +54,15 @@ namespace OgrenciBilgiSistemi.Controllers
                 return View(vm);
             }
 
+            // Servis yoklaması Raporlar > Servis Şoför Raporu ekranına taşındı
             if (raporTipi == RaporTipi.ServisYoklamasi)
-            {
-                vm.ServisYoklamalar = await _gecisRapor.ServisYoklamaListeleAsync(searchString, startDate, endDate, page, ct);
-                return View(vm);
-            }
+                return RedirectToAction("Index", "ServisRapor", new
+                {
+                    sekme = "yoklama",
+                    searchString,
+                    startDate = startDate?.ToString("yyyy-MM-dd"),
+                    endDate = endDate?.ToString("yyyy-MM-dd")
+                });
 
             vm.Gecisler = await _gecisRapor.GecisListeleAsync(sortOrder, searchString, startDate, endDate, istasyonTipi, page, ct);
             return View(vm);
@@ -300,39 +305,13 @@ namespace OgrenciBilgiSistemi.Controllers
             }
 
             if (raporTipi == RaporTipi.ServisYoklamasi)
-            {
-                var liste = await _gecisRapor.TumServisYoklamaListeleAsync(searchString, startDate, endDate, ct);
-
-                var ws3 = workbook.Worksheets.Add("Servis Yoklaması");
-                ws3.Cell(1, 1).Value = "Ad Soyad";
-                ws3.Cell(1, 2).Value = "Sınıf/Birim";
-                ws3.Cell(1, 3).Value = "Tarih";
-                ws3.Cell(1, 4).Value = "Periyot";
-                ws3.Cell(1, 5).Value = "Durum";
-                ws3.Cell(1, 6).Value = "Şoför";
-                BasligiBicimle(ws3.Range(1, 1, 1, 6));
-
-                int r = 2;
-                foreach (var sv in liste)
+                return RedirectToAction("Excel", "ServisRapor", new
                 {
-                    ws3.Cell(r, 1).Value = sv.Ogrenci?.OgrenciAdSoyad ?? "-";
-                    ws3.Cell(r, 2).Value = sv.Ogrenci?.Birim?.BirimAd ?? "-";
-                    var ct3 = ws3.Cell(r, 3);
-                    ct3.Value = sv.OlusturulmaTarihi;
-                    ct3.Style.DateFormat.Format = "dd.MM.yyyy HH:mm";
-                    ws3.Cell(r, 4).Value = sv.Periyot == 1 ? "Sabah" : (sv.Periyot == 2 ? "Akşam" : sv.Periyot.ToString());
-                    ws3.Cell(r, 5).Value = YoklamaMetinleri.ServisMetinGetir(sv.DurumId);
-                    ws3.Cell(r, 6).Value = sv.Kullanici?.KullaniciAdi ?? "-";
-                    r++;
-                }
-                SayfayiSonlandir(ws3, 6, r, $"Toplam {liste.Count} kayıt");
-
-                using var ms = new MemoryStream();
-                workbook.SaveAs(ms);
-                return File(ms.ToArray(),
-                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    $"ServisYoklamasi_{DateTime.Now:yyyyMMdd_HHmm}.xlsx");
-            }
+                    sekme = "yoklama",
+                    searchString,
+                    startDate = startDate?.ToString("yyyy-MM-dd"),
+                    endDate = endDate?.ToString("yyyy-MM-dd")
+                });
 
             // Geçişler (Tumu / AnaKapı / Yemekhane)
             IstasyonTipi? istasyonTipi = raporTipi switch
@@ -404,32 +383,9 @@ namespace OgrenciBilgiSistemi.Controllers
                 "OgrenciGirisCikis.xlsx");
         }
 
-        private static void BasligiBicimle(IXLRange headerRange)
-        {
-            headerRange.Style.Font.Bold = true;
-            headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-            headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
-            headerRange.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
-            headerRange.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
-        }
+        private static void BasligiBicimle(IXLRange headerRange) => ExcelYardimci.BasligiBicimle(headerRange);
 
         private static void SayfayiSonlandir(IXLWorksheet ws, int colCount, int nextRow, string ozet)
-        {
-            ws.SheetView.FreezeRows(1);
-            ws.Range(1, 1, Math.Max(1, nextRow - 1), colCount).SetAutoFilter();
-
-            int summaryRow = nextRow + 1;
-            if (colCount > 1)
-                ws.Range(summaryRow, 1, summaryRow, colCount - 1).Merge();
-            var totalCell = ws.Cell(summaryRow, colCount);
-            totalCell.Value = ozet;
-            totalCell.Style.Font.Bold = true;
-            totalCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
-            totalCell.Style.Border.TopBorder = XLBorderStyleValues.Thin;
-
-            ws.Columns(1, colCount).AdjustToContents(1, summaryRow);
-            foreach (var col in ws.Columns(1, colCount))
-                if (col.Width < 12) col.Width = 12;
-        }
+            => ExcelYardimci.SayfayiSonlandir(ws, colCount, nextRow, ozet);
     }
 }

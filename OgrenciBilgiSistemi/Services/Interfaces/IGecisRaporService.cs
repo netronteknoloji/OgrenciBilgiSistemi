@@ -8,16 +8,12 @@ namespace OgrenciBilgiSistemi.Services.Interfaces
         // Genel listeler (Detay action)
         Task<SayfalanmisListeModel<SinifYoklamaModel>> SinifYoklamaListeleAsync(
             string? search, DateTime? startDate, DateTime? endDate, int page, CancellationToken ct = default);
-        Task<SayfalanmisListeModel<ServisYoklamaModel>> ServisYoklamaListeleAsync(
-            string? search, DateTime? startDate, DateTime? endDate, int page, CancellationToken ct = default);
         Task<SayfalanmisListeModel<OgrenciDetayModel>> GecisListeleAsync(
             string? sortOrder, string? search, DateTime? startDate, DateTime? endDate,
             IstasyonTipi? istasyon, int page, CancellationToken ct = default);
 
         // Genel Excel (DetayExcel action)
         Task<List<SinifYoklamaModel>> TumSinifYoklamaListeleAsync(
-            string? search, DateTime? startDate, DateTime? endDate, CancellationToken ct = default);
-        Task<List<ServisYoklamaModel>> TumServisYoklamaListeleAsync(
             string? search, DateTime? startDate, DateTime? endDate, CancellationToken ct = default);
         Task<List<OgrenciDetayModel>> TumGecislerGetirAsync(
             string? search, DateTime? startDate, DateTime? endDate, IstasyonTipi? istasyon, CancellationToken ct = default);

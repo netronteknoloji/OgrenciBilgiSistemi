@@ -677,6 +677,15 @@ namespace OgrenciBilgiSistemi.Migrations
                             Baslik = "Duyuru İşlemleri",
                             Controller = "Duyurular",
                             Sirala = 1
+                        },
+                        new
+                        {
+                            Id = 35,
+                            Action = "Index",
+                            AnaMenuId = 18,
+                            Baslik = "Servis Şoför Raporu",
+                            Controller = "ServisRapor",
+                            Sirala = 6
                         });
                 });
 

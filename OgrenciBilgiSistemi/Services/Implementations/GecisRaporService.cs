@@ -21,14 +21,6 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             return await SayfalanmisListeModel<SinifYoklamaModel>.CreateAsync(q, page, 50, ct);
         }
 
-        public async Task<SayfalanmisListeModel<ServisYoklamaModel>> ServisYoklamaListeleAsync(
-            string? search, DateTime? startDate, DateTime? endDate, int page, CancellationToken ct = default)
-        {
-            var q = ServisYoklamaSorgusu(search, startDate, endDate)
-                .OrderByDescending(x => x.OlusturulmaTarihi);
-            return await SayfalanmisListeModel<ServisYoklamaModel>.CreateAsync(q, page, 50, ct);
-        }
-
         public async Task<SayfalanmisListeModel<OgrenciDetayModel>> GecisListeleAsync(
             string? sortOrder, string? search, DateTime? startDate, DateTime? endDate,
             IstasyonTipi? istasyon, int page, CancellationToken ct = default)
@@ -55,14 +47,6 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             string? search, DateTime? startDate, DateTime? endDate, CancellationToken ct = default)
         {
             return await SinifYoklamaSorgusu(search, startDate, endDate)
-                .OrderByDescending(x => x.OlusturulmaTarihi)
-                .ToListAsync(ct);
-        }
-
-        public async Task<List<ServisYoklamaModel>> TumServisYoklamaListeleAsync(
-            string? search, DateTime? startDate, DateTime? endDate, CancellationToken ct = default)
-        {
-            return await ServisYoklamaSorgusu(search, startDate, endDate)
                 .OrderByDescending(x => x.OlusturulmaTarihi)
                 .ToListAsync(ct);
         }
@@ -198,35 +182,6 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             string? search, DateTime? startDate, DateTime? endDate)
         {
             var q = _db.SinifYoklamalar
-                .AsNoTracking()
-                .Include(x => x.Ogrenci).ThenInclude(o => o.Birim)
-                .Include(x => x.Kullanici)
-                .AsQueryable();
-
-            if (startDate.HasValue)
-            {
-                var sv = startDate.Value.Date;
-                q = q.Where(x => x.OlusturulmaTarihi >= sv);
-            }
-            if (endDate.HasValue)
-            {
-                var ev = endDate.Value.Date.AddDays(1);
-                q = q.Where(x => x.OlusturulmaTarihi < ev);
-            }
-            if (!string.IsNullOrWhiteSpace(search))
-            {
-                var s = search.Trim();
-                q = q.Where(x => x.Ogrenci != null && x.Ogrenci.OgrenciAdSoyad != null &&
-                    EF.Functions.Like(x.Ogrenci.OgrenciAdSoyad, $"%{s}%"));
-            }
-
-            return q;
-        }
-
-        private IQueryable<ServisYoklamaModel> ServisYoklamaSorgusu(
-            string? search, DateTime? startDate, DateTime? endDate)
-        {
-            var q = _db.ServisYoklamalar
                 .AsNoTracking()
                 .Include(x => x.Ogrenci).ThenInclude(o => o.Birim)
                 .Include(x => x.Kullanici)

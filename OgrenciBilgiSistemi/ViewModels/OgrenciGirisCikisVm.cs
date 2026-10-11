@@ -38,18 +38,17 @@ namespace OgrenciBilgiSistemi.ViewModels
         public string RaporTipiStr { get; set; } = "0";
         public SayfalanmisListeModel<OgrenciDetayModel>? Gecisler { get; set; }
         public SayfalanmisListeModel<SinifYoklamaModel>? SinifYoklamalar { get; set; }
-        public SayfalanmisListeModel<ServisYoklamaModel>? ServisYoklamalar { get; set; }
 
         // Görünen aktif sayfanın paging bilgileri (view'da kolay kullanım için)
         public int SayfaIndeks =>
-            Gecisler?.SayfaIndeks ?? SinifYoklamalar?.SayfaIndeks ?? ServisYoklamalar?.SayfaIndeks ?? 1;
+            Gecisler?.SayfaIndeks ?? SinifYoklamalar?.SayfaIndeks ?? 1;
         public int ToplamSayfa =>
-            Gecisler?.ToplamSayfa ?? SinifYoklamalar?.ToplamSayfa ?? ServisYoklamalar?.ToplamSayfa ?? 1;
+            Gecisler?.ToplamSayfa ?? SinifYoklamalar?.ToplamSayfa ?? 1;
         public int ToplamSayi =>
-            Gecisler?.ToplamSayi ?? SinifYoklamalar?.ToplamSayi ?? ServisYoklamalar?.ToplamSayi ?? 0;
+            Gecisler?.ToplamSayi ?? SinifYoklamalar?.ToplamSayi ?? 0;
         public bool OncekiSayfaVar =>
-            Gecisler?.OncekiSayfaVar ?? SinifYoklamalar?.OncekiSayfaVar ?? ServisYoklamalar?.OncekiSayfaVar ?? false;
+            Gecisler?.OncekiSayfaVar ?? SinifYoklamalar?.OncekiSayfaVar ?? false;
         public bool SonrakiSayfaVar =>
-            Gecisler?.SonrakiSayfaVar ?? SinifYoklamalar?.SonrakiSayfaVar ?? ServisYoklamalar?.SonrakiSayfaVar ?? false;
+            Gecisler?.SonrakiSayfaVar ?? SinifYoklamalar?.SonrakiSayfaVar ?? false;
     }
 }

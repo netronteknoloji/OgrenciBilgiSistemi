@@ -110,6 +110,7 @@ builder.Services.AddScoped<IKullaniciService, KullaniciService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<IKimlikDogrulamaService, KimlikDogrulamaService>();
 builder.Services.AddScoped<IGecisRaporService, GecisRaporService>();
+builder.Services.AddScoped<IServisRaporService, ServisRaporService>();
 
 // SMS
 builder.Services.AddSmsAltyapisi(builder.Configuration);

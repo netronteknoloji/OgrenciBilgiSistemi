@@ -614,7 +614,8 @@ namespace OgrenciBilgiSistemi.Data
                 new MenuOgeModel { Id = 31, Baslik = "Randevu Listesi", Controller = "Randevular", Action = "Index", AnaMenuId = 30, Sirala = 1 },
                 new MenuOgeModel { Id = 32, Baslik = "Öğretmen Randevu Takvimi", Controller = "OgretmenRandevu", Action = "Index", AnaMenuId = 30, Sirala = 2 },
                 new MenuOgeModel { Id = 33, Baslik = "Duyurular", Controller = null, Action = null, AnaMenuId = null, Sirala = 13 },
-                new MenuOgeModel { Id = 34, Baslik = "Duyuru İşlemleri", Controller = "Duyurular", Action = "Index", AnaMenuId = 33, Sirala = 1 }
+                new MenuOgeModel { Id = 34, Baslik = "Duyuru İşlemleri", Controller = "Duyurular", Action = "Index", AnaMenuId = 33, Sirala = 1 },
+                new MenuOgeModel { Id = 35, Baslik = "Servis Şoför Raporu", Controller = "ServisRapor", Action = "Index", AnaMenuId = 18, Sirala = 6 }
             );
         }
     }

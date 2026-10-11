@@ -16,7 +16,6 @@
     var rt = Model?.RaporTipi ?? RaporTipi.Tumu;
     bool gosterGecis = rt == RaporTipi.Tumu || rt == RaporTipi.AnaKapiGecisleri || rt == RaporTipi.YemekhaneGecisleri;
     bool gosterSinif = rt == RaporTipi.SinifYoklamasi;
-    bool gosterServis = rt == RaporTipi.ServisYoklamasi;
 
     string SinifDurumMetni(int? d) => YoklamaMetinleri.MetinGetir(d);
 
@@ -71,7 +70,9 @@
                 <div class="input-group">
                     <span class="input-group-text bg-white"><i class="bi bi-funnel"></i></span>
                     <select name="raporTipi" class="form-select" onchange="this.form.submit()">
-                        @foreach (var item in Html.GetEnumSelectList<RaporTipi>())
+                        @* Servis yoklaması Raporlar > Servis Şoför Raporu ekranına taşındı *@
+                        @foreach (var item in Html.GetEnumSelectList<RaporTipi>()
+                                     .Where(i => i.Value != ((int)RaporTipi.ServisYoklamasi).ToString()))
                         {
                             if (vRapor == item.Value)
                             {
@@ -93,8 +94,7 @@
             <!-- Liste -->
             @{
                 bool bos = (gosterGecis && (Model.Gecisler == null || !Model.Gecisler.Any()))
-                        || (gosterSinif && (Model.SinifYoklamalar == null || !Model.SinifYoklamalar.Any()))
-                        || (gosterServis && (Model.ServisYoklamalar == null || !Model.ServisYoklamalar.Any()));
+                        || (gosterSinif && (Model.SinifYoklamalar == null || !Model.SinifYoklamalar.Any()));
             }
             @if (bos)
             {
@@ -168,36 +168,6 @@
                                     <td>@if (sy.Ders7.HasValue) {<span class="badge @SinifDurumBadge(sy.Ders7)">@SinifDurumMetni(sy.Ders7)</span>} else {<text>-</text>}</td>
                                     <td>@if (sy.Ders8.HasValue) {<span class="badge @SinifDurumBadge(sy.Ders8)">@SinifDurumMetni(sy.Ders8)</span>} else {<text>-</text>}</td>
                                     <td>@(sy.Kullanici?.KullaniciAdi ?? "-")</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                }
-                else if (gosterServis)
-                {
-                    <table class="table table-hover table-sm align-middle text-center">
-                        <thead class="bg-dark text-white">
-                            <tr>
-                                <th class="text-start">Adı Soyadı</th>
-                                <th>Sınıfı</th>
-                                <th>Tarih</th>
-                                <th>Periyot</th>
-                                <th>Durum</th>
-                                <th>Şoför</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var sv in Model.ServisYoklamalar!)
-                            {
-                                <tr>
-                                    <td class="text-start">@sv.Ogrenci?.OgrenciAdSoyad</td>
-                                    <td>@sv.Ogrenci?.Birim?.BirimAd</td>
-                                    <td>@sv.OlusturulmaTarihi.ToString("dd.MM.yyyy HH:mm")</td>
-                                    <td>@(sv.Periyot == 1 ? "Sabah" : (sv.Periyot == 2 ? "Akşam" : sv.Periyot.ToString()))</td>
-                                    <td>
-                                        <span class="badge @YoklamaRenkleri.CssServisGetir(sv.DurumId)">@YoklamaMetinleri.ServisMetinGetir(sv.DurumId)</span>
-                                    </td>
-                                    <td>@(sv.Kullanici?.KullaniciAdi ?? "-")</td>
                                 </tr>
                             }
                         </tbody>
