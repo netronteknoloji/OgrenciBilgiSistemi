@@ -208,11 +208,7 @@ namespace OgrenciBilgiSistemi.Mobil.Services
                     return;
 
                 var baseUrl = Preferences.Default.Get("AktifOkulApiUrl", Constants.VarsayilanApiUrl);
-                using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
-                client.DefaultRequestHeaders.Authorization =
-                    new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-
-                await client.PostAsync($"{baseUrl}kimlik-dogrulama/logout", null);
+                await TemelApiService.LogoutIstegiGonderAsync(baseUrl, token);
             }
             catch (Exception ex)
             {

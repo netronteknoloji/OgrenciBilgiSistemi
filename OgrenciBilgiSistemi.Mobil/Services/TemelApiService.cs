@@ -22,7 +22,7 @@ namespace OgrenciBilgiSistemi.Mobil.Services
 
         protected readonly HttpClient _httpClient = _paylasimliClient.Value;
 
-        // Token refresh için ayrı kısa timeout'lu client (ana client'ın header'ını bozmamak için)
+        // Token refresh ve logout için ayrı kısa timeout'lu client (ana client'ın header'ını bozmamak için)
         private static readonly Lazy<HttpClient> _refreshClient = new(() =>
         {
             var handler = new SocketsHttpHandler
@@ -57,6 +57,18 @@ namespace OgrenciBilgiSistemi.Mobil.Services
             {
                 PropertyNameCaseInsensitive = true
             };
+        }
+
+        /// <summary>
+        /// Çıkışta sunucudaki oturumu (refresh token) kapatır.
+        /// Başlık istek bazında verilir; paylaşımlı client'ların başlıkları değişmez.
+        /// </summary>
+        internal static async Task LogoutIstegiGonderAsync(string baseUrl, string token)
+        {
+            using var zamanAsimi = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+            using var istek = new HttpRequestMessage(HttpMethod.Post, $"{baseUrl}kimlik-dogrulama/logout");
+            istek.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            using var _ = await _refreshClient.Value.SendAsync(istek, zamanAsimi.Token);
         }
 
         /// <summary>

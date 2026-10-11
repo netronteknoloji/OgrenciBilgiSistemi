@@ -60,7 +60,7 @@
 ## Yasaklar
 
 - ❌ Servisi Transient/Scoped yapma → Singleton.
-- ❌ Yeni `HttpClient` oluşturma → `TemelApiService`'ten türet (bilinen istisna: `KullaniciOturum.LogoutApiCagirAsync`).
+- ❌ Yeni `HttpClient` oluşturma → HTTP yalnızca `TemelApiService` üzerinden (türet ya da statik yardımcısını kullan).
 - ❌ Token/şifreyi `Preferences`'a koyma → `SecureStorage`.
 - ❌ Token'ı hardcode veya log'a yazma.
 - ❌ `Constants.KayitSunucuUrl`'i sabit değer olarak değiştirme.
