@@ -8,6 +8,10 @@ namespace OgrenciBilgiSistemi.Controllers
     [Authorize(Policy = "AdminOnly")]
     public class KullanicilarController : Controller
     {
+        // Oturumdaki kullanıcının Id'si (Genel Yönetici için 0)
+        private int IslemYapanId =>
+            int.TryParse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var id) ? id : 0;
+
         private readonly IKullaniciService _kullaniciService;
         private readonly ILogger<KullanicilarController> _logger;
 
@@ -129,7 +133,7 @@ namespace OgrenciBilgiSistemi.Controllers
 
             try
             {
-                await _kullaniciService.GuncelleAsync(vm.ToModel());
+                await _kullaniciService.GuncelleAsync(vm.ToModel(), IslemYapanId);
                 TempData["GuncellenenId"] = vm.KullaniciId;
                 var url = Url.Action(nameof(Index), new { page = vm.ReturnPage, searchString = vm.ReturnFilter });
                 return Redirect(url + $"#kullanici-{vm.KullaniciId}");
@@ -174,7 +178,7 @@ namespace OgrenciBilgiSistemi.Controllers
 
             try
             {
-                await _kullaniciService.GuncelleAsync(vm.ToModel());
+                await _kullaniciService.GuncelleAsync(vm.ToModel(), IslemYapanId);
                 TempData["GuncellenenId"] = vm.KullaniciId;
                 var url = Url.Action(nameof(Index), new { page = vm.ReturnPage, searchString = vm.ReturnFilter });
                 return Redirect(url + $"#kullanici-{vm.KullaniciId}");
@@ -215,7 +219,7 @@ namespace OgrenciBilgiSistemi.Controllers
 
             try
             {
-                await _kullaniciService.GuncelleAsync(vm.ToModel());
+                await _kullaniciService.GuncelleAsync(vm.ToModel(), IslemYapanId);
                 TempData["GuncellenenId"] = vm.KullaniciId;
                 var url = Url.Action(nameof(Index), new { page = vm.ReturnPage, searchString = vm.ReturnFilter });
                 return Redirect(url + $"#kullanici-{vm.KullaniciId}");
@@ -254,7 +258,7 @@ namespace OgrenciBilgiSistemi.Controllers
 
             try
             {
-                await _kullaniciService.GuncelleAsync(vm.ToModel());
+                await _kullaniciService.GuncelleAsync(vm.ToModel(), IslemYapanId);
                 TempData["GuncellenenId"] = vm.KullaniciId;
                 var url = Url.Action(nameof(Index), new { page = vm.ReturnPage, searchString = vm.ReturnFilter });
                 return Redirect(url + $"#kullanici-{vm.KullaniciId}");
@@ -284,7 +288,7 @@ namespace OgrenciBilgiSistemi.Controllers
         {
             try
             {
-                await _kullaniciService.SilAsync(id);
+                await _kullaniciService.SilAsync(id, IslemYapanId);
             }
             catch (InvalidOperationException ex)
             {
@@ -314,6 +318,11 @@ namespace OgrenciBilgiSistemi.Controllers
             {
                 await _kullaniciService.YetkiGuncelleAsync(model.KullaniciId, model.SelectedMenuIds);
                 TempData["OkMessage"] = "Yetkiler güncellendi.";
+            }
+            catch (InvalidOperationException ex)
+            {
+                TempData["ErrMessage"] = ex.Message;
+                return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)
             {

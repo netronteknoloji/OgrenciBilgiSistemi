@@ -12,8 +12,9 @@ namespace OgrenciBilgiSistemi.Services.Interfaces
         Task<KullaniciModel?> GetByIdAsync(int id, CancellationToken ct = default);
 
         Task EkleAsync(KullaniciModel model, CancellationToken ct = default);
-        Task GuncelleAsync(KullaniciModel model, CancellationToken ct = default);
-        Task SilAsync(int id, CancellationToken ct = default);
+        // islemYapanKullaniciId: kendini silme/pasife alma/rol düşürme ve son Admin koruması için
+        Task GuncelleAsync(KullaniciModel model, int islemYapanKullaniciId, CancellationToken ct = default);
+        Task SilAsync(int id, int islemYapanKullaniciId, CancellationToken ct = default);
 
         Task<bool> KullaniciAdiVarMiAsync(string kullaniciAdi, int? excludeId = null, CancellationToken ct = default);
 

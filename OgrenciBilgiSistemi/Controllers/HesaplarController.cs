@@ -138,6 +138,14 @@ namespace OgrenciBilgiSistemi.Controllers
 
             _denemeSayaci.Sifirla(denemeAnahtari);
 
+            // Veli ve Servis hesapları yalnızca mobil uygulama içindir; web paneline giremez
+            if (user.Rol is KullaniciRolu.Veli or KullaniciRolu.Servis)
+            {
+                ModelState.AddModelError(string.Empty, "Bu hesap mobil uygulama içindir; web paneline giriş yapılamaz.");
+                model.Okullar = _okulServisi.TumOkullariGetir();
+                return View(model);
+            }
+
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.Name, user.KullaniciAdi),

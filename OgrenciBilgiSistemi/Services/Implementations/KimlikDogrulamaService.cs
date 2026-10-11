@@ -22,11 +22,16 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             await using var db = CreateContext(connectionString);
 
             var user = await db.Kullanicilar
+                .Include(k => k.OgretmenProfil)
                 .Where(k => !k.IsDeleted)
                 .SingleOrDefaultAsync(u => u.KullaniciAdi == kullaniciAdi, ct);
 
             // DB'deki GenelAdmin satırı oturum açamaz; Genel Yönetici yalnızca yapılandırmadan doğrulanır
             if (user is null || user.Rol == KullaniciRolu.GenelAdmin)
+                return null;
+
+            // Pasif öğretmen profili giriş yapamaz (API'deki kuralla aynı)
+            if (user.Rol == KullaniciRolu.Ogretmen && user.OgretmenProfil?.IsDeleted == true)
                 return null;
 
             var hasher = new PasswordHasher<KullaniciModel>();
@@ -40,27 +45,38 @@ namespace OgrenciBilgiSistemi.Services.Implementations
         {
             await using var db = CreateContext(connectionString);
 
-            var mevcutKayit = await db.Kullanicilar
+            var genelAdmin = await db.Kullanicilar
                 .FirstOrDefaultAsync(k => k.Rol == KullaniciRolu.GenelAdmin, ct);
 
-            if (mevcutKayit != null)
-                return;
-
-            var genelAdmin = new KullaniciModel
+            if (genelAdmin is null)
             {
-                KullaniciAdi = "GenelAdmin",
-                Sifre = "-",
-                Rol = KullaniciRolu.GenelAdmin,
-                IsDeleted = false
-            };
-            db.Kullanicilar.Add(genelAdmin);
-            await db.SaveChangesAsync(ct);
+                genelAdmin = new KullaniciModel
+                {
+                    KullaniciAdi = "GenelAdmin",
+                    Sifre = "-",
+                    Rol = KullaniciRolu.GenelAdmin,
+                    IsDeleted = false
+                };
+                db.Kullanicilar.Add(genelAdmin);
+                await db.SaveChangesAsync(ct);
+            }
+            else if (genelAdmin.IsDeleted)
+            {
+                genelAdmin.IsDeleted = false;
+            }
 
-            var tumMenuler = await db.MenuOgeler
+            // Her okul seçiminde eksik menüler tamamlanır (sonradan eklenen menüler dahil)
+            var mevcutMenuler = await db.KullaniciMenuOgeler
+                .Where(km => km.KullaniciId == genelAdmin.KullaniciId)
+                .Select(km => km.MenuOgeId)
+                .ToListAsync(ct);
+
+            var eksikMenuler = await db.MenuOgeler
+                .Where(m => !mevcutMenuler.Contains(m.Id))
                 .Select(m => m.Id)
                 .ToListAsync(ct);
 
-            foreach (var menuId in tumMenuler)
+            foreach (var menuId in eksikMenuler)
             {
                 db.KullaniciMenuOgeler.Add(new KullaniciMenuModel
                 {

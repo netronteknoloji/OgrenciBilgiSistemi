@@ -13,7 +13,9 @@ public class HomeController : Controller
 
     public IActionResult Index() => View();
 
+    // Okul geneli istatistikler yalnızca Yönetici ekranında gösterilir
     [HttpGet]
+    [Authorize(Policy = "AdminOnly")]
     public async Task<IActionResult> DashboardStats(CancellationToken ct)
     {
         var dto = await _dashboardService.GetStatsAsync(ct);
@@ -21,6 +23,7 @@ public class HomeController : Controller
     }
 
     [HttpGet]
+    [Authorize(Policy = "AdminOnly")]
     public async Task<IActionResult> DashboardSeries(int? yil, int? ay, CancellationToken ct)
     {
         var now = DateTime.Now;

@@ -30,9 +30,10 @@ namespace OgrenciBilgiSistemi.Services.Implementations
         public async Task<SayfalanmisListeModel<KullaniciModel>> SearchPagedAsync(
             string? searchString, int page, int pageSize = 10, CancellationToken ct = default)
         {
+            // Genel Yönetici satırı okul kullanıcısı değildir; listede gösterilmez
             var query = _db.Kullanicilar
                 .AsNoTracking()
-                .AsQueryable();
+                .Where(k => k.Rol != KullaniciRolu.GenelAdmin);
 
             if (!string.IsNullOrWhiteSpace(searchString))
                 query = query.Where(k => k.KullaniciAdi.Contains(searchString));
@@ -77,7 +78,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             await _db.SaveChangesAsync(ct);
         }
 
-        public async Task GuncelleAsync(KullaniciModel model, CancellationToken ct = default)
+        public async Task GuncelleAsync(KullaniciModel model, int islemYapanKullaniciId, CancellationToken ct = default)
         {
             var kullanici = await _db.Kullanicilar
                 .Include(k => k.OgretmenProfil)
@@ -88,6 +89,16 @@ namespace OgrenciBilgiSistemi.Services.Implementations
 
             if (model.Rol == KullaniciRolu.GenelAdmin || kullanici.Rol == KullaniciRolu.GenelAdmin)
                 throw new InvalidOperationException("Genel Yönetici rolü atanamaz ve bu kullanıcı düzenlenemez.");
+
+            var kendisiMi = kullanici.KullaniciId == islemYapanKullaniciId;
+            if (kendisiMi && model.IsDeleted)
+                throw new InvalidOperationException("Kendi hesabınızı pasife alamazsınız.");
+            if (kendisiMi && kullanici.Rol == KullaniciRolu.Admin && model.Rol != KullaniciRolu.Admin)
+                throw new InvalidOperationException("Kendi Yönetici rolünüzü kaldıramazsınız.");
+            if (kullanici.Rol == KullaniciRolu.Admin && !kullanici.IsDeleted
+                && (model.Rol != KullaniciRolu.Admin || model.IsDeleted)
+                && await SonAktifAdminMiAsync(kullanici.KullaniciId, ct))
+                throw new InvalidOperationException("Okulun son aktif Yöneticisi pasife alınamaz veya rolü değiştirilemez.");
 
             var eskiOgretmenBirimId = kullanici.OgretmenProfil?.BirimId;
 
@@ -153,6 +164,12 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 profil.VeliIsYeri = model.VeliProfil?.VeliIsYeri;
                 profil.VeliEmail = model.VeliProfil?.VeliEmail;
                 profil.VeliYakinlik = model.VeliProfil?.VeliYakinlik;
+                profil.IsDeleted = kullanici.IsDeleted;
+            }
+            else if (kullanici.VeliProfil != null)
+            {
+                // Artık veli değil: veli listelerinde ve duyuru alıcılarında görünmesin
+                kullanici.VeliProfil.IsDeleted = true;
             }
 
             if (!string.IsNullOrWhiteSpace(model.Sifre))
@@ -165,10 +182,17 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                     _db, kullanici.KullaniciId, [eskiOgretmenBirimId, kullanici.OgretmenProfil?.BirimId], ct);
         }
 
-        public async Task SilAsync(int id, CancellationToken ct = default)
+        public async Task SilAsync(int id, int islemYapanKullaniciId, CancellationToken ct = default)
         {
             var kullanici = await _db.Kullanicilar.FindAsync([id], ct);
             if (kullanici == null) return;
+
+            if (kullanici.Rol == KullaniciRolu.GenelAdmin)
+                throw new InvalidOperationException("Genel Yönetici kaydı silinemez.");
+            if (id == islemYapanKullaniciId)
+                throw new InvalidOperationException("Kendi hesabınızı silemezsiniz.");
+            if (kullanici.Rol == KullaniciRolu.Admin && !kullanici.IsDeleted && await SonAktifAdminMiAsync(id, ct))
+                throw new InvalidOperationException("Okulun son aktif Yöneticisi silinemez.");
 
             // OgretmenId türetilmiş alan: öğretmen silinince öğrenciler birimdeki diğer öğretmene aktarılır.
             var bagliOgrenciVar = await _db.Ogrenciler
@@ -191,11 +215,20 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             if (ogretmenProfil != null)
                 ogretmenProfil.IsDeleted = true;
 
+            // Bağlı veli profili varsa durumunu pasife çek
+            var veliProfil = await _db.VeliProfiller.FindAsync([id], ct);
+            if (veliProfil != null)
+                veliProfil.IsDeleted = true;
+
             await _db.SaveChangesAsync(ct);
 
             if (ogretmenProfil != null)
                 await OgretmenAtamaHelper.OgretmenDegistiAsync(_db, id, [ogretmenProfil.BirimId], ct);
         }
+
+        // Bu kullanıcı dışında aktif Admin yoksa true
+        private Task<bool> SonAktifAdminMiAsync(int adminId, CancellationToken ct)
+            => _db.Kullanicilar.AllAsync(k => k.KullaniciId == adminId || k.IsDeleted || k.Rol != KullaniciRolu.Admin, ct);
 
         public Task<bool> KullaniciAdiVarMiAsync(string kullaniciAdi, int? excludeId = null, CancellationToken ct = default)
             => _db.Kullanicilar.AnyAsync(k =>
@@ -253,18 +286,32 @@ namespace OgrenciBilgiSistemi.Services.Implementations
 
         // --- Yetki Yönetimi ---
 
+        // Yalnızca Yönetici (AdminOnly) ekranları: Öğretmene atanırsa menüde görünür ama açılmaz
+        private static readonly HashSet<string> SadeceYoneticiControllerlari = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "Kullanicilar", "Ogretmenler", "Veliler", "Servisler", "Duyurular", "Randevular", "OgretmenRandevu"
+        };
+
+        private static bool RoleUygunMenuMu(KullaniciRolu rol, MenuOgeModel menu)
+            => rol != KullaniciRolu.Ogretmen
+               || string.IsNullOrEmpty(menu.Controller)
+               || !SadeceYoneticiControllerlari.Contains(menu.Controller);
+
         public async Task<KullaniciMenuAtamaVm?> GetYetkiVmAsync(int kullaniciId, CancellationToken ct = default)
         {
             var user = await _db.Kullanicilar
                 .Include(u => u.KullaniciMenuler)
                 .FirstOrDefaultAsync(u => u.KullaniciId == kullaniciId, ct);
 
-            if (user == null) return null;
+            // Genel Yönetici'nin menüleri okul seçiminde otomatik tamamlanır; elle düzenlenmez
+            if (user == null || user.Rol == KullaniciRolu.GenelAdmin) return null;
 
-            var allMenus = await _db.MenuOgeler
+            var allMenus = (await _db.MenuOgeler
                 .AsNoTracking()
                 .OrderBy(m => m.Sirala)
-                .ToListAsync(ct);
+                .ToListAsync(ct))
+                .Where(m => RoleUygunMenuMu(user.Rol, m))
+                .ToList();
 
             var assignedMenuIds = user.KullaniciMenuler.Select(km => km.MenuOgeId).ToList();
 
@@ -283,7 +330,16 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 .FirstOrDefaultAsync(u => u.KullaniciId == kullaniciId, ct)
                 ?? throw new KeyNotFoundException("Kullanıcı bulunamadı.");
 
-            var desired = (selectedMenuIds ?? new List<int>()).ToHashSet();
+            if (user.Rol == KullaniciRolu.GenelAdmin)
+                throw new InvalidOperationException("Genel Yönetici yetkileri elle düzenlenemez.");
+
+            // Role uymayan menüler (Öğretmen için Yönetici ekranları) atanmaz
+            var uygunMenuIdler = (await _db.MenuOgeler.AsNoTracking().ToListAsync(ct))
+                .Where(m => RoleUygunMenuMu(user.Rol, m))
+                .Select(m => m.Id)
+                .ToHashSet();
+
+            var desired = (selectedMenuIds ?? new List<int>()).Where(uygunMenuIdler.Contains).ToHashSet();
             var current = user.KullaniciMenuler.Select(km => km.MenuOgeId).ToHashSet();
 
             var toRemove = current.Except(desired).ToList();

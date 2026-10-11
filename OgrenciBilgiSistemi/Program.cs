@@ -136,6 +136,8 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         o.ExpireTimeSpan = TimeSpan.FromHours(8);
         o.SlidingExpiration = true;
         o.Cookie.IsEssential = true;
+        // Pasife alınan / rolü değişen kullanıcının oturumu en geç 5 dakikada kapanır
+        o.Events.OnValidatePrincipal = OturumDogrulayici.DogrulaAsync;
     });
 
 builder.Services.AddAuthorization(o =>
