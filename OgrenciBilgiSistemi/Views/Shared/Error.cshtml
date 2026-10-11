@@ -1,14 +1,30 @@
-﻿@model HataGorunumModel
+@model HataGorunumModel
 
 @{
-    ViewData["Title"] = "Hata";
+    // Hata anında menü/oturum sorgusu yapan ana şablona girmeden bağımsız sayfa
+    Layout = null;
 }
 
-<div class="container mt-5">
-    <div class="alert alert-danger">
-        <h1 class="display-4">Bir Hata Oluştu!</h1>
-        <hr />
-        <p>Lütfen daha sonra tekrar deneyiniz veya destek ekibi ile iletişime geçiniz.</p>
-        <a class="btn btn-primary" href='@Url.Action("Index", "Home")'>Ana Sayfaya Dön</a>
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hata - Öğrenci Bilgi Sistemi</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="alert alert-danger">
+            <h1 class="display-4">Bir Hata Oluştu!</h1>
+            <hr />
+            <p>Lütfen daha sonra tekrar deneyiniz veya destek ekibi ile iletişime geçiniz.</p>
+            @if (Model?.IstemKimlikGoster == true)
+            {
+                <p class="small text-muted mb-3">Hata kodu: <code>@Model.IstemKimlik</code></p>
+            }
+            <a class="btn btn-primary" href="@Url.Action("Index", "Home")">Ana Sayfaya Dön</a>
+        </div>
     </div>
-</div>
+</body>
+</html>

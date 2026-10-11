@@ -7,6 +7,16 @@
       "destination": "wwwroot/lib/bootstrap/"
     },
     {
+      "provider": "jsdelivr",
+      "library": "bootstrap-icons@1.11.3",
+      "destination": "wwwroot/lib/bootstrap-icons/",
+      "files": [
+        "font/bootstrap-icons.min.css",
+        "font/fonts/bootstrap-icons.woff",
+        "font/fonts/bootstrap-icons.woff2"
+      ]
+    },
+    {
       "library": "jquery@3.7.1",
       "destination": "wwwroot/lib/jquery/"
     },
