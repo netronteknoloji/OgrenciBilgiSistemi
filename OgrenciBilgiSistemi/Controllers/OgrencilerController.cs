@@ -156,7 +156,11 @@ namespace OgrenciBilgiSistemi.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Öğrenci eklenirken hata oluştu.");
+                // Geçersiz görsel (tür/boyut) gibi kullanıcıya gösterilecek hatalar formda görünür
+                if (ex is InvalidOperationException)
+                    ModelState.AddModelError(string.Empty, ex.Message);
+                else
+                    _logger.LogError(ex, "Öğrenci eklenirken hata oluştu.");
 
                 var vmRetry = await BuildFormVmAsync(
                     model.Ogrenci,

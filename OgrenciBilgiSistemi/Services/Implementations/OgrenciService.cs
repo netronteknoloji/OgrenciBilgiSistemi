@@ -88,30 +88,43 @@ namespace OgrenciBilgiSistemi.Services.Implementations
 
         public async Task<int> EkleAsync(OgrenciModel model, IFormFile? gorsel, bool buAyYemekhaneAktif, CancellationToken ct = default)
         {
-            model.OgrenciAdSoyad = (model.OgrenciAdSoyad ?? string.Empty).ToUpper(_tr);
-            model.OgrenciKartNo = KartNo.Normalize(model.OgrenciKartNo);
-
+            var ogrenciId = 0;
             var strategy = _db.Database.CreateExecutionStrategy();
             await strategy.ExecuteAsync(async () =>
             {
                 await using var tx = await _db.Database.BeginTransactionAsync(ct);
 
-                // Görsel yolu yalnızca yüklenen dosyadan gelir; formdan gelen değer kullanılmaz
-                model.OgrenciGorsel = gorsel is not null
-                    ? await _files.SaveImageAsync(gorsel, existingPath: null, ct)
-                    : null;
+                // Formdan bağlanan nesne kaydedilmez: yalnızca izinli alanlardan yeni kayıt oluşturulur.
+                // Aksi halde forma eklenen Veli/Birim/OgrenciDetaylar gibi alanlarla ilişkili kayıtlar
+                // (ör. yeni Admin kullanıcısı) da eklenebilirdi (AUTH-02).
+                var yeni = new OgrenciModel
+                {
+                    OgrenciAdSoyad = (model.OgrenciAdSoyad ?? string.Empty).ToUpper(_tr),
+                    OgrenciNo = model.OgrenciNo,
+                    OgrenciKartNo = KartNo.Normalize(model.OgrenciKartNo),
+                    OgrenciCikisDurumu = model.OgrenciCikisDurumu,
+                    BirimId = model.BirimId,
+                    VeliId = model.VeliId,
+                    ServisId = model.ServisId,
+                    IsDeleted = model.IsDeleted,
+                    // Görsel yolu yalnızca yüklenen dosyadan gelir
+                    OgrenciGorsel = gorsel is not null
+                        ? await _files.SaveImageAsync(gorsel, existingPath: null, ct)
+                        : null,
+                    OgretmenId = await BirimdenOgretmenBulAsync(model.BirimId, ct)
+                };
 
-                model.OgretmenId = await BirimdenOgretmenBulAsync(model.BirimId, ct);
-                _db.Ogrenciler.Add(model);
+                _db.Ogrenciler.Add(yeni);
                 await _db.SaveChangesAsync(ct);
 
                 // Yalnızca içinde bulunulan ay için yemekhane durumu
-                await _yemekhane.SetBuAyAsync(model.OgrenciId, buAyYemekhaneAktif, ct: ct);
+                await _yemekhane.SetBuAyAsync(yeni.OgrenciId, buAyYemekhaneAktif, ct: ct);
 
                 await tx.CommitAsync(ct);
+                ogrenciId = yeni.OgrenciId;
             });
 
-            return model.OgrenciId;
+            return ogrenciId;
         }
 
         public async Task GuncelleAsync(OgrenciModel model, IFormFile? gorsel, bool? buAyYemekhaneAktif, CancellationToken ct = default)
