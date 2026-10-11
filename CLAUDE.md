@@ -2,18 +2,19 @@
 
 Multi-tenant okul yönetim sistemi. Web paneli + REST API + MAUI mobil. Her okul ayrı SQL DB. ZKTeco kart okuyucu entegrasyonu.
 
-## Çözüm (6 proje)
+## Çözüm (7 proje)
 
 ```
 OgrenciBilgiSistemi/         → MVC paneli (EF Core, ZKTeco, SignalR)
 OgrenciBilgiSistemi.Api/     → REST API (JWT, ham SQL)
 OgrenciBilgiSistemi.Mobil/   → MAUI (Android + iOS)
-OgrenciBilgiSistemi.Shared/  → Ortak modeller (TenantBaglami, OkulBilgiAyari)
+OgrenciBilgiSistemi.Shared/  → Ortak modeller, saf kurallar (TenantBaglami, OkulBilgiAyari, Kurallar/)
 OgrenciBilgiSistemi.Sms/     → SMS (ilksms.com)
 OgrenciBilgiSistemi.Push/    → FCM push bildirimleri
+OgrenciBilgiSistemi.Tests/   → Shared kurallarının birim testleri (DB/COM yok)
 ```
 
-Her projenin (Push hariç) **kendi CLAUDE.md**'si vardır — detaylar oradadır.
+Her projenin (Push ve Tests hariç) **kendi CLAUDE.md**'si vardır — detaylar oradadır.
 
 ## Bağımlılık Grafiği
 
