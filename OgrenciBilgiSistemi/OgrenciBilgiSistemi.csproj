@@ -28,8 +28,6 @@
 
 	<ItemGroup>
 		<Folder Include="Migrations\" />
-		<Folder Include="wwwroot\lib\signalr\" />
-		<Folder Include="wwwroot\lib\zkemkeeper\" />
 		<Folder Include="wwwroot\uploads\" />
 	</ItemGroup>
 
