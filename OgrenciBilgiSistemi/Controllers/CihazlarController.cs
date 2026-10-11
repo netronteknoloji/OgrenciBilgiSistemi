@@ -1,4 +1,6 @@
+using ClosedXML.Excel;
 using Microsoft.AspNetCore.Mvc;
+using OgrenciBilgiSistemi.Helpers;
 using OgrenciBilgiSistemi.ViewModels;
 
 namespace OgrenciBilgiSistemi.Controllers
@@ -19,6 +21,39 @@ namespace OgrenciBilgiSistemi.Controllers
         {
             var paged = await _cihazService.SearchPagedAsync(searchString, page, 10, ct);
             return View(new CihazIndexVm { Cihazlar = paged, CurrentFilter = searchString });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ExportToExcel(string? searchString, CancellationToken ct = default)
+        {
+            // Cihaz sayısı küçüktür; filtreye uyanların tamamı tek sayfada alınır
+            var liste = await _cihazService.SearchPagedAsync(searchString, 1, 10_000, ct);
+
+            using var workbook = new XLWorkbook();
+            var ws = workbook.Worksheets.Add("Cihazlar");
+            string[] basliklar = ["Cihaz Adı", "Tip", "İstasyon", "Cihaz Kodu", "IP", "Port", "Durum"];
+            for (int i = 0; i < basliklar.Length; i++) ws.Cell(1, i + 1).Value = basliklar[i];
+            ExcelYardimci.BasligiBicimle(ws.Range(1, 1, 1, basliklar.Length));
+
+            int r = 2;
+            foreach (var c in liste)
+            {
+                ws.Cell(r, 1).Value = c.CihazAdi;
+                ws.Cell(r, 2).Value = c.DonanimTipi.ToString();
+                ws.Cell(r, 3).Value = c.IstasyonTipi.ToString();
+                ws.Cell(r, 4).Value = c.CihazKodu.ToString();
+                ws.Cell(r, 5).Value = string.IsNullOrWhiteSpace(c.IpAdresi) ? "-" : c.IpAdresi;
+                ws.Cell(r, 6).Value = c.PortNo is > 0 ? c.PortNo.Value.ToString() : "-";
+                ws.Cell(r, 7).Value = c.IsDeleted ? "Pasif" : "Aktif";
+                r++;
+            }
+            ExcelYardimci.SayfayiSonlandir(ws, basliklar.Length, r, $"Toplam {liste.Count} cihaz");
+
+            using var stream = new MemoryStream();
+            workbook.SaveAs(stream);
+            return File(stream.ToArray(),
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                $"Cihazlar_{DateTime.Now:yyyyMMdd_HHmm}.xlsx");
         }
 
         [HttpGet]
@@ -69,20 +104,9 @@ namespace OgrenciBilgiSistemi.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        [HttpGet]
+        // Onay Index'teki modalda alınır; ayrı onay sayfası yok
+        [HttpPost]
         public async Task<IActionResult> Sil(int id, CancellationToken ct = default)
-        {
-            var cihaz = await _cihazService.CihazGetByIdAsync(id, ct);
-            if (cihaz is null)
-            {
-                _logger.LogWarning("Silinmek istenen cihaz bulunamadı: ID {Id}", id);
-                return NotFound();
-            }
-            return View(cihaz);
-        }
-
-        [HttpPost, ActionName("Sil")]
-        public async Task<IActionResult> SilConfirmed(int id, CancellationToken ct = default)
         {
             var ok = await _cihazService.CihazSilAsync(id, ct);
 
