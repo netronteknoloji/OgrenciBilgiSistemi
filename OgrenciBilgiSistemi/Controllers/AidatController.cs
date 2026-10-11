@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc.Rendering;
 using OgrenciBilgiSistemi.Dtos;
 using OgrenciBilgiSistemi.Helpers;
+using OgrenciBilgiSistemi.Infrastructure;
 using OgrenciBilgiSistemi.Services.Interfaces;
 using OgrenciBilgiSistemi.ViewModels;
 
@@ -23,6 +24,8 @@ namespace OgrenciBilgiSistemi.Controllers
             _birimService = birimService;
             _logger = logger;
         }
+
+        [MenuIslemYetki("Aidat", "Index")]
 
         [HttpGet("Index")]
         public async Task<IActionResult> Index(
@@ -59,23 +62,7 @@ namespace OgrenciBilgiSistemi.Controllers
                 ct: ct);
 
             // Yıl dropdown
-            var yillar = rapor.KullanilabilirYillar
-                .OrderByDescending(x => x)
-                .Select(y => new SelectListItem
-                {
-                    Value = y.ToString(),
-                    Text = $"{y}-{y + 1}",
-                    Selected = (yil ?? 0) == y
-                })
-                .ToList();
-
-            // "Tüm Yıllar" seçeneği
-            yillar.Insert(0, new SelectListItem
-            {
-                Value = "",
-                Text = "Tüm Yıllar",
-                Selected = !yil.HasValue
-            });
+            var yillar = YilSecenekleri(year, rapor.KullanilabilirYillar);
 
             // Birim dropdown
             var birimler = await _birimService.GetSelectListAsync(
@@ -119,9 +106,10 @@ namespace OgrenciBilgiSistemi.Controllers
                 ToplamBorc = rapor.ToplamBorc,
                 ToplamOdenenGosterilen = rapor.ToplamOdenenGosterilen,
                 ToplamKalan = rapor.ToplamKalan,
-                KullanilabilirYillar = rapor.KullanilabilirYillar
+                KullanilabilirYillar = rapor.KullanilabilirYillar,
+                Tarife = rapor.Tarife,
+                OdemesiOlanSayisi = rapor.OdemesiOlanSayisi
             };
-
 
             return View(vm);
         }
@@ -190,22 +178,7 @@ namespace OgrenciBilgiSistemi.Controllers
                 ct: ct);
 
             // Dropdown – Yıllar
-            var yillar = rapor.KullanilabilirYillar
-                .OrderByDescending(x => x)
-                .Select(y => new SelectListItem
-                {
-                    Value = y.ToString(),
-                    Text = $"{y}-{y + 1}",
-                    Selected = (yil ?? 0) == y
-                })
-                .ToList();
-
-            yillar.Insert(0, new SelectListItem
-            {
-                Value = "",
-                Text = "Tüm Yıllar",
-                Selected = !yil.HasValue
-            });
+            var yillar = YilSecenekleri(yil ?? AkademikDonemHelper.Current(), rapor.KullanilabilirYillar);
 
             // Dropdown – Birimler (sınıflar)
             var birimler = await _birimService.GetSelectListAsync(
@@ -279,19 +252,9 @@ namespace OgrenciBilgiSistemi.Controllers
         }
 
         // -------------------------------------------------------------
-        // Öğrenci detay (yıllık aidat)
-        // -------------------------------------------------------------
-        [HttpGet("OgrenciDetay")]
-        public async Task<IActionResult> OgrenciDetay(int id, int yil, CancellationToken ct)
-        {
-            var dto = await _aidatService.GetOgrenciAidatAsync(id, yil, ct);
-            if (dto is null) return NotFound();
-            return View(dto); // Views/OgrenciAidat/OgrenciDetay.cshtml
-        }
-
-        // -------------------------------------------------------------
         // Ödeme işlemleri
         // -------------------------------------------------------------
+        [MenuIslemYetki("Aidat", "Index")]
         [HttpPost("OdemeEkle")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> OdemeEkle(AidatOdemeEkleDto dto, string? returnUrl, CancellationToken ct = default)
@@ -310,6 +273,11 @@ namespace OgrenciBilgiSistemi.Controllers
 
                 return SafeRedirect(returnUrl, nameof(Index), new { yil = dto.Yil });
             }
+            catch (InvalidOperationException ex)
+            {
+                TempData["Error"] = ex.Message;
+                return SafeRedirect(returnUrl, nameof(Index), new { yil = dto.Yil });
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Ödeme ekleme sırasında hata oluştu. {@Dto}", dto);
@@ -317,6 +285,8 @@ namespace OgrenciBilgiSistemi.Controllers
                 return SafeRedirect(returnUrl, nameof(Index), new { yil = dto.Yil });
             }
         }
+
+        [MenuIslemYetki("Aidat", "Index")]
 
         [HttpPost("OdemeSil")]
         [ValidateAntiForgeryToken]
@@ -331,20 +301,60 @@ namespace OgrenciBilgiSistemi.Controllers
         // -------------------------------------------------------------
         // Tarife işlemleri
         // -------------------------------------------------------------
+        [MenuIslemYetki("Aidat", "Index")]
         [HttpPost("TarifeKaydet")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> TarifeKaydet(TarifeDto dto, CancellationToken ct)
+        public async Task<IActionResult> TarifeKaydet(TarifeDto dto, string? returnUrl, CancellationToken ct)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            if (!ModelState.IsValid || dto.Yil < 2000 || dto.Yil > 2100 || dto.Tutar < 0m)
+            {
+                TempData["Error"] = "Tarife bilgileri hatalı. Lütfen kontrol edin.";
+                return SafeRedirect(returnUrl, nameof(Index), new { yil = dto.Yil });
+            }
 
-            var result = await _aidatService.TarifeKaydetAsync(dto, ct);
-            return Ok(result); // JSON döndürür
+            try
+            {
+                await _aidatService.TarifeKaydetAsync(dto, ct);
+                TempData["Success"] = $"{dto.Yil}-{dto.Yil + 1} tarifesi kaydedildi: {dto.Tutar:N2} ₺";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Tarife kaydedilirken hata oluştu. Yil={Yil}", dto.Yil);
+                TempData["Error"] = "Tarife kaydedilemedi. Lütfen tekrar deneyin.";
+            }
+
+            return SafeRedirect(returnUrl, nameof(Index), new { yil = dto.Yil });
+        }
+
+        // -------------------------------------------------------------
+        // Öğrenciye özel borç (indirim/burs)
+        // -------------------------------------------------------------
+        [MenuIslemYetki("Aidat", "Index")]
+        [HttpPost("BorcAyarla")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> BorcAyarla(int ogrenciId, int yil, decimal? borc, bool tarifeyeDon, string? returnUrl, CancellationToken ct = default)
+        {
+            if (!tarifeyeDon && (borc is null || borc < 0m))
+            {
+                TempData["Error"] = "Geçerli bir borç tutarı girin.";
+            }
+            else
+            {
+                var ok = await _aidatService.OgrenciBorcAyarlaAsync(ogrenciId, yil, tarifeyeDon ? null : borc, ct);
+                TempData[ok ? "Success" : "Error"] = !ok
+                    ? "Borç güncellenemedi."
+                    : tarifeyeDon
+                        ? "Öğrenci yılın tarifesine döndürüldü."
+                        : $"Öğrenciye özel borç kaydedildi: {borc:N2} ₺";
+            }
+
+            return RedirectToAction(nameof(Ozet), new { ogrenciId, yil, returnUrl });
         }
 
         // -------------------------------------------------------------
         // Muafiyet işlemleri (+ alias)
         // -------------------------------------------------------------
+        [MenuIslemYetki("Aidat", "Index")]
         [HttpPost("SetMuafiyet")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> SetMuafiyet(int ogrenciId, int yil, bool muaf, CancellationToken ct)
@@ -361,6 +371,7 @@ namespace OgrenciBilgiSistemi.Controllers
         }
 
         // /OgrenciAidat/MuafiyetAyarla (alias’lar)
+        [MenuIslemYetki("Aidat", "Index")]
         [HttpPost("MuafiyetAyarla")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> MuafiyetAyarla(int ogrenciId, int yil, bool muaf, string? returnUrl, CancellationToken ct = default)
@@ -387,6 +398,21 @@ namespace OgrenciBilgiSistemi.Controllers
         // -------------------------------------------------------------
         // Yardımcı
         // -------------------------------------------------------------
+        private static List<SelectListItem> YilSecenekleri(int seciliYil, IEnumerable<int> yillar)
+        {
+            return yillar
+                .Append(seciliYil)
+                .Distinct()
+                .OrderByDescending(y => y)
+                .Select(y => new SelectListItem
+                {
+                    Value = y.ToString(),
+                    Text = $"{y}-{y + 1}",
+                    Selected = y == seciliYil
+                })
+                .ToList();
+        }
+
         private IActionResult SafeRedirect(string? returnUrl, string fallbackAction, object? routeValues = null)
         {
             if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))

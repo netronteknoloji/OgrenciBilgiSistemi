@@ -102,6 +102,12 @@ namespace OgrenciBilgiSistemi.Controllers
             {
                 return NotFound();
             }
+            catch (InvalidOperationException ex)
+            {
+                ModelState.AddModelError(string.Empty, ex.Message);
+                TempData["Error"] = ex.Message;
+                return View(vm);
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Birim güncellenirken hata oluştu.");
@@ -118,6 +124,10 @@ namespace OgrenciBilgiSistemi.Controllers
             {
                 await _birimService.DeleteAsync(id, ct);
                 TempData["Success"] = "Birim silindi.";
+            }
+            catch (InvalidOperationException ex)
+            {
+                TempData["Error"] = ex.Message;
             }
             catch (Exception ex)
             {

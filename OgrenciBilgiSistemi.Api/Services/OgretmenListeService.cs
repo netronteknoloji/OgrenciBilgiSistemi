@@ -23,6 +23,8 @@ namespace OgrenciBilgiSistemi.Api.Services
                 FROM Kullanicilar k
                 INNER JOIN OgretmenProfiller op ON k.KullaniciId = op.KullaniciId
                 WHERE op.IsDeleted = 0
+                  AND k.IsDeleted = 0
+                  AND k.Rol = 2
                 ORDER BY k.KullaniciAdi";
 
             await using var conn = new SqlConnection(ConnectionString);

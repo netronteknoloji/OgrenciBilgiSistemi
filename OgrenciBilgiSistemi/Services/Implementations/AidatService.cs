@@ -35,9 +35,11 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             return (start, endExcl);
         }
 
+        private string TarifeCacheKey(int baslangicYil) => $"aidat_tarife:{_tenant.OkulKodu}:{baslangicYil}";
+
         private async Task<decimal> GetTarifeTutarAsync(int baslangicYil, CancellationToken ct)
         {
-            var key = $"aidat_tarife:{_tenant.OkulKodu}:{baslangicYil}";
+            var key = TarifeCacheKey(baslangicYil);
             if (_cache.TryGetValue(key, out decimal cached))
                 return cached;
 
@@ -51,6 +53,16 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             _cache.Set(key, result, TimeSpan.FromMinutes(30));
             return result;
         }
+
+        // Tarifeyi kullanan (özel tutarı olmayan), muaf olmayan ve ödemesi olan kayıtlar.
+        // Tarife değişikliğinden borcu etkilenecek ödeme yapmış öğrencileri verir.
+        private IQueryable<OgrenciAidatModel> TarifeyeBagliOdeyenler(int yil) =>
+            _db.OgrenciAidatlar
+                .IgnoreQueryFilters()
+                .Where(a => a.BaslangicYil == yil
+                            && a.Borc == null
+                            && !a.Muaf
+                            && a.Odemeler.Any(o => !o.IsDeleted));
 
         // ---------------------- Öğrenci Yıllık Özet ----------------------
         public async Task<OgrenciAidatDto> GetOgrenciAidatAsync(int ogrenciId, int yil, CancellationToken ct = default)
@@ -67,10 +79,10 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 .Select(t => new TarifeDto { Yil = t.BaslangicYil, Tutar = t.Tutar, Aciklama = t.Aciklama })
                 .FirstOrDefaultAsync(ct);
 
+            var tarifeTutar = tarife?.Tutar ?? 0m;
+
             if (aidat == null)
             {
-                var tarifeTutar = tarife?.Tutar ?? await GetTarifeTutarAsync(yil, ct);
-
                 var ogr = await _db.Ogrenciler
                     .AsNoTracking()
                     .Where(x => x.OgrenciId == ogrenciId)
@@ -83,6 +95,8 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                     OgrenciAdSoyad = ogr?.OgrenciAdSoyad ?? "Öğrenci",
                     Yil = yil,
                     ToplamBorc = tarifeTutar,
+                    TarifeTutari = tarifeTutar,
+                    OzelBorc = null,
                     ToplamOdenen = 0m,
                     Muaf = false,
                     SonOdemeTarihi = null,
@@ -96,10 +110,12 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 OgrenciId = aidat.OgrenciId,
                 OgrenciAdSoyad = aidat.Ogrenci?.OgrenciAdSoyad ?? string.Empty,
                 Yil = aidat.BaslangicYil,
-                ToplamBorc = aidat.Borc,
-                ToplamOdenen = aidat.Odenen,
+                ToplamBorc = aidat.Muaf ? 0m : (aidat.Borc ?? tarifeTutar),
+                TarifeTutari = tarifeTutar,
+                OzelBorc = aidat.Borc,
+                ToplamOdenen = aidat.Odemeler.Sum(p => p.Tutar),
                 Muaf = aidat.Muaf,
-                SonOdemeTarihi = aidat.SonOdemeTarihi,
+                SonOdemeTarihi = aidat.Odemeler.Max(p => (DateTime?)p.OdemeTarihi),
                 Odemeler = aidat.Odemeler
                     .OrderByDescending(p => p.OdemeTarihi)
                     .Select(p => new OdemeSatiriDto
@@ -176,8 +192,9 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                     Muaf = a != null && a.Muaf,
                     BorcRaw = a == null
                         ? tarifeTutar
-                        : (a.Muaf ? 0m : ((a.Borc > 0m) ? a.Borc : tarifeTutar)),
-                    OdenenRaw = a == null || a.Muaf
+                        : (a.Muaf ? 0m : (a.Borc ?? tarifeTutar)),
+                    // Muaf olsa da tahsil edilmiş ödemeler gösterilir (raporda para kaybolmasın)
+                    OdenenRaw = a == null
                         ? 0m
                         : (_db.OgrenciAidatOdemeler
                             .Where(p => p.OgrenciAidatId == a.OgrenciAidatId
@@ -197,7 +214,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 Muaf = x.Muaf,
 
                 BorcGosterim = x.Muaf ? 0m : x.BorcRaw,
-                GosterilenOdenen = x.Muaf ? 0m : x.OdenenRaw,
+                GosterilenOdenen = x.OdenenRaw,
 
                 Kalan = x.Muaf ? 0m : (x.BorcRaw - x.OdenenRaw),
                 Kapandi = x.Muaf || (x.BorcRaw - x.OdenenRaw) <= 0m
@@ -207,7 +224,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             dtoQuery = durum switch
             {
                 RaporDurumFiltresiDto.Borclu => dtoQuery.Where(r => !r.Muaf && r.Kalan > 0m),
-                RaporDurumFiltresiDto.Borcsuz => dtoQuery.Where(r => !r.Muaf && r.Kalan == 0m),
+                RaporDurumFiltresiDto.Borcsuz => dtoQuery.Where(r => !r.Muaf && r.Kalan <= 0m),
                 RaporDurumFiltresiDto.Muaf => dtoQuery.Where(r => r.Muaf),
                 _ => dtoQuery
             };
@@ -244,7 +261,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 var aktifQuery = dtoQuery.Where(x => !x.Muaf);
 
                 var toplamBorc = await aktifQuery.SumAsync(x => (decimal?)x.BorcGosterim, ct) ?? 0m;
-                var toplamOdenen = await aktifQuery.SumAsync(x => (decimal?)x.GosterilenOdenen, ct) ?? 0m;
+                var toplamOdenen = await dtoQuery.SumAsync(x => (decimal?)x.GosterilenOdenen, ct) ?? 0m; // muaflar dahil
                 var toplamKalan = await aktifQuery.SumAsync(x => (decimal?)x.Kalan, ct) ?? 0m;
 
                 var orderedQuery = dtoQuery
@@ -264,13 +281,25 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                     .OrderByDescending(x => x)
                     .ToListAsync(ct);
 
+                var seciliYil = yil ?? AkademikDonemHelper.Current();
+
+                var tarife = await _db.OgrenciAidatTarifeler
+                    .AsNoTracking()
+                    .Where(t => t.BaslangicYil == seciliYil)
+                    .Select(t => new TarifeDto { Yil = t.BaslangicYil, Tutar = t.Tutar, Aciklama = t.Aciklama })
+                    .FirstOrDefaultAsync(ct);
+
+                var odemesiOlanSayisi = await TarifeyeBagliOdeyenler(seciliYil).CountAsync(ct);
+
                 return new AidatRaporSonucDto
                 {
                     Satirlar = paged,
                     ToplamBorc = toplamBorc,
                     ToplamOdenenGosterilen = toplamOdenen,
                     ToplamKalan = toplamKalan,
-                    KullanilabilirYillar = kullanilabilirYillar
+                    KullanilabilirYillar = kullanilabilirYillar,
+                    Tarife = tarife,
+                    OdemesiOlanSayisi = odemesiOlanSayisi
                 };
             }
             finally
@@ -314,7 +343,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             // ✅ Toplamlar (filtreli tüm kayıtlar üzerinden)
             var aktif = rows.Where(x => !x.Muaf).ToList();
             var toplamBorc = aktif.Sum(x => x.BorcGosterim);
-            var toplamOdenen = aktif.Sum(x => x.GosterilenOdenen);
+            var toplamOdenen = rows.Sum(x => x.GosterilenOdenen); // muaflar dahil
             var toplamKalan = aktif.Sum(x => x.Kalan);
 
             using var wb = new XLWorkbook();
@@ -372,90 +401,74 @@ namespace OgrenciBilgiSistemi.Services.Implementations
         // ---------------------- Ödeme İşlemleri ----------------------
         public async Task<OdemeSatiriDto> OdemeEkleAsync(AidatOdemeEkleDto dto, CancellationToken ct = default)
         {
-            var strategy = _db.Database.CreateExecutionStrategy();
-            return await strategy.ExecuteAsync(async () =>
+            // Aynı öğrenciye aynı anda ilk ödeme girilirse aidat kaydı unique index'e takılır;
+            // bir kez daha denendiğinde diğer isteğin oluşturduğu kayıt bulunur.
+            for (var deneme = 1; ; deneme++)
             {
-                await using var tx = await _db.Database.BeginTransactionAsync(ct);
-
-                var aidat = await _db.OgrenciAidatlar
-                    .FirstOrDefaultAsync(a => a.OgrenciId == dto.OgrenciId && a.BaslangicYil == dto.Yil, ct);
-
-                var tarife = await GetTarifeTutarAsync(dto.Yil, ct);
-
-                if (aidat == null)
+                try
                 {
-                    // kayıt yoksa oluştur
-                    aidat = new OgrenciAidatModel
-                    {
-                        OgrenciId = dto.OgrenciId,
-                        BaslangicYil = dto.Yil,
-                        Borc = tarife,          // borcu tarifeden başlat
-                        Odenen = 0m,
-                        Muaf = false
-                    };
-                    _db.OgrenciAidatlar.Add(aidat);
+                    return await OdemeEkleIcAsync(dto, ct);
                 }
-                else if (!aidat.Muaf && aidat.Borc <= 0m)
+                catch (DbUpdateException) when (deneme == 1)
                 {
-                    // kayıt var ama Borc<=0 ise tarifeye yükselt
-                    aidat.Borc = tarife;
+                    _db.ChangeTracker.Clear();
                 }
+            }
+        }
 
-                var ent = new OgrenciAidatOdemeModel
+        private async Task<OdemeSatiriDto> OdemeEkleIcAsync(AidatOdemeEkleDto dto, CancellationToken ct)
+        {
+            var aidat = await _db.OgrenciAidatlar
+                .FirstOrDefaultAsync(a => a.OgrenciId == dto.OgrenciId && a.BaslangicYil == dto.Yil, ct);
+
+            if (aidat == null)
+            {
+                // Borc = null => yılın tarifesi uygulanır
+                aidat = new OgrenciAidatModel
                 {
-                    OgrenciAidat = aidat,
-                    OdemeTarihi = dto.Tarih,
-                    Tutar = dto.Tutar,
-                    Aciklama = dto.Aciklama
+                    OgrenciId = dto.OgrenciId,
+                    BaslangicYil = dto.Yil,
+                    Muaf = false
                 };
-                _db.OgrenciAidatOdemeler.Add(ent);
+                _db.OgrenciAidatlar.Add(aidat);
+            }
+            else if (aidat.Muaf)
+            {
+                throw new InvalidOperationException("Muaf öğrenciye ödeme eklenemez.");
+            }
 
-                aidat.Odenen += dto.Tutar;
-                aidat.SonOdemeTarihi = dto.Tarih;
+            var ent = new OgrenciAidatOdemeModel
+            {
+                OgrenciAidat = aidat,
+                OdemeTarihi = dto.Tarih,
+                Tutar = dto.Tutar,
+                Aciklama = dto.Aciklama
+            };
+            _db.OgrenciAidatOdemeler.Add(ent);
 
-                await _db.SaveChangesAsync(ct);
-                await tx.CommitAsync(ct);
+            // Aidat kaydı ve ödeme tek SaveChanges ile (tek transaction) yazılır.
+            await _db.SaveChangesAsync(ct);
 
-                return new OdemeSatiriDto
-                {
-                    OgrenciAidatOdemeId = ent.OgrenciAidatOdemeId,
-                    Tarih = ent.OdemeTarihi,
-                    Tutar = ent.Tutar,
-                    Aciklama = ent.Aciklama
-                };
-            });
+            return new OdemeSatiriDto
+            {
+                OgrenciAidatOdemeId = ent.OgrenciAidatOdemeId,
+                Tarih = ent.OdemeTarihi,
+                Tutar = ent.Tutar,
+                Aciklama = ent.Aciklama
+            };
         }
 
         public async Task<bool> OdemeSilAsync(int ogrenciAidatOdemeId, CancellationToken ct = default)
         {
-            var strategy = _db.Database.CreateExecutionStrategy();
-            return await strategy.ExecuteAsync(async () =>
-            {
-                await using var tx = await _db.Database.BeginTransactionAsync(ct);
+            var ent = await _db.OgrenciAidatOdemeler
+                .FirstOrDefaultAsync(p => p.OgrenciAidatOdemeId == ogrenciAidatOdemeId, ct);
 
-                var ent = await _db.OgrenciAidatOdemeler
-                    .Include(p => p.OgrenciAidat)
-                    .FirstOrDefaultAsync(p => p.OgrenciAidatOdemeId == ogrenciAidatOdemeId, ct);
+            if (ent is null)
+                return false;
 
-                if (ent is null)
-                    return false;
-
-                var aidat = ent.OgrenciAidat;
-                aidat.Odenen = decimal.Round(Math.Max(0m, aidat.Odenen - ent.Tutar), 2, MidpointRounding.AwayFromZero);
-                ent.IsDeleted = true;
-                await _db.SaveChangesAsync(ct);
-
-                aidat.SonOdemeTarihi = await _db.OgrenciAidatOdemeler
-                    .Where(x => x.OgrenciAidatId == aidat.OgrenciAidatId)
-                    .OrderByDescending(x => x.OdemeTarihi)
-                    .Select(x => (DateTime?)x.OdemeTarihi)
-                    .FirstOrDefaultAsync(ct);
-
-                await _db.SaveChangesAsync(ct);
-                await tx.CommitAsync(ct);
-
-                return true;
-            });
+            ent.IsDeleted = true;
+            await _db.SaveChangesAsync(ct);
+            return true;
         }
 
         // ---------------------- Muafiyet İşlemleri ----------------------
@@ -466,13 +479,10 @@ namespace OgrenciBilgiSistemi.Services.Implementations
 
             if (aidat == null)
             {
-                var borc = await GetTarifeTutarAsync(yil, ct);
                 aidat = new OgrenciAidatModel
                 {
                     OgrenciId = ogrenciId,
                     BaslangicYil = yil,
-                    Borc = borc,
-                    Odenen = 0m,
                     Muaf = muaf
                 };
                 _db.OgrenciAidatlar.Add(aidat);
@@ -507,28 +517,75 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 .ToListAsync(ct);
         }
 
-        public async Task<TarifeDto> TarifeKaydetAsync(TarifeDto dto, CancellationToken ct = default)
+        public async Task<bool> OgrenciBorcAyarlaAsync(int ogrenciId, int yil, decimal? borc, CancellationToken ct = default)
         {
-            var tarife = await _db.OgrenciAidatTarifeler
-                .FirstOrDefaultAsync(t => t.BaslangicYil == dto.Yil, ct);
+            if (borc is < 0m)
+                return false;
 
-            if (tarife == null)
+            var aidat = await _db.OgrenciAidatlar
+                .FirstOrDefaultAsync(a => a.OgrenciId == ogrenciId && a.BaslangicYil == yil, ct);
+
+            if (aidat == null)
             {
-                tarife = new OgrenciAidatTarifeModel
+                if (borc is null)
+                    return true; // kayıt yok => zaten tarife uygulanıyor
+
+                aidat = new OgrenciAidatModel
                 {
-                    BaslangicYil = dto.Yil,
-                    Tutar = dto.Tutar,
-                    Aciklama = dto.Aciklama
+                    OgrenciId = ogrenciId,
+                    BaslangicYil = yil,
+                    Muaf = false
                 };
-                _db.OgrenciAidatTarifeler.Add(tarife);
+                _db.OgrenciAidatlar.Add(aidat);
             }
-            else
-            {
-                tarife.Tutar = dto.Tutar;
-                tarife.Aciklama = dto.Aciklama;
-            }
+
+            aidat.Borc = borc.HasValue
+                ? decimal.Round(borc.Value, 2, MidpointRounding.AwayFromZero)
+                : null;
 
             await _db.SaveChangesAsync(ct);
+            return true;
+        }
+
+        public async Task<TarifeDto> TarifeKaydetAsync(TarifeDto dto, CancellationToken ct = default)
+        {
+            var strategy = _db.Database.CreateExecutionStrategy();
+            await strategy.ExecuteAsync(async () =>
+            {
+                await using var tx = await _db.Database.BeginTransactionAsync(ct);
+
+                var tarife = await _db.OgrenciAidatTarifeler
+                    .FirstOrDefaultAsync(t => t.BaslangicYil == dto.Yil, ct);
+
+                if (tarife == null)
+                {
+                    tarife = new OgrenciAidatTarifeModel
+                    {
+                        BaslangicYil = dto.Yil,
+                        Tutar = dto.Tutar,
+                        Aciklama = dto.Aciklama
+                    };
+                    _db.OgrenciAidatTarifeler.Add(tarife);
+                }
+                else
+                {
+                    // Ödeme yapmış öğrencileri eski tarifede sabitle (özel tutar olarak yaz)
+                    if (dto.OdeyenleriSabitle && tarife.Tutar != dto.Tutar)
+                    {
+                        var eskiTutar = tarife.Tutar;
+                        await TarifeyeBagliOdeyenler(dto.Yil)
+                            .ExecuteUpdateAsync(s => s.SetProperty(a => a.Borc, (decimal?)eskiTutar), ct);
+                    }
+
+                    tarife.Tutar = dto.Tutar;
+                    tarife.Aciklama = dto.Aciklama;
+                }
+
+                await _db.SaveChangesAsync(ct);
+                await tx.CommitAsync(ct);
+            });
+
+            _cache.Remove(TarifeCacheKey(dto.Yil));
             return dto;
         }
     }

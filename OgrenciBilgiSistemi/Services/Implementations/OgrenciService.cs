@@ -83,7 +83,10 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             if (birimId is null) return null;
             return await _db.OgretmenProfiller
                 .AsNoTracking()
-                .Where(op => op.BirimId == birimId && !op.IsDeleted)
+                .Where(op => op.BirimId == birimId
+                             && !op.IsDeleted
+                             && !op.Kullanici.IsDeleted
+                             && op.Kullanici.Rol == KullaniciRolu.Ogretmen)
                 .OrderBy(op => op.KullaniciId)
                 .Select(op => (int?)op.KullaniciId)
                 .FirstOrDefaultAsync(ct);

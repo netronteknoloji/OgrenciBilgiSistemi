@@ -12,6 +12,9 @@ namespace OgrenciBilgiSistemi.Controllers
         private readonly IKullaniciService _kullaniciService;
         private readonly ILogger<OgretmenlerController> _logger;
 
+        private const string KullaniciAdiKullaniliyorMesaji =
+            "Bu kullanıcı adı kullanılıyor. Aynı isimde öğretmen için farklı bir ad girin (ör. Ahmet Yılmaz 2).";
+
         public OgretmenlerController(
             IOgretmenProfilService ogretmenProfilService,
             IKullaniciService kullaniciService,
@@ -34,7 +37,7 @@ namespace OgrenciBilgiSistemi.Controllers
         public async Task<IActionResult> Ekle(CancellationToken ct = default)
         {
             var vm = new OgretmenFormVm();
-            vm.Birimler = await _kullaniciService.GetBirimlerSelectListAsync(ct);
+            vm.Birimler = await _kullaniciService.GetBirimlerSelectListAsync(vm.BirimId, ct);
             return View(vm);
         }
 
@@ -42,9 +45,16 @@ namespace OgrenciBilgiSistemi.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Ekle(OgretmenFormVm vm, CancellationToken ct = default)
         {
+            if (string.IsNullOrWhiteSpace(vm.Sifre) || vm.Sifre.Length < 4 || vm.Sifre.Length > 50)
+                ModelState.AddModelError(nameof(vm.Sifre), "Şifre 4-50 karakter olmalıdır.");
+
+            if (!string.IsNullOrWhiteSpace(vm.KullaniciAdi) &&
+                await _kullaniciService.KullaniciAdiVarMiAsync(vm.KullaniciAdi, null, ct))
+                ModelState.AddModelError(nameof(vm.KullaniciAdi), KullaniciAdiKullaniliyorMesaji);
+
             if (!ModelState.IsValid)
             {
-                vm.Birimler = await _kullaniciService.GetBirimlerSelectListAsync(ct);
+                vm.Birimler = await _kullaniciService.GetBirimlerSelectListAsync(vm.BirimId, ct);
                 return View(vm);
             }
 
@@ -57,7 +67,7 @@ namespace OgrenciBilgiSistemi.Controllers
             {
                 _logger.LogError(ex, "Öğretmen eklenirken hata oluştu.");
                 ModelState.AddModelError(string.Empty, "Kayıt sırasında bir hata oluştu.");
-                vm.Birimler = await _kullaniciService.GetBirimlerSelectListAsync(ct);
+                vm.Birimler = await _kullaniciService.GetBirimlerSelectListAsync(vm.BirimId, ct);
                 return View(vm);
             }
         }
@@ -71,7 +81,7 @@ namespace OgrenciBilgiSistemi.Controllers
             if (profil == null) return NotFound();
 
             var vm = OgretmenFormVm.FromModel(profil);
-            vm.Birimler = await _kullaniciService.GetBirimlerSelectListAsync(ct);
+            vm.Birimler = await _kullaniciService.GetBirimlerSelectListAsync(vm.BirimId, ct);
             return View(vm);
         }
 
@@ -82,9 +92,16 @@ namespace OgrenciBilgiSistemi.Controllers
             vm.FormAction = "Guncelle"; vm.SubmitText = "Güncelle";
             ModelState.Remove(nameof(vm.Sifre));
 
+            if (!string.IsNullOrWhiteSpace(vm.Sifre) && (vm.Sifre.Length < 4 || vm.Sifre.Length > 50))
+                ModelState.AddModelError(nameof(vm.Sifre), "Şifre 4-50 karakter olmalıdır.");
+
+            if (!string.IsNullOrWhiteSpace(vm.KullaniciAdi) &&
+                await _kullaniciService.KullaniciAdiVarMiAsync(vm.KullaniciAdi, vm.KullaniciId, ct))
+                ModelState.AddModelError(nameof(vm.KullaniciAdi), KullaniciAdiKullaniliyorMesaji);
+
             if (!ModelState.IsValid)
             {
-                vm.Birimler = await _kullaniciService.GetBirimlerSelectListAsync(ct);
+                vm.Birimler = await _kullaniciService.GetBirimlerSelectListAsync(vm.BirimId, ct);
                 return View(vm);
             }
 
@@ -97,7 +114,7 @@ namespace OgrenciBilgiSistemi.Controllers
             {
                 _logger.LogError(ex, "Öğretmen profili güncellenirken hata oluştu.");
                 ModelState.AddModelError(string.Empty, "Güncelleme sırasında bir hata oluştu.");
-                vm.Birimler = await _kullaniciService.GetBirimlerSelectListAsync(ct);
+                vm.Birimler = await _kullaniciService.GetBirimlerSelectListAsync(vm.BirimId, ct);
                 return View(vm);
             }
         }

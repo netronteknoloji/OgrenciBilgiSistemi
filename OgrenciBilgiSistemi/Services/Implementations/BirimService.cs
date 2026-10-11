@@ -33,18 +33,15 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             BirimFiltre filtre = BirimFiltre.Aktif,
             CancellationToken ct = default)
         {
-            var q = _db.Birimler.AsNoTracking().AsQueryable();
+            bool durumFiltreli = filtre != BirimFiltre.Tum;
+            bool aktifMi = filtre == BirimFiltre.Aktif;
 
-            // Durum filtresi (Aktif/Pasif/Tümü)
-            if (filtre != BirimFiltre.Tum)
-            {
-                bool aktifMi = filtre == BirimFiltre.Aktif;
-                q = q.Where(b => b.IsDeleted != aktifMi);
-            }
-
-            // Sınıf filtresi (opsiyonel)
-            if (sinifMi.HasValue)
-                q = q.Where(b => b.BirimSinifMi == sinifMi.Value);
+            // Durum (Aktif/Pasif/Tümü) ve sınıf filtresi. Seçili birim filtre dışında kalsa da listede tutulur;
+            // aksi halde formda boş seçenek seçilir ve kaydedince öğrencinin birimi sessizce silinir.
+            var q = _db.Birimler.AsNoTracking().Where(b =>
+                ((!durumFiltreli || b.IsDeleted != aktifMi) &&
+                 (!sinifMi.HasValue || b.BirimSinifMi == sinifMi.Value))
+                || (selectedId.HasValue && b.BirimId == selectedId.Value));
 
             var items = await q
                 .OrderBy(b => b.BirimAd)
@@ -119,6 +116,28 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 (!excludeId.HasValue || b.BirimId != excludeId.Value), ct);
         }
 
+        // Aktif öğrencisi (ve istenirse aktif öğretmeni) olan birim pasiflenirse öğrenciler
+        // mobil sınıf listesinden ve yoklamadan düşer; bu yüzden işlem engellenir.
+        private async Task BagliKayitKontrolAsync(int birimId, string islem, bool ogretmenDahil, CancellationToken ct)
+        {
+            var ogrenciSayisi = await _db.Ogrenciler
+                .CountAsync(o => o.BirimId == birimId && !o.IsDeleted, ct);
+
+            var ogretmenSayisi = ogretmenDahil
+                ? await _db.OgretmenProfiller.CountAsync(op => op.BirimId == birimId && !op.IsDeleted, ct)
+                : 0;
+
+            if (ogrenciSayisi == 0 && ogretmenSayisi == 0)
+                return;
+
+            var bagli = new List<string>();
+            if (ogrenciSayisi > 0) bagli.Add($"{ogrenciSayisi} aktif öğrenci");
+            if (ogretmenSayisi > 0) bagli.Add($"{ogretmenSayisi} aktif öğretmen");
+
+            throw new InvalidOperationException(
+                $"Bu birimde {string.Join(" ve ", bagli)} var; birim {islem}. Önce kayıtları başka birime taşıyın.");
+        }
+
         // --- CRUD ---
 
         public async Task AddAsync(BirimModel model, CancellationToken ct = default)
@@ -142,6 +161,11 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             var ent = await _db.Birimler.FirstOrDefaultAsync(b => b.BirimId == model.BirimId, ct)
                       ?? throw new KeyNotFoundException("Birim bulunamadı.");
 
+            if (!ent.IsDeleted && model.IsDeleted)
+                await BagliKayitKontrolAsync(ent.BirimId, "pasif yapılamaz", ogretmenDahil: true, ct);
+            else if (ent.BirimSinifMi && !model.BirimSinifMi)
+                await BagliKayitKontrolAsync(ent.BirimId, "sınıf dışı yapılamaz", ogretmenDahil: false, ct);
+
             ent.BirimAd = (model.BirimAd ?? string.Empty).Trim();
             ent.IsDeleted = model.IsDeleted;
             ent.BirimSinifMi = model.BirimSinifMi;
@@ -161,6 +185,8 @@ namespace OgrenciBilgiSistemi.Services.Implementations
         {
             var ent = await _db.Birimler.FirstOrDefaultAsync(b => b.BirimId == id, ct);
             if (ent == null) return;
+
+            await BagliKayitKontrolAsync(ent.BirimId, "silinemez", ogretmenDahil: true, ct);
 
             ent.IsDeleted = true;
             try

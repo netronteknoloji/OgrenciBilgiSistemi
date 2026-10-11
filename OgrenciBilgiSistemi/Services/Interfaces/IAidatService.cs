@@ -48,7 +48,14 @@ namespace OgrenciBilgiSistemi.Services.Interfaces
             TarifeDto dto,
             CancellationToken ct = default);
 
-        /// <summary>Filtrelerle üretilen aidat raporunu Excel (CSV) olarak dışa aktarır.</summary>
+        /// <summary>Öğrenciye özel borç tutarını ayarlar; null => yılın tarifesine döner.</summary>
+        Task<bool> OgrenciBorcAyarlaAsync(
+            int ogrenciId,
+            int yil,
+            decimal? borc,
+            CancellationToken ct = default);
+
+        /// <summary>Filtrelerle üretilen aidat raporunu Excel (xlsx) olarak dışa aktarır.</summary>
         /// <returns>(içerik, dosyaAdı, içerikTürü)</returns>
         Task<(byte[] Content, string FileName, string ContentType)> ExportAidatRaporExcelAsync(
             int? yil,

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using OgrenciBilgiSistemi.Data;
+using OgrenciBilgiSistemi.Helpers;
 using OgrenciBilgiSistemi.Models;
 using OgrenciBilgiSistemi.Services.Interfaces;
 using OgrenciBilgiSistemi.Shared.Services;
@@ -81,6 +82,8 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 .FirstOrDefaultAsync(k => k.KullaniciId == model.KullaniciId, ct)
                 ?? throw new KeyNotFoundException("Kullanıcı bulunamadı.");
 
+            var eskiOgretmenBirimId = kullanici.OgretmenProfil?.BirimId;
+
             kullanici.KullaniciAdi = model.KullaniciAdi;
             kullanici.Rol = model.Rol;
             kullanici.IsDeleted = model.IsDeleted;
@@ -104,6 +107,11 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 if (model.OgretmenProfil?.GorselFile != null && model.OgretmenProfil.GorselFile.Length > 0)
                     profil.GorselPath = await SaveImageAsync(model.OgretmenProfil.GorselFile, ct);
             }
+            else if (kullanici.OgretmenProfil != null)
+            {
+                // Artık öğretmen değil: profil öğretmen listelerinde/atamalarda görünmesin
+                kullanici.OgretmenProfil.IsDeleted = true;
+            }
 
             // ServisProfil yönetimi
             if (model.Rol == KullaniciRolu.Servis)
@@ -117,6 +125,10 @@ namespace OgrenciBilgiSistemi.Services.Implementations
 
                 profil.Plaka = model.ServisProfil?.Plaka ?? string.Empty;
                 profil.IsDeleted = kullanici.IsDeleted;
+            }
+            else if (kullanici.ServisProfil != null)
+            {
+                kullanici.ServisProfil.IsDeleted = true;
             }
 
             // VeliProfil yönetimi
@@ -140,6 +152,10 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 kullanici.Sifre = _passwordHasher.HashPassword(kullanici, model.Sifre);
 
             await _db.SaveChangesAsync(ct);
+
+            if (eskiOgretmenBirimId.HasValue || kullanici.OgretmenProfil != null)
+                await OgretmenAtamaHelper.OgretmenDegistiAsync(
+                    _db, kullanici.KullaniciId, [eskiOgretmenBirimId, kullanici.OgretmenProfil?.BirimId], ct);
         }
 
         public async Task SilAsync(int id, CancellationToken ct = default)
@@ -147,9 +163,10 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             var kullanici = await _db.Kullanicilar.FindAsync([id], ct);
             if (kullanici == null) return;
 
+            // OgretmenId türetilmiş alan: öğretmen silinince öğrenciler birimdeki diğer öğretmene aktarılır.
             var bagliOgrenciVar = await _db.Ogrenciler
                 .AnyAsync(o => !o.IsDeleted &&
-                               (o.VeliId == id || o.OgretmenId == id || o.ServisId == id), ct);
+                               (o.VeliId == id || o.ServisId == id), ct);
             if (bagliOgrenciVar)
                 throw new InvalidOperationException(
                     "Bu kullanıcıya bağlı aktif öğrenci kaydı var. " +
@@ -168,6 +185,9 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 ogretmenProfil.IsDeleted = true;
 
             await _db.SaveChangesAsync(ct);
+
+            if (ogretmenProfil != null)
+                await OgretmenAtamaHelper.OgretmenDegistiAsync(_db, id, [ogretmenProfil.BirimId], ct);
         }
 
         public Task<bool> KullaniciAdiVarMiAsync(string kullaniciAdi, int? excludeId = null, CancellationToken ct = default)
@@ -305,10 +325,11 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             _cache.Remove($"menu:{_tenant.OkulKodu}:{kullaniciId}");
         }
 
-        public async Task<List<SelectListItem>> GetBirimlerSelectListAsync(CancellationToken ct = default)
+        // seciliBirimId pasif olsa da listede kalır; aksi halde form kaydedilince birim sessizce silinir.
+        public async Task<List<SelectListItem>> GetBirimlerSelectListAsync(int? seciliBirimId = null, CancellationToken ct = default)
             => await _db.Birimler
                 .AsNoTracking()
-                .Where(b => !b.IsDeleted)
+                .Where(b => !b.IsDeleted || b.BirimId == seciliBirimId)
                 .OrderBy(b => b.BirimAd)
                 .Select(b => new SelectListItem
                 {

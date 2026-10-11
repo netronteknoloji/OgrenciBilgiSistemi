@@ -23,7 +23,7 @@ namespace OgrenciBilgiSistemi.Services.Interfaces
 
         // Öğrenci formu için: "Plaka - KullaniciAdi" formatında servis listesi
         Task<List<SelectListItem>> GetServislerPlakaliSelectListAsync(CancellationToken ct = default);
-        Task<List<SelectListItem>> GetBirimlerSelectListAsync(CancellationToken ct = default);
+        Task<List<SelectListItem>> GetBirimlerSelectListAsync(int? seciliBirimId = null, CancellationToken ct = default);
         Task<List<SelectListItem>> GetKullanicilarByRolSelectListAsync(KullaniciRolu rol, CancellationToken ct = default);
 
         // Yetki yönetimi

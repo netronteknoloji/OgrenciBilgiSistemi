@@ -9,5 +9,9 @@
         public decimal ToplamKalan { get; set; }
 
         public List<int> KullanilabilirYillar { get; set; } = new();
+
+        // Seçili yılın tarifesi ve tarife değişince etkilenecek (ödemesi olan) öğrenci sayısı
+        public TarifeDto? Tarife { get; set; }
+        public int OdemesiOlanSayisi { get; set; }
     }
 }

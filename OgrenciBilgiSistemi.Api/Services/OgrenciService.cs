@@ -281,6 +281,7 @@ namespace OgrenciBilgiSistemi.Api.Services
                     FROM SinifYoklamalar SY
                     INNER JOIN Ogrenciler O ON SY.OgrenciId = O.OgrenciId
                     WHERE O.BirimId = @sinifId
+                      AND O.IsDeleted = 0
                       AND CAST(SY.OlusturulmaTarihi AS DATE) = CAST(GETDATE() AS DATE)";
 
                 await using var cmd = new SqlCommand(query, conn);
@@ -301,7 +302,11 @@ namespace OgrenciBilgiSistemi.Api.Services
             return yoklamaDict;
         }
 
-        public async Task TopluYoklamaKaydetAsync(
+        /// <summary>
+        /// Yalnızca <paramref name="sinifId"/> sınıfındaki aktif öğrencilere yazar;
+        /// başka sınıfa ait/silinmiş öğrenci ID'leri atlanır. Yazılan kayıtları döndürür (SMS yalnızca bunlara gider).
+        /// </summary>
+        public async Task<List<(int OgrenciId, int DurumId)>> TopluYoklamaKaydetAsync(
             IEnumerable<(int OgrenciId, int DurumId)> yoklamaVerisi,
             int sinifId,
             int ogretmenId,
@@ -319,7 +324,8 @@ namespace OgrenciBilgiSistemi.Api.Services
                 string query = $@"
                     DECLARE @Bugun DATE = CAST(GETDATE() AS DATE);
                     MERGE INTO SinifYoklamalar AS target
-                    USING (SELECT @ogrenciId AS OgrenciId) AS source
+                    USING (SELECT O.OgrenciId FROM Ogrenciler O
+                           WHERE O.OgrenciId = @ogrenciId AND O.BirimId = @sinifId AND O.IsDeleted = 0) AS source
                     ON (target.OgrenciId = source.OgrenciId AND CAST(target.OlusturulmaTarihi AS DATE) = @Bugun)
                     WHEN MATCHED THEN
                         UPDATE SET {dersKolonu} = @durumId,
@@ -332,18 +338,23 @@ namespace OgrenciBilgiSistemi.Api.Services
                         VALUES (@ogrenciId, @kullaniciId, @durumId, 0, GETDATE());";
 
                 var dersBit = 1 << (dersNumarasi - 1);
+                var yazilanlar = new List<(int OgrenciId, int DurumId)>();
 
                 foreach (var kayit in yoklamaVerisi)
                 {
                     await using var cmd = new SqlCommand(query, conn, transaction);
                     cmd.Parameters.AddWithValue("@ogrenciId", kayit.OgrenciId);
+                    cmd.Parameters.AddWithValue("@sinifId", sinifId);
                     cmd.Parameters.AddWithValue("@durumId",   kayit.DurumId);
                     cmd.Parameters.AddWithValue("@kullaniciId", ogretmenId);
                     cmd.Parameters.AddWithValue("@dersBit", dersBit);
-                    await cmd.ExecuteNonQueryAsync();
+
+                    if (await cmd.ExecuteNonQueryAsync() > 0)
+                        yazilanlar.Add(kayit);
                 }
 
                 await transaction.CommitAsync();
+                return yazilanlar;
             }
             catch (Exception ex)
             {

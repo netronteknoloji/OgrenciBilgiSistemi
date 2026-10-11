@@ -7,6 +7,8 @@
         public string OgrenciAdSoyad { get; set; } = string.Empty;
 
         public decimal ToplamBorc { get; set; }
+        public decimal TarifeTutari { get; set; }
+        public decimal? OzelBorc { get; set; }
         public decimal ToplamOdenen { get; set; }
         public bool Muaf { get; set; }
         public DateTime? SonOdemeTarihi { get; set; }

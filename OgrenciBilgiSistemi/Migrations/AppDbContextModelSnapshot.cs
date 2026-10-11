@@ -361,7 +361,9 @@ namespace OgrenciBilgiSistemi.Migrations
                     b.HasKey("KullaniciId");
 
                     b.HasIndex("KullaniciAdi")
-                        .HasDatabaseName("IX_Kullanicilar_KullaniciAdi");
+                        .IsUnique()
+                        .HasDatabaseName("IX_Kullanicilar_KullaniciAdi")
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.HasIndex("Rol")
                         .HasDatabaseName("IX_Kullanicilar_Rol");
@@ -689,22 +691,15 @@ namespace OgrenciBilgiSistemi.Migrations
                     b.Property<int>("BaslangicYil")
                         .HasColumnType("int");
 
-                    b.Property<decimal>("Borc")
+                    b.Property<decimal?>("Borc")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<bool>("Muaf")
                         .HasColumnType("bit");
 
-                    b.Property<decimal>("Odenen")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
-
                     b.Property<int>("OgrenciId")
                         .HasColumnType("int");
-
-                    b.Property<DateTime?>("SonOdemeTarihi")
-                        .HasColumnType("datetime2");
 
                     b.HasKey("OgrenciAidatId");
 
@@ -715,7 +710,7 @@ namespace OgrenciBilgiSistemi.Migrations
                         {
                             t.HasCheckConstraint("CK_Aidat_BaslangicYil", "[BaslangicYil] BETWEEN 2000 AND 2100");
 
-                            t.HasCheckConstraint("CK_Aidat_Pozitif", "[Borc] >= 0 AND [Odenen] >= 0");
+                            t.HasCheckConstraint("CK_Aidat_Pozitif", "[Borc] IS NULL OR [Borc] >= 0");
                         });
                 });
 
@@ -752,7 +747,7 @@ namespace OgrenciBilgiSistemi.Migrations
 
                     b.ToTable("OgrenciAidatOdemeler", t =>
                         {
-                            t.HasCheckConstraint("CK_AidatOdeme_Tutar_NonNegative", "[Tutar] >= 0");
+                            t.HasCheckConstraint("CK_AidatOdeme_Tutar_Pozitif", "[Tutar] > 0 OR [IsDeleted] = 1");
                         });
                 });
 

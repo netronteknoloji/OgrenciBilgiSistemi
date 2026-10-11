@@ -153,8 +153,9 @@
                                 <tr class="text-center">
                                     <td class="text-start">
                                         <a asp-controller="Aidat"
-                                           asp-action="OgrenciDetay"
-                                           asp-route-id="@s.OgrenciId"
+                                           asp-action="Ozet"
+                                           asp-route-ogrenciId="@s.OgrenciId"
+                                           asp-route-returnUrl="@(Context.Request.Path + Context.Request.QueryString)"
                                            asp-route-yil="@(s.Yil ?? akademikYilDefault)"
                                            class="text-decoration-none">
                                             @s.OgrenciAdSoyad

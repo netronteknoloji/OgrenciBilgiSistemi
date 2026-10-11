@@ -324,14 +324,19 @@ namespace OgrenciBilgiSistemi.Api.Controllers
 
             try
             {
-                var kayitlar = model.Kayitlar.Select(k => (k.OgrenciId, k.DurumId)).ToList();
+                var gelenKayitlar = model.Kayitlar.Select(k => (k.OgrenciId, k.DurumId)).ToList();
 
-                await _ogrenciService.TopluYoklamaKaydetAsync(
-                    kayitlar,
+                // Sadece bu sınıfın aktif öğrencilerine yazılanlar döner; SMS yalnızca bunlara gider.
+                var kayitlar = await _ogrenciService.TopluYoklamaKaydetAsync(
+                    gelenKayitlar,
                     model.SinifId,
                     tokenKullaniciId,
                     model.DersNumarasi
                 );
+
+                if (kayitlar.Count < gelenKayitlar.Count)
+                    _logger.LogWarning("Toplu yoklamada sınıfa ait olmayan {Adet} öğrenci atlandı. SinifId: {SinifId}, KullaniciId: {KullaniciId}",
+                        gelenKayitlar.Count - kayitlar.Count, model.SinifId, tokenKullaniciId);
 
                 // SMS bildirimini arka planda gönder
                 // Tenant bilgileri istek scope'undan snapshot alınır; arka plan scope'unda

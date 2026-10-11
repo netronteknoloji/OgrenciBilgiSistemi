@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using OgrenciBilgiSistemi.Data;
+using OgrenciBilgiSistemi.Helpers;
 using OgrenciBilgiSistemi.Models;
 using OgrenciBilgiSistemi.Services.Interfaces;
 using OgrenciBilgiSistemi.ViewModels;
@@ -78,6 +79,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             {
                 _db.Kullanicilar.Add(kullanici);
                 await _db.SaveChangesAsync(ct);
+                await OgretmenAtamaHelper.OgretmenDegistiAsync(_db, kullanici.KullaniciId, [profil.BirimId], ct);
             }
             catch (Exception ex)
             {
@@ -92,6 +94,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             var mevcut = await _db.OgretmenProfiller.FindAsync([model.KullaniciId], ct)
                 ?? throw new KeyNotFoundException("Öğretmen profili bulunamadı.");
 
+            var eskiBirimId = mevcut.BirimId;
             mevcut.BirimId = model.BirimId;
             mevcut.Email = model.Email;
             mevcut.IsDeleted = model.IsDeleted;
@@ -113,6 +116,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             try
             {
                 await _db.SaveChangesAsync(ct);
+                await OgretmenAtamaHelper.OgretmenDegistiAsync(_db, model.KullaniciId, [eskiBirimId, mevcut.BirimId], ct);
             }
             catch (Exception ex)
             {
@@ -127,9 +131,16 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             if (profil == null) return;
 
             profil.IsDeleted = true;
+
+            // Kullanıcı hesabı da pasiflenir; aksi halde öğretmen giriş yapmaya devam eder.
+            var kullanici = await _db.Kullanicilar.FindAsync([kullaniciId], ct);
+            if (kullanici != null)
+                kullanici.IsDeleted = true;
+
             try
             {
                 await _db.SaveChangesAsync(ct);
+                await OgretmenAtamaHelper.OgretmenDegistiAsync(_db, kullaniciId, [profil.BirimId], ct);
             }
             catch (Exception ex)
             {

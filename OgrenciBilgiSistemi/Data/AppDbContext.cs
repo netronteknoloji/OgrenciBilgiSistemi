@@ -181,7 +181,7 @@ namespace OgrenciBilgiSistemi.Data
                 e.ToTable(tb =>
                 {
                     tb.HasCheckConstraint("CK_Aidat_BaslangicYil", "[BaslangicYil] BETWEEN 2000 AND 2100");
-                    tb.HasCheckConstraint("CK_Aidat_Pozitif", "[Borc] >= 0 AND [Odenen] >= 0");
+                    tb.HasCheckConstraint("CK_Aidat_Pozitif", "[Borc] IS NULL OR [Borc] >= 0");
                 });
             });
 
@@ -203,7 +203,7 @@ namespace OgrenciBilgiSistemi.Data
 
                 e.ToTable(tb =>
                 {
-                    tb.HasCheckConstraint("CK_AidatOdeme_Tutar_NonNegative", "[Tutar] >= 0");
+                    tb.HasCheckConstraint("CK_AidatOdeme_Tutar_Pozitif", "[Tutar] > 0 OR [IsDeleted] = 1");
                 });
             });
 
@@ -354,9 +354,11 @@ namespace OgrenciBilgiSistemi.Data
                 .HasFilter("[OgrenciKartNo] IS NOT NULL AND [OgrenciKartNo] != ''")
                 .HasDatabaseName("UX_Ogrenciler_OgrenciKartNo");
 
-            // Kullanıcı adı — tüm kayıtlar arasında benzersiz olmalı
+            // Kullanıcı adı — aktif kullanıcılar arasında benzersiz (giriş bu alanla yapılır)
             modelBuilder.Entity<KullaniciModel>()
                 .HasIndex(k => k.KullaniciAdi)
+                .IsUnique()
+                .HasFilter("[IsDeleted] = 0")
                 .HasDatabaseName("IX_Kullanicilar_KullaniciAdi");
 
             modelBuilder.Entity<KullaniciModel>()

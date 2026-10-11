@@ -12,7 +12,7 @@ namespace OgrenciBilgiSistemi.Api.Services.Interfaces
         Task<OgrenciModel?> OgrenciGetirAsync(int ogrenciId);
         Task<List<SinifYoklamaOzetModel>> SinifYoklamaOzetiGetirAsync(int sinifId, DateTime tarih);
         Task<Dictionary<int, int>> MevcutYoklamaGetirAsync(int sinifId, int dersNumarasi);
-        Task TopluYoklamaKaydetAsync(IEnumerable<(int OgrenciId, int DurumId)> yoklamaVerisi, int sinifId, int ogretmenId, int dersNumarasi);
+        Task<List<(int OgrenciId, int DurumId)>> TopluYoklamaKaydetAsync(IEnumerable<(int OgrenciId, int DurumId)> yoklamaVerisi, int sinifId, int ogretmenId, int dersNumarasi);
         Task<List<SinifYoklamaDto>> HaftalikYoklamaGetirAsync(int ogrenciId, DateTime baslangic, DateTime bitis);
         Task<OgrenciDetayDto?> OgrenciDetayGetirAsync(int ogrenciId);
         Task<int> EkleAsync(OgrenciKaydetDto dto);

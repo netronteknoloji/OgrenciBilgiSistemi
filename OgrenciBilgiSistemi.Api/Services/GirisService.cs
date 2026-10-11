@@ -40,7 +40,9 @@ namespace OgrenciBilgiSistemi.Api.Services
                 LEFT JOIN ServisProfiller SP ON SP.KullaniciId = K.KullaniciId
                 LEFT JOIN OgretmenProfiller OP ON OP.KullaniciId = K.KullaniciId
                 WHERE K.KullaniciAdi = @kullaniciAdi
-                  AND K.IsDeleted = 0";
+                  AND K.IsDeleted = 0
+                  -- Pasif öğretmen profili olan öğretmen giriş yapamaz
+                  AND (K.Rol <> 2 OR ISNULL(OP.IsDeleted, 0) = 0)";
 
             string?        storedHash = null;
             KullaniciModel?  found      = null;
@@ -108,7 +110,9 @@ namespace OgrenciBilgiSistemi.Api.Services
                 LEFT JOIN ServisProfiller SP ON SP.KullaniciId = K.KullaniciId
                 LEFT JOIN OgretmenProfiller OP ON OP.KullaniciId = K.KullaniciId
                 WHERE K.KullaniciId = @kullaniciId
-                  AND K.IsDeleted = 0";
+                  AND K.IsDeleted = 0
+                  -- Pasif öğretmen profili olan öğretmen giriş yapamaz
+                  AND (K.Rol <> 2 OR ISNULL(OP.IsDeleted, 0) = 0)";
 
             try
             {

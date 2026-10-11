@@ -83,7 +83,7 @@ namespace OgrenciBilgiSistemi.Controllers
             {
                 case KullaniciRolu.Ogretmen:
                     var ogVm = OgretmenKullaniciFormVm.FromModel(kullanici);
-                    ogVm.Birimler = await _kullaniciService.GetBirimlerSelectListAsync();
+                    ogVm.Birimler = await _kullaniciService.GetBirimlerSelectListAsync(ogVm.OgretmenBirimId);
                     vm = ogVm;
                     break;
                 case KullaniciRolu.Servis:
@@ -161,14 +161,14 @@ namespace OgrenciBilgiSistemi.Controllers
 
             if (!ModelState.IsValid)
             {
-                vm.Birimler = await _kullaniciService.GetBirimlerSelectListAsync();
+                vm.Birimler = await _kullaniciService.GetBirimlerSelectListAsync(vm.OgretmenBirimId);
                 return View("Guncelle", vm);
             }
 
             if (await _kullaniciService.KullaniciAdiVarMiAsync(vm.KullaniciAdi, vm.KullaniciId))
             {
                 ModelState.AddModelError(nameof(vm.KullaniciAdi), "Bu kullanıcı adı zaten kayıtlı.");
-                vm.Birimler = await _kullaniciService.GetBirimlerSelectListAsync();
+                vm.Birimler = await _kullaniciService.GetBirimlerSelectListAsync(vm.OgretmenBirimId);
                 return View("Guncelle", vm);
             }
 
@@ -182,14 +182,14 @@ namespace OgrenciBilgiSistemi.Controllers
             catch (InvalidOperationException ex)
             {
                 ModelState.AddModelError(string.Empty, ex.Message);
-                vm.Birimler = await _kullaniciService.GetBirimlerSelectListAsync();
+                vm.Birimler = await _kullaniciService.GetBirimlerSelectListAsync(vm.OgretmenBirimId);
                 return View("Guncelle", vm);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Kullanıcı güncellenirken hata oluştu.");
                 ModelState.AddModelError(string.Empty, "Güncelleme sırasında bir hata oluştu.");
-                vm.Birimler = await _kullaniciService.GetBirimlerSelectListAsync();
+                vm.Birimler = await _kullaniciService.GetBirimlerSelectListAsync(vm.OgretmenBirimId);
                 return View("Guncelle", vm);
             }
         }
@@ -275,7 +275,7 @@ namespace OgrenciBilgiSistemi.Controllers
         private async Task DropdownDoldur(KullaniciFormVm vm)
         {
             vm.Servisler = await _kullaniciService.GetServislerSelectListAsync();
-            vm.Birimler = await _kullaniciService.GetBirimlerSelectListAsync();
+            vm.Birimler = await _kullaniciService.GetBirimlerSelectListAsync(vm.OgretmenBirimId);
         }
 
         [HttpPost]

@@ -16,16 +16,14 @@ namespace OgrenciBilgiSistemi.Models
         [Required, Range(2000, 2100)]
         public int BaslangicYil { get; set; }
 
-        [Precision(18, 2)] public decimal Borc { get; set; }
-        [Precision(18, 2)] public decimal Odenen { get; set; } = 0m;
+        // NULL => yılın tarifesi uygulanır; değer => öğrenciye özel tutar (indirim/burs)
+        [Precision(18, 2)] public decimal? Borc { get; set; }
 
         public bool Muaf { get; set; } = false;
-        public DateTime? SonOdemeTarihi { get; set; }
 
+        // Ödenen tutar ve son ödeme tarihi kolonda tutulmaz; Odemeler'den hesaplanır.
         public ICollection<OgrenciAidatOdemeModel> Odemeler { get; set; } = new List<OgrenciAidatOdemeModel>();
 
         [NotMapped] public string Etiket => $"{BaslangicYil}-{BaslangicYil + 1}";
-        [NotMapped] public decimal Kalan => Muaf ? 0 : Math.Max(0, Borc - Odenen);
-        [NotMapped] public bool Kapandi => Muaf || Odenen >= Borc;
     }
 }

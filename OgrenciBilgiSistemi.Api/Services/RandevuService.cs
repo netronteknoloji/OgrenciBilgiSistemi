@@ -130,7 +130,7 @@ namespace OgrenciBilgiSistemi.Api.Services
 
         public async Task<int> OgretmenRandevuOlustur(int ogretmenId, int veliId, int? ogrenciId, DateTime tarih, int sureDakika, string? not)
         {
-            var aktifMesaj = await AktiflikKontrolu(ogretmenId, veliId);
+            var aktifMesaj = await AktiflikKontrolu(ogretmenId, veliId, ogrenciId);
             if (aktifMesaj is not null) throw new InvalidOperationException(aktifMesaj);
 
             var cakisma = await CakismaMesaji(ogretmenId, veliId, tarih, sureDakika);
@@ -142,7 +142,7 @@ namespace OgrenciBilgiSistemi.Api.Services
 
         public async Task<int> VeliRandevuOlustur(int veliId, int ogretmenId, int? ogrenciId, DateTime tarih, int sureDakika, string? not)
         {
-            var aktifMesaj = await AktiflikKontrolu(ogretmenId, veliId);
+            var aktifMesaj = await AktiflikKontrolu(ogretmenId, veliId, ogrenciId);
             if (aktifMesaj is not null) throw new InvalidOperationException(aktifMesaj);
 
             var cakisma = await CakismaMesaji(ogretmenId, veliId, tarih, sureDakika);
@@ -154,7 +154,7 @@ namespace OgrenciBilgiSistemi.Api.Services
 
         // Hem öğretmen hem veli (Kullanicilar + rol profili IsDeleted=0) aktif mi?
         // Aktif değilse Türkçe açıklama döner; her ikisi de aktifse null.
-        private async Task<string?> AktiflikKontrolu(int ogretmenId, int veliId)
+        private async Task<string?> AktiflikKontrolu(int ogretmenId, int veliId, int? ogrenciId)
         {
             const string query = @"
                 SELECT
@@ -165,12 +165,18 @@ namespace OgrenciBilgiSistemi.Api.Services
                   (SELECT COUNT(*) FROM Kullanicilar k
                     INNER JOIN VeliProfiller vp ON vp.KullaniciId = k.KullaniciId
                     WHERE k.KullaniciId = @veliId
-                      AND k.Rol = 4 AND k.IsDeleted = 0 AND vp.IsDeleted = 0)     AS VeliAktif";
+                      AND k.Rol = 4 AND k.IsDeleted = 0 AND vp.IsDeleted = 0)     AS VeliAktif,
+                  -- Seçilen öğrenci bu velinin aktif öğrencisi olmalı (öğrenci seçilmediyse geçerli)
+                  CASE WHEN @ogrenciId IS NULL THEN 1 ELSE
+                    (SELECT COUNT(*) FROM Ogrenciler o
+                      WHERE o.OgrenciId = @ogrenciId AND o.VeliId = @veliId AND o.IsDeleted = 0)
+                  END AS OgrenciGecerli";
 
             await using var conn = new SqlConnection(ConnectionString);
             await using var cmd = new SqlCommand(query, conn);
             cmd.Parameters.AddWithValue("@ogretmenId", ogretmenId);
             cmd.Parameters.AddWithValue("@veliId", veliId);
+            cmd.Parameters.AddWithValue("@ogrenciId", (object?)ogrenciId ?? DBNull.Value);
             await conn.OpenAsync();
 
             await using var reader = await cmd.ExecuteReaderAsync();
@@ -181,6 +187,7 @@ namespace OgrenciBilgiSistemi.Api.Services
 
             if (!ogretmenAktif) return "Seçilen öğretmen şu anda aktif değil.";
             if (!veliAktif)     return "Seçilen veli şu anda aktif değil.";
+            if (reader.GetInt32(2) == 0) return "Seçilen öğrenci bu veliye ait değil.";
             return null;
         }
 
@@ -281,7 +288,7 @@ namespace OgrenciBilgiSistemi.Api.Services
                 veliId = reader.GetInt32(1);
             }
 
-            var aktifMesaj = await AktiflikKontrolu(ogretmenId, veliId);
+            var aktifMesaj = await AktiflikKontrolu(ogretmenId, veliId, ogrenciId: null);
             if (aktifMesaj is not null) throw new InvalidOperationException(aktifMesaj);
         }
 

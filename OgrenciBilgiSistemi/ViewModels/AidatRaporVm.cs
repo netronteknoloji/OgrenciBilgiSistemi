@@ -29,5 +29,8 @@ namespace OgrenciBilgiSistemi.ViewModels
         public decimal ToplamKalan { get; set; }
 
         public List<int> KullanilabilirYillar { get; set; } = new();
+
+        public TarifeDto? Tarife { get; set; }
+        public int OdemesiOlanSayisi { get; set; }
     }
 }
