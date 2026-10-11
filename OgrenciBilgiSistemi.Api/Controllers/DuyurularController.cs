@@ -29,7 +29,7 @@ namespace OgrenciBilgiSistemi.Api.Controllers
             try
             {
                 var duyuruId = await _duyuruService.OgretmenDuyuruOlustur(KullaniciId, dto.Baslik, dto.Icerik);
-                return CreatedAtAction(nameof(Getir), new { id = duyuruId }, new { duyuruId });
+                return StatusCode(StatusCodes.Status201Created, new { duyuruId });
             }
             catch (InvalidOperationException ex)
             {
@@ -43,14 +43,6 @@ namespace OgrenciBilgiSistemi.Api.Controllers
             if (Rol != "Veli") return Forbid();
             var liste = await _duyuruService.VeliDuyurulariGetir(KullaniciId, sayfaNo);
             return Ok(liste);
-        }
-
-        [HttpGet("{id}")]
-        public async Task<IActionResult> Getir(int id)
-        {
-            var duyuru = await _duyuruService.DuyuruGetir(id);
-            if (duyuru is null) return NotFound();
-            return Ok(duyuru);
         }
 
         [HttpPut("{id}/okundu")]

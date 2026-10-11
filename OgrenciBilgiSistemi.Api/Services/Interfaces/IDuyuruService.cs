@@ -7,6 +7,5 @@ namespace OgrenciBilgiSistemi.Api.Services.Interfaces
         Task<bool> OkunduIsaretle(int duyuruId, int veliId);
         Task<int> TumunuOkunduIsaretle(int veliId);
         Task<int> OkunmamisSayisi(int veliId);
-        Task<DuyuruModel?> DuyuruGetir(int duyuruId);
     }
 }

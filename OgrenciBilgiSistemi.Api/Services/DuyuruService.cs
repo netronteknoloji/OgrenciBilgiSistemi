@@ -225,33 +225,5 @@ namespace OgrenciBilgiSistemi.Api.Services
             return (int)(await cmd.ExecuteScalarAsync())!;
         }
 
-        public async Task<DuyuruModel?> DuyuruGetir(int duyuruId)
-        {
-            const string query = @"
-                SELECT d.DuyuruId, d.OlusturanKullaniciId, d.Hedef, d.Baslik, d.Icerik, d.OlusturulmaTarihi,
-                       k.KullaniciAdi AS OlusturanAdSoyad
-                FROM Duyurular d
-                INNER JOIN Kullanicilar k ON k.KullaniciId = d.OlusturanKullaniciId
-                WHERE d.DuyuruId = @id AND d.IsDeleted = 0";
-
-            await using var conn = new SqlConnection(ConnectionString);
-            await using var cmd = new SqlCommand(query, conn);
-            cmd.Parameters.AddWithValue("@id", duyuruId);
-            await conn.OpenAsync();
-
-            await using var reader = await cmd.ExecuteReaderAsync();
-            if (!await reader.ReadAsync()) return null;
-
-            return new DuyuruModel
-            {
-                DuyuruId = reader.GetInt32(reader.GetOrdinal("DuyuruId")),
-                OlusturanKullaniciId = reader.GetInt32(reader.GetOrdinal("OlusturanKullaniciId")),
-                OlusturanAdSoyad = reader.GetString(reader.GetOrdinal("OlusturanAdSoyad")),
-                Hedef = reader.GetInt32(reader.GetOrdinal("Hedef")),
-                Baslik = reader.GetString(reader.GetOrdinal("Baslik")),
-                Icerik = reader.GetString(reader.GetOrdinal("Icerik")),
-                OlusturulmaTarihi = reader.GetDateTime(reader.GetOrdinal("OlusturulmaTarihi"))
-            };
-        }
     }
 }

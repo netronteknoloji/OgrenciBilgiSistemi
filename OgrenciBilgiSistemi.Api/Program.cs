@@ -88,7 +88,6 @@ builder.Services.AddScoped<IGirisService, GirisService>();
 builder.Services.AddSingleton<RefreshTokenService>();
 builder.Services.AddScoped<ISinifService, SinifService>();
 builder.Services.AddScoped<IOgrenciService, OgrenciService>();
-builder.Services.AddScoped<IBirimService, BirimService>();
 builder.Services.AddScoped<IGecisKayitService, GecisKayitService>();
 builder.Services.AddScoped<IServisService, ServisService>();
 builder.Services.AddScoped<IRandevuService, RandevuService>();
