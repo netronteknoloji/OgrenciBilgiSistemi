@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using OgrenciBilgiSistemi.Data;
 using OgrenciBilgiSistemi.Helpers;
+using OgrenciBilgiSistemi.Infrastructure;
 using OgrenciBilgiSistemi.Models;
 using OgrenciBilgiSistemi.Services.Interfaces;
 using OgrenciBilgiSistemi.Shared.Services;
@@ -180,6 +181,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 kullanici.Sifre = _passwordHasher.HashPassword(kullanici, model.Sifre);
 
             await _db.SaveChangesAsync(ct);
+            OturumDogrulayici.OnbellegiTemizle(_cache, _tenant.OkulKodu, kullanici.KullaniciId);
 
             if (eskiOgretmenBirimId.HasValue || kullanici.OgretmenProfil != null)
                 await OgretmenAtamaHelper.OgretmenDegistiAsync(
@@ -225,6 +227,7 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 veliProfil.IsDeleted = true;
 
             await _db.SaveChangesAsync(ct);
+            OturumDogrulayici.OnbellegiTemizle(_cache, _tenant.OkulKodu, id);
 
             if (ogretmenProfil != null)
                 await OgretmenAtamaHelper.OgretmenDegistiAsync(_db, id, [ogretmenProfil.BirimId], ct);

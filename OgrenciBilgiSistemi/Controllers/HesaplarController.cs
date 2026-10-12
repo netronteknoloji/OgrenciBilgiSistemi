@@ -3,8 +3,11 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 using OgrenciBilgiSistemi.Dtos;
+using OgrenciBilgiSistemi.Infrastructure;
 using OgrenciBilgiSistemi.Services.Interfaces;
+using OgrenciBilgiSistemi.Shared.Kurallar;
 using OgrenciBilgiSistemi.Shared.Services;
 using System.Security.Claims;
 
@@ -16,17 +19,20 @@ namespace OgrenciBilgiSistemi.Controllers
         private readonly OkulYapilandirmaServisi _okulServisi;
         private readonly IConfiguration _configuration;
         private readonly GirisDenemeSayaci _denemeSayaci;
+        private readonly IMemoryCache _cache;
 
         public HesaplarController(
             IKimlikDogrulamaService kimlikServisi,
             OkulYapilandirmaServisi okulServisi,
             IConfiguration configuration,
-            GirisDenemeSayaci denemeSayaci)
+            GirisDenemeSayaci denemeSayaci,
+            IMemoryCache cache)
         {
             _kimlikServisi = kimlikServisi;
             _okulServisi = okulServisi;
             _configuration = configuration;
             _denemeSayaci = denemeSayaci;
+            _cache = cache;
         }
 
         // Art arda hatalı denemelerde hesap geçici kilitlenir; kilitliyse formu hata ile döndürür
@@ -139,7 +145,7 @@ namespace OgrenciBilgiSistemi.Controllers
             _denemeSayaci.Sifirla(denemeAnahtari);
 
             // Veli ve Servis hesapları yalnızca mobil uygulama içindir; web paneline giremez
-            if (user.Rol is KullaniciRolu.Veli or KullaniciRolu.Servis)
+            if (!PanelOturumKurallari.PaneleGirebilirMi(user.Rol))
             {
                 ModelState.AddModelError(string.Empty, "Bu hesap mobil uygulama içindir; web paneline giriş yapılamaz.");
                 model.Okullar = _okulServisi.TumOkullariGetir();
@@ -157,6 +163,9 @@ namespace OgrenciBilgiSistemi.Controllers
                 new Claim("okulKodu", okul.OkulKodu),
                 new Claim("okulAdi", okul.OkulAdi)
             };
+
+            // Önceki oturumdan kalan karar (eski rol / pasif) yeni oturumu reddetmesin
+            OturumDogrulayici.OnbellegiTemizle(_cache, okul.OkulKodu, user.KullaniciId);
 
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
             await HttpContext.SignInAsync(

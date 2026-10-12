@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using OgrenciBilgiSistemi.Constants;
 using OgrenciBilgiSistemi.Data;
+using OgrenciBilgiSistemi.Shared.Kurallar;
 using OgrenciBilgiSistemi.Shared.Services;
 
 namespace OgrenciBilgiSistemi.Infrastructure
@@ -39,7 +40,7 @@ namespace OgrenciBilgiSistemi.Infrastructure
             try
             {
                 guncelRol = await sp.GetRequiredService<IMemoryCache>().GetOrCreateAsync(
-                    $"oturum:{okulKodu}:{kullaniciId}",
+                    OnbellekAnahtari(okulKodu, kullaniciId),
                     async e =>
                     {
                         e.AbsoluteExpirationRelativeToNow = Onbellek;
@@ -51,10 +52,16 @@ namespace OgrenciBilgiSistemi.Infrastructure
                             {
                                 x.IsDeleted,
                                 x.Rol,
-                                OgretmenPasif = x.OgretmenProfil != null && x.OgretmenProfil.IsDeleted
+                                OgretmenProfilSilinmis = x.OgretmenProfil != null && x.OgretmenProfil.IsDeleted
                             })
                             .FirstOrDefaultAsync();
-                        return k is null || k.IsDeleted || k.OgretmenPasif ? null : k.Rol.ToString();
+
+                        // Girişle aynı kural (KimlikDogrulamaService)
+                        return k is not null
+                               && PanelOturumKurallari.HesapAktifMi(k.Rol, k.IsDeleted, k.OgretmenProfilSilinmis)
+                               && PanelOturumKurallari.PaneleGirebilirMi(k.Rol)
+                            ? k.Rol.ToString()
+                            : null;
                     });
             }
             catch (InvalidOperationException)
@@ -66,6 +73,15 @@ namespace OgrenciBilgiSistemi.Infrastructure
             if (guncelRol is null || !string.Equals(guncelRol, rol, StringComparison.Ordinal))
                 await ReddetAsync(ctx);
         }
+
+        private static string OnbellekAnahtari(string okulKodu, int kullaniciId) => $"oturum:{okulKodu}:{kullaniciId}";
+
+        /// <summary>
+        /// Önbellekteki kararı siler; sonraki istek DB'den yeniden denetlenir. Başarılı girişte ve kullanıcı
+        /// güncellenince/silinince çağrılır — aksi halde eski karar (eski rol, pasif) yeni oturumu da 5 dk reddeder.
+        /// </summary>
+        public static void OnbellegiTemizle(IMemoryCache cache, string okulKodu, int kullaniciId)
+            => cache.Remove(OnbellekAnahtari(okulKodu, kullaniciId));
 
         private static async Task ReddetAsync(CookieValidatePrincipalContext ctx)
         {

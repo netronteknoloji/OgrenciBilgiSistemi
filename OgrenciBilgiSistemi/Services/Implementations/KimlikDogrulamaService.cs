@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using OgrenciBilgiSistemi.Data;
 using OgrenciBilgiSistemi.Models;
 using OgrenciBilgiSistemi.Services.Interfaces;
+using OgrenciBilgiSistemi.Shared.Kurallar;
 
 namespace OgrenciBilgiSistemi.Services.Implementations
 {
@@ -26,12 +27,9 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 .Where(k => !k.IsDeleted)
                 .SingleOrDefaultAsync(u => u.KullaniciAdi == kullaniciAdi, ct);
 
-            // DB'deki GenelAdmin satırı oturum açamaz; Genel Yönetici yalnızca yapılandırmadan doğrulanır
-            if (user is null || user.Rol == KullaniciRolu.GenelAdmin)
-                return null;
-
-            // Pasif öğretmen profili giriş yapamaz (API'deki kuralla aynı)
-            if (user.Rol == KullaniciRolu.Ogretmen && user.OgretmenProfil?.IsDeleted == true)
+            // OturumDogrulayici ile aynı kural (GenelAdmin satırı, pasif öğretmen profili)
+            if (user is null || !PanelOturumKurallari.HesapAktifMi(
+                    user.Rol, user.IsDeleted, user.OgretmenProfil?.IsDeleted == true))
                 return null;
 
             var hasher = new PasswordHasher<KullaniciModel>();
