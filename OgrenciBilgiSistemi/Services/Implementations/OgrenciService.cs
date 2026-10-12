@@ -16,20 +16,20 @@ namespace OgrenciBilgiSistemi.Services.Implementations
         private static readonly CultureInfo _tr = CultureInfo.GetCultureInfo("tr-TR");
 
         private readonly AppDbContext _db;
-        private readonly ICihazService _cihaz;
+        private readonly ICihazSenkronService _cihazSenkron;
         private readonly IYemekhaneService _yemekhane;
         private readonly IFileStorage _files;
         private readonly ILogger<OgrenciService> _log;
 
         public OgrenciService(
             AppDbContext db,
-            ICihazService cihaz,
+            ICihazSenkronService cihazSenkron,
             IYemekhaneService yemekhane,
             IFileStorage files,
             ILogger<OgrenciService> log)
         {
             _db = db;
-            _cihaz = cihaz;
+            _cihazSenkron = cihazSenkron;
             _yemekhane = yemekhane;
             _files = files;
             _log = log;
@@ -120,10 +120,14 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 // Yalnızca içinde bulunulan ay için yemekhane durumu
                 await _yemekhane.SetBuAyAsync(yeni.OgrenciId, buAyYemekhaneAktif, ct: ct);
 
+                // Cihazlara yazımı CihazSenkronIsleyici yapar (cihaz kapalıysa açılınca)
+                await _cihazSenkron.KuyrugaEkleAsync(yeni.OgrenciId, ct);
+
                 await tx.CommitAsync(ct);
                 ogrenciId = yeni.OgrenciId;
             });
 
+            _cihazSenkron.Tetikle();
             return ogrenciId;
         }
 
@@ -160,35 +164,13 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                     await _yemekhane.SetBuAyAsync(ent.OgrenciId, buAyYemekhaneAktif.Value, ct: ct);
                 }
 
+                // Ad, kart, durum veya yemek hakkı değişmiş olabilir: cihazlarla yeniden eşitlenir
+                await _cihazSenkron.KuyrugaEkleAsync(ent.OgrenciId, ct);
+
                 await tx.CommitAsync(ct);
             });
 
-            // Cihaz senkronizasyonu transaction dışında — uzak cihaz çağrısı transaction'ı uzun tutmamalı.
-            if (buAyYemekhaneAktif.HasValue && ent is not null)
-            {
-                var cihazlar = await _db.Cihazlar
-                    .Where(c => !c.IsDeleted && c.IstasyonTipi == IstasyonTipi.Yemekhane)
-                    .ToListAsync(ct);
-
-                foreach (var cihaz in cihazlar)
-                {
-                    try
-                    {
-                        if (buAyYemekhaneAktif.Value)
-                        {
-                            await _cihaz.CihazaOgrenciGuncelleAsync(ent, ct);
-                        }
-                        else
-                        {
-                            await _cihaz.CihazaOgrenciSilAsync(ent.OgrenciId, ct);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        _log.LogError(ex, "Cihaz senkron hatası. Cihaz: {ip}, ÖğrenciId: {id}", cihaz.IpAdresi, ent.OgrenciId);
-                    }
-                }
-            }
+            _cihazSenkron.Tetikle();
         }
 
         public async Task SilAsync(int ogrenciId, CancellationToken ct = default)
@@ -208,35 +190,13 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 ent.IsDeleted = true;
                 await _db.SaveChangesAsync(ct);
 
+                // Pasif öğrenci cihazlardan silinir
+                await _cihazSenkron.KuyrugaEkleAsync(ent.OgrenciId, ct);
+
                 await tx.CommitAsync(ct);
             });
-        }
 
-        public async Task<bool> CihazaGonderAsync(int cihazId, CancellationToken ct = default)
-        {
-            int yil = DateTime.Now.Year;
-            int ay = DateTime.Now.Month;
-
-            var q = _db.Ogrenciler
-                .AsNoTracking()
-                .Where(o => o.OgrenciYemekler.Any(y => y.Yil == yil && y.Ay == ay && y.Aktif));
-
-            var list = await q.ToListAsync(ct);
-
-            if (list.Count == 0)
-            {
-                _log.LogInformation("Cihaza gönderilecek yemekhane aktif öğrenci yok. cihazId={Id}", cihazId);
-                return true;
-            }
-
-            var ok = await _cihaz.CihazaOgrencileriGonderAsync(cihazId, list, ct);
-
-            _log.LogInformation(
-                "Cihaza gönderim tamamlandı. cihazId={Id}, sayi={Count}, sonuc={Sonuc}",
-                cihazId, list.Count, ok
-            );
-
-            return ok;
+            _cihazSenkron.Tetikle();
         }
 
         public async Task<SayfalanmisListeModel<OgrenciModel>> SearchPagedAsync(

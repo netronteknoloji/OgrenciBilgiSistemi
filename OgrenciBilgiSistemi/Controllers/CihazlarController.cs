@@ -1,6 +1,7 @@
 using ClosedXML.Excel;
 using Microsoft.AspNetCore.Mvc;
 using OgrenciBilgiSistemi.Helpers;
+using OgrenciBilgiSistemi.Services.Interfaces;
 using OgrenciBilgiSistemi.ViewModels;
 
 namespace OgrenciBilgiSistemi.Controllers
@@ -10,17 +11,38 @@ namespace OgrenciBilgiSistemi.Controllers
     {
         private readonly ILogger<CihazlarController> _logger;
         private readonly ICihazService _cihazService;
+        private readonly ICihazSenkronService _cihazSenkron;
 
-        public CihazlarController(ILogger<CihazlarController> logger, ICihazService cihazService)
+        public CihazlarController(ILogger<CihazlarController> logger, ICihazService cihazService,
+            ICihazSenkronService cihazSenkron)
         {
             _logger = logger;
             _cihazService = cihazService;
+            _cihazSenkron = cihazSenkron;
         }
 
         public async Task<IActionResult> Index(string searchString, int page = 1, CancellationToken ct = default)
         {
             var paged = await _cihazService.SearchPagedAsync(searchString, page, 10, ct);
-            return View(new CihazIndexVm { Cihazlar = paged, CurrentFilter = searchString });
+            var senkron = await _cihazSenkron.OzetlerAsync(paged.Select(c => c.CihazId).ToList(), ct);
+            return View(new CihazIndexVm { Cihazlar = paged, CurrentFilter = searchString, SenkronOzetleri = senkron });
+        }
+
+        // Cihazı tüm öğrencilerle eşitler: eksikler yazılır, olmaması gerekenler silinir (toptan silme yok)
+        [HttpPost]
+        public async Task<IActionResult> Esitle(int cihazId, CancellationToken ct = default)
+        {
+            var eklenen = await _cihazSenkron.CihaziEsitleAsync(cihazId, ct);
+            TempData["Info"] = $"Eşitleme başlatıldı ({eklenen} öğrenci sıraya alındı). İlerlemeyi bu sayfadaki senkron durumundan izleyebilirsiniz.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> HatalariYenidenDene(int cihazId, CancellationToken ct = default)
+        {
+            var donen = await _cihazSenkron.HatalariYenidenDeneAsync(cihazId, ct);
+            TempData["Info"] = $"{donen} başarısız işlem yeniden denenecek.";
+            return RedirectToAction(nameof(Index));
         }
 
         [HttpGet]

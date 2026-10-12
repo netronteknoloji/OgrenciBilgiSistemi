@@ -184,6 +184,63 @@ namespace OgrenciBilgiSistemi.Migrations
                     b.ToTable("Cihazlar");
                 });
 
+            modelBuilder.Entity("OgrenciBilgiSistemi.Models.CihazSenkronKuyruguModel", b =>
+                {
+                    b.Property<long>("CihazSenkronKuyruguId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("CihazSenkronKuyruguId"));
+
+                    b.Property<int>("CihazId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("DenemeSayisi")
+                        .HasColumnType("int");
+
+                    b.Property<byte>("Durum")
+                        .HasColumnType("tinyint");
+
+                    b.Property<DateTime?>("KilitBitis")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("OgrenciId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("OlusturmaZamani")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("SonHata")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<byte>("SonIslem")
+                        .HasColumnType("tinyint");
+
+                    b.Property<DateTime>("SonrakiDeneme")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("TamamlanmaZamani")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("CihazSenkronKuyruguId");
+
+                    b.HasIndex("OgrenciId");
+
+                    b.HasIndex("CihazId", "Durum")
+                        .HasDatabaseName("IX_CihazSenkronKuyrugu_Cihaz_Durum");
+
+                    b.HasIndex("CihazId", "OgrenciId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_CihazSenkronKuyrugu_Bekleyen")
+                        .HasFilter("[Durum] = 0");
+
+                    b.HasIndex("Durum", "SonrakiDeneme")
+                        .HasDatabaseName("IX_CihazSenkronKuyrugu_Durum_SonrakiDeneme");
+
+                    b.ToTable("CihazSenkronKuyrugu");
+                });
+
             modelBuilder.Entity("OgrenciBilgiSistemi.Models.DuyuruModel", b =>
                 {
                     b.Property<int>("DuyuruId")
@@ -1580,6 +1637,21 @@ namespace OgrenciBilgiSistemi.Migrations
                     b.Navigation("Alici");
 
                     b.Navigation("Randevu");
+                });
+
+            modelBuilder.Entity("OgrenciBilgiSistemi.Models.CihazSenkronKuyruguModel", b =>
+                {
+                    b.HasOne("OgrenciBilgiSistemi.Models.CihazModel", null)
+                        .WithMany()
+                        .HasForeignKey("CihazId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("OgrenciBilgiSistemi.Models.OgrenciModel", null)
+                        .WithMany()
+                        .HasForeignKey("OgrenciId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("OgrenciBilgiSistemi.Models.DuyuruModel", b =>

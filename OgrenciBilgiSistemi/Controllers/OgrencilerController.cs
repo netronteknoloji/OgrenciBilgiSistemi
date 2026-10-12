@@ -270,23 +270,6 @@ namespace OgrenciBilgiSistemi.Controllers
 
         #endregion
 
-        #region Cihaza Gönder / Yemekhane
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> TopluOgrenciGonder(int cihazId, CancellationToken ct)
-        {
-            var sonuc = await _ogrenciService.CihazaGonderAsync(cihazId, ct);
-
-            TempData["Mesaj"] = sonuc
-                ? "Tüm (aktif) öğrenciler başarıyla cihaza gönderildi."
-                : "Bazı öğrenciler cihaza eklenemedi. Lütfen logları kontrol edin.";
-
-            return RedirectToAction("Index", "Cihazlar");
-        }
-
-        #endregion
-
         #region ExportToExcel
 
         public async Task<IActionResult> ExportToExcel(

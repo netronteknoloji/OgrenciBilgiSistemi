@@ -41,6 +41,7 @@ namespace OgrenciBilgiSistemi.Data
         public DbSet<SmsGonderimGecmisiModel> SmsGonderimGecmisleri { get; set; }
         public DbSet<BildirimCihaziModel> BildirimCihazlari { get; set; }
         public DbSet<GonderimKuyruguModel> GonderimKuyrugu { get; set; }
+        public DbSet<CihazSenkronKuyruguModel> CihazSenkronKuyrugu { get; set; }
         public DbSet<RefreshTokenModel> RefreshTokenlar { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -574,6 +575,39 @@ namespace OgrenciBilgiSistemi.Data
                 // Gönderici: bekleyen/kilidi düşmüş satırları alır
                 e.HasIndex(k => new { k.Durum, k.SonrakiDeneme })
                  .HasDatabaseName("IX_GonderimKuyrugu_Durum_SonrakiDeneme");
+            });
+
+            // =========================
+            // CIHAZ SENKRON KUYRUGU (öğrenci ↔ ZKTeco outbox)
+            // =========================
+            modelBuilder.Entity<CihazSenkronKuyruguModel>(e =>
+            {
+                e.Property(k => k.Durum).HasConversion<byte>();
+                e.Property(k => k.SonIslem).HasConversion<byte>();
+
+                e.HasOne<CihazModel>()
+                 .WithMany()
+                 .HasForeignKey(k => k.CihazId)
+                 .OnDelete(DeleteBehavior.NoAction);
+
+                e.HasOne<OgrenciModel>()
+                 .WithMany()
+                 .HasForeignKey(k => k.OgrenciId)
+                 .OnDelete(DeleteBehavior.NoAction);
+
+                // Aynı cihaz + öğrenci için tek bekleyen satır (işlenirken gelen değişiklik yeni satır açar)
+                e.HasIndex(k => new { k.CihazId, k.OgrenciId })
+                 .IsUnique()
+                 .HasFilter("[Durum] = 0")
+                 .HasDatabaseName("UX_CihazSenkronKuyrugu_Bekleyen");
+
+                // İşleyici: bekleyen/kilidi düşmüş satırları alır
+                e.HasIndex(k => new { k.Durum, k.SonrakiDeneme })
+                 .HasDatabaseName("IX_CihazSenkronKuyrugu_Durum_SonrakiDeneme");
+
+                // Panel: cihaz başına özet
+                e.HasIndex(k => new { k.CihazId, k.Durum })
+                 .HasDatabaseName("IX_CihazSenkronKuyrugu_Cihaz_Durum");
             });
 
             // =========================

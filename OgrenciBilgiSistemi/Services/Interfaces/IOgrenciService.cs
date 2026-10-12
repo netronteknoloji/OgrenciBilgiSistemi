@@ -6,7 +6,6 @@ public interface IOgrenciService
     Task<int> EkleAsync(OgrenciModel model, IFormFile? gorsel, bool buAyYemekhaneAktif, CancellationToken ct = default);
     Task GuncelleAsync(OgrenciModel model, IFormFile? gorsel, bool? buAyYemekhaneAktif, CancellationToken ct = default);
     Task SilAsync(int ogrenciId, CancellationToken ct = default);
-    Task<bool> CihazaGonderAsync(int cihazId, CancellationToken ct = default);
 
     Task<SayfalanmisListeModel<OgrenciModel>> SearchPagedAsync(
     string? sortOrder,

@@ -13,11 +13,13 @@ namespace OgrenciBilgiSistemi.Services.Implementations
     {
         private readonly AppDbContext _ctx;
         private readonly ILogger<YemekhaneService> _logger;
+        private readonly ICihazSenkronService _cihazSenkron;
 
-        public YemekhaneService(AppDbContext ctx, ILogger<YemekhaneService> logger)
+        public YemekhaneService(AppDbContext ctx, ILogger<YemekhaneService> logger, ICihazSenkronService cihazSenkron)
         {
             _ctx = ctx;
             _logger = logger;
+            _cihazSenkron = cihazSenkron;
         }
 
         // ─────────────────────────────────────────────────────────────────────────────
@@ -94,6 +96,13 @@ namespace OgrenciBilgiSistemi.Services.Implementations
 
             await _ctx.SaveChangesAsync(ct);
             _logger.LogInformation("Yemek SetAy: OgrenciId={Id}, {Yil}-{Ay}, Aktif={Aktif}", ogrenciId, yil, ay, aktif);
+
+            // İçinde bulunulan ayın hakkı değiştiyse yemekhane cihazına eklenir/silinir
+            if ((yil, ay) == GetCurrentYearMonth())
+            {
+                await _cihazSenkron.KuyrugaEkleAsync(ogrenciId, ct);
+                _cihazSenkron.Tetikle();
+            }
             return kayit;
         }
 

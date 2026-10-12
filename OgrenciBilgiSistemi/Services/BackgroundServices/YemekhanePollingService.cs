@@ -111,9 +111,13 @@ public sealed class YemekhanePollingService : BackgroundService
         {
             ct.ThrowIfCancellationRequested();
 
-            var (yeniLoglar, cihazOk, bugunLogVar) = CihazdanLogCek(
-                cihaz.CihazId, cihaz.IpAdresi!, cihaz.PortNo!.Value,
-                today, gecerliSet, mevcutSet);
+            // Senkron işleyici ve panel işlemleriyle aynı anda bağlanılmaz
+            List<OgrenciDetayModel> yeniLoglar;
+            bool cihazOk, bugunLogVar;
+            using (await ZkCihazKilidi.AlAsync(cihaz.IpAdresi!, cihaz.PortNo!.Value, ct))
+                (yeniLoglar, cihazOk, bugunLogVar) = CihazdanLogCek(
+                    cihaz.CihazId, cihaz.IpAdresi!, cihaz.PortNo!.Value,
+                    today, gecerliSet, mevcutSet);
 
             tumYeniLoglar.AddRange(yeniLoglar);
 
@@ -153,7 +157,10 @@ public sealed class YemekhanePollingService : BackgroundService
 
         // Bugün logu olmayan cihazların loglarını temizle
         foreach (var (ip, port) in temizlenecekCihazlar)
-            CihazLogTemizle(ip, port);
+        {
+            using (await ZkCihazKilidi.AlAsync(ip, port, ct))
+                CihazLogTemizle(ip, port);
+        }
     }
 
     /// <summary>

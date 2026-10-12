@@ -71,6 +71,7 @@
                                 <th>IP</th>
                                 <th>Port</th>
                                 <th>Durum</th>
+                                <th>Öğrenci Senkronu</th>
                                 <th>İşlem</th>
                             </tr>
                         </thead>
@@ -80,6 +81,8 @@
                                 var guidStr = cihaz.CihazKodu.ToString();
                                 var zkEksik = (cihaz.DonanimTipi == DonanimTipi.ZKTeco)
                                 && (string.IsNullOrWhiteSpace(cihaz.IpAdresi) || !(cihaz.PortNo.HasValue && cihaz.PortNo.Value > 0));
+                                var zkUygun = cihaz.DonanimTipi == DonanimTipi.ZKTeco && !zkEksik && !cihaz.IsDeleted;
+                                Model.SenkronOzetleri.TryGetValue(cihaz.CihazId, out var senkron);
 
                                 <tr class="@(zkEksik ? "table-warning" : "")">
                                     <td class="text-start fw-semibold text-primary">@cihaz.CihazAdi</td>
@@ -121,16 +124,57 @@
                                         }
                                     </td>
 
+                                    <td class="small">
+                                        @if (!zkUygun)
+                                        {
+                                            <span class="text-muted">—</span>
+                                        }
+                                        else if (senkron is null || (senkron.Bekleyen == 0 && senkron.Hatali == 0 && senkron.SonBasarili is null))
+                                        {
+                                            <span class="text-muted">Henüz senkron yok</span>
+                                        }
+                                        else
+                                        {
+                                            <div class="d-flex flex-column align-items-center gap-1">
+                                                @if (senkron.Bekleyen > 0)
+                                                {
+                                                    <span class="badge bg-warning text-dark">
+                                                        <i class="bi bi-hourglass-split"></i> @senkron.Bekleyen bekliyor
+                                                    </span>
+                                                }
+                                                @if (!string.IsNullOrEmpty(senkron.SonHata) && (senkron.Bekleyen > 0 || senkron.Hatali > 0))
+                                                {
+                                                    <span class="text-danger" style="max-width:260px"><i class="bi bi-exclamation-triangle"></i> @senkron.SonHata</span>
+                                                }
+                                                @if (senkron.Hatali > 0)
+                                                {
+                                                    <form asp-action="HatalariYenidenDene" method="post" class="d-inline">
+                                                        <input type="hidden" name="cihazId" value="@cihaz.CihazId" />
+                                                        <button type="submit" class="btn btn-outline-danger btn-sm py-0" title="Başarısız işlemleri yeniden dene">
+                                                            <i class="bi bi-arrow-repeat"></i> @senkron.Hatali hata · yeniden dene
+                                                        </button>
+                                                    </form>
+                                                }
+                                                @if (senkron.Bekleyen == 0 && senkron.Hatali == 0)
+                                                {
+                                                    <span class="badge bg-success"><i class="bi bi-check2"></i> Güncel</span>
+                                                }
+                                                @if (senkron.SonBasarili is { } son)
+                                                {
+                                                    <span class="text-muted">Son: @son.ToString("dd.MM HH:mm")</span>
+                                                }
+                                            </div>
+                                        }
+                                    </td>
+
                                     <td>
                                         <div class="d-flex flex-wrap gap-1 justify-content-center">
-                                            <form asp-controller="Ogrenciler" asp-action="TopluOgrenciGonder"
-                                                  method="post" class="d-inline">
-                                                @Html.AntiForgeryToken()
+                                            <form asp-action="Esitle" method="post" class="d-inline">
                                                 <input type="hidden" name="cihazId" value="@cihaz.CihazId" />
                                                 <button type="submit" class="btn btn-success btn-sm"
-                                                        title="Öğrenci verilerini bu cihaza gönder"
-                                                        @(cihaz.DonanimTipi != DonanimTipi.ZKTeco || zkEksik ? "disabled" : null)>
-                                                    <i class="bi bi-send-check"></i> Öğrenci Gönder
+                                                        title="Cihazı öğrenci kayıtlarıyla eşitle: eksikler yazılır, olmaması gerekenler silinir"
+                                                        @(zkUygun ? null : "disabled")>
+                                                    <i class="bi bi-arrow-left-right"></i> Şimdi Eşitle
                                                 </button>
                                             </form>
 

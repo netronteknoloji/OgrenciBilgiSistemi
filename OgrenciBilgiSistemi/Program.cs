@@ -84,6 +84,9 @@ builder.Services.AddScoped<IKartOkuService, KartOkuService>();
 builder.Services.AddScoped<IGecisKarariService, GecisKarariService>();
 builder.Services.AddScoped<IYemekhaneService, YemekhaneService>();
 builder.Services.AddScoped<ICihazService, CihazService>();
+// Öğrenci ↔ ZKTeco senkronu (outbox): üretici kuyruğa ekler, CihazSenkronIsleyici cihaza yazar
+builder.Services.AddScoped<ICihazSenkronService, CihazSenkronService>();
+builder.Services.AddSingleton<CihazSenkronTetikleyici>();
 builder.Services.AddScoped<IOgrenciService, OgrenciService>();
 builder.Services.AddScoped<IVeliProfilService, VeliProfilService>();
 builder.Services.AddScoped<IServisProfilService, ServisProfilService>();
@@ -118,6 +121,7 @@ builder.Services.AddHostedService<KartOkumaOlayIsleyiciService>();
 builder.Services.AddHostedService<ZkBaglantiIzleyiciHostedService>();
 builder.Services.AddHostedService<YemekhanePollingService>();
 builder.Services.AddHostedService<GonderimKuyruguIsleyici>();
+builder.Services.AddHostedService<CihazSenkronIsleyici>();
 builder.Services.AddHostedService<RandevuArkaPlanService>();
 builder.Services.AddHostedService<BildirimCihaziTemizlemeService>();
 

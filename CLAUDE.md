@@ -33,7 +33,7 @@ Mobil     → Shared (HTTP üzerinden Api'ye)
 | Tenant | Cookie/Session | JWT `okulKodu` claim |
 | DB | EF Core | Raw `SqlClient` |
 | Authorize | Global FallbackPolicy | FallbackPolicy (kimlik zorunlu) + `[Authorize]`/`[AllowAnonymous]` |
-| Background svc | 6 | 1 |
+| Background svc | 7 | 1 |
 
 ## Multi-Tenancy
 
@@ -106,6 +106,7 @@ dotnet ef migrations script --idempotent --project OgrenciBilgiSistemi/OgrenciBi
 - **CI**: `.github/workflows/backend-ci.yml` → MVC + API build ve güvenlik açıklı paket kapısı (Mobil: `codemagic.yaml`).
 - **SMS + push = outbox (`GonderimKuyrugu` tablosu).** Üretici yalnızca kuyruğa ekler (kaynak bayrağıyla aynı transaction'da, `TekilAnahtar` unique); doğrudan `ISmsService.Gonder` / `IPushBildirimGonderici` çağırma, `Task.Run` ile gönderme. MVC: `IGonderimKuyruguService` + `KuyrukTetikleyici`; API: `IYoklamaSmsBildirimService` (yoklama), `BildirimService` (push). Gönderim/tekrar deneme yalnızca MVC'deki `GonderimKuyruguIsleyici`'de (API'nin eklediği satırlar dahil) → MVC app pool çalışır olmalı (AlwaysRunning). Kurallar: `Shared/Kurallar/GonderimKuyruguKurallari`.
 - **Kart okuma kuralları** (öğle çıkışı/dönüşü, yemekhane izni/limiti) tek yerde: `Shared/Kurallar/GecisKurallari` (saf, testli). USB (`KartOkuController`) ve ZKTeco (`KartOkumaOlayIsleyiciService`) yolu `IGecisKarariService` + `GecisKilidi` üzerinden aynı kararı kullanır; kural değişikliği yalnızca orada ve testlerde yapılır.
+- **Öğrenci ↔ ZKTeco cihaz senkronu = outbox (`CihazSenkronKuyrugu`).** Öğrenciyi/yemek hakkını değiştiren kod yalnızca `ICihazSenkronService.KuyrugaEkleAsync` çağırır (aynı transaction'da) ve commit sonrası `Tetikle()`; cihaza yazma/silme yalnızca MVC'deki `CihazSenkronIsleyici`'de. Satır "öğrenciyi cihazla eşitle" demektir: kim hangi cihazda olur → `Shared/Kurallar/CihazSenkronKurallari.CihazdaOlmaliMi` (ana kapı: aktif öğrenci; yemekhane: + bu ay yemek hakkı). Aynı ZKTeco cihazına aynı anda tek bağlantı: `ZkCihazKilidi`. Cihazdaki kullanıcı Id = `OgrenciId`.
 - **Kart no** kaydederken ve okuturken `Shared/Helpers/KartNo.Normalize` (MVC + API).
 - **Roller:** Panel = Admin, Öğretmen, GenelAdmin (Veli/Servis panele giremez, yalnızca mobil). Panel yetkisi menü ataması ile; çok menülü controller'larda action → menü eşlemesi `Infrastructure/MenuIslemHaritasi` (rapor menüsü işlem ekranını açmaz). Panel oturumu `OturumDogrulayici` ile ≤5 dk'da güncellenir; giriş ile aynı kuralı `Shared/Kurallar/PanelOturumKurallari`'ndan alır, önbelleği başarılı girişte ve kullanıcı güncelle/silde `OturumDogrulayici.OnbellegiTemizle` ile silinir. Öğretmenin tüm sınıflara erişimi bilinçli kuraldır. Randevu durum geçişleri `Shared/Kurallar/RandevuDurumKurallari`.
 - **Mobil oturum (refresh token)** okul DB'sindeki `RefreshTokenlar` tablosunda (şeması MVC migration'ında, okuyup yazan yalnızca API). Eski kayıtları MVC `BildirimCihaziTemizlemeService` siler.

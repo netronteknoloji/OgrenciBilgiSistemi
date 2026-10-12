@@ -29,11 +29,12 @@
 
 - **Kart okuma:** USB (`KartOkuController`) ve ZKTeco (`KartOkumaOlayIsleyiciService`) aynı kararı `IGecisKarariService` + `GecisKilidi` → `Shared/Kurallar/GecisKurallari` üzerinden verir. Kural burada değil, Shared'de ve testlerde değişir.
 - **SMS + push = outbox:** üretici yalnızca `IGonderimKuyruguService` ile kuyruğa ekler, `KuyrukTetikleyici` işleyiciyi uyandırır; `ISmsService` / `IPushBildirimGonderici`'yi yalnızca `GonderimKuyruguIsleyici` çağırır.
+- **Cihaz senkronu:** öğrenciyi cihaza `CihazService` ile doğrudan yazma; `ICihazSenkronService` ile kuyruğa ekle, `CihazSenkronIsleyici` yazar. ZKTeco bağlantısı açan her kod `ZkCihazKilidi` altında çalışır (ZKTecoService'in kalıcı olay bağlantısı hariç).
 - **Kart no:** kaydederken ve okuturken `Shared/Helpers/KartNo.Normalize`.
 
-## Background Services (6 adet)
+## Background Services (7 adet)
 
-`KartOkumaOlayIsleyiciService`, `ZkBaglantiIzleyiciHostedService`, `YemekhanePollingService` (yalnızca cihaz logu), `GonderimKuyruguIsleyici` (SMS + push gönderimi, tüm okullar), `RandevuArkaPlanService`, `BildirimCihaziTemizlemeService`.
+`KartOkumaOlayIsleyiciService`, `ZkBaglantiIzleyiciHostedService`, `YemekhanePollingService` (yalnızca cihaz logu), `GonderimKuyruguIsleyici` (SMS + push gönderimi, tüm okullar), `CihazSenkronIsleyici` (öğrenci ↔ ZKTeco cihaz senkronu; `CihazSenkronKuyrugu` outbox'ı), `RandevuArkaPlanService`, `BildirimCihaziTemizlemeService`.
 
 ## AppDbContext Tuzakları
 
