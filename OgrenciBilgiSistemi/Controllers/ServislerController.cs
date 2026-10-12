@@ -9,13 +9,19 @@ namespace OgrenciBilgiSistemi.Controllers
     public class ServislerController : Controller
     {
         private readonly IServisProfilService _servisProfilService;
+        private readonly IKullaniciService _kullaniciService;
         private readonly ILogger<ServislerController> _logger;
+
+        private const string KullaniciAdiKullaniliyorMesaji =
+            "Bu kullanıcı adı kullanılıyor. Farklı bir kullanıcı adı girin.";
 
         public ServislerController(
             IServisProfilService servisProfilService,
+            IKullaniciService kullaniciService,
             ILogger<ServislerController> logger)
         {
             _servisProfilService = servisProfilService;
+            _kullaniciService = kullaniciService;
             _logger = logger;
         }
 
@@ -36,6 +42,10 @@ namespace OgrenciBilgiSistemi.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Ekle(ServisFormVm vm, CancellationToken ct = default)
         {
+            if (!string.IsNullOrWhiteSpace(vm.KullaniciAdi) &&
+                await _kullaniciService.KullaniciAdiVarMiAsync(vm.KullaniciAdi, null, ct))
+                ModelState.AddModelError(nameof(vm.KullaniciAdi), KullaniciAdiKullaniliyorMesaji);
+
             if (!ModelState.IsValid)
                 return View(vm);
 
@@ -69,6 +79,10 @@ namespace OgrenciBilgiSistemi.Controllers
         {
             vm.FormAction = "Guncelle"; vm.SubmitText = "Güncelle";
             ModelState.Remove(nameof(vm.Sifre));
+
+            if (!string.IsNullOrWhiteSpace(vm.KullaniciAdi) &&
+                await _kullaniciService.KullaniciAdiVarMiAsync(vm.KullaniciAdi, vm.KullaniciId, ct))
+                ModelState.AddModelError(nameof(vm.KullaniciAdi), KullaniciAdiKullaniliyorMesaji);
 
             if (!ModelState.IsValid)
                 return View(vm);
