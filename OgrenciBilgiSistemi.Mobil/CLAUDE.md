@@ -23,7 +23,7 @@
 
 | Platform | Min OS | RID | ApplicationId |
 |---|---|---|---|
-| Android | API 23 | `android-arm64` | `com.netronyazilimvebilisimteknolojileri.ogrencibilgisistemi` |
+| Android | API 23 | `android-arm` + `android-arm64` (32-bit Android cihazlar için) | `com.netronyazilimvebilisimteknolojileri.ogrencibilgisistemi` |
 | iOS | 15.0 | (auto) | `com.netronyazilim.ogrencibilgisistemi` |
 
 ⚠️ Bundle ID'ler **farklı** — store yayınında dikkat.

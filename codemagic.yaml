@@ -100,7 +100,6 @@ workflows:
             -c Release \
             -f "$ANDROID_TFM" \
             --no-restore \
-            /p:RuntimeIdentifier=android-arm64 \
             /p:AndroidPackageFormat=aab \
             /p:AndroidKeyStore=true \
             /p:AndroidSigningKeyStore="$CM_KEYSTORE_PATH" \

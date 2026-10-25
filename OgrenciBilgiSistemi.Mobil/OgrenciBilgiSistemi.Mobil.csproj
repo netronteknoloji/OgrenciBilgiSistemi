@@ -23,7 +23,7 @@
 
 	<PropertyGroup Condition="$(TargetFramework.Contains('-android'))">
 		<SupportedOSPlatformVersion>23.0</SupportedOSPlatformVersion>
-		<RuntimeIdentifier>android-arm64</RuntimeIdentifier>
+		<RuntimeIdentifiers>android-arm;android-arm64</RuntimeIdentifiers>
 		<ApplicationId>com.netronyazilimvebilisimteknolojileri.ogrencibilgisistemi</ApplicationId>
 	</PropertyGroup>
 
