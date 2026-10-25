@@ -47,7 +47,7 @@ namespace OgrenciBilgiSistemi.Shared.Kurallar
             public const string OglenIzniYok = "ÖĞRENCİNİN ÖĞLE ÇIKIŞ İZNİ YOK!";
             public const string YemekIzniYok = "ÖĞRENCİNİN YEMEKHANE GEÇİŞ İZNİ YOK!";
             public const string YemekLimit = "Bugün için yemekhane geçiş hakkı kullanıldı!";
-            public const string OgleDonusLimit = "Bugün öğle çıkışı ve dönüşü zaten yapılmış!";
+            public const string OgleDonusLimit = "Bugün öğle çıkışı ve dönüşü yapıldı!";
             public const string KartTanimsiz = "KART TANIMSIZ!";
             public const string OgleCikisOk = "ÖĞLE ÇIKIŞI ONAYLANDI.";
             public const string OgleDonusOk = "ÖĞLE DÖNÜŞÜ ONAYLANDI.";
@@ -92,7 +92,7 @@ namespace OgrenciBilgiSistemi.Shared.Kurallar
                 // Çıkıştan hemen sonra tekrar okutma (çift okutma) dönüş sayılmaz
                 if (d.AnaKapiCikisZamani is { } cikis && d.Simdi - cikis < ayar.OgleDonusMinSure)
                     return GecisKarari.Reddet("ANA_KAPI_OGLE_CIKIS_YAPILDI",
-                        $"Öğle çıkışı zaten yapıldı ({cikis:HH:mm}).", cikis);
+                        $"Öğle çıkışı yapıldı ({cikis:HH:mm}).", cikis);
 
                 return GecisKarari.Kaydet(Giris);
             }

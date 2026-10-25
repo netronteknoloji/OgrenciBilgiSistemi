@@ -7,7 +7,7 @@ let displayTimeoutId = null;
 let retryCount = 0;
 
 const config = {
-  displayDuration: 1000, // ms
+  displayDuration: 2000, // ms
   initialRetryDelay: 1000, // ms
   maxRetryDelay: 30000, // ms
 };
@@ -197,7 +197,7 @@ function getReasonSpec(reason, ctx) {
     case "ANA_KAPI_OGLE_CIKIS_YAPILDI":
       return {
         fullBg: "#dc2626",
-        text: errMsg || "Öğle çıkışı zaten yapıldı!",
+        text: errMsg || "Öğle çıkışı yapıldı!",
         beep: true,
       };
     case "ANA_KAPI_OGLE_SAAT_DISI":
@@ -227,7 +227,7 @@ function getReasonSpec(reason, ctx) {
     case "ANA_KAPI_OGLE_DONUS_LIMIT":
       return {
         fullBg: "#dc2626",
-        text: "Bugün öğle çıkış ve dönüş zaten yapılmış!",
+        text: "Bugün öğle çıkış ve dönüş yapıldı!",
         beep: true,
       };
     default:
@@ -268,9 +268,6 @@ function renderSonucOverlay(o, spec, bannerText, ogrenciGoster) {
     }
 
     overlay.appendChild(el("div", "kart-sonuc-ad", (o.ogrenciAdSoyad || o.OgrenciAdSoyad || "-").toString()));
-
-    const sinif = o.ogrenciSinif || o.OgrenciSinif;
-    if (!bosMu(sinif)) overlay.appendChild(el("div", "kart-sonuc-sinif", sinif.toString()));
 
     const istasyon = (o.istasyon || o.Istasyon || "").toString().toLowerCase();
     if (istasyon !== "yemekhane") {
