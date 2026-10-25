@@ -43,6 +43,57 @@
 </footer>
 
 @section Scripts {
+    <!-- Tam ekran geçiş sonucu (signalr-handler.js üretir). Tıklamayı geçirir; kart input'u odakta kalır. -->
+    <style>
+        .kart-sonuc-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 2000;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1.5vh;
+            padding: 3vh 4vw;
+            text-align: center;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            font-weight: 700;
+        }
+        .kart-sonuc-durum {
+            font-size: clamp(1.8rem, 5vw, 4.5rem);
+            line-height: 1.15;
+            text-transform: uppercase;
+        }
+        .kart-sonuc-foto {
+            height: 42vh;
+            max-width: 80vw;
+            aspect-ratio: 3 / 4;
+            object-fit: cover;
+            border: 8px solid #fff;
+            border-radius: 16px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, .35);
+            background: rgba(255, 255, 255, .2);
+        }
+        .kart-sonuc-foto-yok {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(1.2rem, 2.5vw, 2rem);
+        }
+        .kart-sonuc-ad {
+            font-size: clamp(2rem, 6vw, 5.5rem);
+            line-height: 1.1;
+        }
+        .kart-sonuc-sinif {
+            font-size: clamp(1.2rem, 3vw, 2.5rem);
+            font-weight: 600;
+        }
+        .kart-sonuc-saat {
+            font-size: clamp(1.4rem, 3.5vw, 3rem);
+        }
+    </style>
+
     <!-- Yerel SignalR kütüphanesi -->
     <script src="~/lib/microsoft/signalr/dist/browser/signalr.min.js" asp-append-version="true"></script>
 

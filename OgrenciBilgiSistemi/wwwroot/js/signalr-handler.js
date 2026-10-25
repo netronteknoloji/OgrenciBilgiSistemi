@@ -159,38 +159,6 @@ function playBeep(duration = 180, frequency = 880, volume = 0.4) {
   }
 }
 
-/* -------- ENUM -> öğle izni -------- */
-function lunchAllowedFromEnum(o) {
-  if (!o || typeof o !== "object")
-    return { allowed: false, source: "default", raw: undefined };
-
-  if (Object.prototype.hasOwnProperty.call(o, "oglenCikisDurumu")) {
-    const v = o.oglenCikisDurumu;
-    if (typeof v === "number")
-      return { allowed: v === 0, source: "camel-num", raw: v };
-    if (typeof v === "string") {
-      const s = v.trim().toLowerCase();
-      if (s === "0" || s === "evet")
-        return { allowed: true, source: "camel-str", raw: v };
-      if (s === "1" || s === "hayır" || s === "hayir")
-        return { allowed: false, source: "camel-str", raw: v };
-    }
-  }
-  if (Object.prototype.hasOwnProperty.call(o, "OglenCikisDurumu")) {
-    const v = o.OglenCikisDurumu;
-    if (typeof v === "number")
-      return { allowed: v === 0, source: "pascal-num", raw: v };
-    if (typeof v === "string") {
-      const s = v.trim().toLowerCase();
-      if (s === "0" || s === "evet")
-        return { allowed: true, source: "pascal-str", raw: v };
-      if (s === "1" || s === "hayır" || s === "hayir")
-        return { allowed: false, source: "pascal-str", raw: v };
-    }
-  }
-  return { allowed: false, source: "default", raw: undefined };
-}
-
 /* -------- Banner spec -------- */
 function getReasonSpec(reason, ctx) {
   const infoMsg = (ctx && (ctx.Info || ctx.info)) || null;
@@ -198,7 +166,7 @@ function getReasonSpec(reason, ctx) {
   switch ((reason || "").toString()) {
     case "YEMEKHANE_OK":
       return {
-        fullBg: "#22c55e",
+        fullBg: "#16a34a",
         text: infoMsg || "YEMEKHANE GEÇİŞİ ONAYLANDI.",
         beep: false,
       };
@@ -216,13 +184,13 @@ function getReasonSpec(reason, ctx) {
       };
     case "ANA_KAPI_OGLE_OK":
       return {
-        fullBg: "#22c55e",
+        fullBg: "#16a34a",
         text: infoMsg || "ÖĞLE ÇIKIŞI ONAYLANDI.",
         beep: false,
       };
     case "ANA_KAPI_OGLE_DONUS_OK":
       return {
-        fullBg: "#22c55e",
+        fullBg: "#16a34a",
         text: infoMsg || "ÖĞLE DÖNÜŞÜ ONAYLANDI.",
         beep: false,
       };
@@ -267,169 +235,53 @@ function getReasonSpec(reason, ctx) {
   }
 }
 
-/* -------- Öğrenci kartı renderer -------- */
-function renderStudentFragment(o, lunch) {
-  const reason = (o.reason || o.Reason || "").toString();
-  const istasyonRaw = (o.istasyon || o.Istasyon || "").toString();
-  const istasyon = istasyonRaw.toLowerCase();
-  const isYemekhane = istasyon === "yemekhane";
+/* -------- Tam ekran sonuç renderer -------- */
+// Değerler yalnızca textContent ile basılır (XSS); "-" olan alanlar gösterilmez
+function bosMu(v) {
+  return v === null || v === undefined || v.toString().trim() === "" || v.toString().trim() === "-";
+}
 
-  const container = document.createElement("div");
-  container.className = "row g-0 mx-auto";
-  container.style.maxWidth = "900px";
-  container.style.borderRadius = "12px";
-  container.style.border = "2px solid #e5e7eb";
-  container.style.overflow = "hidden";
+function el(tag, className, text) {
+  const d = document.createElement(tag);
+  if (className) d.className = className;
+  if (text !== undefined) d.textContent = text;
+  return d;
+}
 
-  const colImg = document.createElement("div");
-  colImg.className =
-    "col-md-5 d-flex align-items-center justify-content-center p-3";
-  colImg.style.borderRadius = "12px 0 0 12px";
-  colImg.style.background = "transparent";
+function renderSonucOverlay(o, spec, bannerText, ogrenciGoster) {
+  const overlay = el("div", "kart-sonuc-overlay");
+  overlay.style.background = spec.fullBg || "#e5e7eb";
+  // Gri (bilgi) zeminde koyu, renkli zeminde beyaz yazı
+  overlay.style.color = spec.fullBg === "#e5e7eb" || !spec.fullBg ? "#111" : "#fff";
 
-  const imgUrl = sanitizeUrl(o.ogrenciGorsel || "");
-  if (imgUrl) {
-    const img = document.createElement("img");
-    img.src = imgUrl;
-    img.alt = "Öğrenci Fotoğrafı";
-    img.style.width = "340px";
-    img.style.height = "450px";
-    img.style.objectFit = "cover";
-    img.style.borderRadius = "8px";
-    img.style.maxWidth = "100%";
-    colImg.appendChild(img);
-  } else {
-    const noImg = document.createElement("h5");
-    noImg.textContent = "Görsel Yok";
-    noImg.style.color = "#111";
-    colImg.appendChild(noImg);
-  }
+  overlay.appendChild(el("div", "kart-sonuc-durum", bannerText));
 
-  const colInfo = document.createElement("div");
-  colInfo.className = "col-md-7";
-  colInfo.style.borderRadius = "0 12px 12px 0";
-  colInfo.style.background = "#ffffff";
-  colInfo.style.color = "#111";
-
-  const body = document.createElement("div");
-  body.className = "card-body p-4 d-flex flex-column justify-content-start";
-  body.style.fontFamily = "'Segoe UI', Arial, sans-serif";
-
-  const header = document.createElement("div");
-  header.className = "d-flex align-items-center justify-content-between mb-3";
-
-  const hName = document.createElement("h3");
-  hName.className = "card-subtitle mb-0";
-  hName.style.color = "#111";
-  hName.style.fontSize = "2.0rem";
-  hName.style.fontWeight = "700";
-  hName.textContent = sanitizeHtml(o.ogrenciAdSoyad || "-");
-
-  const badge = document.createElement("span");
-  badge.className = "badge";
-  badge.style.fontSize = "1rem";
-  badge.style.padding = "0.5rem 0.75rem";
-  badge.style.borderRadius = "9999px";
-  badge.style.border = "1px solid #e5e7eb";
-  badge.style.background = "#ffffff";
-  badge.style.color = "#16a34a";
-
-  const reasonStr = (o.reason || o.Reason || "").toString();
-  const isReject =
-    reasonStr === "YEMEKHANE_RED" ||
-    reasonStr === "YEMEKHANE_LIMIT" ||
-    reasonStr === "ANA_KAPI_OGLE_RED" ||
-    reasonStr === "ANA_KAPI_OGLE_LIMIT" ||
-    reasonStr === "ANA_KAPI_OGLE_DONUS_LIMIT" ||
-    reasonStr === "ANA_KAPI_OGLE_CIKIS_YAPILDI" ||
-    reasonStr === "ANA_KAPI_OGLE_SAAT_DISI" ||
-    (o.gecisTipi || o.GecisTipi || "").toString().toLowerCase() ===
-      "reddedildi";
-
-  if (isYemekhane) {
-    // YEMEKHANE için badge metni
-    if (reasonStr === "YEMEKHANE_OK") {
-      badge.textContent = "Yemekhane: İzin Var";
-      badge.style.color = "#16a34a";
-    } else if (reasonStr === "YEMEKHANE_RED") {
-      badge.textContent = "Yemekhane: İzin Yok!";
-      badge.style.color = "#dc2626";
-    } else if (reasonStr === "YEMEKHANE_LIMIT") {
-      badge.textContent = "Yemekhane: Günlük Hak Kullanıldı!";
-      badge.style.color = "#dc2626";
+  if (ogrenciGoster) {
+    const imgUrl = sanitizeUrl(o.ogrenciGorsel || o.OgrenciGorsel || "");
+    if (imgUrl) {
+      const img = el("img", "kart-sonuc-foto");
+      img.src = imgUrl;
+      img.alt = "Öğrenci Fotoğrafı";
+      overlay.appendChild(img);
     } else {
-      badge.textContent = "Yemekhane";
-      badge.style.color = isReject ? "#dc2626" : "#16a34a";
+      overlay.appendChild(el("div", "kart-sonuc-foto kart-sonuc-foto-yok", "Görsel Yok"));
     }
-  } else {
-    // ANA KAPI için badge metni
-    if (reasonStr === "ANA_KAPI_OGLE_OK") {
-      badge.textContent = "Öğle Çıkış: Onaylandı";
-      badge.style.color = "#16a34a";
-    } else if (reasonStr === "ANA_KAPI_OGLE_DONUS_OK") {
-      badge.textContent = "Öğle Dönüş: Onaylandı";
-      badge.style.color = "#16a34a";
-    } else if (reasonStr === "ANA_KAPI_OGLE_CIKIS_YAPILDI") {
-      badge.textContent = "Öğle Çıkış: Zaten Yapıldı!";
-      badge.style.color = "#dc2626";
-    } else if (reasonStr === "ANA_KAPI_OGLE_SAAT_DISI") {
-      badge.textContent = "Öğle Çıkış: Saat Dışı!";
-      badge.style.color = "#dc2626";
-    } else if (reasonStr === "ANA_KAPI_OGLE_RED") {
-      badge.textContent = "Öğle Çıkış: İzin Yok!";
-      badge.style.color = "#dc2626";
-    } else if (
-      reasonStr === "ANA_KAPI_OGLE_LIMIT" ||
-      reasonStr === "ANA_KAPI_OGLE_DONUS_LIMIT"
-    ) {
-      badge.textContent = "Öğle Çıkış/Dönüş: Günlük Hak Kullanıldı!";
-      badge.style.color = "#dc2626";
-    } else {
-      const lunch = lunchAllowedFromEnum(o); // sadece badge rengi/varsayılan metin için
-      badge.textContent = lunch.allowed
-        ? "Öğle Çıkış: İzin Var"
-        : "Öğle Çıkış: İzin Yok";
-      badge.style.color = lunch.allowed ? "#16a34a" : "#dc2626";
+
+    overlay.appendChild(el("div", "kart-sonuc-ad", (o.ogrenciAdSoyad || o.OgrenciAdSoyad || "-").toString()));
+
+    const sinif = o.ogrenciSinif || o.OgrenciSinif;
+    if (!bosMu(sinif)) overlay.appendChild(el("div", "kart-sonuc-sinif", sinif.toString()));
+
+    const istasyon = (o.istasyon || o.Istasyon || "").toString().toLowerCase();
+    if (istasyon !== "yemekhane") {
+      const cikis = o.ogrenciCikisSaati || o.OgrenciCikisSaati;
+      const giris = o.ogrenciGirisSaati || o.OgrenciGirisSaati;
+      if (!bosMu(cikis)) overlay.appendChild(el("div", "kart-sonuc-saat", `Çıkış: ${cikis}`));
+      if (!bosMu(giris)) overlay.appendChild(el("div", "kart-sonuc-saat", `Dönüş: ${giris}`));
     }
   }
 
-  header.append(hName, badge);
-  body.appendChild(header);
-
-  const fields = [
-    ["Öğrenci No:", o.ogrenciNo],
-    ["Sınıf:", o.ogrenciSinif],
-    ["Giriş Zamanı:", o.ogrenciGirisSaati],
-    ["Çıkış Zamanı:", o.ogrenciCikisSaati],
-  ];
-
-  fields.forEach(([label, value]) => {
-    const p = document.createElement("p");
-    p.className = "fs-5 text-start";
-    p.style.display = "flex";
-    p.style.alignItems = "center";
-    p.style.marginBottom = "1.0rem";
-    p.style.lineHeight = "1.7";
-    p.style.color = "#111";
-    p.innerHTML = `
-            <span style="min-width: 150px; font-weight: 600;">${label}</span>
-            <span style="
-                flex: 1;
-                border-bottom: 1px solid #cbd5e1;
-                padding-bottom: 4px;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                color:#111;
-            ">
-                ${sanitizeHtml(value)}
-            </span>
-        `;
-    body.appendChild(p);
-  });
-
-  colInfo.appendChild(body);
-  container.append(colImg, colInfo);
-  return container;
+  return overlay;
 }
 
 /* =================== Main Flow =================== */
@@ -509,29 +361,13 @@ function showStudentInfo(o) {
     bannerText = "ÖĞLE DÖNÜŞÜ ONAYLANDI.";
   }
 
-  const frag = document.createDocumentFragment();
-
-  const banner = document.createElement("div");
-  banner.className = "alert fw-bold fs-5 text-center mb-3";
-  banner.style.background = spec.fullBg || "#e5e7eb";
-  banner.style.border = "none";
-  banner.style.color = "#111";
-  banner.textContent = bannerText;
-  frag.appendChild(banner);
-
   if (spec.beep) playBeep();
 
-  // Tanımsız kartta gösterilecek öğrenci yok; sadece banner
-  if (effectiveReason !== "KART_TANIMSIZ") {
-    frag.appendChild(renderStudentFragment(o, lunchAllowedFromEnum(o)));
-  }
-
-  ogrenciBilgisiContainer.replaceChildren(frag);
-
-  const formContainer = document.getElementById("ogrenciFormAlani");
-  if (formContainer) formContainer.style.display = "none";
-  const baslik = document.getElementById("sayfaBasligi");
-  if (baslik) baslik.style.display = "none";
+  // Tanımsız kartta gösterilecek öğrenci yok; sadece durum metni.
+  // Form gizlenmez: overlay üstünü kaplar, input odakta kalır ve sıradaki kart okunabilir.
+  ogrenciBilgisiContainer.replaceChildren(
+    renderSonucOverlay(o, spec, bannerText, effectiveReason !== "KART_TANIMSIZ"),
+  );
 
   scheduleEkranTemizle();
 }
