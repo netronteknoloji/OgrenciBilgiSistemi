@@ -1,3 +1,5 @@
+using OgrenciBilgiSistemi.Mobil.ViewModels;
+using OgrenciBilgiSistemi.Mobil.Views;
 using Plugin.Firebase.CloudMessaging;
 
 namespace OgrenciBilgiSistemi.Mobil.Services
@@ -7,7 +9,15 @@ namespace OgrenciBilgiSistemi.Mobil.Services
     /// </summary>
     public class BildirimYonlendirmeServisi
     {
+        private readonly RandevuService _randevuService;
+        private readonly BildirimService _bildirimService;
         private bool _bagli;
+
+        public BildirimYonlendirmeServisi(RandevuService randevuService, BildirimService bildirimService)
+        {
+            _randevuService = randevuService;
+            _bildirimService = bildirimService;
+        }
 
         public void DinleyiciyiBaglat()
         {
@@ -58,14 +68,17 @@ namespace OgrenciBilgiSistemi.Mobil.Services
                     var shell = Shell.Current;
                     if (shell is null) return;
 
+                    // Global rotalar mutlak (//) adreslenemez; uygulamanın geri kalanı gibi mevcut yığına eklenir.
                     // Tur 1-5: Randevu, 6: Duyuru
                     if (tur >= 1 && tur <= 5 && randevuId > 0)
                     {
-                        await shell.GoToAsync($"//RandevuDetayView?randevuId={randevuId}");
+                        var vm = RandevuDetayGorunumModel.FromId(_randevuService, randevuId);
+                        await shell.Navigation.PushAsync(new RandevuDetayView(vm));
                     }
                     else
                     {
-                        await shell.GoToAsync("//BildirimListeView");
+                        var vm = new BildirimListeGorunumModel(_bildirimService, _randevuService);
+                        await shell.Navigation.PushAsync(new BildirimListeView(vm));
                     }
                 });
             }

@@ -302,6 +302,13 @@ namespace OgrenciBilgiSistemi.Mobil.ViewModels
                         return;
                     }
 
+                    if (_seciliOgrenci.VeliId is null)
+                    {
+                        await Application.Current!.MainPage!.DisplayAlert("Uyarı",
+                            "Bu öğrencinin kayıtlı velisi yok; randevu oluşturulamaz.", "Tamam");
+                        return;
+                    }
+
                     _karsiTarafId = _seciliOgrenci.VeliId;
                     ogrenciId = _seciliOgrenci.OgrenciId;
                     randevuTarihi = SecilenTarih.Date + BaslangicSaatiSecilen;

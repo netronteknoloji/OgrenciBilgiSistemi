@@ -327,36 +327,37 @@ namespace OgrenciBilgiSistemi.Mobil.Services
         /// </summary>
         private async Task<bool> TokenYenilemeAsync()
         {
-            var refreshToken = KullaniciOturum.RefreshToken;
-            if (string.IsNullOrEmpty(refreshToken))
-                return false;
+            Task<bool> gorev;
 
+            // Kilit yalnızca görevi seçerken tutulur; yenileme beklenirken kilit serbesttir
             await _refreshKilidi.WaitAsync();
             try
             {
-                // Başka bir thread zaten refresh yapıyorsa aynı görevi bekle
-                if (_aktifRefreshGorevi != null)
+                // Başka bir istek zaten yeniliyorsa aynı görevi bekle (refresh token tek kullanımlık)
+                if (_aktifRefreshGorevi == null)
                 {
-                    _refreshKilidi.Release();
-                    return await _aktifRefreshGorevi;
-                }
+                    var refreshToken = KullaniciOturum.RefreshToken;
+                    if (string.IsNullOrEmpty(refreshToken))
+                        return false;
 
-                _aktifRefreshGorevi = GercekTokenYenilemeAsync(refreshToken);
+                    _aktifRefreshGorevi = GercekTokenYenilemeAsync(refreshToken);
+                }
+                gorev = _aktifRefreshGorevi;
             }
             finally
             {
-                if (_aktifRefreshGorevi == null)
-                    _refreshKilidi.Release();
+                _refreshKilidi.Release();
             }
 
             try
             {
-                return await _aktifRefreshGorevi;
+                return await gorev;
             }
             finally
             {
                 await _refreshKilidi.WaitAsync();
-                _aktifRefreshGorevi = null;
+                if (ReferenceEquals(_aktifRefreshGorevi, gorev))
+                    _aktifRefreshGorevi = null;
                 _refreshKilidi.Release();
             }
         }
