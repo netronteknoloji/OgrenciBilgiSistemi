@@ -23,7 +23,7 @@
 
 | Platform | Min OS | RID | ApplicationId |
 |---|---|---|---|
-| Android | API 24 (Play otomatik koruma şartı) | `android-arm` + `android-arm64` (32-bit Android cihazlar için) | `com.netronyazilimvebilisimteknolojileri.ogrencibilgisistemi` |
+| Android | API 23 (Play otomatik koruma kapalı olmalı; açılırsa en az 24 ister) | `android-arm` + `android-arm64` (32-bit Android cihazlar için) | `com.netronyazilimvebilisimteknolojileri.ogrencibilgisistemi` |
 | iOS | 15.0 | (auto) | `com.netronyazilim.ogrencibilgisistemi` |
 
 ⚠️ Bundle ID'ler **farklı** — store yayınında dikkat.
