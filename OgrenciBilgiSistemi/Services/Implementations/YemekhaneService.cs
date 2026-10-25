@@ -479,8 +479,9 @@ namespace OgrenciBilgiSistemi.Services.Implementations
 
             // Batch: Aktif ay sayıları (OgrenciId) → Count
             // Akademik yıl aralığını kapsayan tüm ay kayıtlarını çek, bellekte grupla
-            var yilMin = akYillar.Min();
-            var yilMax = akYillar.Max() + 1;
+            // Sayfada satır yoksa (ödeme kaydı yok / filtre boş) Min/Max patlamasın; ogrenciIds boş olduğundan sorgu zaten boş döner
+            var yilMin = akYillar.Count > 0 ? akYillar.Min() : 0;
+            var yilMax = akYillar.Count > 0 ? akYillar.Max() + 1 : 0;
             var ayKayitlari = await _ctx.OgrenciYemekler.AsNoTracking()
                 .Where(a => ogrenciIds.Contains(a.OgrenciId) && a.Aktif
                          && a.Yil >= yilMin && a.Yil <= yilMax
