@@ -21,5 +21,12 @@
         /// Cihaz bağlantısını izler ve yeniden bağlanma sağlar.
         /// </summary>
         Task MonitorConnectionsAsync(CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Cihaz işlemleri (log okuma/silme, kullanıcı senkronu, panel) için bağlantı verir; yalnızca ZkCihazKilidi
+        /// altında çağrılır. Olay bağlantısı bu cihazdaysa aynı COM nesnesi ödünç verilir (cihaz ikinci SDK
+        /// oturumunu -307 ile reddediyor), değilse geçici bağlantı açılır. Bağlanılamazsa (null, hata kodu).
+        /// </summary>
+        Task<(Implementations.ZkBaglanti? Baglanti, int HataKodu)> CihazBaglantisiAcAsync(string ip, int port, CancellationToken ct = default);
     }
 }

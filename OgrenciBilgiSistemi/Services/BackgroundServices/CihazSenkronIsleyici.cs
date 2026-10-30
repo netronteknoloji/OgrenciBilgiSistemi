@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using OgrenciBilgiSistemi.Data;
 using OgrenciBilgiSistemi.Models;
 using OgrenciBilgiSistemi.Services.Implementations;
+using OgrenciBilgiSistemi.Services.Interfaces;
 using OgrenciBilgiSistemi.Shared.Helpers;
 using OgrenciBilgiSistemi.Shared.Kurallar;
 using OgrenciBilgiSistemi.Shared.Services;
@@ -14,7 +15,8 @@ namespace OgrenciBilgiSistemi.Services.BackgroundServices;
 /// <summary>
 /// CihazSenkronKuyrugu'ndaki "öğrenciyi cihazla eşitle" işlerini yapar: öğrencinin o anki durumuna göre
 /// (CihazSenkronKurallari.CihazdaOlmaliMi) cihaza yazar veya cihazdan siler.
-/// Satırlar cihaz başına gruplanır; her cihaza tek bağlantıyla (ZkCihazKilidi altında) gidilir.
+/// Satırlar cihaz başına gruplanır; her cihaza tek bağlantıyla (ZkCihazKilidi altında,
+/// IZKTecoService.CihazBaglantisiAcAsync ile) gidilir.
 /// Yazmadan önce aynı kart cihazda başka bir kullanıcıdaysa o kullanıcının kartı boşaltılır (kullanıcı silinmez).
 /// Cihaza ulaşılamazsa satırlar artan beklemeyle tekrar denenir.
 /// </summary>
@@ -35,15 +37,17 @@ WHERE (K.Durum = 0 AND K.SonrakiDeneme <= {2}) OR (K.Durum = 1 AND K.KilitBitis 
     private readonly TenantKapsamFabrikasi _tenantKapsam;
     private readonly CihazSenkronTetikleyici _tetikleyici;
     private readonly TimeProvider _saat;
+    private readonly IZKTecoService _zk;
     private readonly ILogger<CihazSenkronIsleyici> _logger;
     private readonly ConcurrentDictionary<string, DateTime> _sonTemizlik = new();
 
     public CihazSenkronIsleyici(TenantKapsamFabrikasi tenantKapsam, CihazSenkronTetikleyici tetikleyici,
-        TimeProvider saat, ILogger<CihazSenkronIsleyici> logger)
+        TimeProvider saat, IZKTecoService zk, ILogger<CihazSenkronIsleyici> logger)
     {
         _tenantKapsam = tenantKapsam;
         _tetikleyici = tetikleyici;
         _saat = saat;
+        _zk = zk;
         _logger = logger;
     }
 
@@ -146,7 +150,22 @@ WHERE (K.Durum = 0 AND K.SonrakiDeneme <= {2}) OR (K.Durum = 1 AND K.KilitBitis 
             else
             {
                 using (await ZkCihazKilidi.AlAsync(cihaz.IpAdresi, cihaz.PortNo.Value, ct))
-                    sonuclar = CihazaUygula(cihaz, grupSatirlari, ogrenciler, yemekVar);
+                {
+                    var (baglanti, kod) = await _zk.CihazBaglantisiAcAsync(cihaz.IpAdresi, cihaz.PortNo.Value, ct);
+                    if (baglanti is null)
+                    {
+                        var hata = $"Cihaza bağlanılamadı (kod {kod}).";
+                        _logger.LogWarning("Cihaz senkronu: {Cihaz} ({Ip}) cihazına bağlanılamadı, kod={Kod}.", cihaz.CihazAdi, cihaz.IpAdresi, kod);
+                        sonuclar = grupSatirlari
+                            .Select(s => new IslemSonucu(s, CihazSenkronSonucTuru.Gecici, CihazSenkronIslemi.Yok, hata))
+                            .ToList();
+                    }
+                    else
+                    {
+                        using (baglanti)
+                            sonuclar = CihazaUygula(baglanti.Zk, cihaz, grupSatirlari, ogrenciler, yemekVar);
+                    }
+                }
 
                 if (sonuclar.Count > 0 && sonuclar.All(x => x.Tur == CihazSenkronSonucTuru.Gecici))
                     ulasilamayan.Add(cihaz.CihazId);
@@ -166,27 +185,15 @@ WHERE (K.Durum = 0 AND K.SonrakiDeneme <= {2}) OR (K.Durum = 1 AND K.KilitBitis 
         }
     }
 
-    // COM çağrıları senkron; yalnızca ZkCihazKilidi altında çağrılır.
-    private List<IslemSonucu> CihazaUygula(CihazModel cihaz, List<CihazSenkronKuyruguModel> satirlar,
+    // COM çağrıları senkron; yalnızca ZkCihazKilidi altında, çağıranın açtığı bağlantıyla çağrılır
+    // (bağlantıyı Dispose cihazı tekrar etkinleştirip kapatır).
+    private List<IslemSonucu> CihazaUygula(CZKEM zk, CihazModel cihaz, List<CihazSenkronKuyruguModel> satirlar,
         Dictionary<int, OgrenciBilgisi> ogrenciler, HashSet<int> yemekVar)
     {
         var sonuclar = new List<IslemSonucu>(satirlar.Count);
-        CZKEM? zk = null;
-        var bagli = false;
 
         try
         {
-            zk = new CZKEM();
-            bagli = zk.Connect_Net(cihaz.IpAdresi, cihaz.PortNo!.Value);
-            if (!bagli)
-            {
-                var kod = 0;
-                zk.GetLastError(ref kod);
-                var hata = $"Cihaza bağlanılamadı (kod {kod}).";
-                _logger.LogWarning("Cihaz senkronu: {Cihaz} ({Ip}) cihazına bağlanılamadı, kod={Kod}.", cihaz.CihazAdi, cihaz.IpAdresi, kod);
-                return satirlar.Select(s => new IslemSonucu(s, CihazSenkronSonucTuru.Gecici, CihazSenkronIslemi.Yok, hata)).ToList();
-            }
-
             zk.EnableDevice(MakineNo, false);
             var kullanicilar = KullanicilariOku(zk);
 
@@ -212,25 +219,6 @@ WHERE (K.Durum = 0 AND K.SonrakiDeneme <= {2}) OR (K.Durum = 1 AND K.KilitBitis 
             sonuclar.AddRange(satirlar
                 .Where(s => !islenen.Contains(s.CihazSenkronKuyruguId))
                 .Select(s => new IslemSonucu(s, CihazSenkronSonucTuru.Gecici, CihazSenkronIslemi.Yok, $"Bağlantı hatası: {ex.GetType().Name}")));
-        }
-        finally
-        {
-            if (zk != null)
-            {
-                try
-                {
-                    if (bagli)
-                    {
-                        zk.EnableDevice(MakineNo, true);
-                        zk.Disconnect();
-                    }
-                }
-                catch { }
-                finally
-                {
-                    try { Marshal.FinalReleaseComObject(zk); } catch { }
-                }
-            }
         }
 
         return sonuclar;

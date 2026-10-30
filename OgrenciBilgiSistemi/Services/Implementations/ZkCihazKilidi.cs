@@ -6,7 +6,9 @@ namespace OgrenciBilgiSistemi.Services.Implementations
     /// Aynı ZKTeco cihazına aynı anda tek bağlantı: senkron işleyici, yemekhane log taraması ve panel işlemleri
     /// (kullanıcı listele/sil) sırayla bağlanır. Cihazlar eşzamanlı bağlantıda hata (ör. -8) verebiliyor ve
     /// bir işlem cihazı kapatırken (EnableDevice false) diğeri yarım kalabiliyor.
-    /// ZKTecoService'in kalıcı olay bağlantısı bu kilide dahil değildir.
+    /// Bağlantı kilit altında IZKTecoService.CihazBaglantisiAcAsync ile alınır: cihaz ikinci SDK oturumunu
+    /// reddettiği için (-307) olay bağlantısı o cihazdaysa aynı COM nesnesi ödünç verilir; ayrı Connect_Net açılmaz.
+    /// Olay bağlantısı kurulurken de bu kilit alınır (sıra her yerde: ZkCihazKilidi → ZKTecoService._connLock).
     /// Tek süreçli IIS app pool varsayımıyla bellek içi kilit yeterlidir.
     /// </summary>
     public static class ZkCihazKilidi

@@ -2,7 +2,7 @@
 using OgrenciBilgiSistemi.Data;
 using OgrenciBilgiSistemi.Dtos;
 using OgrenciBilgiSistemi.Models;
-using System.Runtime.InteropServices;
+using OgrenciBilgiSistemi.Services.Interfaces;
 using zkemkeeper;
 
 namespace OgrenciBilgiSistemi.Services.Implementations
@@ -12,16 +12,18 @@ namespace OgrenciBilgiSistemi.Services.Implementations
         private const int MACHINE_NO = 1;
 
         private readonly AppDbContext _context;
+        private readonly IZKTecoService _zkTeco;
         private readonly ILogger<CihazService> _logger;
 
         // Bellekteki anlık cihaz listesi
         private List<CihazModel> _cihazlar = new();
         private readonly SemaphoreSlim _refreshLock = new(1, 1);
 
-        public CihazService(ILogger<CihazService> logger, AppDbContext context)
+        public CihazService(ILogger<CihazService> logger, AppDbContext context, IZKTecoService zkTeco)
         {
             _logger = logger;
             _context = context;
+            _zkTeco = zkTeco;
         }
 
         // --- Yardımcılar ---
@@ -30,18 +32,6 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             c.DonanimTipi == DonanimTipi.ZKTeco &&
             !string.IsNullOrWhiteSpace(c.IpAdresi) &&
             c.PortNo is > 0;
-
-        private static CZKEM CreateZk() => new CZKEM();
-
-        private static void ReleaseZk(CZKEM? zk)
-        {
-            try { zk?.EnableDevice(MACHINE_NO, true); } catch { }
-            try { zk?.Disconnect(); } catch { }
-            if (zk != null)
-            {
-                try { Marshal.FinalReleaseComObject(zk); } catch { }
-            }
-        }
 
         private async Task EnsureCihazListAsync(CancellationToken ct = default)
         {
@@ -77,21 +67,21 @@ namespace OgrenciBilgiSistemi.Services.Implementations
 
             // Senkron işleyici ve yemekhane taramasıyla aynı anda bağlanılmaz
             using var kilit = await ZkCihazKilidi.AlAsync(cihaz.IpAdresi!, cihaz.PortNo!.Value, ct);
-            CZKEM? zk = null;
+            var (baglanti, code) = await _zkTeco.CihazBaglantisiAcAsync(cihaz.IpAdresi!, cihaz.PortNo!.Value, ct);
+            if (baglanti is null)
+            {
+                _logger.LogWarning("Bağlantı başarısız (TÜM SİL / SC403): {ip}:{port} (ZKERR={code})",
+                    cihaz.IpAdresi, cihaz.PortNo, code);
+                return false;
+            }
+
+            using var oturum = baglanti;
             try
             {
-                zk = CreateZk();
-                if (!zk.Connect_Net(cihaz.IpAdresi, cihaz.PortNo!.Value))
-                {
-                    var code = GetZkLastError(zk);
-                    _logger.LogWarning("Bağlantı başarısız (TÜM SİL / SC403): {ip}:{port} (ZKERR={code})",
-                        cihaz.IpAdresi, cihaz.PortNo, code);
-                    return false;
-                }
-
+                var zk = oturum.Zk;
                 zk.EnableDevice(MACHINE_NO, false);
 
-                bool cleared = ClearKullaniciVerisi(zk, cihaz.IpAdresi, genelTemizlikDahil: true);
+                bool cleared = ClearKullaniciVerisi(zk, cihaz.IpAdresi!, genelTemizlikDahil: true);
 
                 _logger.LogInformation("SC403 toplu kullanıcı silme bitti: cihazId={id}, ip={ip}, sonuc={ok}",
                     cihazId, cihaz.IpAdresi, cleared);
@@ -103,14 +93,6 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             {
                 _logger.LogError(ex, "SC403 toplu kullanıcı silme hatası: cihazId={id}, ip={ip}", cihazId, cihaz.IpAdresi);
                 return false;
-            }
-            finally
-            {
-                if (zk != null)
-                {
-                    try { zk.EnableDevice(MACHINE_NO, true); } catch { /* ignore */ }
-                    ReleaseZk(zk);
-                }
             }
         }
 
@@ -128,18 +110,17 @@ namespace OgrenciBilgiSistemi.Services.Implementations
 
             var result = new List<ZkUserDto>();
             using var kilit = await ZkCihazKilidi.AlAsync(cihaz.IpAdresi!, cihaz.PortNo!.Value, ct);
-            CZKEM? zk = null;
+            var (baglanti, code) = await _zkTeco.CihazBaglantisiAcAsync(cihaz.IpAdresi!, cihaz.PortNo!.Value, ct);
+            if (baglanti is null)
+            {
+                _logger.LogWarning("Bağlantı başarısız (LİSTELE / SC403): {ip}:{port} (ZKERR={code})", cihaz.IpAdresi, cihaz.PortNo, code);
+                return result;
+            }
 
+            using var oturum = baglanti;
             try
             {
-                zk = CreateZk();
-                if (!zk.Connect_Net(cihaz.IpAdresi, cihaz.PortNo!.Value))
-                {
-                    var code = GetZkLastError(zk);
-                    _logger.LogWarning("Bağlantı başarısız (LİSTELE / SC403): {ip}:{port} (ZKERR={code})", cihaz.IpAdresi, cihaz.PortNo, code);
-                    return result;
-                }
-
+                var zk = oturum.Zk;
                 zk.EnableDevice(MACHINE_NO, false);
 
                 // LEGACY İMZA: GetAllUserInfo iterate eder; true döndükçe next kayıt gelir.
@@ -173,10 +154,6 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             {
                 _logger.LogError(ex, "SC403 kullanıcı listesi hatası: cihazId={id}, ip={ip}", cihazId, cihaz.IpAdresi);
                 return result;
-            }
-            finally
-            {
-                ReleaseZk(zk);
             }
         }
 

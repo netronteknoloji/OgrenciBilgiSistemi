@@ -1,7 +1,6 @@
 using System.Collections.Concurrent;
 using System.Data;
 using System.Globalization;
-using System.Runtime.InteropServices;
 using Microsoft.EntityFrameworkCore;
 using OgrenciBilgiSistemi.Data;
 using OgrenciBilgiSistemi.Models;
@@ -17,7 +16,9 @@ namespace OgrenciBilgiSistemi.Services.BackgroundServices;
 /// bağlantısının kaçırdığı geçişleri tamamlar: öğrenci-gün başına tek GİRİŞ yazar, bugünkülerin
 /// veli SMS'ini kuyruğa alır. Okuma başarısızsa başarılı olana kadar tekrar dener.
 /// Cihaz logları yalnızca ayın son günü gece, aynı kilit oturumundaki okuma + DB yazımı
-/// başarılıysa silinir; böylece okunmamış kayıt silinmez ve kaçırılan günler sonraki okumada tamamlanır.
+/// başarılıysa ve cihazdaki log sayısı okunanla aynıysa silinir; böylece okunmamış kayıt silinmez ve
+/// kaçırılan günler sonraki okumada tamamlanır. Cihaza IZKTecoService.CihazBaglantisiAcAsync ile bağlanılır
+/// (olay bağlantısı aynı cihazdaysa ödünç alınır; cihaz ikinci oturumu -307 ile reddediyor).
 /// </summary>
 public sealed class YemekhanePollingService : BackgroundService
 {
@@ -32,6 +33,7 @@ public sealed class YemekhanePollingService : BackgroundService
 
     private readonly TenantKapsamFabrikasi _tenantKapsam;
     private readonly KuyrukTetikleyici _tetikleyici;
+    private readonly IZKTecoService _zk;
     private readonly ILogger<YemekhanePollingService> _logger;
 
     // (okul, cihaz) başına: bugün okundu mu, bugün temizlendi mi, son deneme ne zaman
@@ -49,10 +51,12 @@ public sealed class YemekhanePollingService : BackgroundService
     public YemekhanePollingService(
         TenantKapsamFabrikasi tenantKapsam,
         KuyrukTetikleyici tetikleyici,
+        IZKTecoService zk,
         ILogger<YemekhanePollingService> logger)
     {
         _tenantKapsam = tenantKapsam;
         _tetikleyici = tetikleyici;
+        _zk = zk;
         _logger = logger;
     }
 
@@ -132,14 +136,23 @@ public sealed class YemekhanePollingService : BackgroundService
             // Okuma, yazma ve (ay sonunda) silme aynı kilit oturumunda: arada başka işlem cihaza bağlanmaz
             using (await ZkCihazKilidi.AlAsync(ip, port, ct))
             {
-                var okuma = CihazdanLogCek(x.Cihaz.CihazId, ip, port, today, ogrenciIdler);
+                OkumaSonucu okuma;
+                var (baglanti, kod) = await _zk.CihazBaglantisiAcAsync(ip, port, ct);
+                if (baglanti is null)
+                {
+                    _logger.LogWarning("Yemekhane cihazına bağlanılamadı: {Ip}:{Port} Kod={Code}", ip, port, kod);
+                    continue;
+                }
+                // DB yazımı sürerken cihaz okutma alabilsin diye bağlantı okuma bitince bırakılır
+                using (baglanti)
+                    okuma = CihazdanLogCek(baglanti.Zk, x.Cihaz.CihazId, ip, today, ogrenciIdler);
                 if (!okuma.Ok) continue;
 
                 if (!await LoglariYaz(sp, db, okuma, ip, today, ct)) continue;
 
                 x.Durum.BasariliGun = today;
 
-                if (x.Temizlik && CihazLogTemizle(ip, port))
+                if (x.Temizlik && await CihazLogTemizle(ip, port, okuma.ToplamLog, ct))
                     x.Durum.TemizlikGunu = today;
             }
         }
@@ -227,28 +240,15 @@ public sealed class YemekhanePollingService : BackgroundService
 
     /// <summary>
     /// Tek bir ZKTeco cihazındaki tüm logları okur (ay sonu temizliğine kadar biriken).
-    /// COM nesnesi bu metot içinde oluşturulur ve temizlenir.
+    /// Bağlantıyı çağıran açar ve kapatır (Dispose cihazı tekrar etkinleştirir).
     /// </summary>
-    private OkumaSonucu CihazdanLogCek(int cihazId, string ip, int port, DateTime today, HashSet<int> ogrenciIdler)
+    private OkumaSonucu CihazdanLogCek(CZKEM zkem, int cihazId, string ip, DateTime today, HashSet<int> ogrenciIdler)
     {
         var loglar = new List<OgrenciDetayModel>();
         int toplamLog = 0, ogrenciDegil = 0, gecersiz = 0;
 
-        CZKEM? zkem = null;
-        bool connected = false;
-
         try
         {
-            zkem = new CZKEM();
-            _logger.LogDebug("Cihaza bağlanılıyor: {Ip}:{Port}", ip, port);
-            connected = zkem.Connect_Net(ip, port);
-            if (!connected)
-            {
-                int code = 0; zkem.GetLastError(ref code);
-                _logger.LogWarning("Yemekhane cihazına bağlanılamadı: {Ip}:{Port} Kod={Code}", ip, port, code);
-                return new OkumaSonucu(false, loglar, 0, 0, 0);
-            }
-
             zkem.EnableDevice(MACHINE_NUMBER, false);
 
             // Boş cihaz ile okuma hatası henüz ayırt edilmiyor: sahada kod görülene kadar hepsi hata sayılır,
@@ -304,25 +304,6 @@ public sealed class YemekhanePollingService : BackgroundService
             _logger.LogError(ex, "Yemekhane cihazından log çekme hatası: {Ip}", ip);
             return new OkumaSonucu(false, new List<OgrenciDetayModel>(), toplamLog, ogrenciDegil, gecersiz);
         }
-        finally
-        {
-            if (zkem != null)
-            {
-                try
-                {
-                    if (connected)
-                    {
-                        zkem.EnableDevice(MACHINE_NUMBER, true);
-                        zkem.Disconnect();
-                    }
-                }
-                catch { }
-                finally
-                {
-                    try { Marshal.FinalReleaseComObject(zkem); } catch { }
-                }
-            }
-        }
     }
 
     /// <summary>
@@ -372,18 +353,37 @@ public sealed class YemekhanePollingService : BackgroundService
 
     /// <summary>
     /// Cihaz loglarını temizler (ay sonu, başarılı okuma + yazmadan sonra). Başarılıysa true.
+    /// Cihaz kapalıyken log sayısı, okunup yazılan sayıyla eşit değilse (arada okutma olduysa) silmez.
     /// </summary>
-    private bool CihazLogTemizle(string ip, int port)
+    private async Task<bool> CihazLogTemizle(string ip, int port, int okunanLog, CancellationToken ct)
     {
-        CZKEM? z = null;
-        bool connected = false;
+        var (baglanti, kod) = await _zk.CihazBaglantisiAcAsync(ip, port, ct);
+        if (baglanti is null)
+        {
+            _logger.LogWarning("Yemekhane log temizliği için cihaza bağlanılamadı: {Ip} Kod={Code}", ip, kod);
+            return false;
+        }
+
+        using var oturum = baglanti;
         try
         {
-            z = new CZKEM();
-            connected = z.Connect_Net(ip, port);
-            if (!connected)
+            var z = oturum.Zk;
+            z.EnableDevice(MACHINE_NUMBER, false);
+
+            // 6 = cihazdaki geçiş (attendance) log sayısı
+            int cihazdakiLog = 0;
+            if (!z.GetDeviceStatus(MACHINE_NUMBER, 6, ref cihazdakiLog))
             {
-                _logger.LogWarning("Yemekhane log temizliği için cihaza bağlanılamadı: {Ip}", ip);
+                int code = 0; z.GetLastError(ref code);
+                _logger.LogWarning("Yemekhane log sayısı okunamadı, temizlik ertelendi: {Ip} Kod={Code}", ip, code);
+                return false;
+            }
+
+            if (cihazdakiLog != okunanLog)
+            {
+                _logger.LogWarning(
+                    "Yemekhane log temizliği ertelendi: cihazda {Cihazda} log var, okunan {Okunan} ({Ip}). Sonraki turda yeniden okunacak.",
+                    cihazdakiLog, okunanLog, ip);
                 return false;
             }
 
@@ -400,14 +400,6 @@ public sealed class YemekhanePollingService : BackgroundService
         {
             _logger.LogError(ex, "Yemekhane log temizleme hatası: {Ip}", ip);
             return false;
-        }
-        finally
-        {
-            if (z != null)
-            {
-                try { if (connected) z.Disconnect(); } catch { }
-                finally { try { Marshal.FinalReleaseComObject(z); } catch { } }
-            }
         }
     }
 }
