@@ -5,6 +5,7 @@ using OgrenciBilgiSistemi.Data;
 using OgrenciBilgiSistemi.Dtos;
 using OgrenciBilgiSistemi.Models;
 using OgrenciBilgiSistemi.Services.Interfaces;
+using OgrenciBilgiSistemi.Shared.Kurallar;
 using OgrenciBilgiSistemi.ViewModels;
 
 namespace OgrenciBilgiSistemi.Services.Implementations
@@ -106,6 +107,167 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             return kayit;
         }
 
+        public async Task<int> SetAyTopluAsync(IReadOnlyCollection<int> ogrenciIdler, int yil, int ay, bool aktif, CancellationToken ct = default)
+        {
+            var ids = ogrenciIdler.Distinct().ToList();
+            if (ids.Count == 0) return 0;
+
+            var buAyMi = (yil, ay) == GetCurrentYearMonth();
+
+            var strategy = _ctx.Database.CreateExecutionStrategy();
+            await strategy.ExecuteAsync(async () =>
+            {
+                await using var tx = await _ctx.Database.BeginTransactionAsync(ct);
+
+                var mevcut = await _ctx.OgrenciYemekler
+                    .Where(x => ids.Contains(x.OgrenciId) && x.Yil == yil && x.Ay == ay)
+                    .ToListAsync(ct);
+
+                AyHakkiYaz(mevcut, ids, yil, ay, aktif);
+                await _ctx.SaveChangesAsync(ct);
+
+                // İçinde bulunulan ayın hakkı değiştiyse yemekhane cihazına eklenir/silinir
+                if (buAyMi)
+                {
+                    foreach (var id in ids)
+                        await _cihazSenkron.KuyrugaEkleAsync(id, ct);
+                }
+
+                await tx.CommitAsync(ct);
+            });
+
+            if (buAyMi)
+                _cihazSenkron.Tetikle();
+
+            _logger.LogInformation("Yemek SetAyToplu: {Adet} öğrenci, {Yil}-{Ay}, Aktif={Aktif}", ids.Count, yil, ay, aktif);
+            return ids.Count;
+        }
+
+        // Upsert: mevcut kaydın notu korunur; yalnızca hak değişir. Durumu gerçekten değişen öğrencileri döner.
+        private List<int> AyHakkiYaz(List<OgrenciYemekModel> mevcut, IEnumerable<int> ids, int yil, int ay, bool aktif)
+        {
+            var degisen = new List<int>();
+            foreach (var id in ids)
+            {
+                var kayit = mevcut.FirstOrDefault(x => x.OgrenciId == id);
+                if (kayit == null)
+                {
+                    _ctx.OgrenciYemekler.Add(new OgrenciYemekModel { OgrenciId = id, Yil = yil, Ay = ay, Aktif = aktif });
+                    if (aktif) degisen.Add(id);   // kayıt yoksa hak yok sayılır
+                }
+                else if (kayit.Aktif != aktif)
+                {
+                    kayit.Aktif = aktif;
+                    degisen.Add(id);
+                }
+            }
+            return degisen;
+        }
+
+        // ─────────────────────────────────────────────────────────────────────────────
+        // Excel'den ay listesi: A sütunu öğrenci no; dosya o ayın tam listesidir
+        // ─────────────────────────────────────────────────────────────────────────────
+        public async Task<YemekHakkiIceAktarmaSonucDto> ExceldenAyHakkiYukleAsync(Stream dosya, int yil, int ay, CancellationToken ct = default)
+        {
+            List<string?> hucreler;
+            try
+            {
+                using var wb = new XLWorkbook(dosya);
+                var ws = wb.Worksheets.First();
+                var sonSatir = ws.LastRowUsed()?.RowNumber() ?? 0;
+                hucreler = Enumerable.Range(1, sonSatir)
+                    .Select(r => (string?)ws.Cell(r, 1).GetFormattedString())
+                    .ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Yemek Excel okunamadı: {Yil}-{Ay}", yil, ay);
+                return new YemekHakkiIceAktarmaSonucDto { Hata = "Excel dosyası okunamadı. .xlsx biçiminde ve ilk sayfanın A sütununda öğrenci no olmalı." };
+            }
+
+            // Aktif öğrenciler (global filtre pasifleri dışlar); no unique değil
+            var ogrenciler = await _ctx.Ogrenciler.AsNoTracking()
+                .Select(o => new { o.OgrenciNo, o.OgrenciId })
+                .ToListAsync(ct);
+            var noSozlugu = ogrenciler
+                .GroupBy(o => o.OgrenciNo)
+                .ToDictionary(g => g.Key, g => (IReadOnlyList<int>)g.Select(o => o.OgrenciId).ToList());
+
+            var eslesme = YemekHakkiIceAktarmaKurallari.Esle(hucreler, noSozlugu);
+
+            var sonuc = new YemekHakkiIceAktarmaSonucDto
+            {
+                Bulunamayan = eslesme.Bulunamayan,
+                BirdenFazla = eslesme.BirdenFazla,
+                GecersizSatirlar = eslesme.GecersizSatirlar
+            };
+
+            // Boş/yanlış dosya herkesin hakkını kapatmasın
+            if (eslesme.AcilacakIdler.Count == 0)
+            {
+                sonuc.Hata = "Dosyada eşleşen öğrenci no bulunamadı; hiçbir değişiklik yapılmadı.";
+                return sonuc;
+            }
+
+            var listedekiler = eslesme.AcilacakIdler.ToHashSet();
+            var buAyMi = (yil, ay) == GetCurrentYearMonth();
+            var degisen = new List<int>();
+
+            var strategy = _ctx.Database.CreateExecutionStrategy();
+            await strategy.ExecuteAsync(async () =>
+            {
+                degisen.Clear();
+                sonuc.Acilan = sonuc.Kapatilan = 0;
+                await using var tx = await _ctx.Database.BeginTransactionAsync(ct);
+
+                var mevcut = await _ctx.OgrenciYemekler
+                    .Where(x => x.Yil == yil && x.Ay == ay)
+                    .ToListAsync(ct);
+
+                var acilan = AyHakkiYaz(mevcut, listedekiler, yil, ay, aktif: true);
+                var kapatilacak = mevcut.Where(x => x.Aktif && !listedekiler.Contains(x.OgrenciId))
+                                        .Select(x => x.OgrenciId)
+                                        .ToList();
+                var kapatilan = AyHakkiYaz(mevcut, kapatilacak, yil, ay, aktif: false);
+                await _ctx.SaveChangesAsync(ct);
+
+                degisen.AddRange(acilan);
+                degisen.AddRange(kapatilan);
+
+                // İçinde bulunulan ayın hakkı değiştiyse yemekhane cihazına eklenir/silinir
+                if (buAyMi)
+                {
+                    foreach (var id in degisen)
+                        await _cihazSenkron.KuyrugaEkleAsync(id, ct);
+                }
+
+                await tx.CommitAsync(ct);
+                sonuc.Acilan = acilan.Count;
+                sonuc.Kapatilan = kapatilan.Count;
+            });
+
+            if (buAyMi && degisen.Count > 0)
+                _cihazSenkron.Tetikle();
+
+            sonuc.Degismeyen = listedekiler.Count - sonuc.Acilan;
+            _logger.LogInformation("Yemek Excel yükleme: {Yil}-{Ay}, Açılan={Acilan}, Kapatılan={Kapatilan}, Bulunamayan={Bulunamayan}",
+                yil, ay, sonuc.Acilan, sonuc.Kapatilan, sonuc.Bulunamayan.Count);
+            return sonuc;
+        }
+
+        public byte[] ExcelSablonu()
+        {
+            using var wb = new XLWorkbook();
+            var ws = wb.Worksheets.Add("Yemek Listesi");
+            ws.Cell(1, 1).Value = "Öğrenci No";
+            ws.Cell(1, 1).Style.Font.Bold = true;
+            ws.Column(1).Width = 16;
+
+            using var ms = new MemoryStream();
+            wb.SaveAs(ms);
+            return ms.ToArray();
+        }
+
         public async Task<OgrenciYemekModel> SetBuAyAsync(int ogrenciId, bool aktif, string? not = null, CancellationToken ct = default)
         {
             var (yil, ay) = GetCurrentYearMonth();
@@ -198,9 +360,6 @@ namespace OgrenciBilgiSistemi.Services.Implementations
         // ─────────────────────────────────────────────────────────────────────────────
         public async Task<YemekhaneOzetVm> GetOzetAsync(int ogrenciId, int akademikYil, CancellationToken ct = default)
         {
-            var tarife = await GetTarifeAsync(ogrenciId, akademikYil, ct);
-            var aylikTutar = tarife?.AylikTutar ?? 0m;
-
             var y1 = akademikYil;       // Eyl..Ara
             var y2 = akademikYil + 1;   // Oca..Ağu
 
@@ -211,32 +370,15 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 .AsNoTracking()
                 .ToListAsync(ct);
 
-            var odemeler = await _ctx.OgrenciYemekOdemeler
-                .Where(x => x.OgrenciId == ogrenciId
-                         && (x.Yil == y1 && x.Ay >= 9 && x.Ay <= 12 ||
-                             x.Yil == y2 && x.Ay >= 1 && x.Ay <= 8))
-                .AsNoTracking()
-                .ToListAsync(ct);
-
             var vm = new YemekhaneOzetVm
             {
                 OgrenciId = ogrenciId,
                 Yil = akademikYil,
-                AylikTutar = aylikTutar,
             };
-
-            decimal toplamBorc = 0m;
 
             foreach (var slot in BuildAkademikAylar(akademikYil))
             {
                 var kayit = ayKayitlari.FirstOrDefault(k => k.Yil == slot.YilGercek && k.Ay == slot.AyGercek);
-                var aktif = kayit?.Aktif ?? false;
-
-                var odenenAy = odemeler
-                    .Where(o => o.Yil == slot.YilGercek && o.Ay == slot.AyGercek)
-                    .Sum(o => o.Tutar);
-
-                var borcAy = aktif ? aylikTutar : 0m;
 
                 vm.Aylar.Add(new YemekhaneOzetAyVm
                 {
@@ -244,29 +386,23 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                     AyAd = slot.Ad,
                     YilGercek = slot.YilGercek,
                     AyGercek = slot.AyGercek,
-                    Aktif = aktif,
-                    AylikTutar = aylikTutar,
-                    Borc = borcAy,
-                    Odenen = odenenAy,
+                    Aktif = kayit?.Aktif ?? false,
                     Not = kayit?.Not
                 });
-
-                toplamBorc += borcAy;
             }
 
-            vm.ToplamBorc = toplamBorc;
-            vm.ToplamOdenen = odemeler.Sum(x => x.Tutar);
             return vm;
         }
 
         // ─────────────────────────────────────────────────────────────────────────────
-        // Yemekhane Index — akademik yıl bazlı öğrenci listesi (tarife × aktif ay = borç)
+        // Yemekhane Index — seçilen ayda öğrencilerin yemek hakkı (takvim yılı/ay)
         // ─────────────────────────────────────────────────────────────────────────────
-        public async Task<YemekhaneIndexRaporSonucDto> GetIndexRaporAsync(
-            int? yil,
+        public async Task<YemekhaneAylikTakipSonucDto> GetAylikTakipAsync(
+            int yil,
+            int ay,
             string? query,
             int? birimId,
-            RaporDurumFiltresiDto durum = RaporDurumFiltresiDto.Hepsi,
+            YemekHakkiFiltresi durum = YemekHakkiFiltresi.Hepsi,
             int page = 1,
             int pageSize = 50,
             bool includePasif = false,
@@ -274,10 +410,6 @@ namespace OgrenciBilgiSistemi.Services.Implementations
         {
             page = Math.Max(1, page);
             pageSize = Math.Clamp(pageSize, 5, 200);
-
-            var akYil = yil ?? (DateTime.Now.Month >= 9 ? DateTime.Now.Year : DateTime.Now.Year - 1);
-            var y1 = akYil;
-            var y2 = akYil + 1;
 
             var oncekiPasifFlag = _ctx.IncludeDeleted;
             if (includePasif)
@@ -311,116 +443,59 @@ namespace OgrenciBilgiSistemi.Services.Implementations
 
                 var ogrenciIds = ogrenciler.Select(x => x.OgrenciId).ToList();
 
-                if (ogrenciIds.Count == 0)
-                {
-                    return new YemekhaneIndexRaporSonucDto
-                    {
-                        Satirlar = SayfalanmisListeModel<YemekhaneIndexSatirDto>.FromList(
-                            new List<YemekhaneIndexSatirDto>(), page, pageSize),
-                        KullanilabilirYillar = await GetKullanilabilirYillarAsync(ct)
-                    };
-                }
+                // 2) Batch: seçilen ayın kayıtları
+                var ayKayitlari = ogrenciIds.Count == 0
+                    ? []
+                    : await _ctx.OgrenciYemekler.AsNoTracking()
+                        .Where(a => ogrenciIds.Contains(a.OgrenciId) && a.Yil == yil && a.Ay == ay)
+                        .Select(a => new { a.OgrenciId, a.Aktif, a.Not })
+                        .ToListAsync(ct);
+                var ayDict = ayKayitlari.GroupBy(a => a.OgrenciId).ToDictionary(g => g.Key, g => g.First());
 
-                // 2) Batch: tarifeler
-                var tarifeDict = await _ctx.OgrenciYemekTarifeler.AsNoTracking()
-                    .Where(t => ogrenciIds.Contains(t.OgrenciId) && t.Yil == akYil)
-                    .ToDictionaryAsync(t => t.OgrenciId, t => t.AylikTutar, ct);
-
-                // 3) Batch: aktif ay sayıları (Eyl..Ara + Oca..Ağu)
-                var ayKayitlari = await _ctx.OgrenciYemekler.AsNoTracking()
-                    .Where(a => ogrenciIds.Contains(a.OgrenciId) && a.Aktif &&
-                                ((a.Yil == y1 && a.Ay >= 9 && a.Ay <= 12) ||
-                                 (a.Yil == y2 && a.Ay >= 1 && a.Ay <= 8)))
-                    .Select(a => a.OgrenciId)
-                    .ToListAsync(ct);
-                var aktifAyDict = ayKayitlari.GroupBy(id => id).ToDictionary(g => g.Key, g => g.Count());
-
-                // 4) Batch: ödemeler
-                var odemeler = await _ctx.OgrenciYemekOdemeler.AsNoTracking()
-                    .Where(o => ogrenciIds.Contains(o.OgrenciId) && !o.IsDeleted &&
-                                ((o.Yil == y1 && o.Ay >= 9 && o.Ay <= 12) ||
-                                 (o.Yil == y2 && o.Ay >= 1 && o.Ay <= 8)))
-                    .Select(o => new { o.OgrenciId, o.Tutar })
-                    .ToListAsync(ct);
-                var odemeDict = odemeler.GroupBy(o => o.OgrenciId)
-                                        .ToDictionary(g => g.Key, g => g.Sum(o => o.Tutar));
-
-                // 5) Batch: bu ay durumu
-                var (curYil, curAy) = GetCurrentYearMonth();
-                var buAyDict = await _ctx.OgrenciYemekler.AsNoTracking()
-                    .Where(a => ogrenciIds.Contains(a.OgrenciId) && a.Yil == curYil && a.Ay == curAy)
-                    .ToDictionaryAsync(a => a.OgrenciId, a => a.Aktif, ct);
-
-                // 6) Satırları derle
+                // 3) Satırları derle (kayıt yoksa hak yok)
                 var tumSatirlar = ogrenciler.Select(o =>
                 {
-                    var aylik = tarifeDict.TryGetValue(o.OgrenciId, out var t) ? t : 0m;
-                    var aktifAy = aktifAyDict.TryGetValue(o.OgrenciId, out var c) ? c : 0;
-                    var borc = aylik * aktifAy;
-                    var odenen = odemeDict.TryGetValue(o.OgrenciId, out var od) ? od : 0m;
-                    var kalan = Math.Max(0m, borc - odenen);
-
+                    ayDict.TryGetValue(o.OgrenciId, out var kayit);
                     return new YemekhaneIndexSatirDto
                     {
                         OgrenciId = o.OgrenciId,
-                        Yil = akYil,
                         OgrenciAdSoyad = o.OgrenciAdSoyad ?? "",
                         OgrenciNo = o.OgrenciNo.ToString(),
                         OgrenciSinif = o.SinifAd,
-                        AylikTarife = aylik,
-                        AktifAySayisi = aktifAy,
-                        Borc = borc,
-                        Odenen = odenen,
-                        Kalan = kalan,
-                        TarifeVarMi = tarifeDict.ContainsKey(o.OgrenciId),
-                        BuAyAktif = buAyDict.TryGetValue(o.OgrenciId, out var ba) && ba
+                        HakVar = kayit?.Aktif ?? false,
+                        Not = kayit?.Not
                     };
                 }).ToList();
 
-                // 7) Durum filtresi
+                // 4) Sayılar (durum filtresinden önce)
+                var hakVarSayisi = tumSatirlar.Count(s => s.HakVar);
+                var hakYokSayisi = tumSatirlar.Count - hakVarSayisi;
+
+                // 5) Durum filtresi
                 tumSatirlar = durum switch
                 {
-                    RaporDurumFiltresiDto.Borclu => tumSatirlar.Where(s => s.Kalan > 0).ToList(),
-                    RaporDurumFiltresiDto.Borcsuz => tumSatirlar.Where(s => s.Kalan == 0).ToList(),
+                    YemekHakkiFiltresi.Var => tumSatirlar.Where(s => s.HakVar).ToList(),
+                    YemekHakkiFiltresi.Yok => tumSatirlar.Where(s => !s.HakVar).ToList(),
                     _ => tumSatirlar
                 };
 
-                // 8) Toplamlar
-                var toplamBorc = tumSatirlar.Sum(s => s.Borc);
-                var toplamOdenen = tumSatirlar.Sum(s => s.Odenen);
-                var toplamKalan = tumSatirlar.Sum(s => s.Kalan);
-
-                // 9) Sıralama + sayfalama (memory)
+                // 6) Sıralama + sayfalama (memory)
                 var ordered = tumSatirlar
                     .OrderBy(s => s.OgrenciSinif)
                     .ThenBy(s => s.OgrenciAdSoyad)
                     .ToList();
 
-                var paged = SayfalanmisListeModel<YemekhaneIndexSatirDto>.FromList(
-                    ordered, page, pageSize);
-
-                return new YemekhaneIndexRaporSonucDto
+                return new YemekhaneAylikTakipSonucDto
                 {
-                    Satirlar = paged,
-                    ToplamBorc = toplamBorc,
-                    ToplamOdenen = toplamOdenen,
-                    ToplamKalan = toplamKalan,
-                    KullanilabilirYillar = await GetKullanilabilirYillarAsync(ct)
+                    Satirlar = SayfalanmisListeModel<YemekhaneIndexSatirDto>.FromList(ordered, page, pageSize),
+                    HakVarSayisi = hakVarSayisi,
+                    HakYokSayisi = hakYokSayisi
                 };
             }
             finally
             {
                 _ctx.IncludeDeleted = oncekiPasifFlag;
             }
-        }
-
-        private async Task<List<int>> GetKullanilabilirYillarAsync(CancellationToken ct)
-        {
-            return await _ctx.OgrenciYemekTarifeler.AsNoTracking()
-                .Select(t => t.Yil)
-                .Distinct()
-                .OrderByDescending(y => y)
-                .ToListAsync(ct);
         }
 
         // ─────────────────────────────────────────────────────────────────────────────

@@ -1,11 +1,25 @@
-@using System.Globalization
 @model OgrenciBilgiSistemi.ViewModels.YemekhaneIndexVm
 
 @{
-    ViewData["Title"] = "Öğrenci Yemekhane İşlemleri";
+    ViewData["Title"] = "Yemekhane Aylık Takip";
 
     var list = Model.Satirlar;
-    var culture = CultureInfo.CurrentCulture;
+
+    // Aç/Kapat formlarının listeye aynı filtrelerle dönmesi için
+    void FiltreAlanlari(bool? aktif)
+    {
+        <input type="hidden" name="yil" value="@Model.yil" />
+        <input type="hidden" name="ay" value="@Model.ay" />
+        @if (aktif.HasValue)
+        {
+            <input type="hidden" name="aktif" value="@(aktif.Value ? "true" : "false")" />
+        }
+        <input type="hidden" name="query" value="@Model.query" />
+        <input type="hidden" name="birimId" value="@Model.birimId" />
+        <input type="hidden" name="durum" value="@((int)Model.durum)" />
+        <input type="hidden" name="page" value="@list.SayfaIndeks" />
+        <input type="hidden" name="includePasif" value="@(Model.includePasif ? "true" : "false")" />
+    }
 }
 
 <div class="viewport-scroller">
@@ -16,6 +30,19 @@
             <div class="d-flex justify-content-between align-items-center mb-4 flex-nowrap no-wrap-scroll">
                 <h3 class="text-primary fw-bold mb-0">@ViewData["Title"]</h3>
             </div>
+
+            @if (TempData["Bilgi"] is string infoMsg)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    @infoMsg <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+            @if (TempData["Hata"] is string errMsg)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    @errMsg <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
 
             <!-- Filtre Formu -->
             <form id="yemekhaneFilterForm" method="get"
@@ -32,13 +59,13 @@
                     </div>
                 </div>
 
-                <!-- Yıl -->
+                <!-- Ay -->
                 <div>
-                    <label for="yil" class="visually-hidden">Akademik Yıl</label>
+                    <label for="ay" class="visually-hidden">Ay</label>
                     <div class="input-group">
-                        <span class="input-group-text bg-white"><i class="bi bi-calendar2-week"></i></span>
-                        <select asp-for="yil" id="yil" asp-items="Model.Yillar"
-                                class="form-select" style="width:160px;"></select>
+                        <span class="input-group-text bg-white"><i class="bi bi-calendar2-month"></i></span>
+                        <input type="month" id="ay" name="ay" value="@Model.AyDegeri"
+                               class="form-control" style="width:180px;" />
                     </div>
                 </div>
 
@@ -69,26 +96,27 @@
                 </div>
             </form>
 
-            <!-- Üst Toplam Kartı -->
+            <!-- Üst Özet -->
             <div class="row g-2 mb-3">
                 <div class="col">
                     <div class="border rounded-3 p-2 text-center bg-light">
-                        <div class="text-muted small">Toplam Borç</div>
-                        <div class="fw-bold text-danger">@Model.ToplamBorc.ToString("C", culture)</div>
+                        <div class="text-muted small">@Model.AyAdi — Hakkı var</div>
+                        <div class="fw-bold text-success">@Model.HakVarSayisi</div>
                     </div>
                 </div>
                 <div class="col">
                     <div class="border rounded-3 p-2 text-center bg-light">
-                        <div class="text-muted small">Toplam Ödenen</div>
-                        <div class="fw-bold text-success">@Model.ToplamOdenen.ToString("C", culture)</div>
+                        <div class="text-muted small">@Model.AyAdi — Hakkı yok</div>
+                        <div class="fw-bold text-secondary">@Model.HakYokSayisi</div>
                     </div>
                 </div>
-                <div class="col">
-                    <div class="border rounded-3 p-2 text-center bg-light">
-                        <div class="text-muted small">Toplam Kalan</div>
-                        <div class="fw-bold text-warning">@Model.ToplamKalan.ToString("C", culture)</div>
-                    </div>
-                </div>
+            </div>
+
+            <!-- Excel'den ay listesi yükleme (liste boşken de görünür) -->
+            <div class="d-flex justify-content-end mb-2">
+                <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#excelYukleModal">
+                    <i class="bi bi-file-earmark-excel"></i> Excel'den Yükle
+                </button>
             </div>
 
             <!-- Liste -->
@@ -100,61 +128,87 @@
             }
             else
             {
+                <!-- Toplu işlem: seçili satırlar gönderimde forma eklenir (aşağıdaki script) -->
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <span class="text-muted small"><span id="seciliSayi">0</span> öğrenci seçili</span>
+                    <form id="topluAcForm" method="post" asp-action="AyHakkiKaydet" asp-controller="Yemekhane" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        @{ FiltreAlanlari(true); }
+                        <button type="submit" class="btn btn-sm btn-outline-success toplu-btn" disabled>
+                            <i class="bi bi-check2-circle"></i> Seçilileri Aç
+                        </button>
+                    </form>
+                    <form id="topluKapatForm" method="post" asp-action="AyHakkiKaydet" asp-controller="Yemekhane" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        @{ FiltreAlanlari(false); }
+                        <button type="submit" class="btn btn-sm btn-outline-secondary toplu-btn" disabled>
+                            <i class="bi bi-x-circle"></i> Seçilileri Kapat
+                        </button>
+                    </form>
+                </div>
+
                 <div class="table-scroll">
                     <table class="table table-hover table-sm align-middle">
                         <thead class="bg-dark text-white">
                             <tr class="text-center">
+                                <th style="width:36px;">
+                                    <input type="checkbox" class="form-check-input" id="tumunuSec" title="Tümünü seç" />
+                                </th>
                                 <th class="text-start">Öğrenci</th>
                                 <th>Öğrenci No</th>
                                 <th>Sınıf</th>
-                                <th class="text-end">Aylık Tarife</th>
-                                <th>Aktif Ay</th>
-                                <th class="text-end">Borç</th>
-                                <th class="text-end">Ödenen</th>
-                                <th class="text-end">Kalan</th>
-                                <th>Durum</th>
+                                <th>@Model.AyAdi</th>
+                                <th class="text-start">Not</th>
                                 <th>İşlem</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach (var s in list)
                             {
-                                string badgeText;
-                                string badgeClass;
-                                if (!s.TarifeVarMi) { badgeText = "Tarifesiz"; badgeClass = "bg-secondary text-white"; }
-                                else if (s.Kalan > 0) { badgeText = "Borçlu"; badgeClass = "bg-danger text-white"; }
-                                else { badgeText = "Borçsuz"; badgeClass = "bg-success text-white"; }
-
                                 <tr class="text-center">
+                                    <td>
+                                        <input type="checkbox" class="form-check-input satir-sec" value="@s.OgrenciId" />
+                                    </td>
                                     <td class="text-start">
                                         <a asp-controller="Yemekhane"
                                            asp-action="Ozet"
                                            asp-route-ogrenciId="@s.OgrenciId"
-                                           asp-route-yil="@s.Yil"
+                                           asp-route-yil="@(Model.ay >= 9 ? Model.yil : Model.yil - 1)"
                                            class="text-decoration-none">
                                             @s.OgrenciAdSoyad
-                                            @if (s.BuAyAktif)
-                                            {
-                                                <span class="badge bg-info text-dark ms-1" title="Bu ay aktif">●</span>
-                                            }
                                         </a>
                                     </td>
                                     <td>@s.OgrenciNo</td>
                                     <td>@s.OgrenciSinif</td>
-                                    <td class="text-end">@s.AylikTarife.ToString("C", culture)</td>
-                                    <td>@s.AktifAySayisi</td>
-                                    <td class="text-end">@s.Borc.ToString("C", culture)</td>
-                                    <td class="text-end">@s.Odenen.ToString("C", culture)</td>
-                                    <td class="text-end">@s.Kalan.ToString("C", culture)</td>
-                                    <td><span class="badge @badgeClass">@badgeText</span></td>
                                     <td>
-                                        <a asp-controller="Yemekhane"
-                                           asp-action="Ozet"
-                                           asp-route-ogrenciId="@s.OgrenciId"
-                                           asp-route-yil="@s.Yil"
-                                           class="btn btn-outline-primary btn-sm">
-                                            <i class="bi bi-info-circle"></i> Detay
-                                        </a>
+                                        @if (s.HakVar)
+                                        {
+                                            <span class="badge bg-success">Var</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">Yok</span>
+                                        }
+                                    </td>
+                                    <td class="text-start small text-muted">@s.Not</td>
+                                    <td>
+                                        <form method="post" asp-action="AyHakkiKaydet" asp-controller="Yemekhane" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="ogrenciIdler" value="@s.OgrenciId" />
+                                            @{ FiltreAlanlari(!s.HakVar); }
+                                            @if (s.HakVar)
+                                            {
+                                                <button type="submit" class="btn btn-outline-secondary btn-sm">
+                                                    <i class="bi bi-x-circle"></i> Kapat
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <button type="submit" class="btn btn-outline-success btn-sm">
+                                                    <i class="bi bi-check2-circle"></i> Aç
+                                                </button>
+                                            }
+                                        </form>
                                     </td>
                                 </tr>
                             }
@@ -172,7 +226,7 @@
                         <a class="btn btn-outline-secondary @(list.OncekiSayfaVar ? "" : "disabled")"
                            asp-action="Index"
                            asp-route-query="@Model.query"
-                           asp-route-yil="@Model.yil"
+                           asp-route-ay="@Model.AyDegeri"
                            asp-route-birimId="@Model.birimId"
                            asp-route-durum="@((int)Model.durum)"
                            asp-route-includePasif="@(Model.includePasif)"
@@ -183,7 +237,7 @@
                         <a class="btn btn-outline-secondary @(list.SonrakiSayfaVar ? "" : "disabled")"
                            asp-action="Index"
                            asp-route-query="@Model.query"
-                           asp-route-yil="@Model.yil"
+                           asp-route-ay="@Model.AyDegeri"
                            asp-route-birimId="@Model.birimId"
                            asp-route-durum="@((int)Model.durum)"
                            asp-route-includePasif="@(Model.includePasif)"
@@ -197,3 +251,71 @@
         </div>
     </div>
 </div>
+
+<!-- EXCEL YÜKLE Modal -->
+<div class="modal fade" id="excelYukleModal" tabindex="-1" aria-labelledby="excelYukleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content rounded-4">
+            <div class="modal-header bg-primary text-white rounded-top-4">
+                <h5 class="modal-title fw-bold" id="excelYukleModalLabel">@Model.AyAdi — Excel'den Yükle</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" asp-action="ExcelYukle" asp-controller="Yemekhane" enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+                    @{ FiltreAlanlari(null); }
+                    <div class="alert alert-warning small">
+                        Dosya <strong>@Model.AyAdi</strong> ayının tam listesidir: dosyadaki öğrencilerin hakkı açılır,
+                        <strong>dosyada olmayan öğrencilerin hakkı kapatılır.</strong>
+                    </div>
+                    <p class="small text-muted mb-2">
+                        İlk sayfanın A sütununa öğrenci numaralarını yazın (ilk satır başlık olabilir).
+                        <a asp-action="ExcelSablon" asp-controller="Yemekhane">Şablonu indir</a>
+                    </p>
+                    <div class="mb-3">
+                        <input type="file" name="dosya" accept=".xlsx" class="form-control" required />
+                    </div>
+                    <div class="text-end">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Vazgeç</button>
+                        <button type="submit" class="btn btn-primary">Yükle</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const tumu = document.getElementById('tumunuSec');
+            if (!tumu) return;
+            const kutular = Array.from(document.querySelectorAll('.satir-sec'));
+            const formlar = [document.getElementById('topluAcForm'), document.getElementById('topluKapatForm')];
+            const butonlar = document.querySelectorAll('.toplu-btn');
+            const sayi = document.getElementById('seciliSayi');
+
+            function guncelle() {
+                const secili = kutular.filter(k => k.checked);
+                sayi.textContent = secili.length;
+                butonlar.forEach(b => b.disabled = secili.length === 0);
+                tumu.checked = secili.length > 0 && secili.length === kutular.length;
+            }
+
+            // Seçili öğrenci id'leri gönderimden hemen önce iki toplu forma da eklenir
+            formlar.forEach(f => f.addEventListener('submit', function () {
+                f.querySelectorAll('input[name="ogrenciIdler"]').forEach(i => i.remove());
+                kutular.filter(k => k.checked).forEach(k => {
+                    const i = document.createElement('input');
+                    i.type = 'hidden';
+                    i.name = 'ogrenciIdler';
+                    i.value = k.value;
+                    f.appendChild(i);
+                });
+            }));
+
+            tumu.addEventListener('change', () => { kutular.forEach(k => k.checked = tumu.checked); guncelle(); });
+            kutular.forEach(k => k.addEventListener('change', guncelle));
+        })();
+    </script>
+}

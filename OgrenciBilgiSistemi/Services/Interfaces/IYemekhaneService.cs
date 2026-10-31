@@ -9,12 +9,13 @@ namespace OgrenciBilgiSistemi.Services.Interfaces
         // -------- Özet / Rapor / Excel --------
         Task<YemekhaneOzetVm> GetOzetAsync(int ogrenciId, int akademikYil, CancellationToken ct = default);
 
-        // Yemekhane Index sayfası — akademik yıl bazlı öğrenci listesi (tarife × aktif ay = borç)
-        Task<YemekhaneIndexRaporSonucDto> GetIndexRaporAsync(
-            int? yil,
+        // Yemekhane Index sayfası — seçilen ayda öğrencilerin yemek hakkı (takvim yılı/ay)
+        Task<YemekhaneAylikTakipSonucDto> GetAylikTakipAsync(
+            int yil,
+            int ay,
             string? query,
             int? birimId,
-            RaporDurumFiltresiDto durum = RaporDurumFiltresiDto.Hepsi,
+            YemekHakkiFiltresi durum = YemekHakkiFiltresi.Hepsi,
             int page = 1,
             int pageSize = 50,
             bool includePasif = false,
@@ -41,6 +42,15 @@ namespace OgrenciBilgiSistemi.Services.Interfaces
         // -------- Ay bazlı tekil kayıt (takvim yılı/ay) --------
         /// <summary>Belirtilen yıl/ay için kaydı upsert eder.</summary>
         Task<OgrenciYemekModel> SetAyAsync(int ogrenciId, int yil, int ay, bool aktif, string? not = null, CancellationToken ct = default);
+
+        /// <summary>Öğrencilerin belirtilen yıl/ay hakkını tek transaction'da açar/kapatır (not korunur). Etkilenen öğrenci sayısını döner.</summary>
+        Task<int> SetAyTopluAsync(IReadOnlyCollection<int> ogrenciIdler, int yil, int ay, bool aktif, CancellationToken ct = default);
+
+        /// <summary>Excel (A sütunu öğrenci no) o ayın tam listesidir: listedekilerin hakkı açılır, olmayanlarınki kapatılır.</summary>
+        Task<YemekHakkiIceAktarmaSonucDto> ExceldenAyHakkiYukleAsync(Stream dosya, int yil, int ay, CancellationToken ct = default);
+
+        /// <summary>"Öğrenci No" başlıklı boş yükleme şablonu (.xlsx).</summary>
+        byte[] ExcelSablonu();
 
         // -------- "Bu Ay" yardımcıları (Eyl başlangıçlı akademik yıla göre yıl hesaplar) --------
         /// <summary>İçinde bulunulan ay için upsert. Sadece bu aya yazar.</summary>

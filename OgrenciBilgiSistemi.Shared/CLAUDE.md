@@ -9,7 +9,7 @@ Sadece **ortak sözleşmeler** burada olmalı:
 - Tenant context (`TenantBaglami`)
 - Tenant çözümleme (`OkulYapilandirmaServisi`)
 - İstek dışı tenant kapsamı (`TenantKapsamFabrikasi`, Singleton)
-- Saf iş kuralları (`Kurallar/`): DB, saat ve IO bağımlılığı olmayan, MVC/API'nin ortak kullandığı kararlar — `GecisKurallari` (kart okuma), `GonderimKuyruguKurallari` (outbox tekrar deneme), `RandevuDurumKurallari` (durum geçişleri), `PanelOturumKurallari` (panel girişi + oturum denetimi), `CihazSenkronKurallari` (öğrenci hangi ZKTeco cihazında olur, senkron tekrar deneme). Testleri `OgrenciBilgiSistemi.Tests`'te; kural değişikliği testle birlikte yapılır.
+- Saf iş kuralları (`Kurallar/`): DB, saat ve IO bağımlılığı olmayan, MVC/API'nin ortak kullandığı kararlar — `GecisKurallari` (kart okuma), `GonderimKuyruguKurallari` (outbox tekrar deneme), `RandevuDurumKurallari` (durum geçişleri), `PanelOturumKurallari` (panel girişi + oturum denetimi), `CihazSenkronKurallari` (öğrenci hangi ZKTeco cihazında olur, senkron tekrar deneme), `YemekHakkiIceAktarmaKurallari` (Excel yemek listesi → öğrenci eşleme). Testleri `OgrenciBilgiSistemi.Tests`'te; kural değişikliği testle birlikte yapılır.
 - Giriş kilidi (`GirisDenemeSayaci`, saf bellek içi sayaç) ve helper'lar (`KartNo.Normalize`, `RefreshTokenBicimi`)
 - POCO/DTO, enum, constant, helper/extension
 
@@ -52,7 +52,7 @@ ApiContracts/   → API ↔ Mobil JSON sözleşmeleri (*Dto)
 Dtos/           → API DTO'ları (GecisKayitDto, SinifYoklamaDto)
 Constants/      Enums/
 Helpers/        → KartNo, RefreshTokenBicimi, HaftaHesaplayici
-Kurallar/       → GecisKurallari, GonderimKuyruguKurallari, RandevuDurumKurallari, PanelOturumKurallari, CihazSenkronKurallari
+Kurallar/       → GecisKurallari, GonderimKuyruguKurallari, RandevuDurumKurallari, PanelOturumKurallari, CihazSenkronKurallari, YemekHakkiIceAktarmaKurallari
 Models/         → OkulBilgiAyari, KartOkumaAyarlari
 Services/       → TenantBaglami, OkulYapilandirmaServisi, TenantKapsamFabrikasi, GirisDenemeSayaci
 ```

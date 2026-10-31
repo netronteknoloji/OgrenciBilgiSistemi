@@ -1,7 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Globalization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using OgrenciBilgiSistemi.Dtos;
-using OgrenciBilgiSistemi.Helpers;
 using OgrenciBilgiSistemi.Services.Interfaces;
 using OgrenciBilgiSistemi.ViewModels;
 
@@ -22,21 +22,25 @@ namespace OgrenciBilgiSistemi.Controllers
         [HttpGet("Index")]
         public async Task<IActionResult> Index(
             string? query,
-            int? yil,
+            string? ay,
             int? birimId,
-            RaporDurumFiltresiDto durum = RaporDurumFiltresiDto.Hepsi,
+            YemekHakkiFiltresi durum = YemekHakkiFiltresi.Hepsi,
             int page = 1,
             int pageSize = 50,
             bool includePasif = false,
             CancellationToken ct = default)
         {
-            int defaultYil = AkademikDonemHelper.Current();
-
             if (pageSize <= 0) pageSize = 50;
             pageSize = Math.Min(pageSize, 200);
 
-            var rapor = await _svc.GetIndexRaporAsync(
-                yil: yil,
+            // ay = "yyyy-MM" (input type="month"); boş/geçersizse bu ay
+            var secilen = DateTime.TryParseExact(ay, "yyyy-MM", CultureInfo.InvariantCulture, DateTimeStyles.None, out var d)
+                ? d
+                : DateTime.Today;
+
+            var rapor = await _svc.GetAylikTakipAsync(
+                yil: secilen.Year,
+                ay: secilen.Month,
                 query: query,
                 birimId: birimId,
                 durum: durum,
@@ -45,40 +49,22 @@ namespace OgrenciBilgiSistemi.Controllers
                 includePasif: includePasif,
                 ct: ct);
 
-            // Yıl dropdown
-            var yillar = rapor.KullanilabilirYillar
-                .OrderByDescending(x => x)
-                .Select(y => new SelectListItem
-                {
-                    Value = y.ToString(),
-                    Text = $"{y}-{y + 1}",
-                    Selected = (yil ?? defaultYil) == y
-                })
-                .ToList();
-            yillar.Insert(0, new SelectListItem
-            {
-                Value = "",
-                Text = "Tüm Yıllar",
-                Selected = !yil.HasValue
-            });
-
             // Birim dropdown
             var birimler = await _birimService.GetSelectListAsync(
                 selectedId: birimId,
                 sinifMi: true,
                 ct: ct);
 
-            // Durum dropdown — Yemekhane'de Muaf yok, sadece Hepsi/Borçlu/Borçsuz
-            var durumlar = new[] { RaporDurumFiltresiDto.Hepsi, RaporDurumFiltresiDto.Borclu, RaporDurumFiltresiDto.Borcsuz }
+            // Durum dropdown — seçilen ayda yemek hakkı
+            var durumlar = new[] { YemekHakkiFiltresi.Hepsi, YemekHakkiFiltresi.Var, YemekHakkiFiltresi.Yok }
                 .Select(e => new SelectListItem
                 {
                     Value = ((int)e).ToString(),
                     Text = e switch
                     {
-                        RaporDurumFiltresiDto.Hepsi => "Hepsi",
-                        RaporDurumFiltresiDto.Borclu => "Borçlu",
-                        RaporDurumFiltresiDto.Borcsuz => "Borçsuz",
-                        _ => e.ToString()
+                        YemekHakkiFiltresi.Var => "Hakkı var",
+                        YemekHakkiFiltresi.Yok => "Hakkı yok",
+                        _ => "Hepsi"
                     },
                     Selected = e == durum
                 })
@@ -87,24 +73,136 @@ namespace OgrenciBilgiSistemi.Controllers
             var vm = new YemekhaneIndexVm
             {
                 query = query,
-                yil = yil ?? defaultYil,
+                yil = secilen.Year,
+                ay = secilen.Month,
+                AyAdi = secilen.ToString("MMMM yyyy", new CultureInfo("tr-TR")),
                 birimId = birimId,
                 durum = durum,
                 includePasif = includePasif,
 
-                Yillar = yillar,
                 Birimler = birimler,
                 Durumlar = durumlar,
 
                 Satirlar = rapor.Satirlar,
-                ToplamBorc = rapor.ToplamBorc,
-                ToplamOdenen = rapor.ToplamOdenen,
-                ToplamKalan = rapor.ToplamKalan,
-                KullanilabilirYillar = rapor.KullanilabilirYillar
+                HakVarSayisi = rapor.HakVarSayisi,
+                HakYokSayisi = rapor.HakYokSayisi
             };
 
             return View(vm);
         }
+
+        // Index'ten tekil veya toplu yemek hakkı aç/kapat; filtreler korunarak listeye dönülür
+        [HttpPost("AyHakkiKaydet")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AyHakkiKaydet(
+            int[] ogrenciIdler,
+            int yil,
+            int ay,
+            bool aktif,
+            string? query,
+            int? birimId,
+            YemekHakkiFiltresi durum = YemekHakkiFiltresi.Hepsi,
+            int page = 1,
+            bool includePasif = false,
+            CancellationToken ct = default)
+        {
+            if (ay < 1 || ay > 12 || yil < 2000 || yil > 2100)
+                return BadRequest();
+
+            if (ogrenciIdler.Length == 0)
+            {
+                TempData["Hata"] = "Öğrenci seçilmedi.";
+            }
+            else
+            {
+                var adet = await _svc.SetAyTopluAsync(ogrenciIdler, yil, ay, aktif, ct);
+                TempData["Bilgi"] = $"{adet} öğrencinin {yil}-{ay:D2} yemek hakkı {(aktif ? "açıldı" : "kapatıldı")}.";
+            }
+
+            return RedirectToAction(nameof(Index), new
+            {
+                query,
+                ay = $"{yil:D4}-{ay:D2}",
+                birimId,
+                durum = (int)durum,
+                page,
+                includePasif
+            });
+        }
+
+        private const long ExcelMaksBoyut = 2 * 1024 * 1024;
+
+        // Excel o ayın tam listesi: listedekilerin hakkı açılır, olmayanlarınki kapatılır
+        [HttpPost("ExcelYukle")]
+        [ValidateAntiForgeryToken]
+        [RequestSizeLimit(ExcelMaksBoyut + 64 * 1024)]
+        public async Task<IActionResult> ExcelYukle(
+            IFormFile? dosya,
+            int yil,
+            int ay,
+            string? query,
+            int? birimId,
+            YemekHakkiFiltresi durum = YemekHakkiFiltresi.Hepsi,
+            bool includePasif = false,
+            CancellationToken ct = default)
+        {
+            if (ay < 1 || ay > 12 || yil < 2000 || yil > 2100)
+                return BadRequest();
+
+            var geri = RedirectToAction(nameof(Index), new
+            {
+                query,
+                ay = $"{yil:D4}-{ay:D2}",
+                birimId,
+                durum = (int)durum,
+                includePasif
+            });
+
+            if (dosya is null || dosya.Length == 0)
+            {
+                TempData["Hata"] = "Dosya seçilmedi.";
+                return geri;
+            }
+            if (!string.Equals(Path.GetExtension(dosya.FileName), ".xlsx", StringComparison.OrdinalIgnoreCase))
+            {
+                TempData["Hata"] = "Yalnızca .xlsx dosyası yüklenebilir.";
+                return geri;
+            }
+            if (dosya.Length > ExcelMaksBoyut)
+            {
+                TempData["Hata"] = "Dosya 2 MB'tan büyük olamaz.";
+                return geri;
+            }
+
+            await using var akis = dosya.OpenReadStream();
+            var sonuc = await _svc.ExceldenAyHakkiYukleAsync(akis, yil, ay, ct);
+
+            var uyarilar = new List<string>();
+            if (sonuc.Hata is not null) uyarilar.Add(sonuc.Hata);
+            if (sonuc.Bulunamayan.Count > 0)
+                uyarilar.Add($"Bulunamayan öğrenci no ({sonuc.Bulunamayan.Count}): {Kisalt(sonuc.Bulunamayan)}");
+            if (sonuc.BirdenFazla.Count > 0)
+                uyarilar.Add($"Birden çok öğrencide aynı no, açılmadı ({sonuc.BirdenFazla.Count}): {Kisalt(sonuc.BirdenFazla)}");
+            if (sonuc.GecersizSatirlar.Count > 0)
+                uyarilar.Add($"Sayı olmayan satırlar ({sonuc.GecersizSatirlar.Count}): {Kisalt(sonuc.GecersizSatirlar)}");
+
+            if (sonuc.Hata is null)
+                TempData["Bilgi"] = $"{yil}-{ay:D2} yemek listesi yüklendi: {sonuc.Acilan} açıldı, {sonuc.Kapatilan} kapatıldı, {sonuc.Degismeyen} zaten açıktı.";
+            if (uyarilar.Count > 0)
+                TempData["Hata"] = string.Join(" • ", uyarilar);
+
+            return geri;
+
+            static string Kisalt(IReadOnlyList<int> liste)
+                => string.Join(", ", liste.Take(20)) + (liste.Count > 20 ? ", …" : "");
+        }
+
+        [HttpGet("ExcelSablon")]
+        public IActionResult ExcelSablon()
+            => File(
+                _svc.ExcelSablonu(),
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                "YemekListesiSablon.xlsx");
 
         [HttpGet("Ozet")]
         public async Task<IActionResult> Ozet(int ogrenciId, int? yil, CancellationToken ct)
@@ -113,9 +211,6 @@ namespace OgrenciBilgiSistemi.Controllers
             var akYil = yil ?? (DateTime.Now.Month >= 9 ? DateTime.Now.Year : DateTime.Now.Year - 1);
 
             var vm = await _svc.GetOzetAsync(ogrenciId, akYil, ct);
-
-            // Akademik yılın tamamındaki ödemeler (Eyl..Ara + Oca..Ağu)
-            vm.Odemeler = await _svc.GetAkademikYilOdemeleriAsync(ogrenciId, akYil, ct);
             return View(vm);
         }
 

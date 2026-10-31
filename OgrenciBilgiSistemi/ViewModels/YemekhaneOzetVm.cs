@@ -1,6 +1,4 @@
 ﻿// ViewModels/YemekhaneOzetVm.cs
-using OgrenciBilgiSistemi.Models;
-
 namespace OgrenciBilgiSistemi.ViewModels
 {
     public class YemekhaneOzetAyVm
@@ -14,10 +12,6 @@ namespace OgrenciBilgiSistemi.ViewModels
         public int AyGercek { get; set; }          // 1..12
 
         public bool Aktif { get; set; }
-        public decimal AylikTutar { get; set; }
-        public decimal Borc { get; set; }
-        public decimal Odenen { get; set; }
-        public decimal Kalan => Math.Max(0, Borc - Odenen);
         public string? Not { get; set; }
     }
 
@@ -27,12 +21,6 @@ namespace OgrenciBilgiSistemi.ViewModels
         // Akademik Yıl BAŞLANGICI (2025 => 2025-2026)
         public int Yil { get; set; }
 
-        public decimal AylikTutar { get; set; }
-        public decimal ToplamBorc { get; set; }
-        public decimal ToplamOdenen { get; set; }
-        public decimal ToplamKalan => Math.Max(0, ToplamBorc - ToplamOdenen);
-
         public List<YemekhaneOzetAyVm> Aylar { get; set; } = new();
-        public List<OgrenciYemekOdemeModel> Odemeler { get; set; } = new();
     }
 }
