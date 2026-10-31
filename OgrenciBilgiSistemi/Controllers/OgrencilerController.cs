@@ -187,7 +187,9 @@ namespace OgrenciBilgiSistemi.Controllers
                 return NotFound();
 
             var map = await _yemekhaneService.GetBuAyDurumlariAsync(new[] { id }, ct);
-            bool? buAyYemekhaneAktif = map.TryGetValue(id, out var v) ? (bool?)v : null;
+            // Bu ay kaydı yoksa hak yok (listede de "Hayır"); null geçilirse form varsayılanı "Evet" olur
+            // ve kaydedilince öğrenciye istemeden yemek hakkı verilir
+            bool buAyYemekhaneAktif = map.TryGetValue(id, out var v) && v;
 
             var vm = await BuildFormVmAsync(
                 ogrenci,
