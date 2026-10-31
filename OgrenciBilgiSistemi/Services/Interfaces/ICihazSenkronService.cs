@@ -15,6 +15,9 @@ namespace OgrenciBilgiSistemi.Services.Interfaces
         /// <summary>Cihazı tüm öğrencilerle eşitlemek üzere kuyruğa alır; bekleyenleri hemen denenecek hale getirir.</summary>
         Task<int> CihaziEsitleAsync(int cihazId, CancellationToken ct = default);
 
+        /// <summary>Tüm ZKTeco yemekhane cihazlarını eşitler (bu ay yemek hakkı olanlar yazılır, olmayanlar silinir).</summary>
+        Task<(int CihazSayisi, int Eklenen)> YemekhaneCihazlariniEsitleAsync(CancellationToken ct = default);
+
         /// <summary>Cihazın başarısız satırlarını yeniden denenmek üzere kuyruğa döndürür.</summary>
         Task<int> HatalariYenidenDeneAsync(int cihazId, CancellationToken ct = default);
 

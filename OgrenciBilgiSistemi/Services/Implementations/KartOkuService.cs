@@ -27,17 +27,9 @@ namespace OgrenciBilgiSistemi.Services.Implementations
                 .FirstOrDefaultAsync(o => o.OgrenciKartNo == k && !o.IsDeleted, ct);
         }
 
-        public async Task<bool> YemekIzniVarMiAsync(int ogrenciId, int yil, int ay, CancellationToken ct = default)
-        {
-            var ayAktif = await _context.OgrenciYemekler.AsNoTracking()
-                .AnyAsync(x => x.OgrenciId == ogrenciId && x.Yil == yil && x.Ay == ay && x.Aktif, ct);
-
-            if (ayAktif)
-                return true;
-
-            return await _context.OgrenciYemekOdemeler.AsNoTracking()
-                .AnyAsync(p => p.OgrenciId == ogrenciId && p.Yil == yil && p.Ay == ay && p.Tutar > 0m, ct);
-        }
+        // Hak tanımı tek yerde (YemekHakki); ödeme hak vermez
+        public Task<bool> YemekIzniVarMiAsync(int ogrenciId, int yil, int ay, CancellationToken ct = default)
+            => YemekHakki.HakkiOlanlar(_context, yil, ay).AnyAsync(id => id == ogrenciId, ct);
 
         public async Task<bool> BugunYemekGirisiVarMiAsync(int ogrenciId, DateTime today, DateTime tomorrow, CancellationToken ct = default)
         {

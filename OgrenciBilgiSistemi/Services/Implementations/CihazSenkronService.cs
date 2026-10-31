@@ -54,6 +54,23 @@ WHERE NOT EXISTS (SELECT 1 FROM CihazSenkronKuyrugu K WITH (UPDLOCK, HOLDLOCK)
             return eklenen;
         }
 
+        // Yalnızca bağlanılabilir ZKTeco yemekhane cihazları; ana kapı cihazlarına dokunulmaz
+        public async Task<(int CihazSayisi, int Eklenen)> YemekhaneCihazlariniEsitleAsync(CancellationToken ct = default)
+        {
+            var cihazIdler = await _db.Cihazlar.AsNoTracking()
+                .Where(c => !c.IsDeleted && c.DonanimTipi == DonanimTipi.ZKTeco
+                         && c.IstasyonTipi == IstasyonTipi.Yemekhane
+                         && c.IpAdresi != null && c.IpAdresi != "" && c.PortNo > 0)
+                .Select(c => c.CihazId)
+                .ToListAsync(ct);
+
+            var eklenen = 0;
+            foreach (var cihazId in cihazIdler)
+                eklenen += await CihaziEsitleAsync(cihazId, ct);
+
+            return (cihazIdler.Count, eklenen);
+        }
+
         public async Task<int> HatalariYenidenDeneAsync(int cihazId, CancellationToken ct = default)
         {
             var simdi = Simdi;

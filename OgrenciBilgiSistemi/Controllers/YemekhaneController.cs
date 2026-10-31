@@ -12,11 +12,13 @@ namespace OgrenciBilgiSistemi.Controllers
     {
         private readonly IYemekhaneService _svc;
         private readonly IBirimService _birimService;
+        private readonly ICihazSenkronService _cihazSenkron;
 
-        public YemekhaneController(IYemekhaneService svc, IBirimService birimService)
+        public YemekhaneController(IYemekhaneService svc, IBirimService birimService, ICihazSenkronService cihazSenkron)
         {
             _svc = svc;
             _birimService = birimService;
+            _cihazSenkron = cihazSenkron;
         }
 
         [HttpGet("Index")]
@@ -128,6 +130,27 @@ namespace OgrenciBilgiSistemi.Controllers
                 page,
                 includePasif
             });
+        }
+
+        // Yemekhane cihazlarını bu ayın haklarıyla eşitler (kuyruğa alır; cihaza CihazSenkronIsleyici yazar)
+        [HttpPost("CihazlaEsitle")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CihazlaEsitle(
+            string? query,
+            string? ay,
+            int? birimId,
+            YemekHakkiFiltresi durum = YemekHakkiFiltresi.Hepsi,
+            int page = 1,
+            bool includePasif = false,
+            CancellationToken ct = default)
+        {
+            var (cihazSayisi, eklenen) = await _cihazSenkron.YemekhaneCihazlariniEsitleAsync(ct);
+            if (cihazSayisi == 0)
+                TempData["Hata"] = "Kayıtlı ZKTeco yemekhane cihazı yok (Cihazlar sayfasında IP ve port tanımlı olmalı).";
+            else
+                TempData["Bilgi"] = $"{cihazSayisi} yemekhane cihazı için eşitleme başlatıldı ({eklenen} öğrenci sıraya alındı). İlerlemeyi Cihazlar sayfasından izleyebilirsiniz.";
+
+            return RedirectToAction(nameof(Index), new { query, ay, birimId, durum = (int)durum, page, includePasif });
         }
 
         private const long ExcelMaksBoyut = 2 * 1024 * 1024;

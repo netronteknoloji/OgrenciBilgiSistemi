@@ -120,9 +120,9 @@ WHERE (K.Durum = 0 AND K.SonrakiDeneme <= {2}) OR (K.Durum = 1 AND K.KilitBitis 
             .Select(o => new OgrenciBilgisi(o.OgrenciId, o.OgrenciAdSoyad, o.OgrenciKartNo, !o.IsDeleted))
             .ToDictionaryAsync(o => o.OgrenciId, ct);
 
-        var yemekVar = (await db.OgrenciYemekler.IgnoreQueryFilters().AsNoTracking()
-                .Where(y => ogrenciIdler.Contains(y.OgrenciId) && y.Aktif && y.Yil == bugun.Year && y.Ay == bugun.Month)
-                .Select(y => y.OgrenciId)
+        // Pasif öğrencinin hakkı sayılmaz; zaten CihazdaOlmaliMi'de aktif değil
+        var yemekVar = (await YemekHakki.HakkiOlanlar(db, bugun.Year, bugun.Month)
+                .Where(id => ogrenciIdler.Contains(id))
                 .ToListAsync(ct))
             .ToHashSet();
 

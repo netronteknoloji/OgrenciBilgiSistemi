@@ -5,6 +5,11 @@
 
     var list = Model.Satirlar;
 
+    // Cihaz senkronu her zaman içinde bulunulan ayın haklarını kullanır (CihazSenkronIsleyici)
+    var bugun = DateTime.Today;
+    var buAyMi = Model.yil == bugun.Year && Model.ay == bugun.Month;
+    var buAyAdi = bugun.ToString("MMMM yyyy", new System.Globalization.CultureInfo("tr-TR"));
+
     // Aç/Kapat formlarının listeye aynı filtrelerle dönmesi için
     void FiltreAlanlari(bool? aktif)
     {
@@ -112,8 +117,23 @@
                 </div>
             </div>
 
-            <!-- Excel'den ay listesi yükleme (liste boşken de görünür) -->
-            <div class="d-flex justify-content-end mb-2">
+            <!-- Excel'den ay listesi yükleme + cihazla eşitleme (liste boşken de görünür) -->
+            <div class="d-flex justify-content-end align-items-center gap-2 mb-2">
+                <span class="small @(buAyMi ? "text-muted" : "text-warning fw-semibold")">
+                    Cihaza <strong>@buAyAdi</strong> hakları gönderilir.
+                </span>
+                <form method="post" asp-action="CihazlaEsitle" asp-controller="Yemekhane" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="query" value="@Model.query" />
+                    <input type="hidden" name="ay" value="@Model.AyDegeri" />
+                    <input type="hidden" name="birimId" value="@Model.birimId" />
+                    <input type="hidden" name="durum" value="@((int)Model.durum)" />
+                    <input type="hidden" name="page" value="@list.SayfaIndeks" />
+                    <input type="hidden" name="includePasif" value="@(Model.includePasif ? "true" : "false")" />
+                    <button type="submit" class="btn btn-sm btn-outline-success">
+                        <i class="bi bi-arrow-repeat"></i> Cihazla Eşitle
+                    </button>
+                </form>
                 <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#excelYukleModal">
                     <i class="bi bi-file-earmark-excel"></i> Excel'den Yükle
                 </button>

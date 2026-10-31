@@ -30,6 +30,7 @@
 - **Kart okuma:** USB (`KartOkuController`) ve ZKTeco (`KartOkumaOlayIsleyiciService`) aynı kararı `IGecisKarariService` + `GecisKilidi` → `Shared/Kurallar/GecisKurallari` üzerinden verir. Kural burada değil, Shared'de ve testlerde değişir.
 - **SMS + push = outbox:** üretici yalnızca `IGonderimKuyruguService` ile kuyruğa ekler, `KuyrukTetikleyici` işleyiciyi uyandırır; `ISmsService` / `IPushBildirimGonderici`'yi yalnızca `GonderimKuyruguIsleyici` çağırır.
 - **Cihaz senkronu:** öğrenciyi cihaza `CihazService` ile doğrudan yazma; `ICihazSenkronService` ile kuyruğa ekle, `CihazSenkronIsleyici` yazar. ZKTeco cihazına erişen her kod `ZkCihazKilidi` altında çalışır ve bağlantıyı `IZKTecoService.CihazBaglantisiAcAsync` ile alır — kendi `Connect_Net`'ini açmaz. Cihaz ikinci SDK oturumunu reddeder (-307); olay bağlantısı o cihazdaysa aynı COM nesnesi ödünç verilir. Kilit sırası: `ZkCihazKilidi` → `ZKTecoService._connLock`.
+- **Yemek hakkı:** tek tanım `YemekHakki.HakkiOlanlar(db, yil, ay)`; yemek hakkını başka yerde sorgu yazarak hesaplama.
 - **Kart no:** kaydederken ve okuturken `Shared/Helpers/KartNo.Normalize`.
 
 ## Background Services (7 adet)

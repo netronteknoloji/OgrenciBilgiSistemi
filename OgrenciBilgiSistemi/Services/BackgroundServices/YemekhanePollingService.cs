@@ -187,7 +187,15 @@ public sealed class YemekhanePollingService : BackgroundService
                 mevcut.Add((k.OgrenciId, k.OgrenciGTarih!.Value.Date));
         }
 
-        int zatenVar = 0, yeniKayit = 0, bugunYeni = 0;
+        // Cihaz kapıyı açtığı için geçiş kaydedilir; o ay yemek hakkı olmayan öğrenciye aitse ayrıca sayılır
+        var hakkiOlanlar = new HashSet<(int OgrenciId, int Yil, int Ay)>();
+        foreach (var (yil, ay) in dedup.Select(x => (x.OgrenciGTarih!.Value.Year, x.OgrenciGTarih!.Value.Month)).Distinct())
+        {
+            foreach (var id in await YemekHakki.HakkiOlanlar(db, yil, ay).ToListAsync(ct))
+                hakkiOlanlar.Add((id, yil, ay));
+        }
+
+        int zatenVar = 0, yeniKayit = 0, bugunYeni = 0, haksizGecis = 0;
         bool hataVar = false;
 
         // sp_getapplock ile tekil ekleme
@@ -203,6 +211,7 @@ public sealed class YemekhanePollingService : BackgroundService
                 {
                     yeniKayit++;
                     if (gun == today) bugunYeni++;
+                    if (!hakkiOlanlar.Contains((log.OgrenciId, gun.Year, gun.Month))) haksizGecis++;
                 }
                 else
                 {
@@ -217,8 +226,12 @@ public sealed class YemekhanePollingService : BackgroundService
         }
 
         _logger.LogInformation(
-            "Cihaz özet {Ip}: ToplamLog={ToplamLog}, Gecersiz={Gecersiz}, OgrenciDegil={OgrenciDegil}, ZatenVar={ZatenVar}, YeniKayıt={YeniKayit}, BugünYeni={BugunYeni}, Hata={Hata}",
-            ip, okuma.ToplamLog, okuma.Gecersiz, okuma.OgrenciDegil, zatenVar, yeniKayit, bugunYeni, hataVar);
+            "Cihaz özet {Ip}: ToplamLog={ToplamLog}, Gecersiz={Gecersiz}, OgrenciDegil={OgrenciDegil}, ZatenVar={ZatenVar}, YeniKayıt={YeniKayit}, BugünYeni={BugunYeni}, HaksizGecis={HaksizGecis}, Hata={Hata}",
+            ip, okuma.ToplamLog, okuma.Gecersiz, okuma.OgrenciDegil, zatenVar, yeniKayit, bugunYeni, haksizGecis, hataVar);
+
+        if (haksizGecis > 0)
+            _logger.LogWarning("Yemekhane {Ip}: {Adet} yeni geçiş o ay yemek hakkı olmayan öğrencilere ait; kaydedildi. Cihazı Yemekhane sayfasından eşitleyin.",
+                ip, haksizGecis);
 
         // Bugünkü yeni girişlerin SMS'leri kuyruğa alınır (geçmiş günler için SMS gitmez)
         if (bugunYeni > 0)

@@ -22,7 +22,7 @@ MVC servis dosyaları çoğunlukla `MVC/Services/Implementations/`, arka plan se
 | Randevu | Mobil (API), panel (iptal), arka plan | API `RandevularController.Olustur` | `Randevular` | Çakışma önce-kontrol | Push (API), hatırlatma (arka plan) | Yok | Panelden iptalde bildirim yok; kısmi hata |
 | Öğretmen randevu slotu | Panel, mobil | `OgretmenRandevuService.Ekle` (MVC/API) | `OgretmenRandevular` | Unique `UX_OgretmenRandevular_Slot` | Yok | Yok | Örtüşen aralık yalnız önce-kontrol |
 | Bildirim / Duyuru / Duyuru okuma | Panel, mobil, arka plan | `BildirimService.Olustur`, `DuyuruService` | `Bildirimler`, `Duyurular`, `DuyuruOkumalari` | Push satırı `BildirimId` unique; okuma unique | Push | Yok | Duyuru döngüsü kısmi hata → tekrar gönderimde çift push |
-| Aidat / yemek ödemesi | Panel | `AidatService.OdemeEkleAsync`, `YemekhaneService.OdemeEkleAsync` | `OgrenciAidatOdemeler`, `OgrenciYemekOdemeler` | Yok | Yok | Yemek ödemesi cihaz senkronunu tetiklemiyor | Ödemeyle hak kazanan öğrenci cihaza yazılmıyor |
+| Aidat / yemek ödemesi | Panel | `AidatService.OdemeEkleAsync`, `YemekhaneService.OdemeEkleAsync` | `OgrenciAidatOdemeler`, `OgrenciYemekOdemeler` | Yok | Yok | Yemek ödemesi hak vermez (`YemekHakki.HakkiOlanlar`); panelde ödeme girişi kaldırıldı | — |
 
 Bulunamayanlar (DbSet listesi `MVC/Data/AppDbContext.cs:13-45`): personel geçişi tablosu, izin/erken çıkış tablosu, **panelden geçiş ekleme/düzeltme ekranı** (`MVC/Controllers/OgrenciGirisCikisController.cs:22-324` yalnız GET/Excel; API `GecisKayitController` `:26,69` yalnız GET).
 
@@ -119,11 +119,11 @@ Bulunamayanlar (DbSet listesi `MVC/Data/AppDbContext.cs:13-45`): personel geçi�
 
 ### 3.3 Kurallar
 - **Anlık yol** (`GecisKurallari.cs:62-67`; `GecisKarariService.cs:27-35`):
-  - Bu ay izin yoksa red. İzin = `OgrenciYemekler.Aktif` **veya** `OgrenciYemekOdemeler.Tutar > 0` (`KartOkuService.cs:30-40`).
+  - Bu ay izin yoksa red. İzin = tek tanım `YemekHakki.HakkiOlanlar`: o ayın `OgrenciYemekler.Aktif` kaydı, silinmiş öğrenci hariç; ödeme hak vermez (`YemekHakki.cs:13`; `KartOkuService.cs:31-32`).
   - Bugün kayıt varsa red (`YEMEKHANE_LIMIT`) (`KartOkuService.cs:42-50`).
   - `GecisService` ayrıca günde tek GİRİŞ uygular, varsa mevcudu döndürür (`GecisService.cs:49-82`) — **applock yok**.
 - **Polling yolu:**
-  - Yemek hakkı filtresi **yok**, yalnız mevcut öğrenci kontrolü (`:286`).
+  - Yemek hakkı filtresi **yok** (cihaz kapıyı açtığı için geçiş yazılır), yalnız mevcut öğrenci kontrolü. Hakkı olmayan öğrenciye ait yeni kayıtlar `HaksizGecis` olarak sayılır ve Warning loglanır (`YemekhanePollingService.cs:194,214`).
   - Geçersiz ve gelecek tarihli kayıtlar atlanır (`:275-283`); saniye 0, saat = cihaz saati (`:281`).
   - Öğrenci+gün için günün ilk kaydı (`:156-159`); DB'deki mevcut GİRİŞ'ler önceden yüklenir (`:161-175`).
   - Ekleme `sp_getapplock` `YEMEKHANE:{OgrenciId}:{yyyyMMdd}`, 5 sn (`:338-344`) + içeride tekrar varlık kontrolü (`:346-358`).
@@ -141,14 +141,14 @@ Bulunamayanlar (DbSet listesi `MVC/Data/AppDbContext.cs:13-45`): personel geçi�
 - **Kilit:** `ZkCihazKilidi` (ip:port, süreç içi, `ZkCihazKilidi.cs:9`) altında polling (`:133`), senkron işleyici (`CihazSenkronIsleyici.cs:148`), panel işlemleri (`CihazService.cs:79,130`).
 - **Okuma:** `Connect_Net` → `EnableDevice(false)` → `ReadGeneralLogData`; `false` dönerse hata, temizlik yapılmaz, sonra tekrar denenir (`:256-261`) → `GetGeneralLogData` döngüsü → `finally` `EnableDevice(true)` + `Disconnect` (`:242-324`). Her seferinde cihazdaki **tüm** loglar okunur (`:229`).
 - **Silme (`ClearGLog`, `:390`)** — hepsi gerekli: ayın son günü ve 22:00 sonrası (`:93-94`); o kilit oturumunda okuma başarılı (`:136`); DB yazımı hatasız (`:138`); aynı gün daha önce temizlenmemiş (`:112,142-143`).
-- **Kullanıcılar:** yalnız bu ay `OgrenciYemekler.Aktif` olan aktif öğrenciler (`CihazSenkronKurallari.cs:32`; `CihazSenkronIsleyici.cs:119-123`). Kuyruğa ekleyenler: `YemekhaneService.SetAyAsync` (yalnız içinde bulunulan ay, `YemekhaneService.cs:101-105`), MVC `OgrenciService.cs:124,168,194`, panel "Eşitle" (`CihazlarController.cs:35`).
+- **Kullanıcılar:** yalnız bu ay yemek hakkı olan (`YemekHakki.HakkiOlanlar`) aktif öğrenciler (`CihazSenkronKurallari.cs:32`; `CihazSenkronIsleyici.cs:124`). Kuyruğa ekleyenler: Yemekhane sayfasındaki hak değişiklikleri (tekil/toplu/Excel, yalnız içinde bulunulan ay), MVC `OgrenciService`, panel "Eşitle" (`CihazlarController.cs:35`) ve Yemekhane sayfası "Cihazla Eşitle" (`YemekhaneController.cs:136` → `CihazSenkronService.YemekhaneCihazlariniEsitleAsync`, yalnız yemekhane cihazları).
 
 ### 3.7 Riskler
 1. **Polling'de ChangeTracker temizlenmiyor ✔.** `TekilYemekhaneEkle` hata alınca rollback edip fırlatır (`:360-369`), `LoglariYaz` yakalayıp devam eder (`:199-203`); dosyada `ChangeTracker.Clear` yok. `Added` durumdaki başarısız entity aynı `DbContext`'te kalır, sonraki `SaveChangesAsync` onu applock dışında yeniden eklemeye çalışır → çift kayıt veya art arda hata.
 2. **İki yazma yolu birbirini kilitlemiyor:** anlık yol applock almaz (`GecisService.cs:49-82`), polling `GecisKilidi` almaz (`:331-371`), DB unique yok → 13:30 sonrası eşzamanlıysa iki satır + iki SMS. Yemekhane cihazının anlık olay kanalında olup olmadığı **doğrulanamadı** (Risk §2.7-2'ye bağlı).
 3. **Ay sonu temizliği ayrı bağlantıda:** okuma bağlantısı kapanır (`:315-316`), `CihazLogTemizle` yeni bağlantıyla `EnableDevice(false)` yapmadan `ClearGLog` çağırır (`:383,390`); aradaki okutma okunmadan silinebilir (22:00 sonrası, olasılık düşük).
-4. **Hak tanımı tutarsız:** anlık yol ödemeyi izin sayar (`KartOkuService.cs:38-39`), cihaz senkronu yalnız `Aktif`'e bakar (`CihazSenkronIsleyici.cs:119-123`), polling hiç bakmaz (`:286`). Ödemeyle hak kazanan öğrenci cihaza yazılmaz.
-5. **Ay geçişinde senkron tetiklenmez:** `SetBuAyAsync` (`YemekhaneService.cs:109-130`) ve `OdemeEkleAsync` (`:166-181`) kuyruğa eklemez; ay başı tetiği yok.
+4. ~~Hak tanımı tutarsız~~ — giderildi: anlık yol, senkron ve polling aynı tanımı (`YemekHakki.HakkiOlanlar`) kullanır; ödeme hak vermez. Polling hakkı olmayan geçişi yazar ama sayar/uyarır.
+5. **Ay geçişinde senkron tetiklenmez (bilinçli):** ay başı otomatik eşitleme yok; ayın 1'inde Yemekhane → "Cihazla Eşitle" (veya Cihazlar → Eşitle) elle basılır.
 6. **Saat senkronu yok:** cihaz saati ileriyse kayıt "gelecek" diye atlanır (`:283`), ay sonu temizliğinde kalıcı kaybolur.
 7. **Durum bellekte:** 22:00–24:00 arası yeniden başlatma o ayın temizliğini atlatabilir (`:38-45`); okuma tekrarları tekilleştirme sayesinde zararsız.
 8. **API'den eklenen/kartı değişen öğrenci cihaza gitmez ✔:** `Api/Services/OgrenciService.cs:493` (`EkleAsync`), `:535` (`GuncelleAsync`); API'de `CihazSenkron` geçen satır yok. Kart cihaza ulaşmaz (ana kapı için de geçerli).
@@ -306,6 +306,6 @@ MVC `Program.cs:120-126`, API `Api/Program.cs:123`.
 | 9 | Outbox kilit süresi = en kötü gönderim süresi; gönderim sonrası çökme | Çift SMS | `GonderimKuyruguIsleyici.cs:29-36,222-225`; `GonderimKuyruguKurallari.cs:19-20` |
 | 10 | Tüm SMS taramaları yalnız bugün | Gün içinde kuyruğa alınamayan / polling'le geç gelen geçişin SMS'i hiç gitmez | `GonderimKuyruguService.cs:39-40`; `YemekhanePollingService.cs:211-216`; `YoklamaSmsBildirimService.cs:211-215` |
 | 11 | Ay sonu `ClearGLog` ayrı bağlantıda, `EnableDevice(false)` yok; saat senkronu yok | Okunmamış log silinebilir | `YemekhanePollingService.cs:383,390,283` |
-| 12 | Yemek hakkı tanımı üç yerde farklı; ay geçişinde senkron yok | Hakkı olan öğrenci cihazda yok / hakkı olmayan kaydediliyor | `KartOkuService.cs:30-40`; `CihazSenkronIsleyici.cs:119-123`; `YemekhanePollingService.cs:286`; `YemekhaneService.cs:109-130,166-181` |
+| 12 | Ay geçişinde otomatik senkron yok (hak tanımı tek yere toplandı) | Ayın 1'inde "Cihazla Eşitle" basılmazsa yeni ayın hakkı cihaza geçmez | `YemekhaneController.cs:136`; `YemekHakki.cs:13` |
 
 **Doğrulanamayanlar (çalışma zamanı/ortam gerektirir):** cihazın hangi olayları gönderdiği (`OnHIDNum` her okutmada mı), STA olmadan COM olaylarının güvenilirliği, üretimde tek/çoklu MVC worker (overlapped recycle), DB ve API sunucularının saat dilimi, yemekhane cihazının anlık olay kanalına bağlı olup olmadığı, SMS sağlayıcısının idempotency desteği, FCM zaman aşımı.
