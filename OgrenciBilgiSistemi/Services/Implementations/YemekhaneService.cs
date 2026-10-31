@@ -282,7 +282,9 @@ namespace OgrenciBilgiSistemi.Services.Implementations
             else
             {
                 kayit.Aktif = aktif;
-                kayit.Not = not;
+                // Öğrenci formu not göndermez: null gelirse ayın mevcut notu korunur
+                if (not is not null)
+                    kayit.Not = not;
                 _ctx.OgrenciYemekler.Update(kayit);
             }
 

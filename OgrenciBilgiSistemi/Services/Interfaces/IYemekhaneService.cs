@@ -53,7 +53,7 @@ namespace OgrenciBilgiSistemi.Services.Interfaces
         byte[] ExcelSablonu();
 
         // -------- "Bu Ay" yardımcıları (Eyl başlangıçlı akademik yıla göre yıl hesaplar) --------
-        /// <summary>İçinde bulunulan ay için upsert. Sadece bu aya yazar.</summary>
+        /// <summary>İçinde bulunulan ay için upsert. Sadece bu aya yazar; not null ise mevcut not korunur.</summary>
         Task<OgrenciYemekModel> SetBuAyAsync(int ogrenciId, bool aktif, string? not = null, CancellationToken ct = default);
 
         /// <summary>Index sayfası için: verilen öğrenci id’leri için bu ayın durumlarını tek seferde getirir.</summary>
